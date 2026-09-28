@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RL Air Roll Trainer</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="hub" class="screen">
+      <div class="menu-panel hub-panel">
+        <p class="menu-kicker">Rocket League aerial practice</p>
+        <h1 class="menu-title">Air Roll Trainer</h1>
+        <p class="menu-sub">Train directional air roll — pick a mode, tweak binds, swap cars.</p>
+
+        <div class="hub-grid" role="list">
+          <button type="button" id="btn-play" class="hub-card" role="listitem">
+            <span class="hub-card-label">Play</span>
+            <span class="hub-card-desc">Air Roll, ball contact, and air dribble drills.</span>
+          </button>
+          <button type="button" id="btn-locker" class="hub-card" role="listitem">
+            <span class="hub-card-label">Locker</span>
+            <span class="hub-card-desc">Choose your car body for training.</span>
+          </button>
+          <button type="button" id="btn-settings" class="hub-card" role="listitem">
+            <span class="hub-card-label">Settings</span>
+            <span class="hub-card-desc">Keyboard and controller remaps.</span>
+          </button>
+        </div>
+
+        <p class="menu-hint" id="menu-hint"></p>
+        <p class="hub-equipped" id="hub-equipped"></p>
+      </div>
+    </div>
+
+    <div id="menu" class="screen hidden">
+      <div class="menu-panel">
+        <p class="menu-kicker" id="play-kicker">Play</p>
+        <h1 class="menu-title settings-title" id="play-title">Select a mode</h1>
+        <p class="menu-sub" id="play-sub">Pick a training path. Air Roll first.</p>
+
+        <p class="phase-blurb" id="phase-blurb"></p>
+
+        <div id="mode-list" class="mode-list" role="list"></div>
+
+        <div class="settings-actions">
+          <button type="button" id="btn-play-back" class="btn-secondary">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="locker" class="screen locker-screen hidden">
+      <div class="menu-panel locker-panel">
+        <p class="menu-kicker">Garage</p>
+        <h1 class="menu-title settings-title">Locker</h1>
+        <p class="menu-sub">Equip a car for all drills. Hover to preview — click to equip.</p>
+
+        <div id="locker-list" class="mode-list" role="list"></div>
+
+        <p class="locker-credit" id="locker-credit"></p>
+
+        <div class="settings-actions">
+          <button type="button" id="btn-locker-back" class="btn-secondary">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="difficulty" class="screen hidden">
+      <div class="menu-panel">
+        <p class="menu-kicker" id="difficulty-mode-label">Ghost Align</p>
+        <h1 class="menu-title settings-title">Select difficulty</h1>
+        <p class="menu-sub">Harder means tighter alignment and tougher ghost poses.</p>
+
+        <div id="difficulty-list" class="mode-list" role="list"></div>
+
+        <div class="settings-actions">
+          <button type="button" id="btn-difficulty-back" class="btn-secondary">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings" class="screen hidden">
+      <div class="menu-panel settings-panel">
+        <p class="menu-kicker">Options</p>
+        <h1 class="menu-title settings-title">Settings</h1>
+        <p class="menu-sub" id="settings-sub">
+          Remap keyboard and controller, or tune the camera.
+        </p>
+
+        <div class="settings-tabs" role="tablist">
+          <button type="button" class="settings-tab active" data-tab="controls" id="tab-controls">
+            Controls
+          </button>
+          <button type="button" class="settings-tab" data-tab="camera" id="tab-camera">
+            Camera
+          </button>
+        </div>
+
+        <div id="panel-controls" class="settings-tab-panel">
+          <p id="pad-status-line" class="pad-status-line">No controller detected — plug one in to rebind buttons.</p>
+          <div id="bind-list" class="bind-list"></div>
+          <p class="settings-section-title">Controller options</p>
+          <div id="pad-bind-list" class="bind-list pad-options-list"></div>
+        </div>
+
+        <div id="panel-camera" class="settings-tab-panel hidden">
+          <div id="camera-list" class="bind-list"></div>
+        </div>
+
+        <div class="settings-actions">
+          <button type="button" id="btn-reset-binds" class="btn-secondary">Reset defaults</button>
+          <button type="button" id="btn-settings-back" class="btn-primary">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <button type="button" id="btn-menu" class="btn-ghost">Menu</button>
+        <div class="brand" id="mode-title">DAR Trainer</div>
+      </div>
+      <div id="score-row">
+        <span>Hits <strong id="hits">0</strong></span>
+        <span>Streak <strong id="streak">0</strong></span>
+        <span>Best <strong id="best">0</strong></span>
+        <span>Last 20 <strong id="avg">—</strong></span>
+      </div>
+      <div id="status">Align your nose + roof with the ghost target</div>
+      <div id="input-row">
+        <span id="pad-status" class="pill">Keyboard</span>
+        <span id="arl" class="pill">Air Roll L</span>
+        <span id="arr" class="pill">Air Roll R</span>
+      </div>
+      <div id="help"></div>
+    </div>
+
+    <div id="align-meter" class="hidden">
+      <div id="align-fill"></div>
+    </div>
+
+    <div id="boost-meter" class="hidden" aria-label="Boost">
+      <div id="boost-fill" class="boost-ring"></div>
+      <div class="boost-center">
+        <strong id="boost-value">100</strong>
+        <span>BOOST</span>
+      </div>
+    </div>
+
+    <div id="seq-queue" class="hidden" aria-live="polite">
+      <div class="seq-queue-title">Queue</div>
+      <div id="seq-queue-list" class="seq-queue-list"></div>
+      <p class="seq-queue-hint">Match NOW — next moves stack below</p>
+    </div>
+
+    <canvas id="game"></canvas>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
