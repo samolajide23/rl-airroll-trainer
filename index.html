@@ -8,7 +8,6 @@
     />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="screen-orientation" content="landscape" />
     <title>RL Air Roll Trainer</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -120,90 +119,84 @@
       </div>
     </div>
 
-    <div id="hud" class="hidden">
-      <div class="hud-top">
-        <button type="button" id="btn-menu" class="btn-ghost">Menu</button>
-        <div class="brand" id="mode-title">DAR Trainer</div>
+    <div id="stage">
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <button type="button" id="btn-menu" class="btn-ghost">Menu</button>
+          <div class="brand" id="mode-title">DAR Trainer</div>
+        </div>
+        <div id="score-row">
+          <span>Hits <strong id="hits">0</strong></span>
+          <span>Streak <strong id="streak">0</strong></span>
+          <span>Best <strong id="best">0</strong></span>
+          <span>Last 20 <strong id="avg">—</strong></span>
+        </div>
+        <div id="status">Align your nose + roof with the ghost target</div>
+        <div id="input-row">
+          <span id="pad-status" class="pill">Keyboard</span>
+          <span id="arl" class="pill">Air Roll L</span>
+          <span id="arr" class="pill">Air Roll R</span>
+        </div>
+        <div id="help"></div>
       </div>
-      <div id="score-row">
-        <span>Hits <strong id="hits">0</strong></span>
-        <span>Streak <strong id="streak">0</strong></span>
-        <span>Best <strong id="best">0</strong></span>
-        <span>Last 20 <strong id="avg">—</strong></span>
+
+      <div id="align-meter" class="hidden">
+        <div id="align-fill"></div>
       </div>
-      <div id="status">Align your nose + roof with the ghost target</div>
-      <div id="input-row">
-        <span id="pad-status" class="pill">Keyboard</span>
-        <span id="arl" class="pill">Air Roll L</span>
-        <span id="arr" class="pill">Air Roll R</span>
-      </div>
-      <div id="help"></div>
-    </div>
 
-    <div id="align-meter" class="hidden">
-      <div id="align-fill"></div>
-    </div>
-
-    <div id="boost-meter" class="hidden" aria-label="Boost">
-      <div id="boost-fill" class="boost-ring"></div>
-      <div class="boost-center">
-        <strong id="boost-value">100</strong>
-        <span>BOOST</span>
-      </div>
-    </div>
-
-    <div id="seq-queue" class="hidden" aria-live="polite">
-      <div class="seq-queue-title">Queue</div>
-      <div id="seq-queue-list" class="seq-queue-list"></div>
-      <p class="seq-queue-hint">Match NOW — next moves stack below</p>
-    </div>
-
-    <div id="rotate-prompt" class="hidden" role="dialog" aria-live="polite">
-      <div class="rotate-card">
-        <div class="rotate-icon" aria-hidden="true">↻</div>
-        <p class="rotate-title">Rotate your phone</p>
-        <p class="rotate-sub">Play in landscape for on-screen controls.</p>
-      </div>
-    </div>
-
-    <div id="touch-controls" class="hidden" aria-hidden="true">
-      <div class="touch-left">
-        <div
-          id="touch-stick"
-          class="touch-stick"
-          role="slider"
-          aria-label="Pitch and yaw stick"
-        >
-          <div id="touch-stick-knob" class="touch-stick-knob"></div>
+      <div id="boost-meter" class="hidden" aria-label="Boost">
+        <div id="boost-fill" class="boost-ring"></div>
+        <div class="boost-center">
+          <strong id="boost-value">100</strong>
+          <span>BOOST</span>
         </div>
       </div>
 
-      <div class="touch-util">
-        <button type="button" class="touch-btn touch-btn-util" data-touch-action="resetCar">
-          Reset
-        </button>
-        <button type="button" class="touch-btn touch-btn-util" data-touch-action="newTarget">
-          Skip
-        </button>
+      <div id="seq-queue" class="hidden" aria-live="polite">
+        <div class="seq-queue-title">Queue</div>
+        <div id="seq-queue-list" class="seq-queue-list"></div>
+        <p class="seq-queue-hint">Match NOW — next moves stack below</p>
       </div>
 
-      <div class="touch-right">
-        <button type="button" class="touch-btn" data-touch-action="airRollLeft">
-          AR L
-        </button>
-        <button type="button" class="touch-btn" data-touch-action="airRollRight">
-          AR R
-        </button>
-        <button type="button" class="touch-btn touch-btn-boost" data-touch-action="boost">
-          Boost
-        </button>
-        <button type="button" class="touch-btn touch-btn-jump" data-touch-action="jump">
-          Jump
-        </button>
+      <div id="touch-controls" class="hidden" aria-hidden="true">
+        <div class="touch-left">
+          <div
+            id="touch-stick"
+            class="touch-stick"
+            role="slider"
+            aria-label="Pitch and yaw stick"
+          >
+            <div id="touch-stick-knob" class="touch-stick-knob"></div>
+          </div>
+        </div>
+
+        <div class="touch-util">
+          <button type="button" class="touch-btn touch-btn-util" data-touch-action="resetCar">
+            Reset
+          </button>
+          <button type="button" class="touch-btn touch-btn-util" data-touch-action="newTarget">
+            Skip
+          </button>
+        </div>
+
+        <div class="touch-right">
+          <button type="button" class="touch-btn" data-touch-action="airRollLeft">
+            AR L
+          </button>
+          <button type="button" class="touch-btn" data-touch-action="airRollRight">
+            AR R
+          </button>
+          <button type="button" class="touch-btn touch-btn-boost" data-touch-action="boost">
+            Boost
+          </button>
+          <button type="button" class="touch-btn touch-btn-jump" data-touch-action="jump">
+            Jump
+          </button>
+        </div>
       </div>
+
+      <canvas id="game"></canvas>
     </div>
-
-    <canvas id="game"></canvas>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

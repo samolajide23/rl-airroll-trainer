@@ -49,4 +49,4 @@ Success rate over your last 20 attempts per drill (stored in the browser). Modes
 ## Controls
 See **Settings** for keyboard + controller remapping. In Phase 3, **Shift** or gamepad **A** is boost.
 
-On phones/tablets, play in **landscape**: a left stick (pitch/yaw) and right buttons (air roll, boost, jump) appear while a drill is running. Rotate to landscape if you see the rotate prompt.
+On phones/tablets, on-screen controls appear while a drill is running (left stick for pitch/yaw, right buttons for air roll / boost / jump). In portrait, the play view is CSS-rotated into landscape so you don’t need to turn the phone.

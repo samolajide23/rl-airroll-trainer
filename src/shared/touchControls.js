@@ -1,6 +1,9 @@
 /**
  * On-screen touch controls for mobile / coarse-pointer play.
  * Left: virtual stick (pitch / yaw). Right: air roll, boost, jump. Util: reset / skip.
+ *
+ * On portrait phones during play, the #stage is CSS-rotated into landscape
+ * (`body.virtual-landscape`) so the user does not need to turn the device.
  */
 
 /** @type {Set<string>} */
@@ -26,15 +29,132 @@ let stickBase = null;
 /** @type {HTMLElement | null} */
 let stickKnob = null;
 /** @type {HTMLElement | null} */
-let rotateEl = null;
+let stageEl = null;
 
 let visible = false;
+let virtualLandscape = false;
+
+/** @type {Set<() => void>} */
+const viewportListeners = new Set();
 
 function isTouchPreferred() {
   return (
     (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) ||
     window.matchMedia("(pointer: coarse)").matches
   );
+}
+
+function wantsVirtualLandscape() {
+  return (
+    visible &&
+    isTouchPreferred() &&
+    window.matchMedia("(orientation: portrait)").matches
+  );
+}
+
+/**
+ * Logical playable size (landscape when virtual-landscape is on).
+ * @returns {{ width: number, height: number, virtualLandscape: boolean }}
+ */
+export function getPlaySize() {
+  if (virtualLandscape) {
+    return {
+      width: window.innerHeight,
+      height: window.innerWidth,
+      virtualLandscape: true,
+    };
+  }
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    virtualLandscape: false,
+  };
+}
+
+export function isVirtualLandscape() {
+  return virtualLandscape;
+}
+
+/**
+ * @param {() => void} fn
+ * @returns {() => void}
+ */
+export function onPlayViewportChange(fn) {
+  viewportListeners.add(fn);
+  return () => viewportListeners.delete(fn);
+}
+
+function notifyViewport() {
+  for (const fn of viewportListeners) fn();
+}
+
+/**
+ * Map client (viewport) coordinates into #stage local space.
+ * When virtual-landscape is active, stage is rotated 90deg CW.
+ * @param {number} clientX
+ * @param {number} clientY
+ */
+function clientToStage(clientX, clientY) {
+  if (!virtualLandscape) return { x: clientX, y: clientY };
+  const { width: stageW, height: stageH } = getPlaySize();
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  const sx = clientX - cx;
+  const sy = clientY - cy;
+  // CSS rotate(90deg): (x', y') = (-y, x). Inverse: (x, y) = (y', -x').
+  return {
+    x: stageW / 2 + sy,
+    y: stageH / 2 - sx,
+  };
+}
+
+/**
+ * Stick center in stage space (layout box, pre-rotation).
+ * @param {HTMLElement} el
+ */
+function elementCenterStage(el) {
+  if (!virtualLandscape || !stageEl) {
+    const rect = el.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  }
+  // Layout size of stage equals getPlaySize(); stick is positioned in that box.
+  const stageRect = stageEl.getBoundingClientRect();
+  // After rotate, AABB is not the layout box — use offsetLeft/Top chain instead.
+  let x = el.offsetWidth / 2;
+  let y = el.offsetHeight / 2;
+  /** @type {HTMLElement | null} */
+  let node = el;
+  while (node && node !== stageEl) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
+  }
+  // If offsetParent chain broke (fixed positioning), fall back to inverse map of AABB center.
+  if (node !== stageEl) {
+    void stageRect;
+    const rect = el.getBoundingClientRect();
+    return clientToStage(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+  return { x, y };
+}
+
+function syncVirtualLandscape() {
+  const next = wantsVirtualLandscape();
+  if (next === virtualLandscape) {
+    // Still notify size changes on resize while locked in a mode.
+    if (document.body.classList.contains("virtual-landscape") !== next) {
+      document.body.classList.toggle("virtual-landscape", next);
+    }
+    notifyViewport();
+    return;
+  }
+  virtualLandscape = next;
+  document.body.classList.toggle("virtual-landscape", virtualLandscape);
+  if (stick.active) resetStickVisual();
+  notifyViewport();
 }
 
 /**
@@ -94,7 +214,7 @@ function updateStickAxes(dx, dy) {
   const scale = (mag - STICK_DEADZONE) / (1 - STICK_DEADZONE);
   nx = (nx / mag) * scale;
   ny = (ny / mag) * scale;
-  // Screen up → pitch up (nose up); screen right → yaw right
+  // Stage-up → pitch up; stage-right → yaw right
   stick.yaw = Math.max(-1, Math.min(1, nx));
   stick.pitch = Math.max(-1, Math.min(1, -ny));
 }
@@ -114,19 +234,21 @@ function bindStick() {
   stickBase.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     stickBase.setPointerCapture?.(e.pointerId);
-    const rect = stickBase.getBoundingClientRect();
+    const origin = elementCenterStage(stickBase);
+    const pt = clientToStage(e.clientX, e.clientY);
     stick.active = true;
     stick.id = e.pointerId;
-    stick.originX = rect.left + rect.width / 2;
-    stick.originY = rect.top + rect.height / 2;
+    stick.originX = origin.x;
+    stick.originY = origin.y;
     stickBase.classList.add("active");
-    updateStickAxes(e.clientX - stick.originX, e.clientY - stick.originY);
+    updateStickAxes(pt.x - stick.originX, pt.y - stick.originY);
   });
 
   stickBase.addEventListener("pointermove", (e) => {
     if (!stick.active || e.pointerId !== stick.id) return;
     e.preventDefault();
-    updateStickAxes(e.clientX - stick.originX, e.clientY - stick.originY);
+    const pt = clientToStage(e.clientX, e.clientY);
+    updateStickAxes(pt.x - stick.originX, pt.y - stick.originY);
   });
 
   const end = (e) => {
@@ -138,26 +260,19 @@ function bindStick() {
   stickBase.addEventListener("pointercancel", end);
 }
 
-function updateRotatePrompt() {
-  if (!rotateEl) return;
-  const portrait = window.matchMedia("(orientation: portrait)").matches;
-  const show = visible && isTouchPreferred() && portrait;
-  rotateEl.classList.toggle("hidden", !show);
-}
-
 /**
  * @param {{
  *   root: HTMLElement,
  *   stickBase: HTMLElement,
  *   stickKnob: HTMLElement,
- *   rotatePrompt: HTMLElement,
+ *   stage?: HTMLElement | null,
  * }} els
  */
 export function initTouchControls(els) {
   rootEl = els.root;
   stickBase = els.stickBase;
   stickKnob = els.stickKnob;
-  rotateEl = els.rotatePrompt;
+  stageEl = els.stage ?? document.getElementById("stage");
 
   rootEl.querySelectorAll("[data-touch-action]").forEach((node) => {
     if (!(node instanceof HTMLElement)) return;
@@ -167,10 +282,12 @@ export function initTouchControls(els) {
   });
   bindStick();
 
-  window.addEventListener("orientationchange", updateRotatePrompt);
-  window.addEventListener("resize", updateRotatePrompt);
+  window.addEventListener("orientationchange", () => {
+    // Wait a tick for browser to settle new inset sizes.
+    requestAnimationFrame(syncVirtualLandscape);
+  });
+  window.addEventListener("resize", syncVirtualLandscape);
 
-  // Block browser gestures over the overlay
   rootEl.addEventListener(
     "touchmove",
     (e) => {
@@ -178,6 +295,8 @@ export function initTouchControls(els) {
     },
     { passive: false },
   );
+
+  syncVirtualLandscape();
 }
 
 /** @param {boolean} on */
@@ -191,20 +310,7 @@ export function setTouchControlsVisible(on) {
     held.clear();
     resetStickVisual();
   }
-  updateRotatePrompt();
-  maybeLockLandscape();
-}
-
-async function maybeLockLandscape() {
-  if (!visible) return;
-  try {
-    const orient = screen.orientation;
-    if (orient && typeof orient.lock === "function") {
-      await orient.lock("landscape");
-    }
-  } catch {
-    // Requires fullscreen / unsupported — rotate prompt covers this.
-  }
+  syncVirtualLandscape();
 }
 
 export function isTouchControlsActive() {

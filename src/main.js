@@ -9,7 +9,9 @@ import {
   snapshotPressedButtons,
 } from "./shared/input.js";
 import {
+  getPlaySize,
   initTouchControls,
+  onPlayViewportChange,
   setTouchControlsVisible,
 } from "./shared/touchControls.js";
 import { createMenuGamepad } from "./shared/menuGamepad.js";
@@ -910,24 +912,32 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+function syncRendererSize() {
+  const { width, height } = getPlaySize();
+  camera.aspect = width / Math.max(height, 1);
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setSize(width, height, false);
+  const canvas = renderer.domElement;
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+}
+
+window.addEventListener("resize", syncRendererSize);
+onPlayViewportChange(syncRendererSize);
 
 const touchRoot = document.getElementById("touch-controls");
 const touchStick = document.getElementById("touch-stick");
 const touchStickKnob = document.getElementById("touch-stick-knob");
-const rotatePrompt = document.getElementById("rotate-prompt");
-if (touchRoot && touchStick && touchStickKnob && rotatePrompt) {
+const stageEl = document.getElementById("stage");
+if (touchRoot && touchStick && touchStickKnob) {
   initTouchControls({
     root: touchRoot,
     stickBase: touchStick,
     stickKnob: touchStickKnob,
-    rotatePrompt,
+    stage: stageEl,
   });
 }
+syncRendererSize();
 
 refreshHelpText();
 showHub();
