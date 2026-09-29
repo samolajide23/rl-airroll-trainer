@@ -16,6 +16,10 @@ import {
 } from "../src/shared/boostPads.js";
 import { DEFAULT_CAMERA } from "../src/shared/settings.js";
 import { ARENA_CEILING, ARENA_HALF_W } from "../src/shared/arenaMesh.js";
+import { RL_CAMERA } from "../src/shared/chaseCamera.js";
+import { UU } from "../src/shared/rl-units.js";
+import { ARENA_UU } from "../src/shared/soccarArena.js";
+import { UU_SCALE } from "../src/shared/ball.js";
 
 let pass = 0;
 let fail = 0;
@@ -395,13 +399,41 @@ for (const id of Object.keys(RS_HITBOX)) {
   );
 }
 
-console.log("\n=== Camera (community / in-game defaults we ship) ===");
+console.log("\n=== Camera (ProfileCameraSettings / BakkesMod defaults) ===");
 check("camera.fov", DEFAULT_CAMERA.fov === 110);
 check("camera.distance", DEFAULT_CAMERA.distance === 270);
 check("camera.height", DEFAULT_CAMERA.height === 100);
 check("camera.angle", DEFAULT_CAMERA.angle === -3);
 check("camera.stiffness", DEFAULT_CAMERA.stiffness === 0.5);
+check("camera.swivelSpeed", DEFAULT_CAMERA.swivelSpeed === 2.5);
 check("camera.transitionSpeed", DEFAULT_CAMERA.transitionSpeed === 1.0);
+check("camera.shake", DEFAULT_CAMERA.shake === false);
+check("camera.ballCam", DEFAULT_CAMERA.ballCam === false);
+check("RL_CAMERA.FOV", RL_CAMERA.FOV === DEFAULT_CAMERA.fov);
+check("RL_CAMERA.DISTANCE", RL_CAMERA.DISTANCE === DEFAULT_CAMERA.distance);
+check("RL_CAMERA.HEIGHT", RL_CAMERA.HEIGHT === DEFAULT_CAMERA.height);
+check("RL_CAMERA.ANGLE", RL_CAMERA.ANGLE === DEFAULT_CAMERA.angle);
+check("RL_CAMERA.STIFFNESS", RL_CAMERA.STIFFNESS === DEFAULT_CAMERA.stiffness);
+check("RL_CAMERA.SWIVEL_SPEED", RL_CAMERA.SWIVEL_SPEED === DEFAULT_CAMERA.swivelSpeed);
+check(
+  "RL_CAMERA.TRANSITION_SPEED",
+  RL_CAMERA.TRANSITION_SPEED === DEFAULT_CAMERA.transitionSpeed,
+);
+check("RL_CAMERA.STIFFNESS_ZOOM_UU", RL_CAMERA.STIFFNESS_ZOOM_UU === 100);
+check("RL_CAMERA.STIFFNESS_ZOOM_SPEED", RL_CAMERA.STIFFNESS_ZOOM_SPEED === 2300);
+check("UU scale", UU === 0.01);
+check("ARENA_UU == UU", ARENA_UU === UU);
+check("ball UU_SCALE == UU", UU_SCALE === UU);
+check(
+  "goal visual half-W metres",
+  near(RL.GOAL_HALF_W * UU, 8.92755, 1e-5),
+);
+check(
+  "goal visual height metres",
+  near(RL.GOAL_HEIGHT * UU, 6.42775, 1e-5),
+);
+check("ball visual radius metres", near(RL.BALL_RADIUS * UU, 0.9125, 1e-6));
+check("octane length metres", near(HITBOX_PRESETS.octane.size[0] * UU, 1.20507, 1e-5));
 
 console.log("\n=== Live RocketSim MutatorConfig + CarConfig (optional) ===");
 const py = spawnSync(

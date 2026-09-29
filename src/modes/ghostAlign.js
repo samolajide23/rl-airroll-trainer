@@ -312,11 +312,15 @@ export class GhostAlignMode {
 
   updateCamera(dt) {
     // True car-cam — ghost sits to the side; don't pull the lens off the car.
+    const input = this._lastInput ?? readControls();
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
     this.chase.update(this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
       onGround: false,
+      boosting: Boolean(input.boost),
+      lookRight: input.lookRight ?? 0,
+      lookUp: input.lookUp ?? 0,
     });
   }
 

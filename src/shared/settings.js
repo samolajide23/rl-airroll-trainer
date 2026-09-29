@@ -1,4 +1,5 @@
-const STORAGE_KEY = "rl-airroll-trainer-settings-v6";
+const STORAGE_KEY = "rl-airroll-trainer-settings-v7";
+const LEGACY_V6 = "rl-airroll-trainer-settings-v6";
 const LEGACY_V5 = "rl-airroll-trainer-settings-v5";
 const LEGACY_V4 = "rl-airroll-trainer-settings-v4";
 const LEGACY_V3 = "rl-airroll-trainer-settings-v3";
@@ -70,8 +71,12 @@ export const DEFAULT_PAD = {
   newTarget: 3, // Y / Triangle
   pitchAxis: 1, // Left stick Y
   yawAxis: 0, // Left stick X
+  lookXAxis: 2, // Right stick X (camera swivel)
+  lookYAxis: 3, // Right stick Y (camera swivel)
   invertPitch: false,
   invertYaw: false,
+  invertLookX: false,
+  invertLookY: false,
   deadzone: 0.1,
 };
 
@@ -95,18 +100,20 @@ export const PAD_AXIS_OPTIONS = [
 ];
 
 /**
- * Rocket League–style camera (values mirror in-game sliders).
- * Distance/height are Unreal units (uu); we convert at use sites.
+ * Rocket League `ProfileCameraSettings` defaults (Psyonix).
+ * Distance/height are Unreal units (uu); convert at use sites via {@link UU}.
  */
 export const DEFAULT_CAMERA = {
   // FOV is horizontal degrees (Rocket League / in-game slider).
   fov: 110,
   distance: 270,
   height: 100,
-  angle: -3,
+  angle: -3, // BakkesMod Pitch
   stiffness: 0.5,
+  swivelSpeed: 2.5,
   transitionSpeed: 1.0,
   shake: false,
+  ballCam: false,
 };
 
 /** @type {{ key: CameraSetting, label: string, min: number, max: number, step: number }[]} */
@@ -116,10 +123,11 @@ export const CAMERA_SLIDERS = [
   { key: "height", label: "Height", min: 40, max: 200, step: 5 },
   { key: "angle", label: "Angle", min: -15, max: 0, step: 0.5 },
   { key: "stiffness", label: "Stiffness", min: 0, max: 1, step: 0.05 },
+  { key: "swivelSpeed", label: "Swivel speed", min: 1, max: 10, step: 0.1 },
   {
     key: "transitionSpeed",
     label: "Transition speed",
-    min: 0.5,
+    min: 1,
     max: 2,
     step: 0.1,
   },
@@ -173,8 +181,8 @@ function persist() {
 function mergeCamera(src) {
   for (const key of Object.keys(DEFAULT_CAMERA)) {
     const val = src[key];
-    if (key === "shake") {
-      if (typeof val === "boolean") camera.shake = val;
+    if (key === "shake" || key === "ballCam") {
+      if (typeof val === "boolean") camera[key] = val;
       continue;
     }
     if (typeof val !== "number" || !Number.isFinite(val)) continue;
@@ -194,6 +202,12 @@ function load() {
     let resetCameraFromV4 = false;
     /** v5 had wrong pad/keyboard drive binds — refresh controls to RL defaults. */
     let resetControlsFromV5 = false;
+    /** v6 lacked swivelSpeed / ballCam — fill from ProfileCameraSettings defaults. */
+    let upgradeCameraFromV6 = false;
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_V6);
+      if (raw) upgradeCameraFromV6 = true;
+    }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V5);
       if (raw) resetControlsFromV5 = true;
@@ -261,6 +275,16 @@ function load() {
       if (parsed?.camera && typeof parsed.camera === "object") {
         mergeCamera(parsed.camera);
       }
+      // v6 → v7: fill ProfileCameraSettings fields that didn't exist yet.
+      if (upgradeCameraFromV6) {
+        if (typeof camera.swivelSpeed !== "number") {
+          camera.swivelSpeed = DEFAULT_CAMERA.swivelSpeed;
+        }
+        if (typeof camera.ballCam !== "boolean") {
+          camera.ballCam = DEFAULT_CAMERA.ballCam;
+        }
+        persist();
+      }
       return;
     }
 
@@ -288,7 +312,12 @@ function load() {
 function mergePad(src) {
   for (const key of Object.keys(DEFAULT_PAD)) {
     const val = src[key];
-    if (key === "invertPitch" || key === "invertYaw") {
+    if (
+      key === "invertPitch" ||
+      key === "invertYaw" ||
+      key === "invertLookX" ||
+      key === "invertLookY"
+    ) {
       if (typeof val === "boolean") pad[key] = val;
     } else if (key === "deadzone") {
       if (typeof val === "number" && Number.isFinite(val)) {
@@ -368,13 +397,23 @@ export function getPad() {
 export function setPad(key, value) {
   if (!(key in DEFAULT_PAD)) return;
 
-  if (key === "invertPitch" || key === "invertYaw") {
+  if (
+    key === "invertPitch" ||
+    key === "invertYaw" ||
+    key === "invertLookX" ||
+    key === "invertLookY"
+  ) {
     pad[key] = Boolean(value);
   } else if (key === "deadzone") {
     const n = Number(value);
     if (!Number.isFinite(n)) return;
     pad.deadzone = Math.min(0.5, Math.max(0.05, n));
-  } else if (key === "pitchAxis" || key === "yawAxis") {
+  } else if (
+    key === "pitchAxis" ||
+    key === "yawAxis" ||
+    key === "lookXAxis" ||
+    key === "lookYAxis"
+  ) {
     const n = Number(value);
     if (!Number.isInteger(n) || n < 0 || n > 3) return;
     pad[key] = n;
@@ -419,8 +458,8 @@ export function getCamera() {
  */
 export function setCamera(key, value) {
   if (!(key in DEFAULT_CAMERA)) return;
-  if (key === "shake") {
-    camera.shake = Boolean(value);
+  if (key === "shake" || key === "ballCam") {
+    camera[key] = Boolean(value);
     persist();
     return;
   }
@@ -506,6 +545,7 @@ export function formatControlsHelp() {
     `${formatKeyCode(b.jump)}/${formatPadButton(p.jump)} jump · ` +
     `${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} air roll · ` +
     `${formatKeyCode(b.resetCar)}/${formatPadButton(p.resetCar)} reset · ` +
-    `${formatKeyCode(b.newTarget)}/${formatPadButton(p.newTarget)} new · Esc menu`
+    `${formatKeyCode(b.newTarget)}/${formatPadButton(p.newTarget)} new · ` +
+    `C/R3 ball cam · Esc menu`
   );
 }

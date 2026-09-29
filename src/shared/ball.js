@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RL } from "./rl-physics.js";
+import { UU } from "./rl-units.js";
 
 /** Render scale: 1 three-unit ≈ 100 uu (1 m). Spec §6. */
-export const UU_SCALE = 0.01;
+export const UU_SCALE = UU;
 
 const BALL_URL = "/ball/rocket-league-ball.glb";
 

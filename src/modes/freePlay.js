@@ -25,10 +25,16 @@ import { ChaseCamera } from "../shared/chaseCamera.js";
 import {
   inputSourceLabel,
   isActionDown,
+  pollBallCamToggle,
   readControls,
 } from "../shared/input.js";
 import { getSelectedCarId } from "../shared/loadout.js";
-import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
+import {
+  formatControlsHelp,
+  getCamera,
+  onBindsChange,
+  setCamera,
+} from "../shared/settings.js";
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
 const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
@@ -103,6 +109,8 @@ export class FreePlayMode {
 
     this.spaceLatch = false;
     this.rLatch = false;
+    /** @type {{ wasDown: boolean }} */
+    this.ballCamLatch = { wasDown: false };
     /** @type {null | (() => void)} */
     this._unbindHelp = null;
     /** @type {null | { bg: number, fogNear: number, fogFar: number, far: number }} */
@@ -276,18 +284,32 @@ export class FreePlayMode {
       this.resetState();
     }
     if (!rd) this.rLatch = false;
+
+    if (pollBallCamToggle(this.ballCamLatch)) {
+      const next = !getCamera().ballCam;
+      setCamera("ballCam", next);
+      this.ctx.hud.status.textContent = next ? "Ball cam on" : "Ball cam off";
+    }
   }
 
   /** @param {number} dt */
   updateCamera(dt) {
+    const input = readControls();
+    const ballCam = Boolean(getCamera().ballCam);
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
     this.chase.update(this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
       velocity: this.velThree,
+      // Only feed ball position when ball cam is on — car-cam must not bias.
+      lookAt: ballCam ? this.ballMesh.position : undefined,
       worldUp: this.worldUp,
       onGround: this.physCar.onGround,
+      boosting: this.boosting,
+      lookRight: input.lookRight,
+      lookUp: input.lookUp,
+      ballCam,
     });
   }
 

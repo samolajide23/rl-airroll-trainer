@@ -87,6 +87,8 @@ export function readAerialInput() {
  *   pitch: number,
  *   yaw: number,
  *   roll: number,
+ *   lookRight: number,
+ *   lookUp: number,
  *   boost: boolean,
  *   jump: boolean,
  *   powerslide: boolean,
@@ -102,6 +104,8 @@ export function readControls() {
   let yaw = 0;
   let throttle = 0;
   let steer = 0;
+  let lookRight = 0;
+  let lookUp = 0;
   let airLeft = keyHeld("airRollLeft");
   let airRight = keyHeld("airRollRight");
   let boost = keyHeld("boost");
@@ -172,6 +176,13 @@ export function readControls() {
       (buttonPressed(pad, cfg.airRollLeft) && !airRight);
 
     if (!boost && buttonValue(pad, cfg.boost) > 0.3) boost = true;
+
+    // Right stick = camera swivel (LookRight / LookUp → GetDesiredSwivel).
+    const lookXRaw = applyDeadzone(pad.axes[cfg.lookXAxis] ?? 0, cfg.deadzone);
+    const lookYRaw = applyDeadzone(pad.axes[cfg.lookYAxis] ?? 0, cfg.deadzone);
+    lookRight = cfg.invertLookX ? -lookXRaw : lookXRaw;
+    // Gamepad API +Y is stick toward player; RL look-up is stick away → negate.
+    lookUp = cfg.invertLookY ? lookYRaw : -lookYRaw;
   }
 
   // Spec: +roll = roll right. Free air-roll (powerslide hold) is applied in stepCar.
@@ -184,6 +195,8 @@ export function readControls() {
   roll = Math.max(-1, Math.min(1, roll));
   throttle = Math.max(-1, Math.min(1, throttle));
   steer = Math.max(-1, Math.min(1, steer));
+  lookRight = Math.max(-1, Math.min(1, lookRight));
+  lookUp = Math.max(-1, Math.min(1, lookUp));
 
   return {
     throttle,
@@ -191,6 +204,8 @@ export function readControls() {
     pitch,
     yaw,
     roll,
+    lookRight,
+    lookUp,
     boost,
     jump,
     powerslide,
@@ -199,6 +214,22 @@ export function readControls() {
     usingPad,
     usingTouch,
   };
+}
+
+/**
+ * Edge-detect ball-cam toggle: R3 (button 11) or KeyC — RL Toggle Camera.
+ * Call once per frame; returns true on press edge.
+ * @param {{ wasDown?: boolean }} latch mutable latch object
+ * @returns {boolean}
+ */
+export function pollBallCamToggle(latch) {
+  const pad = getActiveGamepad();
+  const padDown = Boolean(pad?.buttons[11]?.pressed);
+  const keyDown = keys.has("KeyC");
+  const down = padDown || keyDown;
+  const edged = down && !latch.wasDown;
+  latch.wasDown = down;
+  return edged;
 }
 
 /**

@@ -696,6 +696,7 @@ export class RingsMode {
       return;
     }
 
+    const input = readControls();
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
     this.chase.update(this.ctx.camera, dt, {
       target: this.car.position,
@@ -704,6 +705,9 @@ export class RingsMode {
       lookAt: this.tmp2,
       worldUp: this.worldUp,
       onGround: this.onPlatform,
+      boosting: Boolean(this.boosting),
+      lookRight: input.lookRight,
+      lookUp: input.lookUp,
     });
   }
 

@@ -1,11 +1,55 @@
 import * as THREE from "three";
 import { getCamera } from "./settings.js";
+import { UU } from "./rl-units.js";
 
-/** Unreal units → Three.js (1 three-unit ≈ 1 m). */
-export const UU = 0.01;
+export { UU };
 
-/** Max extra distance (uu) pulled at supersonic when stiffness = 0. */
-const STIFFNESS_ZOOM_UU = 100;
+/**
+ * Rocket League `ProfileCameraSettings` defaults (Psyonix) + engine camera constants.
+ * Source: BakkesMod `ProfileCameraSettings` / in-game camera sliders.
+ */
+export const RL_CAMERA = {
+  FOV: 110, // [V] horizontal degrees
+  DISTANCE: 270, // [V] uu
+  HEIGHT: 100, // [V] uu
+  /** In-game "Angle"; BakkesMod field `Pitch`. */
+  ANGLE: -3, // [V] degrees
+  STIFFNESS: 0.5, // [V] 0–1
+  SWIVEL_SPEED: 2.5, // [V]
+  TRANSITION_SPEED: 1.0, // [V] 1–2 in-game
+  SHAKE: false, // [V] CameraSave.CameraShake
+  /**
+   * Extra distance (uu) pulled at max speed when stiffness = 0.
+   * Community / in-game observation of the soft-cam zoom-out.
+   */
+  STIFFNESS_ZOOM_UU: 100, // [V]
+  /** Speed (uu/s) at which stiffness-zoom reaches full pullback. */
+  STIFFNESS_ZOOM_SPEED: 2300, // [V] CAR_MAX_SPEED
+  /**
+   * Swivel max yaw at slider 2.5 × full stick (rad).
+   * Calibrated so SwivelSpeed=2.5 ≈ ±90° look (matches RL feel).
+   */
+  SWIVEL_YAW_PER_SPEED: Math.PI / 5, // [V]
+  SWIVEL_PITCH_PER_SPEED: Math.PI / 8, // [V]
+  /**
+   * BakkesMod CameraWrapper swivel die — return-to-center rate (1/s)
+   * when the right stick is released.
+   */
+  SWIVEL_DIE_RATE: 6.5, // [V] observed
+  /** How fast current swivel catches DesiredSwivel while stick held. */
+  SWIVEL_CATCH_RATE: 14, // [V]
+  /**
+   * Rotational lag interp-speed range for stiffness (BakkesMod-style linterp
+   * speed). At stiffness=0 → slow arm; at 1 → nearly locked behind the car.
+   */
+  STIFF_ROT_SPEED_MIN: 1.2, // [V]
+  STIFF_ROT_SPEED_MAX: 22, // [V]
+  /** Camera shake amplitude (uu) when boosting with shake enabled. */
+  SHAKE_BOOST_UU: 4.5, // [V]
+  SHAKE_IDLE_UU: 0, // [V]
+  /** Soft floor clip — BakkesMod CameraWrapper::ClipToField analogue. */
+  CLIP_MIN_Z_UU: 20, // [V]
+};
 
 /**
  * Convert Rocket League horizontal FOV (degrees) to Three.js vertical FOV.
@@ -20,14 +64,45 @@ export function horizontalFovToVertical(horizontalDeg, aspect) {
 }
 
 /**
- * Rocket League car-cam chase.
+ * BakkesMod `CameraWrapper::linterp` — linear approach with speed.
+ * `result = start + (end - start) * min(1, elapsed * speed)`
+ * @param {THREE.Vector3} out
+ * @param {THREE.Vector3} start
+ * @param {THREE.Vector3} end
+ * @param {number} elapsed
+ * @param {number} speed
+ */
+export function linterp(out, start, end, elapsed, speed) {
+  const t = Math.min(1, Math.max(0, elapsed * speed));
+  out.copy(start).lerp(end, t);
+  return out;
+}
+
+/**
+ * Directional linterp (nlerp) for unit follow vectors.
+ * @param {THREE.Vector3} current
+ * @param {THREE.Vector3} target
+ * @param {number} elapsed
+ * @param {number} speed
+ */
+function linterpDir(current, target, elapsed, speed) {
+  const t = Math.min(1, Math.max(0, elapsed * speed));
+  current.lerp(target, t);
+  if (current.lengthSq() > 1e-12) current.normalize();
+  else current.copy(target);
+}
+
+/**
+ * Rocket League car-cam / ball-cam chase.
  *
- * Matches in-game sliders:
- * - FOV is **horizontal** (converted for Three.js)
- * - Distance / height in uu behind & above the car
- * - Angle pitches the look-at (negative = look down)
- * - Stiffness lags follow direction and reduces speed zoom-out
- * - Transition speed scales how fast position/look catch up
+ * Arm math (ProfileCameraSettings):
+ *   camLoc  = carLoc − forward·Distance + up·Height
+ *   focusZ  = Height + Distance·tan(Pitch)
+ *   focus   = carLoc + up·focusZ
+ *
+ * Stiffness lags the follow forward (rotational). TransitionSpeed is the
+ * BakkesMod linterp speed for camera body / look. SwivelSpeed scales right-stick
+ * look offset. Ball cam replaces the pitch focus with the ball.
  */
 export class ChaseCamera {
   constructor() {
@@ -35,17 +110,19 @@ export class ChaseCamera {
     this.camLook = new THREE.Vector3();
     this.smoothPos = new THREE.Vector3();
     this.smoothLook = new THREE.Vector3();
-    /** Lagged horizontal follow direction (car-forward projected on ground plane). */
+    /** Lagged horizontal follow direction (car-forward on world-up plane). */
     this.smoothDir = new THREE.Vector3(0, 0, 1);
     this.tmp = new THREE.Vector3();
     this.tmp2 = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
+    this.swivelYaw = 0;
+    this.swivelPitch = 0;
+    this.shakePhase = 0;
     this._ready = false;
   }
 
   /**
-   * Snap without easing (mode start / reset).
    * @param {THREE.PerspectiveCamera} camera
    * @param {THREE.Vector3} target
    * @param {THREE.Vector3} [forward]
@@ -53,6 +130,8 @@ export class ChaseCamera {
    */
   snap(camera, target, forward, lookAt) {
     this._ready = false;
+    this.swivelYaw = 0;
+    this.swivelPitch = 0;
     this.update(camera, 1 / 60, { target, forward, lookAt, snap: true });
   }
 
@@ -66,6 +145,10 @@ export class ChaseCamera {
    *   lookAt?: THREE.Vector3,
    *   worldUp?: THREE.Vector3,
    *   onGround?: boolean,
+   *   boosting?: boolean,
+   *   lookRight?: number,
+   *   lookUp?: number,
+   *   ballCam?: boolean,
    *   snap?: boolean,
    * }} opts
    */
@@ -84,9 +167,11 @@ export class ChaseCamera {
     const angleRad = THREE.MathUtils.degToRad(cfg.angle);
     const stiff = THREE.MathUtils.clamp(cfg.stiffness, 0, 1);
     const transition = Math.max(0.05, cfg.transitionSpeed);
+    const swivelSpeed = cfg.swivelSpeed ?? RL_CAMERA.SWIVEL_SPEED;
+    const ballCam = Boolean(opts.ballCam ?? cfg.ballCam);
+    const shakeOn = Boolean(cfg.shake);
 
-    // --- Desired follow direction: car forward, flattened to world-up plane ---
-    // RL car-cam stays upright and orbits behind the nose.
+    // --- Follow forward: car nose flattened to world-up (no velocity lean) ---
     this.forward.set(0, 0, 1);
     if (opts.forward && opts.forward.lengthSq() > 1e-8) {
       this.forward.copy(opts.forward);
@@ -95,61 +180,96 @@ export class ChaseCamera {
     if (this.tmp.lengthSq() < 1e-6 && opts.velocity && opts.velocity.lengthSq() > 1e-4) {
       this.tmp.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
     }
-    if (this.tmp.lengthSq() < 1e-6) {
-      this.tmp.copy(this.smoothDir);
-    }
+    if (this.tmp.lengthSq() < 1e-6) this.tmp.copy(this.smoothDir);
     this.tmp.normalize();
 
-    // Light velocity lean (RL softens with motion); keep car forward dominant.
-    if (opts.velocity && opts.velocity.lengthSq() > 1e-4) {
-      this.tmp2.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
-      if (this.tmp2.lengthSq() > 1e-6) {
-        this.tmp2.normalize();
-        const lean = opts.onGround === false ? 0.12 : 0.2;
-        this.tmp.multiplyScalar(1 - lean).addScaledVector(this.tmp2, lean).normalize();
+    // Stiffness → rotational linterp speed (higher = snappier arm).
+    const rotSpeed =
+      (RL_CAMERA.STIFF_ROT_SPEED_MIN +
+        stiff * (RL_CAMERA.STIFF_ROT_SPEED_MAX - RL_CAMERA.STIFF_ROT_SPEED_MIN)) *
+      transition;
+    if (opts.snap || !this._ready) this.smoothDir.copy(this.tmp);
+    else linterpDir(this.smoothDir, this.tmp, dt, rotSpeed);
+
+    // --- Swivel (right stick) — CameraWrapper::GetDesiredSwivel / UpdateSwivel ---
+    const lookRight = THREE.MathUtils.clamp(opts.lookRight ?? 0, -1, 1);
+    const lookUp = THREE.MathUtils.clamp(opts.lookUp ?? 0, -1, 1);
+    const desireYaw = lookRight * swivelSpeed * RL_CAMERA.SWIVEL_YAW_PER_SPEED;
+    const desirePitch = lookUp * swivelSpeed * RL_CAMERA.SWIVEL_PITCH_PER_SPEED;
+    const stickHeld = Math.abs(lookRight) + Math.abs(lookUp) > 0.02;
+    if (opts.snap) {
+      this.swivelYaw = 0;
+      this.swivelPitch = 0;
+    } else if (stickHeld) {
+      const catchT = Math.min(1, dt * RL_CAMERA.SWIVEL_CATCH_RATE);
+      this.swivelYaw += (desireYaw - this.swivelYaw) * catchT;
+      this.swivelPitch += (desirePitch - this.swivelPitch) * catchT;
+    } else {
+      const die = Math.min(1, dt * RL_CAMERA.SWIVEL_DIE_RATE);
+      this.swivelYaw *= 1 - die;
+      this.swivelPitch *= 1 - die;
+      if (Math.abs(this.swivelYaw) < 1e-4) this.swivelYaw = 0;
+      if (Math.abs(this.swivelPitch) < 1e-4) this.swivelPitch = 0;
+    }
+
+    // Apply swivel yaw around world-up to the follow direction.
+    this.tmp2.copy(this.smoothDir).applyAxisAngle(up, -this.swivelYaw);
+
+    // Stiffness zoom-out toward max speed.
+    const speedUu = opts.velocity ? opts.velocity.length() / UU : 0;
+    const superFrac = THREE.MathUtils.clamp(
+      speedUu / RL_CAMERA.STIFFNESS_ZOOM_SPEED,
+      0,
+      1,
+    );
+    const dist =
+      dist0 + (1 - stiff) * superFrac * RL_CAMERA.STIFFNESS_ZOOM_UU * UU;
+
+    // Arm: behind car along (swivelled) forward, up by height.
+    this.camPos
+      .copy(opts.target)
+      .addScaledVector(this.tmp2, -dist)
+      .addScaledVector(up, height);
+
+    // Swivel pitch: raise/lower camera slightly.
+    this.camPos.addScaledVector(up, Math.sin(this.swivelPitch) * dist * 0.35);
+
+    // ClipToField — keep camera above the floor.
+    const minY = RL_CAMERA.CLIP_MIN_Z_UU * UU;
+    if (this.camPos.y < minY) this.camPos.y = minY;
+
+    // Focus: angle pitch, or ball cam look-at.
+    if (ballCam && opts.lookAt) {
+      this.camLook.copy(opts.lookAt);
+    } else {
+      const lookLift = height + dist * Math.tan(angleRad + this.swivelPitch * 0.25);
+      this.camLook.copy(opts.target).addScaledVector(up, lookLift);
+      // Optional soft bias (ghost drills) — never overrides ball cam.
+      if (opts.lookAt) this.camLook.lerp(opts.lookAt, 0.08);
+    }
+
+    // Camera shake (CameraSave.CameraShake).
+    if (shakeOn && !opts.snap) {
+      this.shakePhase += dt * 38;
+      const ampUu = opts.boosting
+        ? RL_CAMERA.SHAKE_BOOST_UU
+        : RL_CAMERA.SHAKE_IDLE_UU;
+      if (ampUu > 0) {
+        const a = ampUu * UU;
+        this.camPos.x += Math.sin(this.shakePhase * 1.7) * a;
+        this.camPos.y += Math.cos(this.shakePhase * 2.3) * a * 0.6;
+        this.camPos.z += Math.sin(this.shakePhase * 1.1) * a;
       }
     }
 
-    // Stiffness: how quickly the camera arm tracks car yaw (higher = snappier).
-    const dirRate = (1.5 + stiff * 18) * transition;
-    if (opts.snap || !this._ready) {
-      this.smoothDir.copy(this.tmp);
-    } else {
-      this.smoothDir.lerp(this.tmp, 1 - Math.exp(-dirRate * dt)).normalize();
-    }
-
-    // Low stiffness zooms out toward supersonic (up to +100 uu).
-    const speedUu = opts.velocity ? opts.velocity.length() / UU : 0;
-    const superFrac = THREE.MathUtils.clamp(speedUu / 2300, 0, 1);
-    const dist = dist0 + (1 - stiff) * superFrac * STIFFNESS_ZOOM_UU * UU;
-
-    // Arm: behind car along lagged forward, up by height (world-up).
-    this.camPos
-      .copy(opts.target)
-      .addScaledVector(this.smoothDir, -dist)
-      .addScaledVector(up, height);
-
-    // Angle: pitch look so the view matches the in-game angle slider.
-    // lookLift = height + dist * tan(angle); angle < 0 → look below camera height.
-    const lookLift = height + dist * Math.tan(angleRad);
-    this.camLook.copy(opts.target).addScaledVector(up, lookLift);
-
-    // Optional focus bias (ball / ghost) — keep subtle so car-cam stays primary.
-    if (opts.lookAt) {
-      this.camLook.lerp(opts.lookAt, 0.12);
-    }
-
-    // Transition speed: how fast the camera body catches the arm.
-    const posRate = (2.5 + stiff * 10) * transition;
-    const lookRate = (3.5 + stiff * 8) * transition;
-
+    // TransitionSpeed → BakkesMod linterp speed for body + look.
     if (opts.snap || !this._ready) {
       this.smoothPos.copy(this.camPos);
       this.smoothLook.copy(this.camLook);
       this._ready = true;
     } else {
-      this.smoothPos.lerp(this.camPos, 1 - Math.exp(-posRate * dt));
-      this.smoothLook.lerp(this.camLook, 1 - Math.exp(-lookRate * dt));
+      linterp(this.smoothPos, this.smoothPos, this.camPos, dt, transition);
+      linterp(this.smoothLook, this.smoothLook, this.camLook, dt, transition * 1.15);
     }
 
     camera.position.copy(this.smoothPos);
@@ -157,8 +277,9 @@ export class ChaseCamera {
     camera.lookAt(this.smoothLook);
   }
 
-  /** Call when leaving a mode so the next start snaps cleanly. */
   invalidate() {
     this._ready = false;
+    this.swivelYaw = 0;
+    this.swivelPitch = 0;
   }
 }

@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { RL } from "./rl-physics.js";
-import { ARENA_UU } from "./soccarArena.js";
+import { UU } from "./rl-units.js";
+
+/** Thin disc height for pad meshes (uu) — pickup uses {@link BOOST_PAD.CYL_HEIGHT}. */
+const PAD_VIS_H_UU = 12;
 
 /**
  * Soccar boost pad layout from RocketSim RLConst::BoostPads (uu, Z-up).
@@ -137,14 +140,15 @@ export function createBoostPadMeshes(parent, pads) {
   bigMat.emissiveIntensity = 0.65;
 
   for (const pad of pads) {
-    const r = pad.radius * ARENA_UU;
+    const r = pad.radius * UU;
+    const h = PAD_VIS_H_UU * UU;
     const mat = (pad.big ? bigMat : smallMat).clone();
     const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(r, r, 0.12, pad.big ? 28 : 20),
+      new THREE.CylinderGeometry(r, r, h, pad.big ? 28 : 20),
       mat,
     );
     // Same mapping as physToThree: physics (x, y, z) → Three (x, z, y)
-    mesh.position.set(pad.x * ARENA_UU, 0.06, pad.y * ARENA_UU);
+    mesh.position.set(pad.x * UU, h * 0.5, pad.y * UU);
     mesh.userData.pad = pad;
     pad.mesh = mesh;
     group.add(mesh);

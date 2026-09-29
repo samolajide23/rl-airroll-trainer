@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { arenaDistance, arenaNormal } from "./arenaMesh.js";
 import { getHitboxPreset, HITBOX_PRESETS } from "./hitboxPresets.js";
+import { UU } from "./rl-units.js";
 
 /* =====================================================================
  *  Rocket League constants, hitbox / ball helpers and render mapping
@@ -199,10 +200,10 @@ export function hitboxExtentOnAxis(hb, axis) {
  * `rootPos` is the RL root joint in metres (same units as `scale` uu→m).
  * @param {THREE.Vector3} rootPos
  * @param {THREE.Quaternion} quaternion
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  * @param {import("./hitboxPresets.js").HitboxPreset} [preset]
  */
-export function carHitboxYUp(rootPos, quaternion, scale = 0.01, preset) {
+export function carHitboxYUp(rootPos, quaternion, scale = UU, preset) {
   const hb = preset ?? getHitboxPreset("octane");
   const f = V(0, 0, 1).applyQuaternion(quaternion);
   const r = V(1, 0, 0).applyQuaternion(quaternion);
@@ -226,10 +227,10 @@ export function carHitboxYUp(rootPos, quaternion, scale = 0.01, preset) {
  * Procedural/GLB cars sit on the wheels; the RL root joint is restZ along car-up.
  * @param {THREE.Vector3} wheelPos
  * @param {THREE.Quaternion} quaternion
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  * @param {import("./hitboxPresets.js").HitboxPreset} [preset]
  */
-export function rootFromWheelsYUp(wheelPos, quaternion, scale = 0.01, preset) {
+export function rootFromWheelsYUp(wheelPos, quaternion, scale = UU, preset) {
   const hb = preset ?? getHitboxPreset("octane");
   const u = V(0, 1, 0).applyQuaternion(quaternion);
   return wheelPos.clone().addScaledVector(u, hb.restZ * scale);
@@ -238,10 +239,10 @@ export function rootFromWheelsYUp(wheelPos, quaternion, scale = 0.01, preset) {
 /**
  * @param {THREE.Vector3} wheelPos
  * @param {THREE.Quaternion} quaternion
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  * @param {import("./hitboxPresets.js").HitboxPreset} [preset]
  */
-export function carHitboxYUpFromWheels(wheelPos, quaternion, scale = 0.01, preset) {
+export function carHitboxYUpFromWheels(wheelPos, quaternion, scale = UU, preset) {
   return carHitboxYUp(
     rootFromWheelsYUp(wheelPos, quaternion, scale, preset),
     quaternion,
@@ -259,7 +260,7 @@ export function carHitboxYUpFromWheels(wheelPos, quaternion, scale = 0.01, prese
  * @param {THREE.Vector3} [omega]
  * @param {number} planeY
  * @param {number} [restitution=0.35]
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  * @param {import("./hitboxPresets.js").HitboxPreset} [preset]
  * @returns {{ penetrated: boolean, wheelsDown: boolean }}
  */
@@ -269,7 +270,7 @@ export function resolveHitboxPlaneY(
   omega,
   planeY,
   restitution = RL.ARENA_RESTITUTION,
-  scale = 0.01,
+  scale = UU,
   preset,
 ) {
   const hit =
@@ -322,9 +323,9 @@ export function createHitboxHelper() {
 /**
  * @param {THREE.Object3D} helper
  * @param {import("./carSim.js").SimCar} car
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  */
-export function syncHitboxHelper(helper, car, scale = 0.01) {
+export function syncHitboxHelper(helper, car, scale = UU) {
   const hb = carHitbox(car);
   const front = physToThree(hb.f).normalize();
   const up = physToThree(hb.u).normalize();
@@ -341,10 +342,10 @@ export function syncHitboxHelper(helper, car, scale = 0.01) {
  * Sync wireframe to a Three.js Y-up car whose `position` is the wheel origin.
  * @param {THREE.Object3D} helper
  * @param {THREE.Object3D} object
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  * @param {import("./hitboxPresets.js").HitboxPreset} [preset]
  */
-export function syncHitboxHelperYUp(helper, object, scale = 0.01, preset) {
+export function syncHitboxHelperYUp(helper, object, scale = UU, preset) {
   const hit =
     preset ??
     object.userData?.hitboxPreset ??
@@ -513,9 +514,9 @@ export function physToThree(v, out = V()) {
  *
  * @param {import("./carSim.js").SimCar} car
  * @param {THREE.Object3D} group
- * @param {number} [scale=0.01]
+ * @param {number} [scale=UU]
  */
-export function applyToCarModel(car, group, scale = 0.01) {
+export function applyToCarModel(car, group, scale = UU) {
   const { f, u } = axes(car.q);
   const front = physToThree(f).normalize();
   const up = physToThree(u).normalize();
@@ -543,9 +544,9 @@ export function applyToCarModel(car, group, scale = 0.01) {
  *
  * @param {THREE.Object3D} carMesh `makeCar()` group
  * @param {import("./hitboxPresets.js").HitboxPreset} preset
- * @param {number} [uu=0.01]
+ * @param {number} [uu=UU]
  */
-export function alignCarVisualToHitbox(carMesh, preset, uu = 0.01) {
+export function alignCarVisualToHitbox(carMesh, preset, uu = UU) {
   const refLen = carMesh.userData.refLength ?? 3.2;
   const visualScale = (preset.size[0] * uu) / Math.max(refLen, 1e-6);
   carMesh.scale.setScalar(visualScale);

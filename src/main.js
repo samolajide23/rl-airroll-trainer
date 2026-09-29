@@ -552,6 +552,12 @@ function buildCameraList() {
     }),
   );
 
+  cameraListEl.append(
+    makeToggleRow("Ball cam", cam.ballCam, (checked) => {
+      setCamera("ballCam", checked);
+    }),
+  );
+
   for (const slider of CAMERA_SLIDERS) {
     const row = document.createElement("div");
     row.className = "bind-row";
@@ -683,6 +689,20 @@ function buildPadOptionsList() {
   );
 
   padBindListEl.append(
+    makeSelectRow("Look X axis", cfg.lookXAxis, PAD_AXIS_OPTIONS, (v) => {
+      setPad("lookXAxis", v);
+      buildPadOptionsList();
+    }),
+  );
+
+  padBindListEl.append(
+    makeSelectRow("Look Y axis", cfg.lookYAxis, PAD_AXIS_OPTIONS, (v) => {
+      setPad("lookYAxis", v);
+      buildPadOptionsList();
+    }),
+  );
+
+  padBindListEl.append(
     makeToggleRow("Invert pitch", cfg.invertPitch, (checked) => {
       setPad("invertPitch", checked);
     }),
@@ -691,6 +711,18 @@ function buildPadOptionsList() {
   padBindListEl.append(
     makeToggleRow("Invert yaw", cfg.invertYaw, (checked) => {
       setPad("invertYaw", checked);
+    }),
+  );
+
+  padBindListEl.append(
+    makeToggleRow("Invert look X", cfg.invertLookX, (checked) => {
+      setPad("invertLookX", checked);
+    }),
+  );
+
+  padBindListEl.append(
+    makeToggleRow("Invert look Y", cfg.invertLookY, (checked) => {
+      setPad("invertLookY", checked);
     }),
   );
 

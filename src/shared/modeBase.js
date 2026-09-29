@@ -43,6 +43,8 @@ export class AerialDrillBase {
       pitch: 0,
       yaw: 0,
       roll: 0,
+      lookRight: 0,
+      lookUp: 0,
       boost: false,
       jump: false,
       airLeft: false,
@@ -133,11 +135,15 @@ export class AerialDrillBase {
    */
   updateCamera(dt, lookAt) {
     this.carAxes();
+    const input = this._lastInput;
     this.chase.update(this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
       lookAt,
       onGround: false,
+      boosting: Boolean(input?.boost),
+      lookRight: input?.lookRight ?? 0,
+      lookUp: input?.lookUp ?? 0,
     });
   }
 
