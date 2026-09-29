@@ -100,7 +100,8 @@ export const RL = {
   GOAL_HALF_W: 892.755, // [V] Arena.cpp APPROX_GOAL_HALF_WIDTH
   GOAL_HEIGHT: 642.775, // [V] Arena.cpp APPROX_GOAL_HEIGHT
   GOAL_SCORE_Y: 5124.25, // [V] SOCCAR_GOAL_SCORE_BASE_THRESHOLD_Y
-  GOAL_DEPTH: 880, // [A] soft back of net (not in RLConst)
+  // Soft backstop behind goal mouth — soccar mesh |Y| max ≈ 6000, so depth 880.
+  GOAL_DEPTH: 880, // [V] mesh AABB (HALF_L + depth ≈ 6000)
   ARENA_FRICTION: 0.3, // [V] CARWORLD_COLLISION_FRICTION
   ARENA_RESTITUTION: 0.3, // [V] CARWORLD_COLLISION_RESTITUTION
   /**
@@ -359,6 +360,11 @@ export function syncHitboxHelperYUp(helper, object, scale = 0.01, preset) {
 
 /* ------------------------------ ball step ------------------------------ */
 
+/** Bullet `btSphereShape::calculateLocalInertia` → (2/5) m r². */
+function ballInvInertia(radius = RL.BALL_RADIUS) {
+  return 1 / (0.4 * RL.BALL_MASS * radius * radius);
+}
+
 export function stepBall(ball, dt = RL.DT) {
   const R = RL.BALL_RADIUS;
   ball.vel.z -= RL.GRAVITY * dt;
@@ -366,8 +372,8 @@ export function stepBall(ball, dt = RL.DT) {
   if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
   ball.pos.addScaledVector(ball.vel, dt);
   const e = RL.BALL_RESTITUTION;
-  // Arena planes + soccar meshes. Tangential friction uses BALL_FRICTION
-  // (Bullet-style Coulomb clamp); spin↔surface coupling still omitted.
+  // Arena planes + soccar meshes. Coulomb friction with spin coupling
+  // (Bullet sphere vs static: denom_t = 1/m + R²/I).
   const n = V();
   const clearance = arenaDistance(ball.pos.x, ball.pos.y, ball.pos.z, n);
   const pen = R - clearance;
@@ -375,14 +381,25 @@ export function stepBall(ball, dt = RL.DT) {
     ball.pos.addScaledVector(n, pen);
     const vn = ball.vel.dot(n);
     if (vn < 0) {
-      const jt = ball.vel.clone().addScaledVector(n, -vn); // tangential vel
-      ball.vel.addScaledVector(n, -(1 + e) * vn);
-      const jtLen = jt.length();
-      if (jtLen > 1e-6) {
-        // Coulomb: |Δv_t| ≤ μ * |Δv_n| with Δv_n = (1+e)|vn|
-        const maxSlip = RL.BALL_FRICTION * (1 + e) * Math.abs(vn);
-        const kill = Math.min(jtLen, maxSlip);
-        ball.vel.addScaledVector(jt, -kill / jtLen);
+      // Normal restitution (sphere: no angular contribution on n).
+      const dvn = -(1 + e) * vn;
+      ball.vel.addScaledVector(n, dvn);
+      // Contact-point velocity including spin: v + ω × (−R n).
+      const r = n.clone().multiplyScalar(-R);
+      const vContact = ball.vel.clone().add(ball.omega.clone().cross(r));
+      const vt = vContact.clone().addScaledVector(n, -vContact.dot(n));
+      const vtLen = vt.length();
+      if (vtLen > 1e-6) {
+        const invM = 1 / RL.BALL_MASS;
+        const invI = ballInvInertia(R);
+        const denomT = invM + R * R * invI;
+        // Coulomb: |Jf| ≤ μ |Jn| with Jn = m · dvn
+        const maxJf = RL.BALL_FRICTION * RL.BALL_MASS * Math.abs(dvn);
+        const jfMag = Math.min(vtLen / denomT, maxJf);
+        const jf = vt.clone().multiplyScalar(-jfMag / vtLen);
+        ball.vel.addScaledVector(jf, invM);
+        // τ = r × Jf → Δω = (r × Jf) / I
+        ball.omega.add(r.clone().cross(jf).multiplyScalar(invI));
       }
       if (Math.abs(ball.vel.dot(n)) < 25 && n.z > 0.9) {
         ball.vel.z = 0;
@@ -417,25 +434,37 @@ export function collideCarBall(car, ball, tick) {
   ball.pos.addScaledVector(n, RL.BALL_RADIUS - dist); // resolve penetration
 
   const dv0 = ball.vel.clone().sub(car.vel); // pre-impulse relative velocity
-  const pointVel = car.vel.clone().add(car.omega.clone().cross(nearW.clone().sub(car.pos)));
-  const vn = ball.vel.clone().sub(pointVel).dot(n);
+  const carPoint = nearW.clone().sub(car.pos);
+  const carPointVel = car.vel.clone().add(car.omega.clone().cross(carPoint));
+  // Ball contact point relative to ball centre ≈ −R n
+  const ballR = n.clone().multiplyScalar(-RL.BALL_RADIUS);
+  const ballPointVel = ball.vel.clone().add(ball.omega.clone().cross(ballR));
+  const vn = ballPointVel.clone().sub(carPointVel).dot(n);
   if (vn < 0) {
     // RocketSim CARBALL_RESTITUTION = 0 → kill relative normal speed.
-    // Bullet also applies CARBALL_FRICTION=2 on the manifold; we approximate
-    // with a Coulomb clamp on the ball's tangential relative velocity.
+    // Friction uses Bullet-style Coulomb with ball spin (sphere inertia 2/5 mr²).
+    // Car angular response on the manifold is omitted (RocketSim's Psyonix
+    // extra impulse is also ball-only; car hitbox inertia coupling here is
+    // a much smaller residual than the ball spin term).
     const invSum = 1 / RL.BALL_MASS + 1 / RL.CAR_MASS;
-    const J = -(1 + RL.CARBALL_RESTITUTION) * vn / invSum;
+    const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / invSum;
     ball.vel.addScaledVector(n, J / RL.BALL_MASS);
     car.vel.addScaledVector(n, -J / RL.CAR_MASS);
-    const relAfter = ball.vel.clone().sub(pointVel);
-    const vt = relAfter.clone().addScaledVector(n, -relAfter.dot(n));
+    const ballPointAfter = ball.vel.clone().add(ball.omega.clone().cross(ballR));
+    const relAfter = ballPointAfter.sub(carPointVel);
+    const vt = relAfter.addScaledVector(n, -relAfter.dot(n));
     const vtLen = vt.length();
     if (vtLen > 1e-6) {
-      const maxSlip = RL.CARBALL_FRICTION * Math.abs(J) * invSum;
-      const kill = Math.min(vtLen, maxSlip);
-      // Apply friction impulse to ball only (car response omitted — matches
-      // RocketSim's post-step extra impulse being ball-only asymmetric).
-      ball.vel.addScaledVector(vt, -kill / vtLen);
+      const invMBall = 1 / RL.BALL_MASS;
+      const invIBall = ballInvInertia();
+      const R = RL.BALL_RADIUS;
+      const denomT = invMBall + 1 / RL.CAR_MASS + R * R * invIBall;
+      const maxJf = RL.CARBALL_FRICTION * Math.abs(J);
+      const jfMag = Math.min(vtLen / denomT, maxJf);
+      const jf = vt.multiplyScalar(-jfMag / vtLen);
+      ball.vel.addScaledVector(jf, invMBall);
+      car.vel.addScaledVector(jf, -1 / RL.CAR_MASS);
+      ball.omega.add(ballR.clone().cross(jf).multiplyScalar(invIBall));
     }
   }
   // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).

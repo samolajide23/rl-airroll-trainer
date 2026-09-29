@@ -15,7 +15,7 @@ export const ARENA_SHAPE = {
   EDGE_RADIUS: 256, // [A] floor/wall/ceiling transition radius
   GOAL_HALF_W: RL.GOAL_HALF_W, // [V]
   GOAL_HEIGHT: RL.GOAL_HEIGHT, // [V]
-  GOAL_DEPTH: RL.GOAL_DEPTH, // [A]
+  GOAL_DEPTH: RL.GOAL_DEPTH, // [V] mesh AABB
   GOAL_EDGE_RADIUS: 16, // [A]
   /** Goal box starts this far in front of the back wall so it cuts the ramp at the mouth. */
   GOAL_LIP: 300,

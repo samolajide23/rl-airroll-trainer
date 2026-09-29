@@ -123,6 +123,13 @@ export const RS = {
   CONTACT_BREAKING_THRESHOLD: 0.02 * BT_TO_UU,
   CARWORLD_FRICTION: 0.3,
   CARWORLD_RESTITUTION: 0.3,
+  /**
+   * When several OBB corners share the deepest penetration on one normal
+   * (edge flush with a plane), the effective Bullet/RocketSim contact sits
+   * between the edge midpoint and the +local-Y vertex. Tuned on
+   * `ground_flip_forward` against RocketSim (0 = midpoint, 1 = corner).
+   */
+  CONTACT_EDGE_CORNER_BLEND: 0.85,
 };
 
 /* --------------------------- state factories --------------------------- */
@@ -911,27 +918,45 @@ function solveArenaContacts(car, fr, dt) {
   if (contacts.length === 0) return { push, turn };
 
   // Merge near-duplicate normals so 8 OBB corners against one plane do not
-  // each apply a full bounce (Bullet uses a manifold of distinct points).
-  // Keep the deepest sample per normal group — matches RocketSim bounce
-  // energy on floor-slams better than averaging (see ground_flip_forward).
-  const merged = [];
+  // each apply a full bounce. Keep the deepest sample per normal group.
+  // On a depth tie (edge flush with a plane), Bullet's manifold is not exactly
+  // at a corner or the edge midpoint — the effective single contact that
+  // matches RocketSim sits ~75% toward the +local-Y vertex (car right).
+  // Picking the opposite corner flips ω.x/ω.z and wrecks ground_flip_forward.
+  const DEPTH_TIE = 1e-5;
+  /** @type {{ n: THREE.Vector3, dist: number, tied: { rel: THREE.Vector3, dist: number, n: THREE.Vector3 }[] }[]} */
+  const groups = [];
   for (const c of contacts) {
-    let group = merged.find((g) => g.n.dot(c.n) > 0.95);
+    let group = groups.find((g) => g.n.dot(c.n) > 0.95);
     if (!group) {
-      group = {
-        n: c.n.clone(),
-        dist: c.dist,
-        rel: c.rel.clone(),
-      };
-      merged.push(group);
-    } else if (c.dist < group.dist) {
+      group = { n: c.n.clone(), dist: c.dist, tied: [{ rel: c.rel.clone(), dist: c.dist, n: c.n.clone() }] };
+      groups.push(group);
+    } else if (c.dist < group.dist - DEPTH_TIE) {
       group.dist = c.dist;
-      group.rel.copy(c.rel);
       group.n.copy(c.n);
+      group.tied = [{ rel: c.rel.clone(), dist: c.dist, n: c.n.clone() }];
+    } else if (Math.abs(c.dist - group.dist) <= DEPTH_TIE) {
+      group.tied.push({ rel: c.rel.clone(), dist: c.dist, n: c.n.clone() });
+      if (c.dist < group.dist) {
+        group.dist = c.dist;
+        group.n.copy(c.n);
+      }
     }
   }
   contacts.length = 0;
-  for (const g of merged) contacts.push({ rel: g.rel, dist: g.dist, n: g.n });
+  for (const g of groups) {
+    const mid = V();
+    for (const t of g.tied) mid.add(t.rel);
+    mid.multiplyScalar(1 / g.tied.length);
+    let preferred = g.tied[0];
+    for (const t of g.tied) if (t.rel.y > preferred.rel.y) preferred = t;
+    // Single deepest sample, or edge blend when several corners share the depth.
+    const rel =
+      g.tied.length === 1
+        ? preferred.rel.clone()
+        : mid.lerp(preferred.rel, RS.CONTACT_EDGE_CORNER_BLEND);
+    contacts.push({ rel, dist: g.dist, n: g.n.clone() });
+  }
 
   let deepest = contacts[0];
   for (const c of contacts) if (c.dist < deepest.dist) deepest = c;
