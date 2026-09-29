@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Replay physics-compare scenarios through src/shared/rl-physics.js.
+ * Replay physics-compare scenarios through src/shared/carSim.js (via carPhysics.js).
  * Writes trajectories in the same schema as generate_rocketsim.py.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as THREE from "three";
-import { RL, axes, makeCar, stepCar } from "../../src/shared/rl-physics.js";
+import { RL, axes, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCENARIOS = path.join(HERE, "scenarios.json");
@@ -49,7 +49,7 @@ function vecList(v) {
 
 /** Match RocketSim Angle / RotMat: yaw, pitch, roll about Z, Y-after-yaw? Angle.as_rot_mat. */
 function setOrientation(car, yaw, pitch, roll) {
-  // RocketSim Angle YPR → RotMat (f, right, up). rl-physics `axes().l` is local +Y
+  // RocketSim Angle YPR → RotMat (f, right, up). `axes().l` is local +Y
   // = car right, so pass right as the Y column (not -right; that would be improper).
   const cy = Math.cos(yaw);
   const sy = Math.sin(yaw);
@@ -74,33 +74,12 @@ function setOrientation(car, yaw, pitch, roll) {
 }
 
 function initCar(initial) {
-  const car = makeCar(
-    new THREE.Vector3(...initial.pos),
-    0,
-  );
-  car.pos.set(...initial.pos);
+  const car = makePhysCar(new THREE.Vector3(...initial.pos), 0);
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   car.boost = initial.boost ?? RL.BOOST_MAX;
-  car.infiniteBoost = false;
   car.onGround = initial.on_ground ?? false;
-  car.wheelsContact = initial.on_ground ?? false;
-  car.prevJump = false;
-  car.jumping = false;
-  car.jumpTime = 0;
-  car.hasJumped = false;
-  car.hasDoubleJumped = false;
-  car.hasFlipped = false;
-  car.isFlipping = false;
-  car.flipTime = 0;
-  car.flipRelTorque.set(0, 0, 0);
-  car.hasFlip = true;
-  car.airTime = 0;
-  car.airTimeSinceJump = 0;
-  car.stickyTicks = 0;
-  car.crashed = false;
-  car.isBoosting = false;
-  car.boostingTime = 0;
+  car.wheelsContact = car.onGround;
   setOrientation(
     car,
     initial.yaw ?? 0,
@@ -200,7 +179,7 @@ function runScenario(scenario, defaults) {
   return {
     id: scenario.id,
     description: scenario.description ?? "",
-    engine: "rl-physics.js",
+    engine: "carSim.js",
     tick_rate: 1 / RL.DT,
     tick_time: RL.DT,
     ticks,
@@ -259,6 +238,6 @@ for (const scenario of scenarios) {
 
 await writeFile(
   path.join(args.out, "index.json"),
-  `${JSON.stringify({ engine: "rl-physics.js", scenarios: index }, null, 2)}\n`,
+  `${JSON.stringify({ engine: "carSim.js", scenarios: index }, null, 2)}\n`,
 );
 console.log(`done — ${index.length} scenarios → ${args.out}`);

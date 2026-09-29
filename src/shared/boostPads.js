@@ -139,8 +139,8 @@ export function createBoostPadMeshes(parent, pads) {
       new THREE.CylinderGeometry(r, r, 0.12, pad.big ? 28 : 20),
       mat,
     );
-    // Physics (x,y,z) Z-up → Three (x, z, -y)
-    mesh.position.set(pad.x * ARENA_UU, 0.06, -pad.y * ARENA_UU);
+    // Same mapping as physToThree: physics (x, y, z) → Three (x, z, y)
+    mesh.position.set(pad.x * ARENA_UU, 0.06, pad.y * ARENA_UU);
     mesh.userData.pad = pad;
     pad.mesh = mesh;
     group.add(mesh);

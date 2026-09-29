@@ -14,6 +14,7 @@ import {
   getHitboxForCarId,
   makeBall,
   makePhysCar,
+  physToThree,
   resetBoostPads,
   stepBall,
   stepBoostPads,
@@ -31,6 +32,17 @@ import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
 const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
+
+/**
+ * RL's free air-roll bind: holding powerslide while airborne turns the yaw
+ * axis into roll (unless a directional air-roll button is already held).
+ * @param {ReturnType<typeof readControls>} input
+ * @param {{ onGround: boolean }} car
+ */
+function withFreeAirRoll(input, car) {
+  if (car.onGround || !input.powerslide || input.roll !== 0) return input;
+  return { ...input, roll: input.yaw, yaw: 0 };
+}
 
 /**
  * Free drive around a soccar arena — ground + aerials + ball.
@@ -196,11 +208,7 @@ export class FreePlayMode {
   syncMeshes() {
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
     alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
-    this.ballMesh.position.set(
-      this.physBall.pos.x * ARENA_UU,
-      this.physBall.pos.z * ARENA_UU,
-      -this.physBall.pos.y * ARENA_UU,
-    );
+    physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
     syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
   }
 
@@ -232,7 +240,7 @@ export class FreePlayMode {
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = readControls();
-    stepCar(this.physCar, input, dt);
+    stepCar(this.physCar, withFreeAirRoll(input, this.physCar), dt);
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);
     stepBall(this.physBall, dt);
@@ -269,11 +277,7 @@ export class FreePlayMode {
   /** @param {number} dt */
   updateCamera(dt) {
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
-    this.velThree.set(
-      this.physCar.vel.x * ARENA_UU,
-      this.physCar.vel.z * ARENA_UU,
-      -this.physCar.vel.y * ARENA_UU,
-    );
+    physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
     this.chase.update(this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
