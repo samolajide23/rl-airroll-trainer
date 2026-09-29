@@ -335,7 +335,10 @@ export function advance(w, getControls, elapsed, acc = { t: 0 }) {
 /** Physics (Z-up) -> Three.js (Y-up). Car model: X=left, Y=up, Z=front. 1 three-unit = `scale` uu. */
 export function applyToCarModel(car, group, scale = 0.01) {
   const P = (v) => V(v.x, v.z, -v.y);
-  const { f, l, u } = axes(car.q);
+  const { f, l, u } = axes(car.q); // l = car right
+  const left = l.clone().multiplyScalar(-1);
   group.position.copy(P(car.pos)).multiplyScalar(scale);
-  group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(P(l), P(u), P(f)));
+  group.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(P(left), P(u), P(f)),
+  );
 }

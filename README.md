@@ -13,6 +13,11 @@ Open the Vite URL (usually `http://localhost:5173`).
 
 ## Curriculum
 
+### Free Play
+| Mode | What it trains |
+|---|---|
+| **Arena** | Drive a soccar field — ground, jump, boost, air roll, ball |
+
 ### Phase 1 — Orientation (no ball)
 | Drill | What it trains |
 |---|---|

@@ -1,5 +1,6 @@
 import { BallContactMode } from "./ballContact.js";
 import { DribbleBridgeMode } from "./dribbleBridge.js";
+import { FreePlayMode } from "./freePlay.js";
 import { GhostAlignMode, GHOST_ALIGN_DIFFICULTIES } from "./ghostAlign.js";
 import { RingsMode } from "./ringsMode.js";
 import { SequenceMode } from "./sequenceMode.js";
@@ -26,6 +27,21 @@ import { SequenceMode } from "./sequenceMode.js";
 
 /** @type {PhaseDef[]} */
 export const PHASES = [
+  {
+    id: "free-play",
+    title: "Free Play",
+    blurb: "Drive a full soccar arena — ground, aerials, and the ball.",
+    modes: [
+      {
+        id: "arena",
+        title: "Arena",
+        description:
+          "Free roam with RL-style driving. Jump, boost, air roll, and hit the ball. Reset car / skip ball.",
+        available: true,
+        create: (ctx) => new FreePlayMode(ctx),
+      },
+    ],
+  },
   {
     id: "air-roll",
     title: "Air Roll",

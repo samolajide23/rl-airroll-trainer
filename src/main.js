@@ -352,7 +352,7 @@ function onModeCardClick(def) {
 function buildPlayCategories() {
   playKickerEl.textContent = "Play";
   playTitleEl.textContent = "Select a mode";
-  playSubEl.textContent = "Pick a training path. Air Roll first.";
+  playSubEl.textContent = "Free Play, Air Roll, ball contact, or air dribble.";
   phaseBlurbEl.textContent = "";
   modeListEl.replaceChildren();
 
@@ -378,7 +378,19 @@ function buildPlayCategories() {
 
     btn.append(title, badge, desc);
     if (ready) {
-      btn.addEventListener("click", () => showDrills(index));
+      btn.addEventListener("click", () => {
+        const playable = phase.modes.filter((m) => m.available);
+        // Single drill categories (e.g. Free Play) jump straight in.
+        if (
+          playable.length === 1 &&
+          !playable[0].needsDifficulty &&
+          playable[0].create
+        ) {
+          onModeCardClick(playable[0]);
+        } else {
+          showDrills(index);
+        }
+      });
     }
     modeListEl.append(btn);
   });
