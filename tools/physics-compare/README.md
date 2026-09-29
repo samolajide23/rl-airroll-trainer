@@ -60,6 +60,8 @@ Ground scenarios set `"game_mode": "soccar"` and `"on_ground": true`.
 | Area | Max pos error |
 |---|---|
 | Air freefall / throttle / boost / pitch / yaw / roll | ~0 uu |
+| Air roll/yaw from tilted starts (pitch45/90, roll90) | ~0 uu |
+| Partial combined air inputs | ~0 uu |
 | Air dodges | ~0.001 uu |
 | Ground rest / throttle / boost / coast / brake | ≤ 0.02 uu |
 | Ground steer / powerslide | ≤ 0.17 uu |
