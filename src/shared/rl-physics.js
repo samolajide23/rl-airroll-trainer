@@ -2,14 +2,19 @@ import * as THREE from "three";
 
 /* =====================================================================
  *  Rocket League physics core (units: uu = cm, seconds, radians)
- *  Frame: right-handed, Z up. Car local axes: x = front, y = left, z = up.
+ *  Frame: right-handed, Z up. Car local axes: x = front, y = right, z = up
+ *  (RocketSim / RLBot convention). `axes()` still returns `{ f, l, u }` where
+ *  `l` is the local +Y basis vector — i.e. car right, despite the old name.
  *  Runs at a FIXED 120 Hz like the real game. Render at any rate with
  *  interpolation.
  *
  *  Every constant is tagged:
- *    [V] verified against a published source (see spec doc for links)
+ *    [V] verified against RocketSim RLConst / published sources
  *    [A] approximation / from memory -> must be validated before trusting
  * ===================================================================== */
+
+/** RocketSim: CAR_TORQUE_SCALE * CAR_AIR_CONTROL_{TORQUE,DAMPING} */
+const RS_TORQUE_SCALE = 0.09587380290031433;
 
 export const RL = {
   DT: 1 / 120, // [V] physics tick
@@ -18,28 +23,29 @@ export const RL = {
   MAX_SPEED: 2300, // [V]
   MAX_DRIVE_SPEED: 1410, // [V] no boost
   MAX_ANG_VEL: 5.5, // [V]
-  BOOST_ACCEL_AIR: 1058.333, // [V]
-  BOOST_ACCEL_GROUND: 991.667, // [V]
-  BOOST_USE: 33.3, // [V] per second (100 boost = 3 s)
+  BOOST_ACCEL_AIR: 1058.3333740234375, // [V] RocketSim
+  BOOST_ACCEL_GROUND: 991.6666870117188, // [V] RocketSim
+  BOOST_USE: 33.33333206176758, // [V] per second
   BOOST_MAX: 100, // [V]
-  AIR_THROTTLE: 66.667, // [V] forward; reverse is half
+  AIR_THROTTLE: 66.66666412353516, // [V] forward; reverse is half
   BRAKE: 3500, // [V]
   COAST: 525, // [V]
-  JUMP_IMPULSE: 292, // [V] first + second (non-flip) jump
-  JUMP_HOLD_ACCEL: 1460, // [V] 292*5 per s, up to 0.2 s
+  JUMP_IMPULSE: 291.6666564941406, // [V] RocketSim JUMP_IMMEDIATE_FORCE
+  JUMP_HOLD_ACCEL: 1458.3333740234375, // [V] RocketSim JUMP_ACCEL
   JUMP_HOLD_MAX: 0.2, // [V]
   JUMP_HOLD_MIN_TICKS: 3, // [V]
   STICKY: 325, // [V] for 3 ticks after jump
   FLIP_WINDOW: 1.25, // [V] seconds (+ hold time)
   REST_HEIGHT: 17.01, // [V] Octane centre height on the floor
-  // Air-control model (smish.dev aerial_control), magnitudes only.
-  // We choose signs so: +pitch = nose up, +yaw = nose right, +roll = roll right.
-  T_ROLL: 36.07956616966136, // [V]
-  T_PITCH: 12.1459978190807, // [V]
-  T_YAW: 8.91962804287785, // [V]
-  D_ROLL: -4.47166302201591, // [V] always on
-  D_PITCH: -2.798194258050845, // [V] scaled by (1-|input|)
-  D_YAW: -1.886491900437232, // [V] scaled by (1-|input|)
+  // Air-control (RocketSim): magnitudes are TORQUE/DAMPING * CAR_TORQUE_SCALE.
+  // World-frame signs at identity (f=+X, right=+Y, u=+Z):
+  //   +roll → −ω·f,  +pitch → −ω·right,  +yaw → +ω·up
+  T_ROLL: 400 * RS_TORQUE_SCALE, // [V]
+  T_PITCH: 130 * RS_TORQUE_SCALE, // [V]
+  T_YAW: 95 * RS_TORQUE_SCALE, // [V]
+  D_ROLL: -50 * RS_TORQUE_SCALE, // [V] always on
+  D_PITCH: -30 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
+  D_YAW: -20 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
   // Octane hitbox (OBB)
   HITBOX_SIZE: [118.0074, 84.19941, 36.15907], // [V] length, width, height
   HITBOX_OFFSET: [13.87566, 0, 20.75499], // [A] from memory, verify vs halfwaydead sheet
@@ -50,10 +56,10 @@ export const RL = {
   BALL_MAX_SPEED: 6000, // [V]
   BALL_MAX_SPIN: 6, // [V]
   BALL_RESTITUTION: 0.6, // [V] of the normal velocity component
-  BALL_DRAG: 0.030562030038766, // [V] dv/dt = -DRAG * v (terminal ~21268)
+  BALL_DRAG: 0.03, // [V] RocketSim BALL_DRAG
   BALL_REST_Z: 93.15, // [V]
   EXTRA_IMPULSE_Z: 0.35, // [V]
-  EXTRA_IMPULSE_FWD: 0.35, // [V] (n - 0.35 (n.f) f)
+  EXTRA_IMPULSE_FWD: 0.65, // [V] RocketSim BALL_CAR_EXTRA_IMPULSE_FORWARD_SCALE
   EXTRA_COOLDOWN_TICKS: 3, // [A]
   // --- field ---
   HALF_W: 4096, // [V]
@@ -91,6 +97,7 @@ export function extraImpulseScale(dv) {
   return 0.3;
 }
 
+/** Local basis. `l` is local +Y = car **right** (RocketSim), not left. */
 export function axes(q) {
   return { f: V(1, 0, 0).applyQuaternion(q), l: V(0, 1, 0).applyQuaternion(q), u: V(0, 0, 1).applyQuaternion(q) };
 }
@@ -203,15 +210,17 @@ export function stepCar(car, c, dt = RL.DT) {
 }
 
 function airControl(car, c, dt) {
-  const { f, l, u } = axes(car.q);
+  const { f, l, u } = axes(car.q); // l = car right
   const pitch = clamp(c.pitch || 0, -1, 1);
   const yaw = clamp(c.yaw || 0, -1, 1);
   const roll = clamp(c.roll || 0, -1, 1);
-  const w = V(car.omega.dot(f), car.omega.dot(l), car.omega.dot(u)); // local angular velocity
+  // Local ω about (forward, right, up) — RocketSim air-control axes.
+  const w = V(car.omega.dot(f), car.omega.dot(l), car.omega.dot(u));
+  // Signs match RocketSim CarControls: +pitch nose up, +yaw nose right, +roll right.
   const a = V(
-    RL.T_ROLL * roll + RL.D_ROLL * w.x, // +x rotation = roll right
-    -RL.T_PITCH * pitch + RL.D_PITCH * (1 - Math.abs(pitch)) * w.y, // +y rotation = nose down
-    -RL.T_YAW * yaw + RL.D_YAW * (1 - Math.abs(yaw)) * w.z, // +z rotation = nose left
+    -RL.T_ROLL * roll + RL.D_ROLL * w.x,
+    -RL.T_PITCH * pitch + RL.D_PITCH * (1 - Math.abs(pitch)) * w.y,
+    RL.T_YAW * yaw + RL.D_YAW * (1 - Math.abs(yaw)) * w.z,
   );
   const dOmega = f.clone().multiplyScalar(a.x).addScaledVector(l, a.y).addScaledVector(u, a.z);
   const next = car.omega.clone().addScaledVector(dOmega, dt);
@@ -292,6 +301,7 @@ export function collideCarBall(car, ball, tick) {
   // Psyonix extra impulse on the ball only (breaks Newton's 3rd law on purpose)
   if (tick - ball.lastExtraTick > RL.EXTRA_COOLDOWN_TICKS) {
     const nn = ball.pos.clone().sub(center);
+    // Psyonix extra impulse: scale Z, then remove a fraction of the forward component.
     nn.z *= RL.EXTRA_IMPULSE_Z;
     nn.sub(f.clone().multiplyScalar(RL.EXTRA_IMPULSE_FWD * nn.dot(f))).normalize();
     const m = dv0.length();

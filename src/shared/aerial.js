@@ -2,15 +2,15 @@ import * as THREE from "three";
 import { RL } from "./rl-physics.js";
 
 /**
- * Rocket League aerial torque (smish.dev), applied to a Three.js Object3D.
+ * Rocket League aerial torque (RocketSim / rl-physics.js), on a Three.js Object3D.
  *
- * Physics frame in rl-physics.js is Z-up with car local x=front, y=left, z=up.
- * Our render cars use Y-up with local z=front, y=up, x=right — so we map:
- *   physics f → Three forward (0,0,1)
- *   physics l → Three left   (-1,0,0)
- *   physics u → Three up     (0,1,0)
+ * Physics frame is Z-up with car local x=front, y=right, z=up.
+ * Render cars use Y-up with local z=front, y=up, x=right — map:
+ *   physics forward → Three forward (0,0,1)
+ *   physics right   → Three right   (1,0,0)  (pitch torque applied about -right = left)
+ *   physics up      → Three up      (0,1,0)
  *
- * Sign convention (matches rl-physics.js):
+ * Sign convention (RocketSim CarControls):
  *   +pitch = nose up, +yaw = nose right, +roll = roll right.
  */
 export class AerialBody {
@@ -60,14 +60,13 @@ export class AerialBody {
     left.set(-1, 0, 0).applyQuaternion(object.quaternion);
     up.set(0, 1, 0).applyQuaternion(object.quaternion);
 
-    // Local ω: (roll axis, pitch axis, yaw axis) = (f, l, u)
+    // Local ω about (forward, left, up). Pitch about left (= −right) so
+    // +T_PITCH*pitch matches RocketSim’s −T_PITCH about right. Roll about
+    // forward needs −T_ROLL so +roll is roll-right in RH Three.js.
     omegaLocal.set(omega.dot(forward), omega.dot(left), omega.dot(up));
 
-    // rl-physics.js is Z-up / x=front. Three.js Y-up with z=front maps
-    // roll about forward with opposite visual sense — use +T_ROLL so
-    // +roll (air-roll right) spins the car visually right.
     tauLocal.set(
-      RL.T_ROLL * r + RL.D_ROLL * omegaLocal.x,
+      -RL.T_ROLL * r + RL.D_ROLL * omegaLocal.x,
       RL.T_PITCH * p + RL.D_PITCH * (1 - Math.abs(p)) * omegaLocal.y,
       RL.T_YAW * y + RL.D_YAW * (1 - Math.abs(y)) * omegaLocal.z,
     );

@@ -49,9 +49,8 @@ function vecList(v) {
 
 /** Match RocketSim Angle / RotMat: yaw, pitch, roll about Z, Y-after-yaw? Angle.as_rot_mat. */
 function setOrientation(car, yaw, pitch, roll) {
-  // Build the same basis RocketSim uses: forward, right, up from YPR.
-  // RocketSim Angle(yaw,pitch,roll).as_rot_mat() at (0,0,0) → f=+X, r=+Y, u=+Z.
-  // Our car basis is f, l, u with l = -right.
+  // RocketSim Angle YPR → RotMat (f, right, up). rl-physics `axes().l` is local +Y
+  // = car right, so pass right as the Y column (not -right; that would be improper).
   const cy = Math.cos(yaw);
   const sy = Math.sin(yaw);
   const cp = Math.cos(pitch);
@@ -59,8 +58,6 @@ function setOrientation(car, yaw, pitch, roll) {
   const cr = Math.cos(roll);
   const sr = Math.sin(roll);
 
-  // Standard Rocket League / RocketSim YPR extrinsic-ish composition used by Angle.
-  // Empirically: yaw about up, then pitch about right, then roll about forward.
   const forward = new THREE.Vector3(cp * cy, cp * sy, sp);
   const right = new THREE.Vector3(
     cy * sp * sr - sy * cr,
@@ -72,8 +69,7 @@ function setOrientation(car, yaw, pitch, roll) {
     -sy * sp * cr + cy * sr,
     cp * cr,
   );
-  const left = right.clone().multiplyScalar(-1);
-  car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(forward, left, up));
+  car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(forward, right, up));
   car.q.normalize();
 }
 
@@ -104,11 +100,10 @@ function initCar(initial) {
 }
 
 function rotPayload(car) {
-  const { f, l, u } = axes(car.q);
-  const right = l.clone().multiplyScalar(-1);
+  const { f, l, u } = axes(car.q); // l = car right
   return {
     forward: vecList(f),
-    right: vecList(right),
+    right: vecList(l),
     up: vecList(u),
   };
 }

@@ -69,23 +69,23 @@ Simplifications in the prototype: flat floor, perfect lateral grip, no powerslid
 Prototype checks: tap jump peaks at about 94 uu, full-hold jump at about 242 uu (centre height).
 
 ### Air control (the core of the trainer)
-The model fitted by smish.dev, verified against game data. In the car's local frame, angular acceleration is:
+RocketSim `CAR_AIR_CONTROL_{TORQUE,DAMPING} * CAR_TORQUE_SCALE` (same shape as the smish.dev fit). Local axes are **forward / right / up**. Angular acceleration:
 
 ```
-a_roll  = T_r * roll  + D_r * w_roll
-a_pitch = T_p * pitch + D_p * (1 - |pitch|) * w_pitch
-a_yaw   = T_y * yaw   + D_y * (1 - |yaw|)   * w_yaw
+a_roll  = -T_r * roll  + D_r * w_roll          // about forward; +roll = roll right
+a_pitch = -T_p * pitch + D_p * (1 - |pitch|) * w_pitch  // about right; +pitch = nose up
+a_yaw   = +T_y * yaw   + D_y * (1 - |yaw|)   * w_yaw    // about up; +yaw = nose right
 w  ->  clamp(|w|, 5.5)
 ```
 
 | Constant | Magnitude | Tag |
 |---|---|---|
-| T_roll | 36.08 | V |
-| T_pitch | 12.15 | V |
-| T_yaw | 8.92 | V |
-| D_roll | −4.47 | V |
-| D_pitch | −2.80 | V |
-| D_yaw | −1.89 | V |
+| T_roll | 38.35 | V (RocketSim) |
+| T_pitch | 12.46 | V (RocketSim) |
+| T_yaw | 9.11 | V (RocketSim) |
+| D_roll | −4.79 | V (RocketSim) |
+| D_pitch | −2.88 | V (RocketSim) |
+| D_yaw | −1.92 | V (RocketSim) |
 
 Key behaviors that come straight from this:
 - **Roll damping is always on. Pitch and yaw damping switch off at full input.** So a full pitch or yaw input keeps accelerating up to the 5.5 cap, while roll settles.
