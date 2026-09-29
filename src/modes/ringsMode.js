@@ -521,10 +521,12 @@ export class RingsMode {
     if (pen > 0) this.car.position.y += pen;
 
     if (wheelsDown && this.vel.y <= 0.5) {
+      // Underside on the pad — jump is available again (onPlatform).
       this.car.position.y = this.sitY(PLATFORM_TOP_Y);
       this.vel.y = 0;
       this.vel.x *= 0.85;
       this.vel.z *= 0.85;
+      this.car.userData.hasFlip = true;
       return true;
     }
     if (this.vel.y < 0) {

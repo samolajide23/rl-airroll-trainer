@@ -306,7 +306,12 @@ export class FreePlayMode {
     this.updateCamera(dt);
 
     const speed = this.physCar.vel.length();
-    const state = this.physCar.onGround ? "Ground" : "Air";
-    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · z ${carRestZ(this.physCar).toFixed(0)}`;
+    const state = this.physCar.onGround
+      ? "Ground"
+      : this.physCar.wheelsContact
+        ? "Wheels"
+        : "Air";
+    const flip = this.physCar.hasFlip ? "flip✓" : "flip✗";
+    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}`;
   }
 }

@@ -145,6 +145,10 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     airTime: 0,
     stickyTicks: 0,
     crashed: false,
+    /** Underside (wheels / hitbox bottom) touching a surface this tick. */
+    wheelsContact: true,
+    /** @type {THREE.Vector3} unit surface normal at wheel contact (outward from surface). */
+    contactNormal: V(0, 0, 1),
     /** @type {import("./hitboxPresets.js").HitboxPreset} */
     hitbox,
   };
@@ -175,18 +179,29 @@ export function stepCar(car, c, dt = RL.DT) {
   const throttle = clamp(c.throttle || 0, -1, 1);
   const boosting = !!c.boost;
 
-  /* ---- jump ---- */
+  /* ---- jump ----
+   * First jump when underside is on a surface (floor / wall / ceiling).
+   * Second press in air = flip (dodge stub) while hasFlip is still true.
+   */
   const pressed = !!c.jump && !car.prevJump;
   car.prevJump = !!c.jump;
-  if (car.onGround && pressed) {
+  const canFirstJump = car.onGround || car.wheelsContact;
+  if (canFirstJump && pressed) {
     car.vel.addScaledVector(u, RL.JUMP_IMPULSE);
     car.onGround = false;
+    car.wheelsContact = false;
     car.jumping = true;
     car.jumpTime = 0;
     car.hasFlip = true;
     car.airTime = 0;
     car.stickyTicks = 3;
-  } else if (!car.onGround && pressed && !car.jumping && car.hasFlip && car.airTime < RL.FLIP_WINDOW + car.jumpTime) {
+  } else if (
+    !canFirstJump &&
+    pressed &&
+    !car.jumping &&
+    car.hasFlip &&
+    car.airTime < RL.FLIP_WINDOW + car.jumpTime
+  ) {
     car.vel.addScaledVector(u, RL.JUMP_IMPULSE); // NOTE: directional flips (dodges) not implemented yet
     car.hasFlip = false;
   }
@@ -261,6 +276,36 @@ function airControl(car, c, dt) {
   car.omega.copy(next);
 }
 
+/**
+ * True when the surface lies under the car (normal faces the hitbox / wheel bottom).
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {number} nx
+ * @param {number} ny
+ * @param {number} nz
+ */
+export function isUndersideContact(car, nx, ny, nz) {
+  const { u } = axes(car.q);
+  return u.x * nx + u.y * ny + u.z * nz > 0.3;
+}
+
+/**
+ * Restore jump + flip when the bottom of the car / hitbox touches a surface.
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {number} nx
+ * @param {number} ny
+ * @param {number} nz
+ * @returns {boolean}
+ */
+export function grantWheelContact(car, nx, ny, nz) {
+  if (!isUndersideContact(car, nx, ny, nz)) return false;
+  car.wheelsContact = true;
+  car.hasFlip = true;
+  car.contactNormal.set(nx, ny, nz);
+  car.airTime = 0;
+  car.crashed = false;
+  return true;
+}
+
 function land(car) {
   const { f, l, u } = axes(car.q);
   if (u.z > 0.5) {
@@ -270,15 +315,20 @@ function land(car) {
     const lh = V(0, 0, 1).cross(fh);
     car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(fh, lh, V(0, 0, 1)));
     car.onGround = true;
+    car.wheelsContact = true;
+    car.contactNormal.set(0, 0, 1);
     car.hasFlip = true;
     car.omega.set(0, 0, 0);
     car.vel.z = 0;
     car.pos.z = carRestZ(car);
     car.crashed = false;
+    car.airTime = 0;
   } else {
-    // Roof / side: bounce is applied by resolveCarArena (no teleport through floor).
-    car.crashed = true;
-    car.onGround = false;
+    // Roof / side into floor — still restore jump if the underside is what hit.
+    if (!grantWheelContact(car, 0, 0, 1)) {
+      car.crashed = true;
+      car.onGround = false;
+    }
     car.omega.multiplyScalar(0.5);
   }
 }
@@ -354,12 +404,13 @@ function bounceNormal(car, nx, ny, nz, e) {
 
 /**
  * Keep the car hitbox outside the soccar box (floor, ceiling, walls, goals).
- * Wheels-down contacts snap to the preset rest Z; roof/side use the OBB.
+ * Underside contacts restore jump/flip ({@link grantWheelContact}).
  * @param {ReturnType<typeof makeCar>} car
  */
 export function resolveCarArena(car) {
   const e = RL.ARENA_RESTITUTION;
   const rest = carRestZ(car);
+  car.wheelsContact = false;
 
   // --- Floor: wheels when upright, otherwise hitbox bottom ---
   {
@@ -370,6 +421,7 @@ export function resolveCarArena(car) {
     if (car.onGround && !car.jumping && car.stickyTicks === 0) {
       car.pos.z = rest;
       car.vel.z = 0;
+      grantWheelContact(car, 0, 0, 1);
     } else if (!car.onGround) {
       if (wheelsDown && car.pos.z <= rest && car.vel.z <= 0) {
         land(car);
@@ -377,6 +429,10 @@ export function resolveCarArena(car) {
         pushCar(car, 0, 0, 1, -minHitZ);
         if (wheelsDown && car.vel.z <= 0) {
           land(car);
+        } else if (grantWheelContact(car, 0, 0, 1)) {
+          // Bottom of hitbox on the floor — jump is back; soft settle if nearly upright.
+          bounceNormal(car, 0, 0, 1, e * 0.5);
+          if (hb.u.z > 0.35 && car.vel.z <= 0) land(car);
         } else {
           bounceNormal(car, 0, 0, 1, e);
           car.crashed = true;
@@ -394,6 +450,7 @@ export function resolveCarArena(car) {
       pushCar(car, 0, 0, -1, maxHitZ - RL.CEILING);
       bounceNormal(car, 0, 0, -1, e);
       car.onGround = false;
+      grantWheelContact(car, 0, 0, -1); // wheels on ceiling → jump back
     }
   }
 
@@ -404,9 +461,13 @@ export function resolveCarArena(car) {
     if (sign > 0 && edge > RL.HALF_W) {
       pushCar(car, -1, 0, 0, edge - RL.HALF_W);
       bounceNormal(car, -1, 0, 0, e);
+      car.onGround = false;
+      grantWheelContact(car, -1, 0, 0);
     } else if (sign < 0 && edge < -RL.HALF_W) {
       pushCar(car, 1, 0, 0, -RL.HALF_W - edge);
       bounceNormal(car, 1, 0, 0, e);
+      car.onGround = false;
+      grantWheelContact(car, 1, 0, 0);
     }
   }
 
@@ -429,9 +490,13 @@ export function resolveCarArena(car) {
       if (sign > 0 && backEdge > back) {
         pushCar(car, 0, -1, 0, backEdge - back);
         bounceNormal(car, 0, -1, 0, e);
+        car.onGround = false;
+        grantWheelContact(car, 0, -1, 0);
       } else if (sign < 0 && backEdge < back) {
         pushCar(car, 0, 1, 0, back - backEdge);
         bounceNormal(car, 0, 1, 0, e);
+        car.onGround = false;
+        grantWheelContact(car, 0, 1, 0);
       }
       continue;
     }
@@ -439,6 +504,8 @@ export function resolveCarArena(car) {
     const pen = sign > 0 ? edge - wall : wall - edge;
     pushCar(car, 0, -sign, 0, pen);
     bounceNormal(car, 0, -sign, 0, e);
+    car.onGround = false;
+    grantWheelContact(car, 0, -sign, 0);
   }
 }
 
