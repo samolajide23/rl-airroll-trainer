@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RL_CONST as C } from "./rlConst.js";
 import { RL } from "./rl-physics.js";
 import { UU } from "./rl-units.js";
 
@@ -55,17 +56,17 @@ export const SOCCAR_BIG_PADS = [
 ];
 
 export const BOOST_PAD = {
-  SMALL_AMOUNT: 12, // [V]
-  BIG_AMOUNT: 100, // [V]
-  SMALL_COOLDOWN: 4, // [V] seconds
-  BIG_COOLDOWN: 10, // [V]
-  SMALL_RADIUS: 144, // [V] CYL_RAD_SMALL
-  BIG_RADIUS: 208, // [V] CYL_RAD_BIG
-  CYL_HEIGHT: 95, // [V]
+  SMALL_AMOUNT: C.BOOST_PAD_SMALL_AMOUNT, // [V]
+  BIG_AMOUNT: C.BOOST_PAD_BIG_AMOUNT, // [V]
+  SMALL_COOLDOWN: C.BOOST_PAD_SMALL_COOLDOWN, // [V] seconds
+  BIG_COOLDOWN: C.BOOST_PAD_BIG_COOLDOWN, // [V]
+  SMALL_RADIUS: C.BOOST_PAD_CYL_RAD_SMALL, // [V]
+  BIG_RADIUS: C.BOOST_PAD_CYL_RAD_BIG, // [V]
+  CYL_HEIGHT: C.BOOST_PAD_CYL_HEIGHT, // [V]
   // Alternate AABB pickup volumes (RocketSim BoostPads::BOX_*)
-  BOX_HEIGHT: 64, // [V]
-  BOX_RAD_SMALL: 120, // [V]
-  BOX_RAD_BIG: 160, // [V]
+  BOX_HEIGHT: C.BOOST_PAD_BOX_HEIGHT, // [V]
+  BOX_RAD_SMALL: C.BOOST_PAD_BOX_RAD_SMALL, // [V]
+  BOX_RAD_BIG: C.BOOST_PAD_BOX_RAD_BIG, // [V]
 };
 
 /**

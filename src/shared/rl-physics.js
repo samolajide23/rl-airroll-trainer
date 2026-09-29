@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { arenaDistance, arenaNormal } from "./arenaMesh.js";
 import { getHitboxPreset, HITBOX_PRESETS } from "./hitboxPresets.js";
+import { CAR_TORQUE_SCALE, RL_CONST as C, RL_CURVES } from "./rlConst.js";
 import { UU } from "./rl-units.js";
 
 /* =====================================================================
@@ -10,108 +11,108 @@ import { UU } from "./rl-units.js";
  *  `{ f, l, u }` where `l` is the local +Y basis vector — i.e. car right.
  *  Runs at a FIXED 120 Hz like the real game.
  *
- *  Every constant is tagged [V] = verified against RocketSim RLConst.
+ *  Scalars come from `rlConst.js` (RocketSim RLConst as float32).
  * ===================================================================== */
 
-/** RocketSim: CAR_TORQUE_SCALE * CAR_AIR_CONTROL_{TORQUE,DAMPING} */
-const RS_TORQUE_SCALE = 0.09587380290031433;
+const T = C.CAR_AIR_CONTROL_TORQUE;
+const D = C.CAR_AIR_CONTROL_DAMPING;
 
 export const RL = {
-  DT: 1 / 120, // [V] physics tick
-  GRAVITY: 650, // [V]
+  DT: 1 / 120, // [V] physics tick (120 Hz schedule; keep exact 1/120)
+  GRAVITY: C.GRAVITY_Z, // [V]
   // --- car ---
-  MAX_SPEED: 2300, // [V]
+  MAX_SPEED: C.CAR_MAX_SPEED, // [V]
   MAX_DRIVE_SPEED: 1410, // [V] no boost (DRIVE_SPEED_TORQUE curve hits 0)
-  MAX_ANG_VEL: 5.5, // [V]
-  BOOST_ACCEL_AIR: 1058.3333740234375, // [V] RocketSim
-  BOOST_ACCEL_GROUND: 991.6666870117188, // [V] RocketSim
-  BOOST_USE: 33.33333206176758, // [V] per second
-  BOOST_MAX: 100, // [V]
-  AIR_THROTTLE: 66.66666412353516, // [V] RocketSim THROTTLE_AIR_ACCEL
-  JUMP_IMPULSE: 291.6666564941406, // [V] RocketSim JUMP_IMMEDIATE_FORCE
-  JUMP_HOLD_ACCEL: 1458.3333740234375, // [V] RocketSim JUMP_ACCEL
-  JUMP_HOLD_MAX: 0.2, // [V]
-  FLIP_WINDOW: 1.25, // [V] RocketSim DOUBLEJUMP_MAX_DELAY (after first jump ends)
+  MAX_ANG_VEL: C.CAR_MAX_ANG_SPEED, // [V]
+  BOOST_ACCEL_AIR: C.BOOST_ACCEL_AIR, // [V]
+  BOOST_ACCEL_GROUND: C.BOOST_ACCEL_GROUND, // [V]
+  BOOST_USE: C.BOOST_USED_PER_SECOND, // [V]
+  BOOST_MAX: C.BOOST_MAX, // [V]
+  AIR_THROTTLE: C.THROTTLE_AIR_ACCEL, // [V]
+  JUMP_IMPULSE: C.JUMP_IMMEDIATE_FORCE, // [V]
+  JUMP_HOLD_ACCEL: C.JUMP_ACCEL, // [V]
+  JUMP_HOLD_MAX: C.JUMP_MAX_TIME, // [V]
+  FLIP_WINDOW: C.DOUBLEJUMP_MAX_DELAY, // [V]
   DODGE_DEADZONE: 0.5, // [V] Octane default
-  FLIP_TORQUE_TIME: 0.65, // [V]
-  FLIP_TORQUE_MIN_TIME: 0.41, // [V]
-  FLIP_PITCHLOCK_TIME: 1.0, // [V] RLConst (Car.cpp uses TORQUE+EXTRA below)
-  FLIP_PITCHLOCK_EXTRA: 0.3, // [V] after FLIP_TORQUE_TIME
-  FLIP_Z_DAMP_120: 0.35, // [V]
-  FLIP_Z_DAMP_START: 0.15, // [V]
-  FLIP_Z_DAMP_END: 0.21, // [V]
-  FLIP_INITIAL_VEL: 500, // [V]
-  FLIP_TORQUE_X: 260, // [V] local about forward (side dodge)
-  FLIP_TORQUE_Y: 224, // [V] local about right (forward/back dodge)
-  FLIP_FWD_SPEED_SCALE: 1, // [V]
-  FLIP_SIDE_SPEED_SCALE: 1.9, // [V]
-  FLIP_BACK_SPEED_SCALE: 2.5, // [V]
-  FLIP_BACK_IMPULSE_X: 16 / 15, // [V]
-  BOOST_MIN_TIME: 0.1, // [V]
-  SUPERSONIC_START: 2200, // [V]
-  SUPERSONIC_KEEP: 2100, // [V]
-  SUPERSONIC_KEEP_TIME: 1, // [V]
-  POWERSLIDE_RISE: 5, // [V] per second
-  POWERSLIDE_FALL: 2, // [V] per second
+  FLIP_TORQUE_TIME: C.FLIP_TORQUE_TIME, // [V]
+  FLIP_TORQUE_MIN_TIME: C.FLIP_TORQUE_MIN_TIME, // [V]
+  FLIP_PITCHLOCK_TIME: C.FLIP_PITCHLOCK_TIME, // [V]
+  FLIP_PITCHLOCK_EXTRA: C.FLIP_PITCHLOCK_EXTRA_TIME, // [V]
+  FLIP_Z_DAMP_120: C.FLIP_Z_DAMP_120, // [V]
+  FLIP_Z_DAMP_START: C.FLIP_Z_DAMP_START, // [V]
+  FLIP_Z_DAMP_END: C.FLIP_Z_DAMP_END, // [V]
+  FLIP_INITIAL_VEL: C.FLIP_INITIAL_VEL_SCALE, // [V]
+  FLIP_TORQUE_X: C.FLIP_TORQUE_X, // [V] local about forward (side dodge)
+  FLIP_TORQUE_Y: C.FLIP_TORQUE_Y, // [V] local about right (forward/back dodge)
+  FLIP_FWD_SPEED_SCALE: C.FLIP_FORWARD_IMPULSE_MAX_SPEED_SCALE, // [V]
+  FLIP_SIDE_SPEED_SCALE: C.FLIP_SIDE_IMPULSE_MAX_SPEED_SCALE, // [V]
+  FLIP_BACK_SPEED_SCALE: C.FLIP_BACKWARD_IMPULSE_MAX_SPEED_SCALE, // [V]
+  FLIP_BACK_IMPULSE_X: C.FLIP_BACKWARD_IMPULSE_SCALE_X, // [V]
+  BOOST_MIN_TIME: C.BOOST_MIN_TIME, // [V]
+  SUPERSONIC_START: C.SUPERSONIC_START_SPEED, // [V]
+  SUPERSONIC_KEEP: C.SUPERSONIC_MAINTAIN_MIN_SPEED, // [V]
+  SUPERSONIC_KEEP_TIME: C.SUPERSONIC_MAINTAIN_MAX_TIME, // [V]
+  POWERSLIDE_RISE: C.POWERSLIDE_RISE_RATE, // [V]
+  POWERSLIDE_FALL: C.POWERSLIDE_FALL_RATE, // [V]
   REST_HEIGHT: HITBOX_PRESETS.octane.restZ, // [V] default Octane root height
   // Air-control (RocketSim): magnitudes are TORQUE/DAMPING * CAR_TORQUE_SCALE.
   // World-frame signs at identity (f=+X, right=+Y, u=+Z):
   //   +roll → −ω·f,  +pitch → −ω·right,  +yaw → +ω·up
-  T_ROLL: 400 * RS_TORQUE_SCALE, // [V]
-  T_PITCH: 130 * RS_TORQUE_SCALE, // [V]
-  T_YAW: 95 * RS_TORQUE_SCALE, // [V]
-  D_ROLL: -50 * RS_TORQUE_SCALE, // [V] always on
-  D_PITCH: -30 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
-  D_YAW: -20 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
+  T_ROLL: T.roll * CAR_TORQUE_SCALE, // [V]
+  T_PITCH: T.pitch * CAR_TORQUE_SCALE, // [V]
+  T_YAW: T.yaw * CAR_TORQUE_SCALE, // [V]
+  D_ROLL: -D.roll * CAR_TORQUE_SCALE, // [V] always on
+  D_PITCH: -D.pitch * CAR_TORQUE_SCALE, // [V] scaled by (1-|input|)
+  D_YAW: -D.yaw * CAR_TORQUE_SCALE, // [V] scaled by (1-|input|)
   // Default Octane hitbox (OBB) — prefer `car.hitbox` from hitboxPresets.js
   HITBOX_SIZE: HITBOX_PRESETS.octane.size, // [V] RocketSim
   HITBOX_OFFSET: HITBOX_PRESETS.octane.offset, // [V] RocketSim
   // --- ball ---
-  BALL_RADIUS: 91.25, // [V]
-  BALL_MASS: 30, // [V] CAR_MASS / 6
-  CAR_MASS: 180, // [V]
-  BALL_MAX_SPEED: 6000, // [V]
-  BALL_MAX_SPIN: 6, // [V]
-  BALL_RESTITUTION: 0.6, // [V] ball↔world
-  BALL_FRICTION: 0.35, // [V] ball↔world
-  BALL_DRAG: 0.03, // [V] RocketSim BALL_DRAG
-  BALL_REST_Z: 93.15, // [V]
+  BALL_RADIUS: C.BALL_COLLISION_RADIUS_SOCCAR, // [V]
+  BALL_MASS: C.BALL_MASS, // [V]
+  CAR_MASS: C.CAR_MASS, // [V]
+  BALL_MAX_SPEED: C.BALL_MAX_SPEED, // [V]
+  BALL_MAX_SPIN: C.BALL_MAX_ANG_SPEED, // [V]
+  BALL_RESTITUTION: C.BALL_RESTITUTION, // [V]
+  BALL_FRICTION: C.BALL_FRICTION, // [V]
+  BALL_DRAG: C.BALL_DRAG, // [V]
+  BALL_REST_Z: C.BALL_REST_Z, // [V]
   // Car↔ball (RocketSim CARBALL_COLLISION_*)
-  CARBALL_FRICTION: 2.0, // [V]
-  CARBALL_RESTITUTION: 0.0, // [V]
+  CARBALL_FRICTION: C.CARBALL_COLLISION_FRICTION, // [V]
+  CARBALL_RESTITUTION: C.CARBALL_COLLISION_RESTITUTION, // [V]
   // Psyonix extra ball impulse (RocketSim BALL_CAR_EXTRA_IMPULSE_*)
-  EXTRA_IMPULSE_Z: 0.35, // [V] Z scale of hitDir before normalize
+  EXTRA_IMPULSE_Z: C.BALL_CAR_EXTRA_IMPULSE_Z_SCALE, // [V]
   // Fraction of forward component *kept* after adjustment (RocketSim FORWARD_SCALE).
   // Implementation removes `(1 - FWD) * forward` from hitDir — see collideCarBall.
-  EXTRA_IMPULSE_FWD: 0.65, // [V]
-  EXTRA_IMPULSE_MAX_DV: 4600, // [V] clamp |Δv| before curve
+  EXTRA_IMPULSE_FWD: C.BALL_CAR_EXTRA_IMPULSE_FORWARD_SCALE, // [V]
+  EXTRA_IMPULSE_MAX_DV: C.BALL_CAR_EXTRA_IMPULSE_MAXDELTAVEL_UU, // [V]
   // RocketSim: next extra impulse when tickCount > last + 1
   EXTRA_COOLDOWN_TICKS: 1, // [V]
   /** MutatorConfig.ball_hit_extra_force_scale (default 1) */
   EXTRA_FORCE_SCALE: 1, // [V]
-  BOOST_SPAWN: 33.33333206176758, // [V] RocketSim BOOST_SPAWN_AMOUNT (float32 100/3)
-  CAR_SPAWN_REST_Z: 17, // [V] kickoff root Z
-  CAR_RESPAWN_Z: 36, // [V] demo-respawn drop height
+  BOOST_SPAWN: C.BOOST_SPAWN_AMOUNT, // [V]
+  CAR_SPAWN_REST_Z: C.CAR_SPAWN_REST_Z, // [V]
+  CAR_RESPAWN_Z: C.CAR_RESPAWN_Z, // [V]
   // --- field ---
-  HALF_W: 4096, // [V]
-  HALF_L: 5120, // [V]
-  CEILING: 2048, // [V]
+  HALF_W: C.ARENA_EXTENT_X, // [V]
+  HALF_L: C.ARENA_EXTENT_Y, // [V]
+  CEILING: C.ARENA_HEIGHT, // [V]
   GOAL_HALF_W: 892.755, // [V] Arena.cpp APPROX_GOAL_HALF_WIDTH
   GOAL_HEIGHT: 642.775, // [V] Arena.cpp APPROX_GOAL_HEIGHT
-  GOAL_SCORE_Y: 5124.25, // [V] SOCCAR_GOAL_SCORE_BASE_THRESHOLD_Y
+  GOAL_SCORE_Y: C.SOCCAR_GOAL_SCORE_BASE_THRESHOLD_Y, // [V]
   // Soft backstop behind goal mouth — soccar mesh |Y| max ≈ 6000, so depth 880.
   GOAL_DEPTH: 880, // [V] mesh AABB (HALF_L + depth ≈ 6000)
-  ARENA_FRICTION: 0.3, // [V] CARWORLD_COLLISION_FRICTION
-  ARENA_RESTITUTION: 0.3, // [V] CARWORLD_COLLISION_RESTITUTION
+  ARENA_FRICTION: C.CARWORLD_COLLISION_FRICTION, // [V]
+  ARENA_RESTITUTION: C.CARWORLD_COLLISION_RESTITUTION, // [V]
   // Car↔car (RocketSim CARCAR_COLLISION_* / CAR_COLLISION_*)
-  CARCAR_FRICTION: 0.09, // [V]
-  CARCAR_RESTITUTION: 0.1, // [V]
-  CAR_COLLISION_FRICTION: 0.3, // [V]
-  CAR_COLLISION_RESTITUTION: 0.1, // [V]
+  CARCAR_FRICTION: C.CARCAR_COLLISION_FRICTION, // [V]
+  CARCAR_RESTITUTION: C.CARCAR_COLLISION_RESTITUTION, // [V]
+  CAR_COLLISION_FRICTION: C.CAR_COLLISION_FRICTION, // [V]
+  CAR_COLLISION_RESTITUTION: C.CAR_COLLISION_RESTITUTION, // [V]
   // Bump / demo (RocketSim RLConst + MutatorConfig defaults)
-  BUMP_COOLDOWN_TIME: 0.25, // [V]
-  BUMP_MIN_FORWARD_DIST: 64.5, // [V] bumper local-X threshold (uu)
-  DEMO_RESPAWN_TIME: 3.0, // [V]
+  BUMP_COOLDOWN_TIME: C.BUMP_COOLDOWN_TIME, // [V]
+  BUMP_MIN_FORWARD_DIST: C.BUMP_MIN_FORWARD_DIST, // [V]
+  DEMO_RESPAWN_TIME: C.DEMO_RESPAWN_TIME, // [V]
   BUMP_FORCE_SCALE: 1.0, // [V] MutatorConfig.bump_force_scale
   /**
    * Blue-team soccar kickoff slots (RocketSim CAR_SPAWN_LOCATIONS_SOCCAR).
@@ -141,12 +142,7 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
  * @param {number} dv relative speed (uu/s), already clamped to EXTRA_IMPULSE_MAX_DV
  */
 export function extraImpulseScale(dv) {
-  const pts = [
-    [0, 0.65],
-    [500, 0.65],
-    [2300, 0.55],
-    [4600, 0.3],
-  ];
+  const pts = RL_CURVES.ballCarExtraImpulse;
   if (dv <= pts[0][0]) return pts[0][1];
   for (let i = 1; i < pts.length; i++) {
     if (dv <= pts[i][0]) {
