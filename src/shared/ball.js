@@ -177,8 +177,10 @@ export class PracticeBall {
         Math.abs(this.velocity.y) < 0.25 * UU_SCALE
           ? 0
           : -this.velocity.y * e;
-      this.velocity.x *= 0.9;
-      this.velocity.z *= 0.9;
+      // Tangential kill ≈ RocketSim BALL_FRICTION Coulomb clamp on bounce.
+      const slip = 1 - RL.BALL_FRICTION;
+      this.velocity.x *= slip;
+      this.velocity.z *= slip;
     }
   }
 

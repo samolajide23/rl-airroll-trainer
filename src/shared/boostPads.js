@@ -56,9 +56,13 @@ export const BOOST_PAD = {
   BIG_AMOUNT: 100, // [V]
   SMALL_COOLDOWN: 4, // [V] seconds
   BIG_COOLDOWN: 10, // [V]
-  SMALL_RADIUS: 144, // [V]
-  BIG_RADIUS: 208, // [V]
+  SMALL_RADIUS: 144, // [V] CYL_RAD_SMALL
+  BIG_RADIUS: 208, // [V] CYL_RAD_BIG
   CYL_HEIGHT: 95, // [V]
+  // Alternate AABB pickup volumes (RocketSim BoostPads::BOX_*)
+  BOX_HEIGHT: 64, // [V]
+  BOX_RAD_SMALL: 120, // [V]
+  BOX_RAD_BIG: 160, // [V]
 };
 
 /**

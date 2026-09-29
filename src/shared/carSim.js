@@ -198,7 +198,7 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     /** World angular velocity (rad/s). */
     omega: V(),
     q: new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), yaw),
-    boost: RL.BOOST_MAX,
+    boost: RL.BOOST_SPAWN,
     /** When true, boost never depletes (orientation drills). */
     infiniteBoost: false,
     /** RocketSim `isOnGround`: ≥ 3 wheels touching. */

@@ -10,7 +10,9 @@
     "physics:ref": "python3 tools/physics-compare/generate_rocketsim.py",
     "physics:js": "node tools/physics-compare/run_js.mjs",
     "physics:diff": "node tools/physics-compare/compare.mjs",
-    "physics:compare": "npm run physics:ref && npm run physics:js && npm run physics:diff"
+    "physics:compare": "npm run physics:ref && npm run physics:js && npm run physics:diff",
+    "physics:parity": "node tools/rocketsim-parity.mjs",
+    "physics:signs": "node tools/orientation-signs.mjs"
   },
   "dependencies": {
     "three": "^0.170.0"

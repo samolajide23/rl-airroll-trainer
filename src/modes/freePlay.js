@@ -81,11 +81,13 @@ export class FreePlayMode {
     this.hitboxHelper = createHitboxHelper();
     this.root.add(this.hitboxHelper);
 
+    const spawn0 = RL.SOCCAR_SPAWNS[4];
     this.physCar = makePhysCar(
-      new THREE.Vector3(0, -2560, this.hitbox.restZ),
-      Math.PI / 2,
+      new THREE.Vector3(spawn0.x, spawn0.y, this.hitbox.restZ),
+      spawn0.yaw,
       this.hitbox,
     );
+    this.physCar.boost = RL.BOOST_SPAWN;
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.tick = 0;
     this.boosting = false;
@@ -183,13 +185,15 @@ export class FreePlayMode {
 
   resetState() {
     this.hitbox = getHitboxForCarId(this.carId);
+    // RocketSim center kickoff slot (CAR_SPAWN_LOCATIONS_SOCCAR[4]).
+    const spawn = RL.SOCCAR_SPAWNS[4];
     this.physCar = makePhysCar(
-      new THREE.Vector3(0, -2560, this.hitbox.restZ),
-      Math.PI / 2,
+      new THREE.Vector3(spawn.x, spawn.y, this.hitbox.restZ),
+      spawn.yaw,
       this.hitbox,
     );
     this.physCar.infiniteBoost = false;
-    this.physCar.boost = 33;
+    this.physCar.boost = RL.BOOST_SPAWN;
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.physBall.vel.set(0, 0, 0);
     this.tick = 0;

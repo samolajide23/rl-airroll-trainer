@@ -10,9 +10,15 @@ import { SOCCAR_TRI_COUNT, SOCCAR_TRIS } from "./soccarMeshData.js";
  */
 
 const EPS = 1e-8;
-/** RocketSim RLConst arena extents (uu) — kept local to avoid import cycles. */
-const HALF_W = 4096;
-const CEILING = 2048;
+/**
+ * RocketSim RLConst arena extents (uu).
+ * Duplicated (not imported from RL) to avoid a cycle with rl-physics.js.
+ * `tools/rocketsim-parity.mjs` asserts these match RL.HALF_W / RL.CEILING.
+ */
+export const ARENA_HALF_W = 4096;
+export const ARENA_CEILING = 2048;
+const HALF_W = ARENA_HALF_W;
+const CEILING = ARENA_CEILING;
 
 /** @type {{ point: THREE.Vector3, normal: THREE.Vector3 }[]} */
 const PLANES = [

@@ -36,6 +36,7 @@ export const RL = {
   DODGE_DEADZONE: 0.5, // [V] Octane default
   FLIP_TORQUE_TIME: 0.65, // [V]
   FLIP_TORQUE_MIN_TIME: 0.41, // [V]
+  FLIP_PITCHLOCK_TIME: 1.0, // [V] RLConst (Car.cpp uses TORQUE+EXTRA below)
   FLIP_PITCHLOCK_EXTRA: 0.3, // [V] after FLIP_TORQUE_TIME
   FLIP_Z_DAMP_120: 0.35, // [V]
   FLIP_Z_DAMP_START: 0.15, // [V]
@@ -68,35 +69,83 @@ export const RL = {
   HITBOX_OFFSET: HITBOX_PRESETS.octane.offset, // [V] RocketSim
   // --- ball ---
   BALL_RADIUS: 91.25, // [V]
-  BALL_MASS: 30, // [V]
+  BALL_MASS: 30, // [V] CAR_MASS / 6
   CAR_MASS: 180, // [V]
   BALL_MAX_SPEED: 6000, // [V]
   BALL_MAX_SPIN: 6, // [V]
-  BALL_RESTITUTION: 0.6, // [V] of the normal velocity component
+  BALL_RESTITUTION: 0.6, // [V] ball↔world
+  BALL_FRICTION: 0.35, // [V] ball↔world
   BALL_DRAG: 0.03, // [V] RocketSim BALL_DRAG
   BALL_REST_Z: 93.15, // [V]
-  EXTRA_IMPULSE_Z: 0.35, // [V]
-  EXTRA_IMPULSE_FWD: 0.65, // [V] RocketSim BALL_CAR_EXTRA_IMPULSE_FORWARD_SCALE
-  EXTRA_COOLDOWN_TICKS: 3, // [A]
+  // Car↔ball (RocketSim CARBALL_COLLISION_*)
+  CARBALL_FRICTION: 2.0, // [V]
+  CARBALL_RESTITUTION: 0.0, // [V]
+  // Psyonix extra ball impulse (RocketSim BALL_CAR_EXTRA_IMPULSE_*)
+  EXTRA_IMPULSE_Z: 0.35, // [V] Z scale of hitDir before normalize
+  // Fraction of forward component *kept* after adjustment (RocketSim FORWARD_SCALE).
+  // Implementation removes `(1 - FWD) * forward` from hitDir — see collideCarBall.
+  EXTRA_IMPULSE_FWD: 0.65, // [V]
+  EXTRA_IMPULSE_MAX_DV: 4600, // [V] clamp |Δv| before curve
+  // RocketSim: next extra impulse when tickCount > last + 1
+  EXTRA_COOLDOWN_TICKS: 1, // [V]
+  /** MutatorConfig.ball_hit_extra_force_scale (default 1) */
+  EXTRA_FORCE_SCALE: 1, // [V]
+  BOOST_SPAWN: 33.33333206176758, // [V] RocketSim BOOST_SPAWN_AMOUNT (float32 100/3)
+  CAR_SPAWN_REST_Z: 17, // [V] kickoff root Z
+  CAR_RESPAWN_Z: 36, // [V] demo-respawn drop height
   // --- field ---
   HALF_W: 4096, // [V]
   HALF_L: 5120, // [V]
   CEILING: 2048, // [V]
-  GOAL_HALF_W: 892.755, // [V]
-  GOAL_HEIGHT: 642.775, // [V]
-  GOAL_DEPTH: 880, // [A] soft back of net
-  ARENA_RESTITUTION: 0.3, // [V] RocketSim CARWORLD_COLLISION_RESTITUTION
+  GOAL_HALF_W: 892.755, // [V] Arena.cpp APPROX_GOAL_HALF_WIDTH
+  GOAL_HEIGHT: 642.775, // [V] Arena.cpp APPROX_GOAL_HEIGHT
+  GOAL_SCORE_Y: 5124.25, // [V] SOCCAR_GOAL_SCORE_BASE_THRESHOLD_Y
+  GOAL_DEPTH: 880, // [A] soft back of net (not in RLConst)
+  ARENA_FRICTION: 0.3, // [V] CARWORLD_COLLISION_FRICTION
+  ARENA_RESTITUTION: 0.3, // [V] CARWORLD_COLLISION_RESTITUTION
+  /**
+   * Blue-team soccar kickoff slots (RocketSim CAR_SPAWN_LOCATIONS_SOCCAR).
+   * Flip X/Y and add π to yaw for orange.
+   */
+  SOCCAR_SPAWNS: [
+    { x: -2048, y: -2560, yaw: Math.PI / 4 },
+    { x: 2048, y: -2560, yaw: (3 * Math.PI) / 4 },
+    { x: -256, y: -3840, yaw: Math.PI / 2 },
+    { x: 256, y: -3840, yaw: Math.PI / 2 },
+    { x: 0, y: -4608, yaw: Math.PI / 2 },
+  ],
+  /** Blue-team demo respawn slots (RocketSim CAR_RESPAWN_LOCATIONS_SOCCAR). */
+  SOCCAR_RESPAWNS: [
+    { x: -2304, y: -4608, yaw: Math.PI / 2 },
+    { x: -2688, y: -4608, yaw: Math.PI / 2 },
+    { x: 2304, y: -4608, yaw: Math.PI / 2 },
+    { x: 2688, y: -4608, yaw: Math.PI / 2 },
+  ],
 };
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
-/** Psyonix extra-impulse scale s(|dv|). [A] community summary of the plotted curve. */
+/**
+ * RocketSim `BALL_CAR_EXTRA_IMPULSE_FACTOR_CURVE` (piecewise-linear).
+ * @param {number} dv relative speed (uu/s), already clamped to EXTRA_IMPULSE_MAX_DV
+ */
 export function extraImpulseScale(dv) {
-  if (dv <= 500) return 0.65;
-  if (dv <= 2300) return 0.65 + ((dv - 500) / 1800) * (0.55 - 0.65);
-  if (dv <= 4600) return 0.55 + ((dv - 2300) / 2300) * (0.3 - 0.55);
-  return 0.3;
+  const pts = [
+    [0, 0.65],
+    [500, 0.65],
+    [2300, 0.55],
+    [4600, 0.3],
+  ];
+  if (dv <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) {
+    if (dv <= pts[i][0]) {
+      const [x0, y0] = pts[i - 1];
+      const [x1, y1] = pts[i];
+      return y0 + ((y1 - y0) * (dv - x0)) / (x1 - x0);
+    }
+  }
+  return pts[pts.length - 1][1];
 }
 
 /** Local basis. `l` is local +Y = car **right** (RocketSim), not left. */
@@ -317,7 +366,8 @@ export function stepBall(ball, dt = RL.DT) {
   if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
   ball.pos.addScaledVector(ball.vel, dt);
   const e = RL.BALL_RESTITUTION;
-  // Arena planes + soccar meshes (spin-friction coupling still omitted).
+  // Arena planes + soccar meshes. Tangential friction uses BALL_FRICTION
+  // (Bullet-style Coulomb clamp); spin↔surface coupling still omitted.
   const n = V();
   const clearance = arenaDistance(ball.pos.x, ball.pos.y, ball.pos.z, n);
   const pen = R - clearance;
@@ -325,7 +375,15 @@ export function stepBall(ball, dt = RL.DT) {
     ball.pos.addScaledVector(n, pen);
     const vn = ball.vel.dot(n);
     if (vn < 0) {
+      const jt = ball.vel.clone().addScaledVector(n, -vn); // tangential vel
       ball.vel.addScaledVector(n, -(1 + e) * vn);
+      const jtLen = jt.length();
+      if (jtLen > 1e-6) {
+        // Coulomb: |Δv_t| ≤ μ * |Δv_n| with Δv_n = (1+e)|vn|
+        const maxSlip = RL.BALL_FRICTION * (1 + e) * Math.abs(vn);
+        const kill = Math.min(jtLen, maxSlip);
+        ball.vel.addScaledVector(jt, -kill / jtLen);
+      }
       if (Math.abs(ball.vel.dot(n)) < 25 && n.z > 0.9) {
         ball.vel.z = 0;
       }
@@ -362,20 +420,43 @@ export function collideCarBall(car, ball, tick) {
   const pointVel = car.vel.clone().add(car.omega.clone().cross(nearW.clone().sub(car.pos)));
   const vn = ball.vel.clone().sub(pointVel).dot(n);
   if (vn < 0) {
-    // inelastic normal impulse (rotation + friction terms omitted: [A] simplification)
-    const J = -vn / (1 / RL.BALL_MASS + 1 / RL.CAR_MASS);
+    // RocketSim CARBALL_RESTITUTION = 0 → kill relative normal speed.
+    // Bullet also applies CARBALL_FRICTION=2 on the manifold; we approximate
+    // with a Coulomb clamp on the ball's tangential relative velocity.
+    const invSum = 1 / RL.BALL_MASS + 1 / RL.CAR_MASS;
+    const J = -(1 + RL.CARBALL_RESTITUTION) * vn / invSum;
     ball.vel.addScaledVector(n, J / RL.BALL_MASS);
     car.vel.addScaledVector(n, -J / RL.CAR_MASS);
+    const relAfter = ball.vel.clone().sub(pointVel);
+    const vt = relAfter.clone().addScaledVector(n, -relAfter.dot(n));
+    const vtLen = vt.length();
+    if (vtLen > 1e-6) {
+      const maxSlip = RL.CARBALL_FRICTION * Math.abs(J) * invSum;
+      const kill = Math.min(vtLen, maxSlip);
+      // Apply friction impulse to ball only (car response omitted — matches
+      // RocketSim's post-step extra impulse being ball-only asymmetric).
+      ball.vel.addScaledVector(vt, -kill / vtLen);
+    }
   }
-  // Psyonix extra impulse on the ball only (breaks Newton's 3rd law on purpose)
+  // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).
+  // Once applied, wait until tickCount > last + 1 before applying again.
   if (tick - ball.lastExtraTick > RL.EXTRA_COOLDOWN_TICKS) {
-    const nn = ball.pos.clone().sub(center);
-    // Psyonix extra impulse: scale Z, then remove a fraction of the forward component.
-    nn.z *= RL.EXTRA_IMPULSE_Z;
-    nn.sub(f.clone().multiplyScalar(RL.EXTRA_IMPULSE_FWD * nn.dot(f))).normalize();
-    const m = dv0.length();
-    ball.vel.addScaledVector(nn, m * extraImpulseScale(m));
-    ball.lastExtraTick = tick;
+    const relPos = ball.pos.clone().sub(car.pos);
+    // hitDir = normalize(relPos * (1,1,zScale))
+    const hitDir = V(relPos.x, relPos.y, relPos.z * RL.EXTRA_IMPULSE_Z);
+    if (hitDir.lengthSq() > 1e-12) hitDir.normalize();
+    else hitDir.copy(n);
+    // Remove (1 − FORWARD_SCALE) of the forward component, then re-normalize.
+    const forwardKeep = RL.EXTRA_IMPULSE_FWD;
+    hitDir.sub(f.clone().multiplyScalar(hitDir.dot(f) * (1 - forwardKeep)));
+    if (hitDir.lengthSq() > 1e-12) hitDir.normalize();
+    const relSpeed = Math.min(dv0.length(), RL.EXTRA_IMPULSE_MAX_DV);
+    if (relSpeed > 0) {
+      const impulse =
+        relSpeed * extraImpulseScale(relSpeed) * RL.EXTRA_FORCE_SCALE;
+      ball.vel.addScaledVector(hitDir, impulse);
+      ball.lastExtraTick = tick;
+    }
   }
   return { normal: n, point: nearW, speed: dv0.length() };
 }

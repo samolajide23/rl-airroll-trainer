@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-29T10:58:16.010Z
+Generated: 2026-09-29T11:32:18.564Z
 
 Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
 Candidate: **`src/shared/rl-physics.js`**.
