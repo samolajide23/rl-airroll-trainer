@@ -58,12 +58,16 @@ Frame: Z-up, identity car faces +X with right = +Y.
 - **Not covered yet:** ground driving, jumps/flips, walls, car-ball collisions (need `SOCCAR` + dumped collision meshes from [RLArenaCollisionDumper](https://github.com/ZealanL/RLArenaCollisionDumper)).
 - Orientation drills in the app also use `AerialBody` (`aerial.js`) on a Three.js Y-up car — that path is a separate coordinate mapping and should be validated after `rl-physics.js` matches.
 
-## Interpreting the first report
+## Current status
 
-Expect constant mismatches before any fixes:
+After aligning `rl-physics.js` / `aerial.js` with RocketSim:
 
-| Area | Typical cause |
+| Area | Status |
 |---|---|
-| Air torque / damping | JS uses smish.dev fits; RocketSim uses `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` |
-| Roll / yaw ω sign | Local axis / sign convention bugs in `airControl` |
-| Extra ball impulse forward | JS `0.35` vs RocketSim `0.65` (constants table) |
+| Constants table | Match |
+| Freefall / throttle / boost | Match |
+| Single-axis roll / pitch / yaw ω | Match (sign + magnitude) |
+| Coast-after-roll ω | Match |
+| Orientation over ~0.5–1s | Small residual (~1–6°) from integrator / boost-direction coupling |
+
+Re-run after physics edits and check `out/report.md`.
