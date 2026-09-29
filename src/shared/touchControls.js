@@ -6,6 +6,8 @@
  * (`body.virtual-landscape`) so the user does not need to turn the device.
  */
 
+import { getAppViewport, onAppViewportChange } from "./appViewport.js";
+
 /** @type {Set<string>} */
 const held = new Set();
 
@@ -54,19 +56,21 @@ function wantsVirtualLandscape() {
 
 /**
  * Logical playable size (landscape when virtual-landscape is on).
+ * Uses the visible app viewport so canvas/UI stay clear of browser chrome.
  * @returns {{ width: number, height: number, virtualLandscape: boolean }}
  */
 export function getPlaySize() {
+  const { width, height } = getAppViewport();
   if (virtualLandscape) {
     return {
-      width: window.innerHeight,
-      height: window.innerWidth,
+      width: height,
+      height: width,
       virtualLandscape: true,
     };
   }
   return {
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width,
+    height,
     virtualLandscape: false,
   };
 }
@@ -95,10 +99,14 @@ function notifyViewport() {
  * @param {number} clientY
  */
 function clientToStage(clientX, clientY) {
-  if (!virtualLandscape) return { x: clientX, y: clientY };
+  if (!virtualLandscape) {
+    const { top, left } = getAppViewport();
+    return { x: clientX - left, y: clientY - top };
+  }
   const { width: stageW, height: stageH } = getPlaySize();
-  const cx = window.innerWidth / 2;
-  const cy = window.innerHeight / 2;
+  const { width, height, top, left } = getAppViewport();
+  const cx = left + width / 2;
+  const cy = top + height / 2;
   const sx = clientX - cx;
   const sy = clientY - cy;
   // CSS rotate(90deg): (x', y') = (-y, x). Inverse: (x, y) = (y', -x').
@@ -287,6 +295,7 @@ export function initTouchControls(els) {
     requestAnimationFrame(syncVirtualLandscape);
   });
   window.addEventListener("resize", syncVirtualLandscape);
+  onAppViewportChange(syncVirtualLandscape);
 
   rootEl.addEventListener(
     "touchmove",

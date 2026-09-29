@@ -9,6 +9,7 @@ import {
   snapshotPressedButtons,
 } from "./shared/input.js";
 import { horizontalFovToVertical } from "./shared/chaseCamera.js";
+import { initAppViewport } from "./shared/appViewport.js";
 import {
   getPlaySize,
   initTouchControls,
@@ -1002,6 +1003,7 @@ function syncRendererSize() {
   canvas.style.height = "100%";
 }
 
+initAppViewport();
 window.addEventListener("resize", syncRendererSize);
 onPlayViewportChange(syncRendererSize);
 
