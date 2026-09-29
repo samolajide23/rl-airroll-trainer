@@ -1,21 +1,28 @@
 /**
  * Rocket League free air-roll + shared aerial control mapping.
  *
- * Holding powerslide/handbrake while airborne remaps yaw → roll (unless a
+ * Holding the Air Roll bind while airborne remaps yaw → roll (unless a
  * directional air-roll button is already providing roll). Same rule in Free
  * Play, Rings, and DAR drills.
+ *
+ * Powerslide is handbrake on the ground; Air Roll is the free-roll hold.
+ * They share a button by default (RL dual-bind) but are separate actions.
  */
 
 /**
  * @template {object} T
- * @param {T & { powerslide?: boolean, yaw?: number, roll?: number }} input
+ * @param {T & { airRoll?: boolean, powerslide?: boolean, yaw?: number, roll?: number }} input
  * @param {{ onGround?: boolean }} car
  * @returns {T & { yaw: number, roll: number }}
  */
 export function withFreeAirRoll(input, car) {
   const yaw = input.yaw ?? 0;
   const roll = input.roll ?? 0;
-  if (car.onGround || !input.powerslide || roll !== 0) {
+  // Prefer dedicated Air Roll; fall back to powerslide for older callers.
+  const freeRoll = Boolean(
+    input.airRoll !== undefined ? input.airRoll : input.powerslide,
+  );
+  if (car.onGround || !freeRoll || roll !== 0) {
     return /** @type {T & { yaw: number, roll: number }} */ ({
       ...input,
       yaw,
@@ -37,6 +44,7 @@ export function withFreeAirRoll(input, car) {
  *   pitch?: number,
  *   yaw?: number,
  *   roll?: number,
+ *   airRoll?: boolean,
  *   powerslide?: boolean,
  *   airLeft?: boolean,
  *   airRight?: boolean,
@@ -60,7 +68,10 @@ export function aerialControlAxes(input, opts = {}) {
 
   const mapped = withFreeAirRoll(
     {
-      powerslide: Boolean(input.powerslide),
+      airRoll:
+        input.airRoll !== undefined
+          ? Boolean(input.airRoll)
+          : Boolean(input.powerslide),
       yaw: input.yaw ?? 0,
       roll,
       pitch: input.pitch ?? 0,

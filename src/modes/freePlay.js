@@ -312,6 +312,7 @@ export class FreePlayMode {
       boosting: this.boosting,
       lookRight: input.lookRight,
       lookUp: input.lookUp,
+      lookBehind: input.lookBehind,
       ballCam,
     });
   }

@@ -542,7 +542,7 @@ export class RingsMode {
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = readControls();
-    // RL free air-roll: powerslide remaps yaw→roll while airborne (not on pad).
+    // RL free air-roll: Air Roll bind remaps yaw→roll while airborne.
     const axes = aerialControlAxes(input, { onGround: this.onPlatform });
     if (this.onPlatform) {
       this.car.position.set(0, PLATFORM_TOP_Y + this.hitbox.restZ * UU, 0);
@@ -708,6 +708,7 @@ export class RingsMode {
       boosting: Boolean(this.boosting),
       lookRight: input.lookRight,
       lookUp: input.lookUp,
+      lookBehind: input.lookBehind,
       ballCam: false,
     });
   }

@@ -95,7 +95,7 @@ export class AerialDrillBase {
   _stepOnce(dt) {
     const input = readControls();
     // Pinned aerial drills are always "airborne" — apply RL free air-roll
-    // (powerslide remaps yaw→roll) so DAR practice matches Free Play / RL.
+    // (Air Roll remaps yaw→roll) so DAR practice matches Free Play / RL.
     const axes = aerialControlAxes(input, {
       onGround: false,
       airRollLock: this.airRollLock,
@@ -147,6 +147,7 @@ export class AerialDrillBase {
       boosting: Boolean(input?.boost),
       lookRight: input?.lookRight ?? 0,
       lookUp: input?.lookUp ?? 0,
+      lookBehind: Boolean(input?.lookBehind),
     });
   }
 

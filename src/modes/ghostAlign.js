@@ -321,6 +321,7 @@ export class GhostAlignMode {
       boosting: Boolean(input.boost),
       lookRight: input.lookRight ?? 0,
       lookUp: input.lookUp ?? 0,
+      lookBehind: Boolean(input.lookBehind),
     });
   }
 

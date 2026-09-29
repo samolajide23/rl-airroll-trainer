@@ -240,6 +240,7 @@ export class ChaseCamera {
    *   boosting?: boolean,
    *   lookRight?: number,
    *   lookUp?: number,
+   *   lookBehind?: boolean,
    *   ballCam?: boolean,
    *   snap?: boolean,
    * }} opts
@@ -371,7 +372,11 @@ export class ChaseCamera {
     this.tmp2.copy(opts.target).addScaledVector(up, height);
 
     // ========== Car-cam rotation (yaw from stiffness arm, pitch = Angle) ==========
-    const baseCarYaw = Math.atan2(this.smoothDir.x, this.smoothDir.z);
+    // Rear View (look behind) flips the chase arm 180° around the car.
+    const lookBehind = Boolean(opts.lookBehind);
+    const rearFlip = lookBehind ? Math.PI : 0;
+    const baseCarYaw =
+      Math.atan2(this.smoothDir.x, this.smoothDir.z) + rearFlip;
     const carYaw = baseCarYaw - this.swivelYaw;
     const carPitch = angleRad + this.swivelPitch;
 
@@ -379,9 +384,11 @@ export class ChaseCamera {
     // Keep this exact endpoint for blend=0 so car cam matches prior parity.
     const carLookLift = height + dist * Math.tan(angleRad);
     this.carCamLook.copy(opts.target).addScaledVector(up, carLookLift);
+    // When looking behind, place the camera on the opposite side of the car.
+    const armSign = lookBehind ? 1 : -1;
     this.carCamPos
       .copy(opts.target)
-      .addScaledVector(this.smoothDir, -dist)
+      .addScaledVector(this.smoothDir, armSign * dist)
       .addScaledVector(up, height);
     if (Math.abs(this.swivelYaw) > 1e-6 || Math.abs(this.swivelPitch) > 1e-6) {
       this.tmp.copy(this.carCamPos).sub(this.carCamLook);
@@ -395,9 +402,10 @@ export class ChaseCamera {
     }
 
     // ========== Ball-cam (Focus − Forward×Distance) ==========
+    // Rear View overrides ball cam while held (RL: show behind the car).
     let baseBallYaw = baseCarYaw;
     let baseBallPitch = angleRad;
-    if (opts.lookAt) {
+    if (opts.lookAt && !lookBehind) {
       this.tmp.copy(opts.lookAt).sub(this.tmp2);
       const horizSq = this.tmp.x * this.tmp.x + this.tmp.z * this.tmp.z;
       const horiz = Math.sqrt(horizSq);

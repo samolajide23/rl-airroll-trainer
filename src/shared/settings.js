@@ -1,4 +1,5 @@
-const STORAGE_KEY = "rl-airroll-trainer-settings-v8";
+const STORAGE_KEY = "rl-airroll-trainer-settings-v9";
+const LEGACY_V8 = "rl-airroll-trainer-settings-v8";
 const LEGACY_V7 = "rl-airroll-trainer-settings-v7";
 const LEGACY_V6 = "rl-airroll-trainer-settings-v6";
 const LEGACY_V5 = "rl-airroll-trainer-settings-v5";
@@ -12,13 +13,14 @@ const PREV_KEY = "rl-airroll-trainer-settings-v2";
 /** @typedef {keyof typeof DEFAULT_CAMERA} CameraSetting */
 
 /**
- * Keyboard defaults mirror Rocket League PC:
- * W/S accelerate + reverse (also pitch forward/back in air),
- * A/D steer / yaw, Shift boost, Space jump, Ctrl powerslide/air-roll hold.
+ * Keyboard defaults mirror Rocket League PC controls.
+ * Dual-binds (Accelerate+Pitch Down, etc.) are allowed via SHAREABLE_BINDS.
  */
 export const DEFAULT_BINDS = {
   throttle: "KeyW",
   reverse: "KeyS",
+  steerLeft: "KeyA",
+  steerRight: "KeyD",
   // Pitch forward = nose down (same key as throttle, like RL dual-bind).
   pitchDown: "KeyW",
   // Pitch back = nose up (same key as reverse).
@@ -28,40 +30,100 @@ export const DEFAULT_BINDS = {
   boost: "ShiftLeft",
   jump: "Space",
   powerslide: "ControlLeft",
+  /** Free air-roll hold (RL "Air Roll") — defaults to same key as Powerslide. */
+  airRoll: "ControlLeft",
   airRollLeft: "KeyQ",
   airRollRight: "KeyE",
+  toggleBallCam: "KeyC",
+  lookBehind: "AltLeft",
   resetCar: "KeyR",
   newTarget: "KeyN",
-  /** RL Ball Camera bind — Toggle or Hold per `ballCamMode`; pad uses R3. */
-  toggleBallCam: "KeyC",
 };
 
 /** Pairs that may share one physical key (RL dual-binds). */
 const SHAREABLE_BINDS = [
   new Set(["throttle", "pitchDown"]),
   new Set(["reverse", "pitchUp"]),
+  new Set(["steerLeft", "yawLeft"]),
+  new Set(["steerRight", "yawRight"]),
+  new Set(["powerslide", "airRoll"]),
 ];
 
 export const BIND_LABELS = {
   throttle: "Accelerate",
   reverse: "Brake / Reverse",
-  pitchUp: "Pitch up (nose up)",
-  pitchDown: "Pitch down (nose down)",
-  yawLeft: "Steer / yaw left",
-  yawRight: "Steer / yaw right",
+  steerLeft: "Steer Left",
+  steerRight: "Steer Right",
+  pitchUp: "Pitch Up",
+  pitchDown: "Pitch Down",
+  yawLeft: "Yaw Left",
+  yawRight: "Yaw Right",
   boost: "Boost",
   jump: "Jump",
   powerslide: "Powerslide",
-  airRollLeft: "Air roll left",
-  airRollRight: "Air roll right",
-  resetCar: "Reset car",
-  newTarget: "New target / skip",
-  toggleBallCam: "Ball cam",
+  airRoll: "Air Roll",
+  airRollLeft: "Air Roll Left",
+  airRollRight: "Air Roll Right",
+  toggleBallCam: "Toggle Ball Cam",
+  lookBehind: "Rear View",
+  resetCar: "Reset Shot",
+  newTarget: "Skip / Next",
 };
 
 /**
+ * Settings rows matching Rocket League's Controls screen.
+ * `pad` = pad button setting key, or a fixed stick hint string, or null.
+ *
+ * @type {{ id: string, title: string, actions: { id: BindAction, pad: string | null }[] }[]}
+ */
+export const BIND_SECTIONS = [
+  {
+    id: "driving",
+    title: "Driving",
+    actions: [
+      { id: "throttle", pad: "throttle" },
+      { id: "reverse", pad: "brake" },
+      { id: "steerLeft", pad: "stick:Left Stick" },
+      { id: "steerRight", pad: "stick:Left Stick" },
+      { id: "boost", pad: "boost" },
+      { id: "jump", pad: "jump" },
+      { id: "powerslide", pad: "powerslide" },
+    ],
+  },
+  {
+    id: "air",
+    title: "Air Control",
+    actions: [
+      { id: "pitchUp", pad: "stick:Left Stick" },
+      { id: "pitchDown", pad: "stick:Left Stick" },
+      { id: "yawLeft", pad: "stick:Left Stick" },
+      { id: "yawRight", pad: "stick:Left Stick" },
+      { id: "airRoll", pad: "airRoll" },
+      { id: "airRollLeft", pad: "airRollLeft" },
+      { id: "airRollRight", pad: "airRollRight" },
+    ],
+  },
+  {
+    id: "camera",
+    title: "Camera",
+    actions: [
+      { id: "toggleBallCam", pad: "toggleBallCam" },
+      { id: "lookBehind", pad: "lookBehind" },
+    ],
+  },
+  {
+    id: "training",
+    title: "Training",
+    actions: [
+      { id: "resetCar", pad: "resetCar" },
+      { id: "newTarget", pad: "newTarget" },
+    ],
+  },
+];
+
+/**
  * Xbox-style Gamepad API indices — Rocket League defaults:
- * RT accelerate, LT brake, A jump, B boost, X powerslide, LB/RB air roll.
+ * RT accelerate, LT brake, A jump, B boost, X powerslide/air-roll, LB/RB air roll L/R.
  */
 export const DEFAULT_PAD = {
   throttle: 7, // RT / R2
@@ -69,12 +131,14 @@ export const DEFAULT_PAD = {
   boost: 1, // B / Circle
   jump: 0, // A / Cross
   powerslide: 2, // X / Square
+  airRoll: 2, // X / Square (same as powerslide by default)
   airRollLeft: 4, // LB
   airRollRight: 5, // RB
   resetCar: 8, // Back / Share
   newTarget: 3, // Y / Triangle
   /** RL Toggle Ball Cam — Right stick click (R3). */
   toggleBallCam: 11,
+  lookBehind: 10, // L3
   pitchAxis: 1, // Left stick Y
   yawAxis: 0, // Left stick X
   lookXAxis: 2, // Right stick X (camera swivel)
@@ -92,11 +156,13 @@ export const PAD_BUTTON_ACTIONS = [
   "boost",
   "jump",
   "powerslide",
+  "airRoll",
   "airRollLeft",
   "airRollRight",
   "resetCar",
   "newTarget",
   "toggleBallCam",
+  "lookBehind",
 ];
 
 export const PAD_AXIS_OPTIONS = [
@@ -219,6 +285,44 @@ function mergeCamera(src) {
   }
 }
 
+/**
+ * Fill new v9 bind/pad fields from older saved data.
+ * @param {Record<string, unknown>} [savedBinds]
+ * @param {Record<string, unknown>} [savedPad]
+ */
+function applyV9Defaults(savedBinds, savedPad) {
+  if (typeof binds.steerLeft !== "string" || !binds.steerLeft) {
+    binds.steerLeft =
+      typeof savedBinds?.yawLeft === "string"
+        ? savedBinds.yawLeft
+        : DEFAULT_BINDS.steerLeft;
+  }
+  if (typeof binds.steerRight !== "string" || !binds.steerRight) {
+    binds.steerRight =
+      typeof savedBinds?.yawRight === "string"
+        ? savedBinds.yawRight
+        : DEFAULT_BINDS.steerRight;
+  }
+  if (typeof binds.airRoll !== "string" || !binds.airRoll) {
+    binds.airRoll =
+      typeof savedBinds?.powerslide === "string"
+        ? savedBinds.powerslide
+        : DEFAULT_BINDS.airRoll;
+  }
+  if (typeof binds.lookBehind !== "string") {
+    binds.lookBehind = DEFAULT_BINDS.lookBehind;
+  }
+  if (pad.airRoll === undefined || pad.airRoll === null) {
+    pad.airRoll =
+      typeof savedPad?.powerslide === "number"
+        ? savedPad.powerslide
+        : DEFAULT_PAD.airRoll;
+  }
+  if (pad.lookBehind === undefined) {
+    pad.lookBehind = DEFAULT_PAD.lookBehind;
+  }
+}
+
 function load() {
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
@@ -230,13 +334,25 @@ function load() {
     let upgradeCameraFromV6 = false;
     /** v7 lacked ballCamMode (Toggle/Hold). */
     let upgradeCameraFromV7 = false;
+    /** v8 lacked steer/airRoll/lookBehind as separate binds. */
+    let upgradeBindsFromV8 = false;
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_V8);
+      if (raw) upgradeBindsFromV8 = true;
+    }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V7);
-      if (raw) upgradeCameraFromV7 = true;
+      if (raw) {
+        upgradeCameraFromV7 = true;
+        upgradeBindsFromV8 = true;
+      }
     }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V6);
-      if (raw) upgradeCameraFromV6 = true;
+      if (raw) {
+        upgradeCameraFromV6 = true;
+        upgradeBindsFromV8 = true;
+      }
     }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V5);
@@ -248,6 +364,7 @@ function load() {
     }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V3);
+      if (raw) upgradeBindsFromV8 = true;
     }
     if (!raw) {
       // Migrate v2 → v3 (boost/jump binds added; Space is jump)
@@ -265,9 +382,11 @@ function load() {
             binds.newTarget = "KeyN";
             binds.jump = "Space";
           }
+          applyV9Defaults(parsed.binds, parsed.pad);
         }
         if (parsed?.pad && typeof parsed.pad === "object") {
           mergePad(parsed.pad);
+          applyV9Defaults(parsed.binds, parsed.pad);
         }
         if (parsed?.camera && typeof parsed.camera === "object") {
           mergeCamera(parsed.camera);
@@ -316,15 +435,19 @@ function load() {
         if (camera.ballCamMode !== "toggle" && camera.ballCamMode !== "hold") {
           camera.ballCamMode = DEFAULT_CAMERA.ballCamMode;
         }
-        persist();
       }
       // v7 → v8: Ball Camera Toggle/Hold (RL Camera Settings).
       if (upgradeCameraFromV7) {
         if (camera.ballCamMode !== "toggle" && camera.ballCamMode !== "hold") {
           camera.ballCamMode = DEFAULT_CAMERA.ballCamMode;
         }
-        persist();
       }
+      if (upgradeBindsFromV8) {
+        applyV9Defaults(parsed?.binds, parsed?.pad);
+      }
+      // Always ensure new keys exist even on fresh v9 loads from partial data.
+      applyV9Defaults(parsed?.binds, parsed?.pad);
+      persist();
       return;
     }
 
@@ -340,6 +463,7 @@ function load() {
       binds.newTarget = "KeyN";
       binds.jump = "Space";
     }
+    applyV9Defaults(parsed, null);
     persist();
   } catch {
     // ignore corrupt storage
@@ -396,10 +520,6 @@ export function getBind(action) {
 }
 
 /**
- * @param {BindAction} action
- * @param {string} code
- */
-/**
  * @param {string} a
  * @param {string} b
  */
@@ -407,12 +527,17 @@ function bindsMayShare(a, b) {
   return SHAREABLE_BINDS.some((g) => g.has(a) && g.has(b));
 }
 
+/**
+ * @param {BindAction} action
+ * @param {string} code  Keyboard `e.code`, `Mouse0`…, or `""` to clear
+ */
 export function setBind(action, code) {
   if (!(action in DEFAULT_BINDS)) return;
+  // Escape is reserved for cancelling listen mode in the UI.
   if (code === "Escape") return;
 
   for (const key of Object.keys(binds)) {
-    if (key !== action && binds[key] === code && !bindsMayShare(action, key)) {
+    if (key !== action && binds[key] === code && code && !bindsMayShare(action, key)) {
       binds[key] = "";
     }
   }
@@ -465,7 +590,7 @@ export function setPad(key, value) {
       const n = Number(value);
       if (!Number.isInteger(n) || n < 0) return;
       for (const action of PAD_BUTTON_ACTIONS) {
-        if (action !== key && pad[action] === n) {
+        if (action !== key && pad[action] === n && !padButtonsMayShare(action, key)) {
           pad[action] = null;
         }
       }
@@ -473,6 +598,17 @@ export function setPad(key, value) {
     }
   }
   persist();
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ */
+function padButtonsMayShare(a, b) {
+  return (
+    (a === "powerslide" && b === "airRoll") ||
+    (a === "airRoll" && b === "powerslide")
+  );
 }
 
 export function resetPad() {
@@ -537,6 +673,12 @@ export function formatKeyCode(code) {
   if (code.startsWith("Digit")) return code.slice(5);
   if (code.startsWith("Arrow")) return code.slice(5);
   if (code.startsWith("Numpad")) return `Num ${code.slice(6)}`;
+  if (code.startsWith("Mouse")) {
+    const btn = code.slice(5);
+    return { "0": "LMB", "1": "RMB", "2": "MMB", "3": "Mouse 3", "4": "Mouse 4" }[
+      btn
+    ] ?? code;
+  }
   const special = {
     ShiftLeft: "L Shift",
     ShiftRight: "R Shift",
@@ -557,6 +699,16 @@ export function formatKeyCode(code) {
     Minus: "-",
     Equal: "=",
     Backquote: "`",
+    Tab: "Tab",
+    CapsLock: "Caps",
+    Enter: "Enter",
+    Backspace: "Backspace",
+    Delete: "Delete",
+    Insert: "Insert",
+    Home: "Home",
+    End: "End",
+    PageUp: "PgUp",
+    PageDown: "PgDn",
   };
   return special[code] ?? code;
 }
@@ -585,14 +737,15 @@ export function formatControlsHelp() {
   const b = binds;
   const p = pad;
   return (
-    `${formatKeyCode(b.throttle)}${formatKeyCode(b.yawLeft)}${formatKeyCode(b.reverse)}${formatKeyCode(b.yawRight)} drive · ` +
+    `${formatKeyCode(b.throttle)}${formatKeyCode(b.steerLeft)}${formatKeyCode(b.reverse)}${formatKeyCode(b.steerRight)} drive · ` +
     `stick pitch/steer · ` +
     `${formatPadButton(p.throttle)}/${formatPadButton(p.brake)} throttle/brake · ` +
     `${formatKeyCode(b.boost)}/${formatPadButton(p.boost)} boost · ` +
     `${formatKeyCode(b.jump)}/${formatPadButton(p.jump)} jump · ` +
-    `${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} air roll · ` +
+    `${formatKeyCode(b.airRoll)}/${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} air roll · ` +
     `${formatKeyCode(b.resetCar)}/${formatPadButton(p.resetCar)} reset · ` +
     `${formatKeyCode(b.newTarget)}/${formatPadButton(p.newTarget)} new · ` +
-    `${formatKeyCode(b.toggleBallCam)}/${formatPadButton(p.toggleBallCam)} ball cam · Esc menu`
+    `${formatKeyCode(b.toggleBallCam)}/${formatPadButton(p.toggleBallCam)} ball cam · ` +
+    `${formatKeyCode(b.lookBehind)} rear · Esc menu`
   );
 }
