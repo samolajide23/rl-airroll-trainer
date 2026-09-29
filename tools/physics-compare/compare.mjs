@@ -122,12 +122,20 @@ function constantsSection(rsConst, jsConst) {
     ["D_pitch (effective)", -Math.abs(rsConst.EFFECTIVE_D_PITCH), jsConst.D_PITCH],
     ["D_yaw (effective)", -Math.abs(rsConst.EFFECTIVE_D_YAW), jsConst.D_YAW],
     ["Ball drag", rsConst.BALL_DRAG, jsConst.BALL_DRAG],
+    ["Ball restitution", rsConst.BALL_RESTITUTION, jsConst.BALL_RESTITUTION],
     ["Extra impulse Z", rsConst.BALL_CAR_EXTRA_IMPULSE_Z_SCALE, jsConst.EXTRA_IMPULSE_Z],
     [
       "Extra impulse forward",
       rsConst.BALL_CAR_EXTRA_IMPULSE_FORWARD_SCALE,
       jsConst.EXTRA_IMPULSE_FWD,
     ],
+    ["Jump max time", rsConst.JUMP_MAX_TIME, jsConst.JUMP_HOLD_MAX],
+    ["Jump min time", rsConst.JUMP_MIN_TIME, jsConst.JUMP_MIN_TIME],
+    ["Jump reset pad", rsConst.JUMP_RESET_TIME_PAD, jsConst.JUMP_RESET_TIME_PAD],
+    ["CAR_TORQUE_SCALE", rsConst.CAR_TORQUE_SCALE, jsConst.CAR_TORQUE_SCALE],
+    ["Flip back impulse X", rsConst.FLIP_BACKWARD_IMPULSE_SCALE_X, jsConst.FLIP_BACK_IMPULSE_X],
+    ["Autoflip normZ", rsConst.CAR_AUTOFLIP_NORMZ_THRESH, jsConst.AUTOFLIP_NORMZ],
+    ["Coasting brake", rsConst.COASTING_BRAKE_FACTOR, jsConst.COASTING_BRAKE_FACTOR],
   ];
 
   let md = `## Constants (RocketSim vs rl-physics.js)\n\n`;

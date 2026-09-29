@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-29T13:25:51.700Z
+Generated: 2026-09-29T14:45:05.646Z
 
 Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
 Candidate: **`src/shared/rl-physics.js`**.
@@ -21,8 +21,16 @@ Candidate: **`src/shared/rl-physics.js`**.
 | D_pitch (effective) | -2.8762 | -2.8762 | 0.0000 |
 | D_yaw (effective) | -1.9175 | -1.9175 | 0.0000 |
 | Ball drag | 0.0300 | 0.0300 | 0.0000 |
+| Ball restitution | 0.6000 | 0.6000 | 0.0000 |
 | Extra impulse Z | 0.3500 | 0.3500 | 0.0000 |
 | Extra impulse forward | 0.6500 | 0.6500 | 0.0000 |
+| Jump max time | 0.2000 | 0.2000 | 0.0000 |
+| Jump min time | 0.0250 | 0.0250 | 0.0000 |
+| Jump reset pad | 0.0250 | 0.0250 | 0.0000 |
+| CAR_TORQUE_SCALE | 0.0959 | 0.0959 | 0.0000 |
+| Flip back impulse X | 1.0667 | 1.0667 | 0.0000 |
+| Autoflip normZ | 0.7071 | 0.7071 | 0.0000 |
+| Coasting brake | 0.1500 | 0.1500 | 0.0000 |
 
 RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, roll packing).
 
@@ -41,6 +49,11 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `yaw_left_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `roll_then_release` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `combo_pitch_roll_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roll_from_pitch45` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roll_from_pitch90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `yaw_from_roll90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `combo_from_yaw90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `partial_inputs_air` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `boost_and_pitch_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `double_jump_air` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_forward_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
@@ -150,6 +163,46 @@ Pitch up + roll right together for 1s
 - Final ω RS -4.862, -2.439, 0.813 vs JS -4.862, -2.439, 0.813
 - Final forward RS [0.768, 0.081, -0.635] vs JS [0.768, 0.081, -0.635]
 
+### `roll_from_pitch45`
+Start pitched +45°, hold air-roll right — must spin about nose
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS -3.889, 0.000, -3.889 vs JS -3.889, -0.000, -3.889
+- Final forward RS [0.707, -0.000, 0.707] vs JS [0.707, 0.000, 0.707]
+
+### `roll_from_pitch90`
+Start pitched +90° (nose up), hold air-roll right
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS -0.000, -0.000, -5.500 vs JS 0.000, 0.000, -5.500
+- Final forward RS [0.000, 0.000, 1.000] vs JS [-0.000, 0.000, 1.000]
+
+### `yaw_from_roll90`
+Start rolled 90°, hold yaw right — body-up yaw
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
+- Final ω RS -0.000, 4.554, -0.000 vs JS 0.000, 4.554, 0.000
+- Final forward RS [0.402, -0.000, -0.916] vs JS [0.402, -0.000, -0.916]
+
+### `combo_from_yaw90`
+Start yawed 90°, pitch+roll together
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS 2.449, -4.851, 0.845 vs JS 2.449, -4.851, 0.845
+- Final forward RS [-0.758, 0.458, -0.465] vs JS [-0.758, 0.458, -0.465]
+
+### `partial_inputs_air`
+Half pitch + half yaw + half roll for 1s
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 472.29 vs JS 0.00, 0.00, 472.29
+- Final ω RS -4.795, -1.352, 2.330 vs JS -4.795, -1.352, 2.330
+- Final forward RS [0.322, -0.025, -0.946] vs JS [0.322, -0.025, -0.946]
+
 ### `boost_and_pitch_1s`
 Boost while pitching up for 1s
 
@@ -203,7 +256,7 @@ Full throttle on open floor facing +Y for 2s
 
 - Worst position error at tick **239** (0.004 uu)
 - Final pos RS -0.00, -2201.69, 17.03 vs JS 0.00, -2201.68, 17.03
-- Final ω RS -0.000, 0.000, 0.000 vs JS -0.000, -0.000, 0.000
+- Final ω RS -0.000, 0.000, 0.000 vs JS -0.000, 0.000, -0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [0.000, 1.000, -0.010]
 
 ### `ground_throttle_4s`
@@ -211,7 +264,7 @@ Full throttle on open floor to drive-speed cap
 
 - Worst position error at tick **479** (0.008 uu)
 - Final pos RS -0.01, 611.80, 17.03 vs JS 0.00, 611.81, 17.03
-- Final ω RS 0.000, 0.000, -0.000 vs JS -0.000, 0.000, 0.000
+- Final ω RS 0.000, 0.000, -0.000 vs JS -0.000, 0.000, -0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [0.000, 1.000, -0.010]
 
 ### `ground_boost_2s`
@@ -243,7 +296,7 @@ Throttle to speed then coast 1s
 
 - Worst position error at tick **719** (0.016 uu)
 - Final pos RS -0.01, 3171.61, 17.03 vs JS 0.00, 3171.62, 17.03
-- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
+- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, -0.000, -0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [0.000, 1.000, -0.010]
 
 ### `ground_brake_0_25s`
@@ -251,7 +304,7 @@ Throttle to speed then reverse-brake 0.25s
 
 - Worst position error at tick **629** (0.012 uu)
 - Final pos RS -0.01, 2268.65, 17.03 vs JS 0.00, 2268.66, 17.03
-- Final ω RS -0.000, -0.000, 0.000 vs JS -0.000, -0.000, 0.000
+- Final ω RS -0.000, -0.000, 0.000 vs JS -0.000, 0.000, 0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [0.000, 1.000, -0.010]
 
 ### `ground_powerslide_0_5s`
@@ -290,9 +343,9 @@ Jump then forward flip from ground
 Drive into +X wall and climb with throttle only
 
 - Worst position error at tick **360** (0.100 uu)
-- Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.93, -0.00, 1649.07
-- Final ω RS 0.000, -2.442, 0.000 vs JS 0.000, -2.441, 0.000
-- Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, -0.000, 0.970]
+- Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.93, 0.00, 1649.07
+- Final ω RS 0.000, -2.442, 0.000 vs JS -0.000, -2.441, -0.000
+- Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, 0.000, 0.970]
 
 ## How to re-run
 

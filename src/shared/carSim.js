@@ -6,6 +6,7 @@ import {
   getHitboxPreset,
   HITBOX_PRESETS,
 } from "./hitboxPresets.js";
+import { CAR_TORQUE_SCALE, RL_CONST as C, RL_CURVES } from "./rlConst.js";
 import {
   RL,
   axes,
@@ -50,96 +51,51 @@ function linearPieceCurve(points, defaultOutput = 1) {
   };
 }
 
-/** RocketSim RLConst curves. */
+/** RocketSim RLConst curves (float32 control points from `rlConst.js`). */
 export const RS_CURVES = {
-  /** |forward speed| → max steer angle (rad) */
-  steerAngle: linearPieceCurve([
-    [0, 0.53356],
-    [500, 0.3193],
-    [1000, 0.18203],
-    [1500, 0.1057],
-    [1750, 0.08507],
-    [3000, 0.03454],
-  ]),
-  /** |forward speed| → max steer angle while fully powersliding (rad) */
-  powerslideSteerAngle: linearPieceCurve([
-    [0, 0.39235],
-    [2500, 0.1261],
-  ]),
-  /** |forward speed| → engine torque factor */
-  driveSpeedTorque: linearPieceCurve([
-    [0, 1],
-    [1400, 0.1],
-    [1410, 0],
-  ]),
-  /** contact normal Z → friction factor when not throttling */
-  nonStickyFriction: linearPieceCurve([
-    [0, 0.1],
-    [0.7075, 0.5],
-    [1, 1],
-  ]),
-  /** lateral slip ratio → lateral friction */
-  latFriction: linearPieceCurve([
-    [0, 1],
-    [1, 0.2],
-  ]),
+  steerAngle: linearPieceCurve(RL_CURVES.steerAngle),
+  powerslideSteerAngle: linearPieceCurve(RL_CURVES.powerslideSteerAngle),
+  driveSpeedTorque: linearPieceCurve(RL_CURVES.driveSpeedTorque),
+  nonStickyFriction: linearPieceCurve(RL_CURVES.nonStickyFriction),
+  latFriction: linearPieceCurve(RL_CURVES.latFriction),
   longFriction: linearPieceCurve([]),
-  handbrakeLatFriction: linearPieceCurve([[0, 0.1]]),
-  handbrakeLongFriction: linearPieceCurve([
-    [0, 0.5],
-    [1, 0.9],
-  ]),
-  /** RocketSim `BUMP_VEL_AMOUNT_GROUND_CURVE` (speed toward other → Δv scale). */
-  bumpVelGround: linearPieceCurve([
-    [0, 1 / 1.2],
-    [1400, 1100],
-    [2200, 1530],
-  ]),
-  /** RocketSim `BUMP_VEL_AMOUNT_AIR_CURVE`. */
-  bumpVelAir: linearPieceCurve([
-    [0, 1 / 1.2],
-    [1400, 1390],
-    [2200, 1945],
-  ]),
-  /** RocketSim `BUMP_UPWARD_VEL_AMOUNT_CURVE`. */
-  bumpVelUp: linearPieceCurve([
-    [0, 1 / 3],
-    [1400, 278],
-    [2200, 417],
-  ]),
+  handbrakeLatFriction: linearPieceCurve(RL_CURVES.handbrakeLatFriction),
+  handbrakeLongFriction: linearPieceCurve(RL_CURVES.handbrakeLongFriction),
+  bumpVelGround: linearPieceCurve(RL_CURVES.bumpVelGround),
+  bumpVelAir: linearPieceCurve(RL_CURVES.bumpVelAir),
+  bumpVelUp: linearPieceCurve(RL_CURVES.bumpVelUp),
 };
 
 /** RocketSim RLConst / Bullet solver constants used by the car tick. */
 export const RS = {
-  THROTTLE_TORQUE_AMOUNT: CAR_MASS * 400,
-  BRAKE_TORQUE_AMOUNT: CAR_MASS * (14.25 + 1 / 3),
-  STOPPING_FORWARD_VEL: 25,
-  COASTING_BRAKE_FACTOR: 0.15,
-  BRAKING_NO_THROTTLE_SPEED_THRESH: 0.01,
-  THROTTLE_DEADZONE: 0.001,
-  THROTTLE_AIR_ACCEL: 200 / 3,
-  JUMP_MIN_TIME: 0.025,
-  JUMP_RESET_TIME_PAD: 1 / 40,
-  JUMP_PRE_MIN_ACCEL_SCALE: 0.62,
-  AUTOFLIP_IMPULSE: 200,
-  AUTOFLIP_TORQUE: 50,
-  AUTOFLIP_TIME: 0.4,
-  AUTOFLIP_NORMZ_THRESH: Math.SQRT1_2,
-  AUTOFLIP_ROLL_THRESH: 2.8,
-  AUTOROLL_FORCE: 100,
-  AUTOROLL_TORQUE: 80,
-  /** RocketSim RLConst — float32 of `(2π/65536)*1000`. */
-  CAR_TORQUE_SCALE: 0.09587380290031433,
-  AIR_CONTROL_TORQUE: { pitch: 130, yaw: 95, roll: 400 },
-  AIR_CONTROL_DAMPING: { pitch: 30, yaw: 20, roll: 50 },
-  SUSPENSION_FORCE_SCALE_FRONT: 36 - 1 / 4,
-  SUSPENSION_FORCE_SCALE_BACK: 54 + 1 / 4 + 1.5 / 100,
-  SUSPENSION_STIFFNESS: 500,
-  WHEELS_DAMPING_COMPRESSION: 25,
-  WHEELS_DAMPING_RELAXATION: 40,
-  MAX_SUSPENSION_TRAVEL: 12,
-  SUSPENSION_SUBTRACTION: 0.05 * BT_TO_UU,
-  ROLLING_FRICTION_SCALE_MAGIC: 113.73963,
+  THROTTLE_TORQUE_AMOUNT: C.THROTTLE_TORQUE_AMOUNT,
+  BRAKE_TORQUE_AMOUNT: C.BRAKE_TORQUE_AMOUNT,
+  STOPPING_FORWARD_VEL: C.STOPPING_FORWARD_VEL,
+  COASTING_BRAKE_FACTOR: C.COASTING_BRAKE_FACTOR,
+  BRAKING_NO_THROTTLE_SPEED_THRESH: C.BRAKING_NO_THROTTLE_SPEED_THRESH,
+  THROTTLE_DEADZONE: C.THROTTLE_DEADZONE,
+  THROTTLE_AIR_ACCEL: C.THROTTLE_AIR_ACCEL,
+  JUMP_MIN_TIME: C.JUMP_MIN_TIME,
+  JUMP_RESET_TIME_PAD: C.JUMP_RESET_TIME_PAD,
+  JUMP_PRE_MIN_ACCEL_SCALE: C.JUMP_PRE_MIN_ACCEL_SCALE,
+  AUTOFLIP_IMPULSE: C.CAR_AUTOFLIP_IMPULSE,
+  AUTOFLIP_TORQUE: C.CAR_AUTOFLIP_TORQUE,
+  AUTOFLIP_TIME: C.CAR_AUTOFLIP_TIME,
+  AUTOFLIP_NORMZ_THRESH: C.CAR_AUTOFLIP_NORMZ_THRESH,
+  AUTOFLIP_ROLL_THRESH: C.CAR_AUTOFLIP_ROLL_THRESH,
+  AUTOROLL_FORCE: C.CAR_AUTOROLL_FORCE,
+  AUTOROLL_TORQUE: C.CAR_AUTOROLL_TORQUE,
+  CAR_TORQUE_SCALE,
+  AIR_CONTROL_TORQUE: { ...C.CAR_AIR_CONTROL_TORQUE },
+  AIR_CONTROL_DAMPING: { ...C.CAR_AIR_CONTROL_DAMPING },
+  SUSPENSION_FORCE_SCALE_FRONT: C.SUSPENSION_FORCE_SCALE_FRONT,
+  SUSPENSION_FORCE_SCALE_BACK: C.SUSPENSION_FORCE_SCALE_BACK,
+  SUSPENSION_STIFFNESS: C.SUSPENSION_STIFFNESS,
+  WHEELS_DAMPING_COMPRESSION: C.WHEELS_DAMPING_COMPRESSION,
+  WHEELS_DAMPING_RELAXATION: C.WHEELS_DAMPING_RELAXATION,
+  MAX_SUSPENSION_TRAVEL: C.MAX_SUSPENSION_TRAVEL,
+  SUSPENSION_SUBTRACTION: C.SUSPENSION_SUBTRACTION_BT * BT_TO_UU,
+  ROLLING_FRICTION_SCALE_MAGIC: C.ROLLING_FRICTION_SCALE_MAGIC,
   /** Bullet `resolveSingleBilateral` contact damping */
   SIDE_FRICTION_DAMPING: 0.2,
   /** Bullet btContactSolverInfo defaults (RocketSim sets erp2 = 0.8) */
@@ -148,8 +104,8 @@ export const RS = {
   SOLVER_ITERATIONS: 10,
   RESTITUTION_VELOCITY_THRESHOLD: 0.2 * BT_TO_UU,
   CONTACT_BREAKING_THRESHOLD: 0.02 * BT_TO_UU,
-  CARWORLD_FRICTION: 0.3,
-  CARWORLD_RESTITUTION: 0.3,
+  CARWORLD_FRICTION: C.CARWORLD_COLLISION_FRICTION,
+  CARWORLD_RESTITUTION: C.CARWORLD_COLLISION_RESTITUTION,
   /**
    * When several OBB corners share the deepest penetration on one normal
    * (edge flush with a plane), pick the +local-Y corner (car right). Tuned

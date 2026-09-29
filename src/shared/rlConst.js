@@ -1,0 +1,192 @@
+/**
+ * RocketSim `RLConst` values as float32 (same bit patterns Psyonix / RocketSim use).
+ * Prefer these over double expressions like `200/3` so browser sims stay bit-close.
+ *
+ * Source: ZealanL/RocketSim `src/RLConst.h` (+ Car.cpp / btVehicleRL.cpp locals).
+ */
+
+/** @param {number} x @returns {number} */
+export const f32 = (x) => Math.fround(x);
+
+/** RocketSim `CAR_TORQUE_SCALE` — float32 of `(2π/65536)*1000`. */
+export const CAR_TORQUE_SCALE = 0.09587380290031433;
+
+export const RL_CONST = {
+  GRAVITY_Z: f32(650),
+  CAR_MAX_SPEED: f32(2300),
+  BALL_MAX_SPEED: f32(6000),
+  CAR_MAX_ANG_SPEED: f32(5.5),
+  CAR_MASS: f32(180),
+  BALL_MASS: f32(180) / 6, // CAR_MASS_BT / 6 — exact 30
+
+  BOOST_MAX: f32(100),
+  BOOST_USED_PER_SECOND: f32(100 / 3),
+  BOOST_SPAWN_AMOUNT: f32(100 / 3),
+  BOOST_MIN_TIME: f32(0.1),
+  BOOST_ACCEL_GROUND: f32(2975 / 3),
+  BOOST_ACCEL_AIR: f32(3175 / 3),
+
+  THROTTLE_AIR_ACCEL: f32(200 / 3),
+  JUMP_IMMEDIATE_FORCE: f32(875 / 3),
+  JUMP_ACCEL: f32(4375 / 3),
+  JUMP_MIN_TIME: f32(0.025),
+  JUMP_RESET_TIME_PAD: f32(1 / 40),
+  JUMP_MAX_TIME: f32(0.2),
+  /** Car.cpp local `JUMP_PRE_MIN_ACCEL_SCALE` */
+  JUMP_PRE_MIN_ACCEL_SCALE: f32(0.62),
+  DOUBLEJUMP_MAX_DELAY: f32(1.25),
+
+  FLIP_Z_DAMP_120: f32(0.35),
+  FLIP_Z_DAMP_START: f32(0.15),
+  FLIP_Z_DAMP_END: f32(0.21),
+  FLIP_TORQUE_TIME: f32(0.65),
+  FLIP_TORQUE_MIN_TIME: f32(0.41),
+  FLIP_PITCHLOCK_TIME: f32(1),
+  FLIP_PITCHLOCK_EXTRA_TIME: f32(0.3),
+  FLIP_INITIAL_VEL_SCALE: f32(500),
+  FLIP_TORQUE_X: f32(260),
+  FLIP_TORQUE_Y: f32(224),
+  FLIP_FORWARD_IMPULSE_MAX_SPEED_SCALE: f32(1),
+  FLIP_SIDE_IMPULSE_MAX_SPEED_SCALE: f32(1.9),
+  FLIP_BACKWARD_IMPULSE_MAX_SPEED_SCALE: f32(2.5),
+  FLIP_BACKWARD_IMPULSE_SCALE_X: f32(16 / 15),
+
+  SUPERSONIC_START_SPEED: f32(2200),
+  SUPERSONIC_MAINTAIN_MIN_SPEED: f32(2100),
+  SUPERSONIC_MAINTAIN_MAX_TIME: f32(1),
+  POWERSLIDE_RISE_RATE: f32(5),
+  POWERSLIDE_FALL_RATE: f32(2),
+
+  THROTTLE_TORQUE_AMOUNT: f32(180) * f32(400),
+  /** `CAR_MASS_BT * (14.25f + 1.f/3.f)` — product lands on 2625 in f32. */
+  BRAKE_TORQUE_AMOUNT: f32(180 * (14.25 + 1 / 3)),
+  STOPPING_FORWARD_VEL: f32(25),
+  COASTING_BRAKE_FACTOR: f32(0.15),
+  BRAKING_NO_THROTTLE_SPEED_THRESH: f32(0.01),
+  THROTTLE_DEADZONE: f32(0.001),
+
+  CAR_TORQUE_SCALE,
+  CAR_AIR_CONTROL_TORQUE: { pitch: f32(130), yaw: f32(95), roll: f32(400) },
+  CAR_AIR_CONTROL_DAMPING: { pitch: f32(30), yaw: f32(20), roll: f32(50) },
+
+  CAR_AUTOFLIP_IMPULSE: f32(200),
+  CAR_AUTOFLIP_TORQUE: f32(50),
+  CAR_AUTOFLIP_TIME: f32(0.4),
+  CAR_AUTOFLIP_NORMZ_THRESH: f32(Math.SQRT1_2),
+  CAR_AUTOFLIP_ROLL_THRESH: f32(2.8),
+  CAR_AUTOROLL_FORCE: f32(100),
+  CAR_AUTOROLL_TORQUE: f32(80),
+
+  BALL_COLLISION_RADIUS_SOCCAR: f32(91.25),
+  BALL_REST_Z: f32(93.15),
+  BALL_MAX_ANG_SPEED: f32(6),
+  BALL_DRAG: f32(0.03),
+  BALL_FRICTION: f32(0.35),
+  BALL_RESTITUTION: f32(0.6),
+
+  CARBALL_COLLISION_FRICTION: f32(2),
+  CARBALL_COLLISION_RESTITUTION: f32(0),
+  CARWORLD_COLLISION_FRICTION: f32(0.3),
+  CARWORLD_COLLISION_RESTITUTION: f32(0.3),
+  CARCAR_COLLISION_FRICTION: f32(0.09),
+  CARCAR_COLLISION_RESTITUTION: f32(0.1),
+  CAR_COLLISION_FRICTION: f32(0.3),
+  CAR_COLLISION_RESTITUTION: f32(0.1),
+
+  BALL_CAR_EXTRA_IMPULSE_Z_SCALE: f32(0.35),
+  BALL_CAR_EXTRA_IMPULSE_FORWARD_SCALE: f32(0.65),
+  BALL_CAR_EXTRA_IMPULSE_MAXDELTAVEL_UU: f32(4600),
+
+  CAR_SPAWN_REST_Z: f32(17),
+  CAR_RESPAWN_Z: f32(36),
+  BUMP_COOLDOWN_TIME: f32(0.25),
+  BUMP_MIN_FORWARD_DIST: f32(64.5),
+  DEMO_RESPAWN_TIME: f32(3),
+
+  ARENA_EXTENT_X: f32(4096),
+  ARENA_EXTENT_Y: f32(5120),
+  ARENA_HEIGHT: f32(2048),
+  SOCCAR_GOAL_SCORE_BASE_THRESHOLD_Y: f32(5124.25),
+
+  /** BTVehicle namespace */
+  SUSPENSION_FORCE_SCALE_FRONT: f32(36 - 1 / 4),
+  SUSPENSION_FORCE_SCALE_BACK: f32(54 + 1 / 4 + 1.5 / 100),
+  SUSPENSION_STIFFNESS: f32(500),
+  WHEELS_DAMPING_COMPRESSION: f32(25),
+  WHEELS_DAMPING_RELAXATION: f32(40),
+  MAX_SUSPENSION_TRAVEL: f32(12),
+  SUSPENSION_SUBTRACTION_BT: f32(0.05),
+
+  /** btVehicleRL.cpp */
+  ROLLING_FRICTION_SCALE_MAGIC: f32(113.73963),
+
+  /** BoostPads */
+  BOOST_PAD_SMALL_AMOUNT: f32(12),
+  BOOST_PAD_BIG_AMOUNT: f32(100),
+  BOOST_PAD_SMALL_COOLDOWN: f32(4),
+  BOOST_PAD_BIG_COOLDOWN: f32(10),
+  BOOST_PAD_CYL_RAD_SMALL: f32(144),
+  BOOST_PAD_CYL_RAD_BIG: f32(208),
+  BOOST_PAD_CYL_HEIGHT: f32(95),
+  BOOST_PAD_BOX_HEIGHT: f32(64),
+  BOOST_PAD_BOX_RAD_SMALL: f32(120),
+  BOOST_PAD_BOX_RAD_BIG: f32(160),
+};
+
+/** Curve control points — values stored as float32 like RocketSim `*f` literals. */
+export const RL_CURVES = {
+  steerAngle: [
+    [f32(0), f32(0.53356)],
+    [f32(500), f32(0.3193)],
+    [f32(1000), f32(0.18203)],
+    [f32(1500), f32(0.1057)],
+    [f32(1750), f32(0.08507)],
+    [f32(3000), f32(0.03454)],
+  ],
+  powerslideSteerAngle: [
+    [f32(0), f32(0.39235)],
+    [f32(2500), f32(0.1261)],
+  ],
+  driveSpeedTorque: [
+    [f32(0), f32(1)],
+    [f32(1400), f32(0.1)],
+    [f32(1410), f32(0)],
+  ],
+  nonStickyFriction: [
+    [f32(0), f32(0.1)],
+    [f32(0.7075), f32(0.5)],
+    [f32(1), f32(1)],
+  ],
+  latFriction: [
+    [f32(0), f32(1)],
+    [f32(1), f32(0.2)],
+  ],
+  handbrakeLatFriction: [[f32(0), f32(0.1)]],
+  handbrakeLongFriction: [
+    [f32(0), f32(0.5)],
+    [f32(1), f32(0.9)],
+  ],
+  ballCarExtraImpulse: [
+    [f32(0), f32(0.65)],
+    [f32(500), f32(0.65)],
+    [f32(2300), f32(0.55)],
+    [f32(4600), f32(0.3)],
+  ],
+  /** RocketSim `BUMP_VEL_AMOUNT_GROUND_CURVE` uses `5.f/6.f`. */
+  bumpVelGround: [
+    [f32(0), f32(5 / 6)],
+    [f32(1400), f32(1100)],
+    [f32(2200), f32(1530)],
+  ],
+  bumpVelAir: [
+    [f32(0), f32(5 / 6)],
+    [f32(1400), f32(1390)],
+    [f32(2200), f32(1945)],
+  ],
+  /** RocketSim `BUMP_UPWARD_VEL_AMOUNT_CURVE` uses `2.f/6.f`. */
+  bumpVelUp: [
+    [f32(0), f32(2 / 6)],
+    [f32(1400), f32(278)],
+    [f32(2200), f32(417)],
+  ],
+};
