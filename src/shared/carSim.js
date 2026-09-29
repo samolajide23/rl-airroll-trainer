@@ -912,6 +912,8 @@ function solveArenaContacts(car, fr, dt) {
 
   // Merge near-duplicate normals so 8 OBB corners against one plane do not
   // each apply a full bounce (Bullet uses a manifold of distinct points).
+  // Keep the deepest sample per normal group — matches RocketSim bounce
+  // energy on floor-slams better than averaging (see ground_flip_forward).
   const merged = [];
   for (const c of contacts) {
     let group = merged.find((g) => g.n.dot(c.n) > 0.95);
@@ -920,16 +922,12 @@ function solveArenaContacts(car, fr, dt) {
         n: c.n.clone(),
         dist: c.dist,
         rel: c.rel.clone(),
-        weight: 1,
       };
       merged.push(group);
     } else if (c.dist < group.dist) {
       group.dist = c.dist;
       group.rel.copy(c.rel);
       group.n.copy(c.n);
-      group.weight += 1;
-    } else {
-      group.weight += 1;
     }
   }
   contacts.length = 0;

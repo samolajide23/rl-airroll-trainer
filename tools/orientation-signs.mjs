@@ -135,6 +135,38 @@ function check(name, cond) {
   check("painted right ∥ physics right", painted.dot(physR) > 0.95);
 }
 
+// Free-air-roll remap: +yaw becomes +roll → painted-right down
+{
+  const car = airCar();
+  const mesh = makeMesh();
+  applyToCarModel(car, mesh, 0.01);
+  const r0 = geomRightWorld(mesh).y;
+  // Mimic withFreeAirRoll: powerslide held → roll = yaw, yaw = 0
+  for (let i = 0; i < 30; i++) stepCar(car, { ...idle, roll: 1, yaw: 0 });
+  applyToCarModel(car, mesh, 0.01);
+  check(
+    "free-air-roll (+yaw→+roll) → painted-right down",
+    geomRightWorld(mesh).y < r0 - 0.2,
+  );
+}
+
+// Side dodge right impulse → screen-right
+{
+  const g = makeCar(new THREE.Vector3(0, 0, 17), 0);
+  for (let i = 0; i < 5; i++) stepCar(g, { ...idle, jump: true });
+  for (let i = 0; i < 10; i++) stepCar(g, idle);
+  const before = g.vel.clone();
+  stepCar(g, { ...idle, jump: true, yaw: 1 });
+  const mesh = makeMesh();
+  applyToCarModel(g, mesh, 0.01);
+  const vel3 = physToThree(g.vel.clone().sub(before));
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(mesh.quaternion);
+  check(
+    "side-dodge-right Δvel → screen-right",
+    g.hasFlipped && vel3.dot(screenRight(fwd)) > 100,
+  );
+}
+
 // AerialBody (drill modes)
 {
   const ab = new AerialBody();

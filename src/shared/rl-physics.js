@@ -381,12 +381,13 @@ export function collideCarBall(car, ball, tick) {
 }
 
 /**
- * Physics Z-up → Three.js Y-up. Car model axes: X=left, Y=up, Z=front.
+ * Physics Z-up → Three.js Y-up: `(x, y, z) → (x, z, y)`.
  *
- * RocketSim's world is Unreal's left-handed X-forward / Y-right / Z-up, so
- * the map must be a reflection (x, z, y): a rotation would show physics
- * right (+Y) on screen-left and mirror every turn. Because P reflects,
- * P(u) × P(f) = −P(right) = model left, keeping the model basis proper.
+ * This permutation is a reflection (handedness flip). That is intentional:
+ * a pure rotation would put physics right on chase-cam screen-left.
+ * {@link applyToCarModel} builds a valid RH basis with parent +X = physics
+ * left (`P(u) × P(f)`), then X-mirrors the painted mesh so geometry right
+ * sits on physics right.
  */
 export function physToThree(v, out = V()) {
   return out.set(v.x, v.z, v.y);
