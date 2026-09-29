@@ -151,11 +151,21 @@ export const RS = {
   CARWORLD_RESTITUTION: 0.3,
   /**
    * When several OBB corners share the deepest penetration on one normal
-   * (edge flush with a plane), the effective Bullet/RocketSim contact sits
-   * between the edge midpoint and the +local-Y vertex. Tuned on
-   * `ground_flip_forward` against RocketSim (0 = midpoint, 1 = corner).
+   * (edge flush with a plane), pick the +local-Y corner (car right). Tuned
+   * with CONTACT_*_INSET_UU on `ground_flip_forward` vs RocketSim.
+   * 1 = pure +Y corner (best measured); 0 = edge midpoint.
    */
-  CONTACT_EDGE_CORNER_BLEND: 0.85,
+  CONTACT_EDGE_CORNER_BLEND: 1,
+  /**
+   * Pull the impulse point along the contact normal (uu). Combined with
+   * CONTACT_CORNER_INSET_UU this recreates Bullet's manifold lever arm on
+   * floor-scraping flips (was ~8 uu error at 0/0).
+   */
+  CONTACT_NORMAL_INSET_UU: 7,
+  /**
+   * Pull edge-contact points toward the hitbox centre along car axes (uu).
+   */
+  CONTACT_CORNER_INSET_UU: 5,
 };
 
 /* --------------------------- state factories --------------------------- */
@@ -980,17 +990,45 @@ function solveArenaContacts(car, fr, dt) {
   }
   contacts.length = 0;
   for (const g of groups) {
+    let preferred = g.tied[0];
+    for (const t of g.tied) if (t.rel.y > preferred.rel.y) preferred = t;
+    if (g.tied.length === 1 || RS.CONTACT_EDGE_CORNER_BLEND >= 1 - 1e-9) {
+      contacts.push({
+        rel: preferred.rel.clone(),
+        dist: g.dist,
+        n: g.n.clone(),
+      });
+      continue;
+    }
     const mid = V();
     for (const t of g.tied) mid.add(t.rel);
     mid.multiplyScalar(1 / g.tied.length);
-    let preferred = g.tied[0];
-    for (const t of g.tied) if (t.rel.y > preferred.rel.y) preferred = t;
-    // Single deepest sample, or edge blend when several corners share the depth.
-    const rel =
-      g.tied.length === 1
-        ? preferred.rel.clone()
-        : mid.lerp(preferred.rel, RS.CONTACT_EDGE_CORNER_BLEND);
-    contacts.push({ rel, dist: g.dist, n: g.n.clone() });
+    contacts.push({
+      rel: mid.lerp(preferred.rel, RS.CONTACT_EDGE_CORNER_BLEND),
+      dist: g.dist,
+      n: g.n.clone(),
+    });
+  }
+
+  // Inset impulse points so the lever arm matches Bullet's manifold, not the
+  // geometric outer corner (which over-kicks linear bounce on edge scrapes).
+  const nInset = RS.CONTACT_NORMAL_INSET_UU;
+  const cInset = RS.CONTACT_CORNER_INSET_UU;
+  if (nInset > 0 || cInset > 0) {
+    for (const c of contacts) {
+      if (nInset > 0) c.rel.addScaledVector(c.n, nInset);
+      if (cInset > 0) {
+        // Pull toward hitbox centre in car frame (rel is world offset from COM).
+        const local = V(c.rel.dot(fr.f), c.rel.dot(fr.r), c.rel.dot(fr.u));
+        const sx = Math.sign(local.x) || 1;
+        const sy = Math.sign(local.y) || 1;
+        const sz = Math.sign(local.z) || 1;
+        c.rel
+          .addScaledVector(fr.f, -sx * cInset)
+          .addScaledVector(fr.r, -sy * cInset)
+          .addScaledVector(fr.u, -sz * cInset);
+      }
+    }
   }
 
   let deepest = contacts[0];
@@ -1161,11 +1199,62 @@ function obbOverlap(a, b) {
  * }} [opts]
  * @returns {null | { demo: boolean, bumperId: number, victimId: number }}
  */
+/**
+ * SAT penetration depth + axis for two car OBBs.
+ * @returns {{ depth: number, axis: THREE.Vector3 } | null}
+ */
+function obbPenetration(a, b) {
+  const axesList = [a.f, a.l, a.u, b.f, b.l, b.u];
+  const d = b.center.clone().sub(a.center);
+  let minDepth = Infinity;
+  let minAxis = axesList[0];
+  for (const axis of axesList) {
+    const n = axis.clone();
+    if (n.lengthSq() < 1e-12) continue;
+    n.normalize();
+    const extent =
+      hitboxExtentOnAxis(a, n) + hitboxExtentOnAxis(b, n) - Math.abs(d.dot(n));
+    if (extent <= 0) return null;
+    if (extent < minDepth) {
+      minDepth = extent;
+      minAxis = n.multiplyScalar(d.dot(n) < 0 ? -1 : 1);
+    }
+  }
+  return { depth: minDepth, axis: minAxis.clone() };
+}
+
 export function collideCarCar(car1, car2, opts = {}) {
   if (car1.isDemoed || car2.isDemoed) return null;
   const hb1 = carHitbox(car1);
   const hb2 = carHitbox(car2);
   if (!obbOverlap(hb1, hb2)) return null;
+
+  // Bullet-style separation + CARCAR impulse (RocketSim resolves penetration
+  // in the world step before the Psyonix bump/demo callback).
+  const pen = obbPenetration(hb1, hb2);
+  if (pen && pen.depth > 0) {
+    const n = pen.axis;
+    const share = 0.5;
+    car1.pos.addScaledVector(n, -pen.depth * share);
+    car2.pos.addScaledVector(n, pen.depth * share);
+    const relN = car2.vel.clone().sub(car1.vel).dot(n);
+    if (relN < 0) {
+      const invSum = 2 / CAR_MASS;
+      const J = (-(1 + RL.CARCAR_RESTITUTION) * relN) / invSum;
+      car1.vel.addScaledVector(n, -J / CAR_MASS);
+      car2.vel.addScaledVector(n, J / CAR_MASS);
+      const rel = car2.vel.clone().sub(car1.vel);
+      const vt = rel.addScaledVector(n, -rel.dot(n));
+      const vtLen = vt.length();
+      if (vtLen > 1e-6) {
+        const maxJf = RL.CARCAR_FRICTION * Math.abs(J);
+        const jfMag = Math.min(vtLen / invSum, maxJf);
+        const jf = vt.multiplyScalar(-jfMag / vtLen);
+        car1.vel.addScaledVector(jf, -1 / CAR_MASS);
+        car2.vel.addScaledVector(jf, 1 / CAR_MASS);
+      }
+    }
+  }
 
   const demoMode = opts.demoMode ?? "normal";
   const enableTeamDemos = opts.enableTeamDemos ?? false;

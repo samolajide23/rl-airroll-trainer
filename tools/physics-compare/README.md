@@ -65,6 +65,6 @@ Ground scenarios set `"game_mode": "soccar"` and `"on_ground": true`.
 | Ground steer / powerslide | ≤ 0.17 uu |
 | Ground jump (full + tap) | ≤ 0.01 uu |
 | Wall drive (throttle climb) | ≤ 0.10 uu |
-| Ground flip that scrapes the floor (musty) | ~28 uu residual |
+| Ground flip that scrapes the floor (musty/wavedash) | ~1.6 uu residual |
 
-The residual on floor-scraping dodges comes from Bullet’s contact manifold vs our merged OBB-corner solver; drive, jump, air, and wall paths are effectively 1:1.
+Floor-scraping dodges use a Bullet-manifold lever-arm inset on the contact point (`CONTACT_NORMAL_INSET_UU` / `CONTACT_CORNER_INSET_UU`); drive, jump, air, and wall paths are effectively 1:1.

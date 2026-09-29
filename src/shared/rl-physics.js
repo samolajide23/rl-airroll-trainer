@@ -451,29 +451,54 @@ export function collideCarBall(car, ball, tick) {
   const vn = ballPointVel.clone().sub(carPointVel).dot(n);
   if (vn < 0) {
     // RocketSim CARBALL_RESTITUTION = 0 → kill relative normal speed.
-    // Friction uses Bullet-style Coulomb with ball spin (sphere inertia 2/5 mr²).
-    // Car angular response on the manifold is omitted (RocketSim's Psyonix
-    // extra impulse is also ball-only; car hitbox inertia coupling here is
-    // a much smaller residual than the ball spin term).
-    const invSum = 1 / RL.BALL_MASS + 1 / RL.CAR_MASS;
-    const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / invSum;
-    ball.vel.addScaledVector(n, J / RL.BALL_MASS);
-    car.vel.addScaledVector(n, -J / RL.CAR_MASS);
+    // Friction uses Bullet-style Coulomb with ball spin (sphere inertia 2/5 mr²)
+    // and car hitbox angular response about the contact (box inertia).
+    const { f: cf, l: cl, u: cu } = axes(car.q);
+    const hb = car.hitbox ?? getHitboxPreset("octane");
+    const lx = hb.size[0];
+    const ly = hb.size[1];
+    const lz = hb.size[2];
+    const invI =
+      car.invInertiaLocal ??
+      V(
+        12 / (RL.CAR_MASS * (ly * ly + lz * lz)),
+        12 / (RL.CAR_MASS * (lx * lx + lz * lz)),
+        12 / (RL.CAR_MASS * (lx * lx + ly * ly)),
+      );
+    const invInertiaWorld = (v) =>
+      V()
+        .addScaledVector(cf, v.dot(cf) * invI.x)
+        .addScaledVector(cl, v.dot(cl) * invI.y)
+        .addScaledVector(cu, v.dot(cu) * invI.z);
+    const impulseDenom = (dir) => {
+      const c = carPoint.clone().cross(dir);
+      return (
+        1 / RL.BALL_MASS +
+        1 / RL.CAR_MASS +
+        ballR.clone().cross(dir).lengthSq() * ballInvInertia() +
+        c.dot(invInertiaWorld(c))
+      );
+    };
+    const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / impulseDenom(n);
+    const jn = n.clone().multiplyScalar(J);
+    ball.vel.addScaledVector(jn, 1 / RL.BALL_MASS);
+    car.vel.addScaledVector(jn, -1 / RL.CAR_MASS);
+    ball.omega.add(ballR.clone().cross(jn).multiplyScalar(ballInvInertia()));
+    car.omega.sub(invInertiaWorld(carPoint.clone().cross(jn)));
     const ballPointAfter = ball.vel.clone().add(ball.omega.clone().cross(ballR));
-    const relAfter = ballPointAfter.sub(carPointVel);
+    const carPointAfter = car.vel.clone().add(car.omega.clone().cross(carPoint));
+    const relAfter = ballPointAfter.sub(carPointAfter);
     const vt = relAfter.addScaledVector(n, -relAfter.dot(n));
     const vtLen = vt.length();
     if (vtLen > 1e-6) {
-      const invMBall = 1 / RL.BALL_MASS;
-      const invIBall = ballInvInertia();
-      const R = RL.BALL_RADIUS;
-      const denomT = invMBall + 1 / RL.CAR_MASS + R * R * invIBall;
       const maxJf = RL.CARBALL_FRICTION * Math.abs(J);
-      const jfMag = Math.min(vtLen / denomT, maxJf);
-      const jf = vt.multiplyScalar(-jfMag / vtLen);
-      ball.vel.addScaledVector(jf, invMBall);
+      const tDir = vt.clone().multiplyScalar(1 / vtLen);
+      const jfMag = Math.min(vtLen / impulseDenom(tDir), maxJf);
+      const jf = tDir.multiplyScalar(-jfMag);
+      ball.vel.addScaledVector(jf, 1 / RL.BALL_MASS);
       car.vel.addScaledVector(jf, -1 / RL.CAR_MASS);
-      ball.omega.add(ballR.clone().cross(jf).multiplyScalar(invIBall));
+      ball.omega.add(ballR.clone().cross(jf).multiplyScalar(ballInvInertia()));
+      car.omega.sub(invInertiaWorld(carPoint.clone().cross(jf)));
     }
   }
   // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).

@@ -80,6 +80,7 @@ export const BOOST_PAD = {
  *   timer: number,
  *   active: boolean,
  *   mesh: THREE.Object3D | null,
+ *   _lockedCarId: number | null,
  * }} BoostPad
  */
 
@@ -101,6 +102,7 @@ export function createSoccarBoostPads() {
       timer: 0,
       active: true,
       mesh: null,
+      _lockedCarId: null,
     });
   }
   for (const loc of SOCCAR_BIG_PADS) {
@@ -115,6 +117,7 @@ export function createSoccarBoostPads() {
       timer: 0,
       active: true,
       mesh: null,
+      _lockedCarId: null,
     });
   }
   return pads;
@@ -158,9 +161,9 @@ export function createBoostPadMeshes(parent, pads) {
 }
 
 /**
- * Tick pad cooldowns and collect boost when the car centre is inside a pad cylinder.
+ * Tick pad cooldowns and collect boost (RocketSim cylinder / locked AABB).
  * @param {BoostPad[]} pads
- * @param {{ pos: THREE.Vector3, boost: number }} car
+ * @param {{ pos: THREE.Vector3, boost: number, id?: number }} car
  * @param {number} dt
  * @returns {number} boost collected this tick
  */
@@ -186,11 +189,32 @@ export function stepBoostPads(pads, car, dt) {
       continue;
     }
 
+    // RocketSim BoostPad::_CheckCollide:
+    // - unlocked: cylinder (rad, height CYL_HEIGHT) about pad origin
+    // - locked (prev car): AABB box BOX_RAD × BOX_HEIGHT
     const dx = car.pos.x - pad.x;
     const dy = car.pos.y - pad.y;
     const dz = car.pos.z - pad.z;
-    if (dx * dx + dy * dy > pad.radius * pad.radius) continue;
-    if (Math.abs(dz) > BOOST_PAD.CYL_HEIGHT * 0.5 + 40) continue;
+    const locked = pad._lockedCarId != null && pad._lockedCarId === (car.id ?? 0);
+    let hit = false;
+    if (locked) {
+      const boxRad = pad.big ? BOOST_PAD.BOX_RAD_BIG : BOOST_PAD.BOX_RAD_SMALL;
+      hit =
+        Math.abs(dx) <= boxRad &&
+        Math.abs(dy) <= boxRad &&
+        dz >= 0 &&
+        dz <= BOOST_PAD.BOX_HEIGHT;
+    } else {
+      // Cylinder: horizontal radius + |dz| < CYL_HEIGHT (RocketSim, not half-height).
+      hit =
+        dx * dx + dy * dy <= pad.radius * pad.radius &&
+        Math.abs(dz) < BOOST_PAD.CYL_HEIGHT;
+    }
+    if (!hit) {
+      if (pad._lockedCarId === (car.id ?? 0)) pad._lockedCarId = null;
+      continue;
+    }
+    pad._lockedCarId = car.id ?? 0;
 
     const before = car.boost;
     car.boost = Math.min(RL.BOOST_MAX, car.boost + pad.amount);
@@ -212,6 +236,7 @@ export function resetBoostPads(pads) {
   for (const pad of pads) {
     pad.active = true;
     pad.timer = 0;
+    pad._lockedCarId = null;
     if (pad.mesh) {
       pad.mesh.visible = true;
       if (pad.mesh.material) {

@@ -253,6 +253,7 @@ export class FreePlayMode {
   _stepOnce(dt) {
     const input = readControls();
     stepCar(this.physCar, withFreeAirRoll(input, this.physCar), dt);
+    if (!this.physCar.id) this.physCar.id = 1;
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);
     stepBall(this.physBall, dt);
