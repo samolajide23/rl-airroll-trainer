@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-29T08:27:19.366Z
+Generated: 2026-09-29T08:30:53.298Z
 
 Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
 Candidate: **`src/shared/rl-physics.js`**.
@@ -33,15 +33,17 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `freefall_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_throttle_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_boost_1s` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `roll_right_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 2.849 / 5.675 |
-| `roll_left_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 2.849 / 5.675 |
-| `pitch_up_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.755 / 1.662 | 0.755 / 1.662 |
-| `pitch_down_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.755 / 1.662 | 0.755 / 1.662 |
-| `yaw_right_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.544 / 1.087 | 0.000 / 0.000 |
-| `yaw_left_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.544 / 1.087 | 0.000 / 0.000 |
-| `roll_then_release` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 1.715 / 2.814 |
-| `combo_pitch_roll_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.013 / 0.018 | 2.508 / 5.523 | 4.334 / 9.219 |
-| `boost_and_pitch_1s` | 1.682 / 5.186 | 7.083 / 17.151 | 0.000 / 0.000 | 1.955 / 4.638 | 1.955 / 4.638 |
+| `roll_right_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 1.667 / 4.362 |
+| `roll_left_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 1.667 / 4.362 |
+| `pitch_up_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.023 / 0.349 | 0.023 / 0.349 |
+| `pitch_down_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.023 / 0.349 | 0.023 / 0.349 |
+| `yaw_right_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `yaw_left_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roll_then_release` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.946 / 1.501 |
+| `combo_pitch_roll_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.010 / 0.017 | 1.796 / 4.759 | 3.132 / 7.895 |
+| `boost_and_pitch_1s` | 0.386 / 2.490 | 2.698 / 12.902 | 0.000 / 0.000 | 0.935 / 3.325 | 0.935 / 3.325 |
+| `double_jump_air` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `coast_from_spin` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 
 ## Per-scenario finals
 
@@ -91,7 +93,7 @@ Hold pitch up for 0.5s from rest
 - Worst position error at tick **52** (0.000 uu)
 - Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
 - Final ω RS 0.000, -5.500, 0.000 vs JS 0.000, -5.500, 0.000
-- Final forward RS [0.005, 0.000, 1.000] vs JS [0.034, 0.000, 0.999]
+- Final forward RS [0.005, 0.000, 1.000] vs JS [0.011, 0.000, 1.000]
 
 ### `pitch_down_0_5s`
 Hold pitch down for 0.5s from rest
@@ -99,7 +101,7 @@ Hold pitch down for 0.5s from rest
 - Worst position error at tick **52** (0.000 uu)
 - Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
 - Final ω RS 0.000, 5.500, 0.000 vs JS 0.000, 5.500, 0.000
-- Final forward RS [0.005, 0.000, -1.000] vs JS [0.034, 0.000, -0.999]
+- Final forward RS [0.005, 0.000, -1.000] vs JS [0.011, 0.000, -1.000]
 
 ### `yaw_right_0_5s`
 Hold yaw right for 0.5s from rest
@@ -107,7 +109,7 @@ Hold yaw right for 0.5s from rest
 - Worst position error at tick **52** (0.000 uu)
 - Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
 - Final ω RS 0.000, 0.000, 4.554 vs JS 0.000, 0.000, 4.554
-- Final forward RS [0.402, 0.916, 0.000] vs JS [0.419, 0.908, 0.000]
+- Final forward RS [0.402, 0.916, 0.000] vs JS [0.402, 0.916, 0.000]
 
 ### `yaw_left_0_5s`
 Hold yaw left for 0.5s from rest
@@ -115,7 +117,7 @@ Hold yaw left for 0.5s from rest
 - Worst position error at tick **52** (0.000 uu)
 - Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
 - Final ω RS 0.000, 0.000, -4.554 vs JS 0.000, 0.000, -4.554
-- Final forward RS [0.402, -0.916, 0.000] vs JS [0.419, -0.908, 0.000]
+- Final forward RS [0.402, -0.916, 0.000] vs JS [0.402, -0.916, 0.000]
 
 ### `roll_then_release`
 Roll right 0.5s then release 0.5s (coast angle)
@@ -130,16 +132,32 @@ Pitch up + roll right together for 1s
 
 - Worst position error at tick **52** (0.000 uu)
 - Final pos RS 0.00, 0.00, 472.29 vs JS 0.00, 0.00, 472.29
-- Final ω RS -4.862, -2.439, 0.813 vs JS -4.856, -2.452, 0.809
-- Final forward RS [0.768, 0.081, -0.635] vs JS [0.724, 0.159, -0.671]
+- Final ω RS -4.862, -2.439, 0.813 vs JS -4.856, -2.448, 0.824
+- Final forward RS [0.768, 0.081, -0.635] vs JS [0.729, 0.146, -0.669]
 
 ### `boost_and_pitch_1s`
 Boost while pitching up for 1s
 
-- Worst position error at tick **120** (5.186 uu)
-- Final pos RS 248.54, 0.00, 688.21 vs JS 253.62, 0.00, 689.27
+- Worst position error at tick **120** (2.490 uu)
+- Final pos RS 248.54, 0.00, 688.21 vs JS 249.41, 0.00, 690.54
 - Final ω RS 0.000, -5.500, 0.000 vs JS 0.000, -5.500, 0.000
-- Final forward RS [-0.338, 0.000, -0.941] vs JS [-0.413, 0.000, -0.911]
+- Final forward RS [-0.338, 0.000, -0.941] vs JS [-0.392, 0.000, -0.920]
+
+### `double_jump_air`
+Second jump impulse while already airborne (tap jump 3 ticks)
+
+- Worst position error at tick **59** (0.000 uu)
+- Final pos RS 0.00, 0.00, 863.23 vs JS 0.00, 0.00, 863.23
+- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
+- Final forward RS [1.000, 0.000, 0.000] vs JS [1.000, 0.000, 0.000]
+
+### `coast_from_spin`
+Release inputs with initial roll rate 5.5 rad/s — damping coast
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 472.29 vs JS 0.00, 0.00, 472.29
+- Final ω RS -0.041, 0.000, 0.000 vs JS -0.041, 0.000, 0.000
+- Final forward RS [1.000, 0.000, 0.000] vs JS [1.000, 0.000, 0.000]
 
 ## How to re-run
 

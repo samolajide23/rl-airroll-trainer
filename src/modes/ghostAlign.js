@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { AerialBody, FixedStepClock } from "../shared/aerial.js";
 import { makeCar, makeTargetGuide } from "../shared/car.js";
+import { ChaseCamera } from "../shared/chaseCamera.js";
 import { isActionDown, readControls } from "../shared/input.js";
 import {
   angleErrorDeg,
@@ -106,9 +107,7 @@ export class GhostAlignMode {
     this.root.add(this.car, this.ghost, this.guide);
 
     this.ghostOffset = new THREE.Vector3(3.5, 0, 0);
-    this.camOffset = new THREE.Vector3(-0.8, 4.2, -11);
-    this.camLook = new THREE.Vector3();
-    this.camPos = new THREE.Vector3();
+    this.chase = new ChaseCamera();
     this.midpoint = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
@@ -154,9 +153,17 @@ export class GhostAlignMode {
 
     this.resetCar();
     this.randomTarget();
-    this.ctx.camera.position.set(-0.8, 4.2, -11);
-    this.ctx.camera.up.set(0, 1, 0);
-    this.ctx.camera.lookAt(1.75, 0, 0);
+    this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+    this.midpoint
+      .copy(this.car.position)
+      .add(this.ghost.position)
+      .multiplyScalar(0.5);
+    this.chase.snap(
+      this.ctx.camera,
+      this.car.position,
+      this.forward,
+      this.midpoint,
+    );
   }
 
   stop() {
@@ -168,6 +175,7 @@ export class GhostAlignMode {
       this._unbindHelp();
       this._unbindHelp = null;
     }
+    this.chase.invalidate();
   }
 
   randomTarget() {
@@ -219,6 +227,7 @@ export class GhostAlignMode {
     this.aerial.reset();
     this.clock.reset();
     this.alignHold = 0;
+    this.chase.invalidate();
     this.ctx.hud.status.textContent =
       "Car reset. Hold air roll and steer into the ghost.";
   }
@@ -302,16 +311,17 @@ export class GhostAlignMode {
   }
 
   updateCamera(dt) {
-    // Frame both the player and the side reference ghost
+    // Chase the player; bias look toward the side reference ghost.
     this.midpoint
       .copy(this.car.position)
       .add(this.ghost.position)
       .multiplyScalar(0.5);
-    this.camPos.copy(this.midpoint).add(this.camOffset);
-    this.ctx.camera.position.lerp(this.camPos, 1 - Math.exp(-8 * dt));
-    this.camLook.copy(this.midpoint);
-    this.ctx.camera.up.set(0, 1, 0);
-    this.ctx.camera.lookAt(this.camLook);
+    this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+    this.chase.update(this.ctx.camera, dt, {
+      target: this.car.position,
+      forward: this.forward,
+      lookAt: this.midpoint,
+    });
   }
 
   /**

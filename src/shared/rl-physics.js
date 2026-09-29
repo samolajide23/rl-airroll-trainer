@@ -225,9 +225,11 @@ function airControl(car, c, dt) {
   const dOmega = f.clone().multiplyScalar(a.x).addScaledVector(l, a.y).addScaledVector(u, a.z);
   const next = car.omega.clone().addScaledVector(dOmega, dt);
   if (next.length() > RL.MAX_ANG_VEL) next.setLength(RL.MAX_ANG_VEL);
-  const avg = car.omega.clone().add(next).multiplyScalar(0.5);
-  const phi = avg.length() * dt;
-  if (phi > 1e-9) car.q.premultiply(new THREE.Quaternion().setFromAxisAngle(avg.clone().normalize(), phi)).normalize();
+  // RocketSim integrates orientation with post-torque ω (not the tick average).
+  const phi = next.length() * dt;
+  if (phi > 1e-9) {
+    car.q.premultiply(new THREE.Quaternion().setFromAxisAngle(next.clone().normalize(), phi)).normalize();
+  }
   car.omega.copy(next);
 }
 

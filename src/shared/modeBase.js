@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { AerialBody, FixedStepClock } from "./aerial.js";
 import { makeCar } from "./car.js";
+import { ChaseCamera } from "./chaseCamera.js";
 import { isActionDown, readControls } from "./input.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
 
@@ -22,9 +23,7 @@ export class AerialDrillBase {
     this.car = makeCar(0xffffff);
     this.root.add(this.car);
 
-    this.camOffset = new THREE.Vector3(0, 3.8, -9.5);
-    this.camLook = new THREE.Vector3();
-    this.camPos = new THREE.Vector3();
+    this.chase = new ChaseCamera();
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
     this.right = new THREE.Vector3();
@@ -63,9 +62,8 @@ export class AerialDrillBase {
       if (hud.help) hud.help.textContent = formatControlsHelp();
     });
     this.resetCar();
-    this.ctx.camera.position.set(0, 3.8, -9.5);
-    this.ctx.camera.up.set(0, 1, 0);
-    this.ctx.camera.lookAt(0, 0, 0);
+    this.carAxes();
+    this.chase.snap(this.ctx.camera, this.car.position, this.forward);
   }
 
   stop() {
@@ -77,6 +75,7 @@ export class AerialDrillBase {
       this._unbindHelp();
       this._unbindHelp = null;
     }
+    this.chase.invalidate();
   }
 
   resetCar() {
@@ -84,6 +83,7 @@ export class AerialDrillBase {
     this.car.quaternion.identity();
     this.aerial.reset();
     this.clock.reset();
+    this.chase.invalidate();
   }
 
   /**
@@ -127,16 +127,17 @@ export class AerialDrillBase {
   }
 
   /**
+   * RL chase camera behind the car (Settings → Camera).
    * @param {number} dt
    * @param {THREE.Vector3} [lookAt]
    */
   updateCamera(dt, lookAt) {
-    const target = lookAt ?? this.car.position;
-    this.camPos.copy(target).add(this.camOffset);
-    this.ctx.camera.position.lerp(this.camPos, 1 - Math.exp(-8 * dt));
-    this.camLook.copy(target);
-    this.ctx.camera.up.set(0, 1, 0);
-    this.ctx.camera.lookAt(this.camLook);
+    this.carAxes();
+    this.chase.update(this.ctx.camera, dt, {
+      target: this.car.position,
+      forward: this.forward,
+      lookAt,
+    });
   }
 
   carAxes() {

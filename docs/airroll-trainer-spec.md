@@ -93,7 +93,7 @@ Key behaviors that come straight from this:
 - One full roll takes ≈ 1.2 s at the cap [D].
 - **Coast angles after releasing input** [D], from 5.5 rad/s: roll ≈ 70°, pitch ≈ 113°, yaw ≈ 167°. This is why stopping a roll on target is hard: you must start counter-input or release *early*. The trainer should show this prediction.
 - Angular velocity converges toward the axis of the applied torque, which acts as a natural flight assist.
-- Orientation update uses the *average* angular velocity over the tick with an exponential map (implemented via quaternion axis-angle).
+- Orientation update uses the **post-torque** angular velocity over the tick with an exponential map (quaternion axis-angle). RocketSim does this; the older “average ω” note was wrong for matching the game sim.
 
 Sign convention in our sim: **+pitch = nose up, +yaw = nose right, +roll = roll right.** RLBot/game controller sign conventions differ, so map in the input layer.
 

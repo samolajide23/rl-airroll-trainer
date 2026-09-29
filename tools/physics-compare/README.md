@@ -60,14 +60,12 @@ Frame: Z-up, identity car faces +X with right = +Y.
 
 ## Current status
 
-After aligning `rl-physics.js` / `aerial.js` with RocketSim:
-
 | Area | Status |
 |---|---|
 | Constants table | Match |
-| Freefall / throttle / boost | Match |
-| Single-axis roll / pitch / yaw ω | Match (sign + magnitude) |
-| Coast-after-roll ω | Match |
-| Orientation over ~0.5–1s | Small residual (~1–6°) from integrator / boost-direction coupling |
+| Freefall / throttle / boost / double jump / coast | Match |
+| Single-axis roll / pitch / yaw ω | Match |
+| Yaw orientation | Match |
+| Pitch / roll orientation | ~0–4° residual over 0.5–1s (combo/boost amplify) |
 
 Re-run after physics edits and check `out/report.md`.

@@ -98,6 +98,21 @@
       "description": "Boost while pitching up for 1s",
       "ticks": 120,
       "controls": { "boost": true, "pitch": 1 }
+    },
+    {
+      "id": "double_jump_air",
+      "description": "Second jump impulse while already airborne (tap jump 3 ticks)",
+      "ticks": 60,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true } },
+        { "until_tick": 60, "controls": { "jump": false } }
+      ]
+    },
+    {
+      "id": "coast_from_spin",
+      "description": "Release inputs with initial roll rate 5.5 rad/s — damping coast",
+      "ticks": 120,
+      "initial": { "ang_vel": [-5.5, 0, 0] }
     }
   ]
 }

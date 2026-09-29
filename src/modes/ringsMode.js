@@ -4,6 +4,7 @@ import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
 import { isActionDown, readControls } from "../shared/input.js";
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
+import { ChaseCamera, UU } from "../shared/chaseCamera.js";
 import {
   formatControlsHelp,
   getCamera,
@@ -11,8 +12,6 @@ import {
 } from "../shared/settings.js";
 
 /** Workshop-style Rings: ocean + sky, blue hoops on pillars, boost trail. */
-
-const UU = 0.01;
 /** GLB/procedural cars are ~3.2 long; 0.4× ≈ RL Octane (~118 uu). */
 const CAR_SCALE = 0.4;
 const GRAVITY = RL.GRAVITY * UU;
@@ -59,16 +58,11 @@ export class RingsMode {
     this.boosting = false;
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
-    this.camPos = new THREE.Vector3();
-    this.camLook = new THREE.Vector3();
     this.tmp = new THREE.Vector3();
     this.tmp2 = new THREE.Vector3();
     this.prevPos = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
-    this.smoothPos = new THREE.Vector3();
-    this.smoothLook = new THREE.Vector3();
-    this.smoothDir = new THREE.Vector3(0, 0, 1);
-    this._camReady = false;
+    this.chase = new ChaseCamera();
 
     /** @type {Ring[]} */
     this.rings = [];
@@ -315,7 +309,7 @@ export class RingsMode {
     this.aerial.reset();
     this.clock.reset();
     this.prevPos.copy(this.car.position);
-    this._camReady = false;
+    this.chase.invalidate();
     this.ctx.camera.up.set(0, 1, 0);
     const camCfg = getCamera();
     this.ctx.camera.fov = camCfg.fov;
@@ -601,20 +595,6 @@ export class RingsMode {
 
   /** @param {number} dt */
   updateCamera(dt) {
-    const cfg = getCamera();
-    if (this.ctx.camera.fov !== cfg.fov) {
-      this.ctx.camera.fov = cfg.fov;
-      this.ctx.camera.updateProjectionMatrix();
-    }
-    // RL camera settings are in uu; convert at UU scale (car is now RL-sized).
-    const dist = cfg.distance * UU;
-    const height = cfg.height * UU;
-    const angleRad = (cfg.angle * Math.PI) / 180;
-    const stiff = THREE.MathUtils.clamp(cfg.stiffness, 0, 1);
-    const posRate = (1.2 + stiff * 3.5) * cfg.transitionSpeed;
-    const lookRate = (1.6 + stiff * 2.8) * cfg.transitionSpeed;
-    const dirRate = 1.4 + stiff * 2.2;
-
     if (this.nextIndex < this.rings.length) {
       this.tmp2.copy(this.rings[this.nextIndex].center);
     } else if (this.rings.length > 0) {
@@ -629,39 +609,34 @@ export class RingsMode {
     }
 
     if (this.onPlatform) {
-      this.camPos.set(0, PLATFORM_TOP_Y + height + 2, -dist - 2);
-      this.camLook.set(0, PLATFORM_TOP_Y + 2, 4).lerp(this.tmp2, 0.55);
-    } else {
-      this.tmp.copy(this.tmp2).sub(this.car.position);
-      if (this.tmp.lengthSq() < 0.01) this.tmp.set(0, 0, 1);
-      else this.tmp.normalize();
-      if (this.vel.lengthSq() > 4) {
-        this.forward.copy(this.vel).normalize();
-        this.tmp
-          .multiplyScalar(0.75)
-          .addScaledVector(this.forward, 0.25)
-          .normalize();
+      // Fixed pad view; invalidate chase so takeoff snaps cleanly.
+      const cfg = getCamera();
+      if (this.ctx.camera.fov !== cfg.fov) {
+        this.ctx.camera.fov = cfg.fov;
+        this.ctx.camera.updateProjectionMatrix();
       }
-      this.smoothDir.lerp(this.tmp, 1 - Math.exp(-dirRate * dt)).normalize();
-      this.camPos
-        .copy(this.car.position)
-        .addScaledVector(this.smoothDir, -dist)
-        .addScaledVector(this.worldUp, height);
-      this.camLook.copy(this.car.position).lerp(this.tmp2, 0.55);
-      this.camLook.y += Math.tan(angleRad) * dist * 0.35;
+      const dist = cfg.distance * UU;
+      const height = cfg.height * UU;
+      this.ctx.camera.position.set(
+        0,
+        PLATFORM_TOP_Y + height + 2,
+        -dist - 2,
+      );
+      this.tmp.set(0, PLATFORM_TOP_Y + 2, 4).lerp(this.tmp2, 0.55);
+      this.ctx.camera.up.copy(this.worldUp);
+      this.ctx.camera.lookAt(this.tmp);
+      this.chase.invalidate();
+      return;
     }
 
-    if (!this._camReady) {
-      this.smoothPos.copy(this.camPos);
-      this.smoothLook.copy(this.camLook);
-      this._camReady = true;
-    } else {
-      this.smoothPos.lerp(this.camPos, 1 - Math.exp(-posRate * dt));
-      this.smoothLook.lerp(this.camLook, 1 - Math.exp(-lookRate * dt));
-    }
-    this.ctx.camera.position.copy(this.smoothPos);
-    this.ctx.camera.up.copy(this.worldUp);
-    this.ctx.camera.lookAt(this.smoothLook);
+    this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+    this.chase.update(this.ctx.camera, dt, {
+      target: this.car.position,
+      forward: this.forward,
+      velocity: this.vel,
+      lookAt: this.tmp2,
+      worldUp: this.worldUp,
+    });
   }
 
   /**

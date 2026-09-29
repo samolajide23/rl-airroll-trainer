@@ -17,7 +17,7 @@ export class AerialBody {
   constructor() {
     this.omega = new THREE.Vector3();
     this._omegaNext = new THREE.Vector3();
-    this._omegaAvg = new THREE.Vector3();
+    this._axis = new THREE.Vector3();
     this._omegaLocal = new THREE.Vector3();
     this._tauLocal = new THREE.Vector3();
     this._tauWorld = new THREE.Vector3();
@@ -42,7 +42,7 @@ export class AerialBody {
     const {
       omega,
       _omegaNext: omegaNext,
-      _omegaAvg: omegaAvg,
+      _axis: axis,
       _omegaLocal: omegaLocal,
       _tauLocal: tauLocal,
       _tauWorld: tauWorld,
@@ -81,13 +81,11 @@ export class AerialBody {
     const speed = omegaNext.length();
     if (speed > RL.MAX_ANG_VEL) omegaNext.multiplyScalar(RL.MAX_ANG_VEL / speed);
 
-    // Average ω over the tick (spec §2)
-    omegaAvg.copy(omega).add(omegaNext).multiplyScalar(0.5);
+    // RocketSim: integrate orientation with post-torque ω (not the tick average).
     omega.copy(omegaNext);
-
-    const phi = omegaAvg.length() * dt;
+    const phi = omega.length() * dt;
     if (phi > 1e-8) {
-      tmpQ.setFromAxisAngle(omegaAvg.normalize(), phi);
+      tmpQ.setFromAxisAngle(axis.copy(omega).normalize(), phi);
       object.quaternion.premultiply(tmpQ);
       object.quaternion.normalize();
     }
