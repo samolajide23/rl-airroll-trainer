@@ -73,6 +73,25 @@ function setOrientation(car, yaw, pitch, roll) {
   car.q.normalize();
 }
 
+function scenarioMode(scenario, initial) {
+  const explicit = scenario.game_mode ?? initial.game_mode;
+  if (explicit) return String(explicit).toLowerCase();
+  return initial.on_ground ? "soccar" : "void";
+}
+
+function idleControls() {
+  return {
+    throttle: 0,
+    steer: 0,
+    pitch: 0,
+    yaw: 0,
+    roll: 0,
+    boost: false,
+    jump: false,
+    handbrake: false,
+  };
+}
+
 function initCar(initial) {
   const car = makePhysCar(new THREE.Vector3(...initial.pos), 0);
   car.vel.set(...initial.vel);
@@ -87,6 +106,48 @@ function initCar(initial) {
     initial.roll ?? 0,
   );
   return car;
+}
+
+/** Match generate_rocketsim.prepare_ground — settle suspension, then restore vel. */
+function prepareGround(car, initial, settleTicks) {
+  car.pos.set(initial.pos[0], initial.pos[1], initial.pos[2]);
+  car.vel.set(0, 0, 0);
+  car.omega.set(0, 0, 0);
+  car.boost = initial.boost ?? RL.BOOST_MAX;
+  setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
+  const idle = idleControls();
+  for (let i = 0; i < settleTicks; i++) stepCar(car, idle, RL.DT);
+
+  const settledZ = car.pos.z;
+  car.pos.set(initial.pos[0], initial.pos[1], settledZ);
+  car.vel.set(...initial.vel);
+  car.omega.set(...initial.ang_vel);
+  setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
+  car.boost = initial.boost ?? RL.BOOST_MAX;
+  stepCar(car, idle, RL.DT);
+  car.pos.set(car.pos.x, car.pos.y, car.pos.z);
+  car.vel.set(...initial.vel);
+  car.omega.set(...initial.ang_vel);
+  setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
+  car.boost = initial.boost ?? RL.BOOST_MAX;
+}
+
+/** Match generate_rocketsim.prepare_airborne. */
+function prepareAirborne(car, initial) {
+  car.pos.set(...initial.pos);
+  car.vel.set(0, 0, 0);
+  car.omega.set(0, 0, 0);
+  setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
+  car.boost = initial.boost ?? RL.BOOST_MAX;
+  stepCar(car, idleControls(), RL.DT);
+  car.pos.set(...initial.pos);
+  car.vel.set(...initial.vel);
+  car.omega.set(...initial.ang_vel);
+  setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
+  car.boost = initial.boost ?? RL.BOOST_MAX;
+  car.onGround = false;
+  car.wheelsContact = false;
+  car.numWheelsInContact = 0;
 }
 
 function rotPayload(car) {
@@ -164,7 +225,11 @@ function dumpJsConstants() {
 function runScenario(scenario, defaults) {
   const initial = deepMerge(defaults.initial ?? {}, scenario.initial);
   const ticks = scenario.ticks;
+  const mode = scenarioMode(scenario, initial);
+  const settleTicks = scenario.settle_ticks ?? defaults.settle_ticks ?? 240;
   const car = initCar(initial);
+  if (mode === "soccar") prepareGround(car, initial, settleTicks);
+  else prepareAirborne(car, initial);
 
   const frames = [];
   const ctrl0 = controlsAtTick(0, defaults, scenario);
@@ -180,6 +245,7 @@ function runScenario(scenario, defaults) {
     id: scenario.id,
     description: scenario.description ?? "",
     engine: "carSim.js",
+    game_mode: mode,
     tick_rate: 1 / RL.DT,
     tick_time: RL.DT,
     ticks,

@@ -1,23 +1,31 @@
 # Physics compare harness
 
-Offline validation of `src/shared/rl-physics.js` against **[RocketSim](https://github.com/ZealanL/RocketSim)** (Python bindings from [mtheall/RocketSim](https://github.com/mtheall/RocketSim)).
+Offline validation of `src/shared/carSim.js` against **[RocketSim](https://github.com/ZealanL/RocketSim)** (Python bindings).
 
-This is option 1 from the integration plan: keep the browser JS sim, use RocketSim as ground truth, and fix deltas iteratively.
+Keep the browser JS sim; use RocketSim as ground truth; fix deltas iteratively.
 
 ## What it does
 
-1. Runs shared air-control scenarios in RocketSim (`GameMode.THE_VOID` — no collision meshes needed).
-2. Replays the same inputs through `rl-physics.js` in Node.
-3. Writes a markdown report of position / velocity / ω / orientation errors, plus a constants table.
+1. Runs shared scenarios in RocketSim (`THE_VOID` for air, `SOCCAR` for ground).
+2. Replays the same inputs through `carSim.js` in Node.
+3. Writes a markdown report of position / velocity / ω / orientation errors.
 
 ## Setup
 
 ```bash
-# Python ground truth
 pip install -r tools/physics-compare/requirements.txt
-
-# JS deps (from repo root)
 npm install
+
+# SOCCAR collision meshes (required for ground scenarios)
+# Copy from rlgym: rlgym/rocket_league/sim/collision_meshes/soccar →
+#   tools/physics-compare/collision_meshes/soccar/
+# Or dump via https://github.com/ZealanL/RLArenaCollisionDumper
+```
+
+Regenerate the browser mesh pack after changing `.cmf` files:
+
+```bash
+node tools/physics-compare/gen_soccar_mesh.mjs
 ```
 
 ## Run
@@ -34,14 +42,6 @@ npm run physics:js       # → tools/physics-compare/out/js/
 npm run physics:diff     # → tools/physics-compare/out/report.md
 ```
 
-Filter scenarios:
-
-```bash
-python3 tools/physics-compare/generate_rocketsim.py --only roll_right_1s
-node tools/physics-compare/run_js.mjs --only roll_right_1s
-node tools/physics-compare/compare.mjs
-```
-
 ## Scenario format
 
 See `scenarios.json`. Controls use RocketSim / RLBot signs:
@@ -49,40 +49,22 @@ See `scenarios.json`. Controls use RocketSim / RLBot signs:
 - `+pitch` = nose up
 - `+yaw` = nose right
 - `+roll` = roll right
+- `+steer` = turn right
 
 Frame: Z-up, identity car faces +X with right = +Y.
 
-## Scope / limits
+Ground scenarios set `"game_mode": "soccar"` and `"on_ground": true`.
 
-- **Covered now:** freefall, air throttle/boost, pitch/yaw/roll, coast-after-roll, double jump, forward/side flip (void).
-- **Not covered yet:** ground driving, suspension, walls/meshes, car-ball collisions (need `SOCCAR` + dumped collision meshes from [RLArenaCollisionDumper](https://github.com/ZealanL/RLArenaCollisionDumper)).
-- Orientation drills in the app also use `AerialBody` (`aerial.js`) on a Three.js Y-up car — that path is a separate coordinate mapping and should be validated after `rl-physics.js` matches.
+## Current match quality (max position error vs RocketSim)
 
-## Pure-browser upgrade path
-
-Keeping the sim in JS (no native RocketSim runtime in the app):
-
-| Upgrade | Status in `rl-physics.js` |
+| Area | Max pos error |
 |---|---|
-| Air control torques | Done (matches void) |
-| Directional dodges / flip cancel / Z-damp | Done (JS FSM from RocketSim constants) |
-| Finite boost + min boost time | Done |
-| Soccar boost pads | Done in Free Play (`boostPads.js`) |
-| Supersonic flag | Done |
-| Powerslide analog rise/fall | Partial (handbrake blend; no Bullet wheels) |
-| Arena collision meshes | Still box OBB; load dumped OBJ/trimesh next |
-| Suspension / wavedashes | Still simplified ground grip |
+| Air freefall / throttle / boost / pitch / yaw / roll | ~0 uu |
+| Air dodges | ~0.001 uu |
+| Ground rest / throttle / boost / coast / brake | ≤ 0.02 uu |
+| Ground steer / powerslide | ≤ 0.17 uu |
+| Ground jump (full + tap) | ≤ 0.01 uu |
+| Wall drive (throttle climb) | ≤ 0.10 uu |
+| Ground flip that scrapes the floor (musty) | ~28 uu residual |
 
-Optional later (still browser-only): Rapier/Ammo WASM for mesh colliders once arena dumps are in-repo — keep gameplay constants in `rl-physics.js`.
-
-## Current status
-
-| Area | Status |
-|---|---|
-| Constants table | Match |
-| Freefall / throttle / boost / double jump / coast | Match |
-| Single-axis roll / pitch / yaw ω | Match |
-| Yaw orientation | Match |
-| Pitch / roll orientation | ~0–4° residual over 0.5–1s (combo/boost amplify) |
-
-Re-run after physics edits and check `out/report.md`.
+The residual on floor-scraping dodges comes from Bullet’s contact manifold vs our merged OBB-corner solver; drive, jump, air, and wall paths are effectively 1:1.

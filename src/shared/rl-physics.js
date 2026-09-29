@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { arenaDistance, arenaNormal } from "./arenaMesh.js";
 import { getHitboxPreset, HITBOX_PRESETS } from "./hitboxPresets.js";
 
 /* =====================================================================
@@ -316,11 +317,27 @@ export function stepBall(ball, dt = RL.DT) {
   if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
   ball.pos.addScaledVector(ball.vel, dt);
   const e = RL.BALL_RESTITUTION;
-  // NOTE: simplified box arena (no curved walls/goals); spin-friction coupling omitted.
-  if (ball.pos.z < R) { ball.pos.z = R; ball.vel.z = Math.abs(ball.vel.z) < 25 ? 0 : -ball.vel.z * e; }
-  if (ball.pos.z > RL.CEILING - R) { ball.pos.z = RL.CEILING - R; ball.vel.z = -Math.abs(ball.vel.z) * e; }
-  if (Math.abs(ball.pos.x) > RL.HALF_W - R) { ball.pos.x = Math.sign(ball.pos.x) * (RL.HALF_W - R); ball.vel.x = -Math.sign(ball.pos.x) * Math.abs(ball.vel.x) * e; }
-  if (Math.abs(ball.pos.y) > RL.HALF_L - R) { ball.pos.y = Math.sign(ball.pos.y) * (RL.HALF_L - R); ball.vel.y = -Math.sign(ball.pos.y) * Math.abs(ball.vel.y) * e; }
+  // Arena planes + soccar meshes (spin-friction coupling still omitted).
+  const n = V();
+  const clearance = arenaDistance(ball.pos.x, ball.pos.y, ball.pos.z, n);
+  const pen = R - clearance;
+  if (pen > 0) {
+    ball.pos.addScaledVector(n, pen);
+    const vn = ball.vel.dot(n);
+    if (vn < 0) {
+      ball.vel.addScaledVector(n, -(1 + e) * vn);
+      if (Math.abs(ball.vel.dot(n)) < 25 && n.z > 0.9) {
+        ball.vel.z = 0;
+      }
+    }
+  }
+  // Soft goal backstops (meshes cover the mouth; keep a deep back plane).
+  const back = RL.HALF_L + RL.GOAL_DEPTH;
+  if (Math.abs(ball.pos.y) > back - R) {
+    const sign = Math.sign(ball.pos.y);
+    ball.pos.y = sign * (back - R);
+    if (ball.vel.y * sign > 0) ball.vel.y *= -e;
+  }
   if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
 }
 

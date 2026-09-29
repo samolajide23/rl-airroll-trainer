@@ -41,7 +41,8 @@ export {
   syncHitboxHelperYUp,
 } from "./rl-physics.js";
 
-export { ARENA_SHAPE, arenaDistance, raycastArena } from "./arenaShape.js";
+export { ARENA_SHAPE, arenaDistance as arenaDistanceSdf, raycastArena as raycastArenaSdf } from "./arenaShape.js";
+export { arenaDistance, arenaNormal, raycastArena, ARENA_TRI_COUNT } from "./arenaMesh.js";
 
 export { AerialBody, FixedStepClock } from "./aerial.js";
 

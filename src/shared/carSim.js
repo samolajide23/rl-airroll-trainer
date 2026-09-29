@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { arenaDistance, arenaNormal, raycastArena } from "./arenaShape.js";
+import { arenaDistance, arenaNormal, raycastArena } from "./arenaMesh.js";
 import {
   cloneHitbox,
   getHitboxForCarId,
@@ -601,7 +601,11 @@ function updateAirTorque(car, fr, c, updateAirControl, accel, angAccel) {
 
   let doAirControl = false;
   if (car.isFlipping) {
-    car.isFlipping = car.hasFlipped && car.flipTime < RL.FLIP_TORQUE_TIME;
+    // RocketSim compares flipTime in float32; 78*(1/120) still < 0.65f, so
+    // dodge torque runs for 79 ticks. Mirror that with an inclusive tick count.
+    const flipTicks = Math.round(car.flipTime / RL.DT);
+    const flipTorqueTicks = Math.round(RL.FLIP_TORQUE_TIME / RL.DT);
+    car.isFlipping = car.hasFlipped && flipTicks <= flipTorqueTicks;
   }
   if (car.isFlipping) {
     const rel = car.flipRelTorque.clone();
@@ -629,11 +633,12 @@ function updateAirTorque(car, fr, c, updateAirControl, accel, angAccel) {
     if (c.pitch || c.yaw || c.roll) {
       if (car.isFlipping) {
         pitchTorqueScale = 0;
-      } else if (
-        car.hasFlipped &&
-        car.flipTime < RL.FLIP_TORQUE_TIME + RL.FLIP_PITCHLOCK_EXTRA
-      ) {
-        pitchTorqueScale = 0;
+      } else if (car.hasFlipped) {
+        const flipTicks = Math.round(car.flipTime / RL.DT);
+        const lockTicks = Math.round(
+          (RL.FLIP_TORQUE_TIME + RL.FLIP_PITCHLOCK_EXTRA) / RL.DT,
+        );
+        if (flipTicks <= lockTicks) pitchTorqueScale = 0;
       }
       torque
         .addScaledVector(dirPitch, c.pitch * pitchTorqueScale * RS.AIR_CONTROL_TORQUE.pitch)
@@ -670,9 +675,14 @@ function updateJump(car, fr, c, jumpPressed, dt, accel) {
     }
   }
 
+  // RocketSim compares jumpTime in float32; 24*(1/120) underflows 0.2 in f64 and
+  // would grant an extra hold tick. Use tick counts so hold lasts exactly 0.2s.
+  const jumpTicks = Math.round(car.jumpTime / RL.DT);
+  const minJumpTicks = Math.round(RS.JUMP_MIN_TIME / RL.DT);
+  const maxJumpTicks = Math.round(RL.JUMP_HOLD_MAX / RL.DT);
+
   if (car.jumping) {
-    car.jumping =
-      car.jumpTime < RS.JUMP_MIN_TIME || (c.jump && car.jumpTime < RL.JUMP_HOLD_MAX);
+    car.jumping = jumpTicks < minJumpTicks || (c.jump && jumpTicks < maxJumpTicks);
   } else if (car.onGround && jumpPressed) {
     car.jumping = true;
     car.jumpTime = 0;
@@ -682,7 +692,7 @@ function updateJump(car, fr, c, jumpPressed, dt, accel) {
   if (car.jumping) {
     car.hasJumped = true;
     let jumpAccel = RL.JUMP_HOLD_ACCEL;
-    if (car.jumpTime < RS.JUMP_MIN_TIME) jumpAccel *= RS.JUMP_PRE_MIN_ACCEL_SCALE;
+    if (jumpTicks < minJumpTicks) jumpAccel *= RS.JUMP_PRE_MIN_ACCEL_SCALE;
     accel.addScaledVector(fr.u, jumpAccel);
   }
 
@@ -784,10 +794,14 @@ function updateDoubleJumpOrFlip(car, fr, c, jumpPressed, forwardSpeed, dt) {
 
   if (car.isFlipping) {
     car.flipTime += dt;
+    const flipTicks = Math.round(car.flipTime / RL.DT);
+    const flipTorqueTicks = Math.round(RL.FLIP_TORQUE_TIME / RL.DT);
+    const zDampStart = Math.round(RL.FLIP_Z_DAMP_START / RL.DT);
+    const zDampEnd = Math.round(RL.FLIP_Z_DAMP_END / RL.DT);
     if (
-      car.flipTime <= RL.FLIP_TORQUE_TIME &&
-      car.flipTime >= RL.FLIP_Z_DAMP_START &&
-      (car.vel.z < 0 || car.flipTime < RL.FLIP_Z_DAMP_END)
+      flipTicks <= flipTorqueTicks &&
+      flipTicks >= zDampStart &&
+      (car.vel.z < 0 || flipTicks < zDampEnd)
     ) {
       car.vel.z *= (1 - RL.FLIP_Z_DAMP_120) ** tickTimeScale;
     }
@@ -886,14 +900,40 @@ function solveArenaContacts(car, fr, dt) {
           .addScaledVector(fr.r, offset[1] + (sy * size[1]) / 2)
           .addScaledVector(fr.u, offset[2] + (sz * size[2]) / 2);
         const p = rel.clone().add(car.pos);
-        const dist = arenaDistance(p.x, p.y, p.z);
-        if (dist < RS.CONTACT_BREAKING_THRESHOLD) {
-          contacts.push({ rel, dist, n: arenaNormal(p) });
-        }
+        const n = V();
+        const dist = arenaDistance(p.x, p.y, p.z, n);
+        if (dist >= RS.CONTACT_BREAKING_THRESHOLD) continue;
+        const approaching = n.dot(velocityAt(car, rel)) < RS.RESTITUTION_VELOCITY_THRESHOLD;
+        if (dist < 0 || approaching) contacts.push({ rel, dist, n: n.clone() });
       }
     }
   }
   if (contacts.length === 0) return { push, turn };
+
+  // Merge near-duplicate normals so 8 OBB corners against one plane do not
+  // each apply a full bounce (Bullet uses a manifold of distinct points).
+  const merged = [];
+  for (const c of contacts) {
+    let group = merged.find((g) => g.n.dot(c.n) > 0.95);
+    if (!group) {
+      group = {
+        n: c.n.clone(),
+        dist: c.dist,
+        rel: c.rel.clone(),
+        weight: 1,
+      };
+      merged.push(group);
+    } else if (c.dist < group.dist) {
+      group.dist = c.dist;
+      group.rel.copy(c.rel);
+      group.n.copy(c.n);
+      group.weight += 1;
+    } else {
+      group.weight += 1;
+    }
+  }
+  contacts.length = 0;
+  for (const g of merged) contacts.push({ rel: g.rel, dist: g.dist, n: g.n });
 
   let deepest = contacts[0];
   for (const c of contacts) if (c.dist < deepest.dist) deepest = c;
@@ -903,11 +943,13 @@ function solveArenaContacts(car, fr, dt) {
   for (const c of contacts) {
     const vel = velocityAt(car, c.rel);
     const vn = c.n.dot(vel);
+    // Desired normal speed after the impulse (Bullet restitutionCurve).
+    // Do NOT bias by positive clearance — that attracts the body into the surface.
     const restitution =
-      Math.abs(vn) < RS.RESTITUTION_VELOCITY_THRESHOLD
+      vn >= -RS.RESTITUTION_VELOCITY_THRESHOLD
         ? 0
-        : Math.max(0, RS.CARWORLD_RESTITUTION * -vn);
-    c.target = restitution - (c.dist > 0 ? c.dist / dt : 0);
+        : RS.CARWORLD_RESTITUTION * -vn;
+    c.target = restitution;
     c.k = impulseDenominator(car, fr, c.rel, c.n);
     const tangentVel = vel.clone().addScaledVector(c.n, -vn);
     c.t = tangentVel.lengthSq() > 1e-12 ? tangentVel.normalize() : perpendicular(c.n);

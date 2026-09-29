@@ -1,8 +1,9 @@
 {
-  "version": 1,
-  "notes": "Shared scenarios for RocketSim (ground truth) vs rl-physics.js. Units: uu/cm, seconds, radians. Frame: Z-up. Identity orientation = forward +X, right +Y, up +Z (RocketSim RotMat).",
+  "version": 2,
+  "notes": "Shared scenarios for RocketSim (ground truth) vs carSim.js. Units: uu/cm, seconds, radians. Frame: Z-up. Identity orientation = forward +X, right +Y, up +Z (RocketSim RotMat). Air scenarios use THE_VOID; ground scenarios use SOCCAR + collision_meshes.",
   "defaults": {
     "tick_rate": 120,
+    "settle_ticks": 240,
     "initial": {
       "pos": [0, 0, 800],
       "vel": [0, 0, 0],
@@ -131,6 +132,181 @@
       "description": "Release inputs with initial roll rate 5.5 rad/s — damping coast",
       "ticks": 120,
       "initial": { "ang_vel": [-5.5, 0, 0] }
+    },
+
+    {
+      "id": "ground_rest_0_5s",
+      "description": "Settled Octane on floor, no input for 0.5s",
+      "game_mode": "soccar",
+      "ticks": 60,
+      "initial": {
+        "pos": [0, 0, 17],
+        "on_ground": true
+      }
+    },
+    {
+      "id": "ground_throttle_2s",
+      "description": "Full throttle on open floor facing +Y for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [0, -4000, 17],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "controls": { "throttle": 1 }
+    },
+    {
+      "id": "ground_throttle_4s",
+      "description": "Full throttle on open floor to drive-speed cap",
+      "game_mode": "soccar",
+      "ticks": 480,
+      "initial": {
+        "pos": [0, -4000, 17],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "controls": { "throttle": 1 }
+    },
+    {
+      "id": "ground_boost_2s",
+      "description": "Throttle + boost on open floor for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [0, -4000, 17],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "controls": { "throttle": 1, "boost": true }
+    },
+    {
+      "id": "ground_steer_right_1s",
+      "description": "Throttle 1s then throttle+steer right 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [0, 0, 17],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 120, "controls": { "throttle": 1, "steer": 0 } },
+        { "until_tick": 240, "controls": { "throttle": 1, "steer": 1 } }
+      ]
+    },
+    {
+      "id": "ground_steer_left_1s",
+      "description": "Throttle 1s then throttle+steer left 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [0, 0, 17],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 120, "controls": { "throttle": 1, "steer": 0 } },
+        { "until_tick": 240, "controls": { "throttle": 1, "steer": -1 } }
+      ]
+    },
+    {
+      "id": "ground_coast_1s",
+      "description": "Throttle to speed then coast 1s",
+      "game_mode": "soccar",
+      "ticks": 720,
+      "initial": {
+        "pos": [0, -4000, 17],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 600, "controls": { "throttle": 1 } },
+        { "until_tick": 720, "controls": { "throttle": 0 } }
+      ]
+    },
+    {
+      "id": "ground_brake_0_25s",
+      "description": "Throttle to speed then reverse-brake 0.25s",
+      "game_mode": "soccar",
+      "ticks": 630,
+      "initial": {
+        "pos": [0, -4000, 17],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 600, "controls": { "throttle": 1 } },
+        { "until_tick": 630, "controls": { "throttle": -1 } }
+      ]
+    },
+    {
+      "id": "ground_powerslide_0_5s",
+      "description": "Throttle 2s then throttle+steer+handbrake 0.5s",
+      "game_mode": "soccar",
+      "ticks": 300,
+      "initial": {
+        "pos": [0, 0, 17],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 240, "controls": { "throttle": 1, "steer": 0, "handbrake": false } },
+        { "until_tick": 300, "controls": { "throttle": 1, "steer": 1, "handbrake": true } }
+      ]
+    },
+    {
+      "id": "ground_jump_full_hold",
+      "description": "Full hold jump from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [0, 0, 17],
+        "on_ground": true
+      },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "ground_jump_tap",
+      "description": "Single-tick jump tap from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [0, 0, 17],
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true } },
+        { "until_tick": 120, "controls": { "jump": false } }
+      ]
+    },
+    {
+      "id": "ground_flip_forward",
+      "description": "Jump then forward flip from ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [0, 0, 17],
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true } },
+        { "until_tick": 15, "controls": { "jump": false } },
+        { "until_tick": 120, "controls": { "jump": true, "pitch": -1 } }
+      ]
+    },
+    {
+      "id": "wall_drive_throttle_3s",
+      "description": "Drive into +X wall and climb with throttle only",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": {
+        "pos": [3000, 0, 17],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "controls": { "throttle": 1 }
     }
   ]
 }

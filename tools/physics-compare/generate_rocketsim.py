@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """Generate RocketSim reference trajectories for physics-compare scenarios.
 
-Uses GameMode.THE_VOID so no collision meshes are required.
-Requires: pip install RocketSim numpy
+Air scenarios use GameMode.THE_VOID (no meshes).
+Ground scenarios use GameMode.SOCCAR and require collision meshes:
+
+  tools/physics-compare/collision_meshes/soccar/*.cmf
+
+Copy from rlgym or dump via RLArenaCollisionDumper, then:
+
+  pip install -r tools/physics-compare/requirements.txt
+  npm run physics:ref
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -27,6 +35,7 @@ except ImportError:
 HERE = Path(__file__).resolve().parent
 DEFAULT_SCENARIOS = HERE / "scenarios.json"
 DEFAULT_OUT = HERE / "out" / "rocketsim"
+DEFAULT_MESHES = HERE / "collision_meshes"
 
 
 def deep_merge(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[str, Any]:
@@ -93,6 +102,13 @@ def angle_rot(initial: dict[str, Any]) -> Any:
     ).as_rot_mat()
 
 
+def scenario_mode(scenario: dict[str, Any], initial: dict[str, Any]) -> str:
+    explicit = scenario.get("game_mode") or initial.get("game_mode")
+    if explicit:
+        return str(explicit).lower()
+    return "soccar" if initial.get("on_ground") else "void"
+
+
 def prepare_airborne(arena: rs.Arena, car: rs.Car, initial: dict[str, Any]) -> None:
     """RocketSim keeps is_on_ground True after a cold set_state even at high Z.
 
@@ -111,6 +127,42 @@ def prepare_airborne(arena: rs.Arena, car: rs.Car, initial: dict[str, Any]) -> N
 
     st = rs.CarState()
     st.pos = rs.Vec(*initial["pos"])
+    st.vel = rs.Vec(*initial["vel"])
+    st.ang_vel = rs.Vec(*initial["ang_vel"])
+    st.rot_mat = angle_rot(initial)
+    st.boost = float(initial.get("boost", 100))
+    car.set_state(st)
+
+
+def prepare_ground(arena: rs.Arena, car: rs.Car, initial: dict[str, Any], settle_ticks: int) -> None:
+    """Drop the car onto the soccar floor and settle suspension before tick 0."""
+    st = rs.CarState()
+    st.pos = rs.Vec(*initial["pos"])
+    st.vel = rs.Vec(0, 0, 0)
+    st.ang_vel = rs.Vec(0, 0, 0)
+    st.rot_mat = angle_rot(initial)
+    st.boost = float(initial.get("boost", 100))
+    car.set_state(st)
+    car.set_controls(rs.CarControls())
+    for _ in range(settle_ticks):
+        arena.step(1)
+
+    # Re-apply requested horizontal / angular velocity after settle; keep settled Z.
+    settled = car.get_state()
+    st = rs.CarState()
+    st.pos = rs.Vec(float(initial["pos"][0]), float(initial["pos"][1]), float(settled.pos.z))
+    st.vel = rs.Vec(*initial["vel"])
+    st.ang_vel = rs.Vec(*initial["ang_vel"])
+    st.rot_mat = angle_rot(initial)
+    st.boost = float(initial.get("boost", 100))
+    car.set_state(st)
+    # One more tick with no input so wheels/contact refresh without advancing controls.
+    car.set_controls(rs.CarControls())
+    arena.step(1)
+    # Restore kinematics again so tick 0 matches the requested vel at settled pose.
+    settled = car.get_state()
+    st = rs.CarState()
+    st.pos = rs.Vec(float(settled.pos.x), float(settled.pos.y), float(settled.pos.z))
     st.vel = rs.Vec(*initial["vel"])
     st.ang_vel = rs.Vec(*initial["ang_vel"])
     st.rot_mat = angle_rot(initial)
@@ -169,7 +221,6 @@ def dump_constants() -> dict[str, Any]:
     torque = out["CAR_AIR_CONTROL_TORQUE"]
     damp = out["CAR_AIR_CONTROL_DAMPING"]
     scale = float(out["CAR_TORQUE_SCALE"])
-    # RocketSim packing is (pitch, yaw, roll) for these triples.
     out["EFFECTIVE_T_PITCH"] = float(torque[0]) * scale
     out["EFFECTIVE_T_YAW"] = float(torque[1]) * scale
     out["EFFECTIVE_T_ROLL"] = float(torque[2]) * scale
@@ -179,16 +230,58 @@ def dump_constants() -> dict[str, Any]:
     return out
 
 
+_MESHES_READY = False
+
+
+def ensure_meshes(mesh_dir: Path) -> None:
+    global _MESHES_READY
+    if _MESHES_READY:
+        return
+    soccar = mesh_dir / "soccar"
+    if not soccar.is_dir() or not any(soccar.glob("*.cmf")):
+        print(
+            "SOCCAR collision meshes not found.\n"
+            f"  Expected: {soccar}/*.cmf\n"
+            "Copy from rlgym (rlgym/rocket_league/sim/collision_meshes/soccar)\n"
+            "or dump via https://github.com/ZealanL/RLArenaCollisionDumper",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    rs.init(str(mesh_dir))
+    _MESHES_READY = True
+
+
 def run_scenario(
     scenario: dict[str, Any],
     defaults: dict[str, Any],
+    mesh_dir: Path,
 ) -> dict[str, Any]:
     initial = deep_merge(defaults.get("initial", {}), scenario.get("initial"))
     ticks = int(scenario["ticks"])
+    mode = scenario_mode(scenario, initial)
+    settle_ticks = int(scenario.get("settle_ticks", defaults.get("settle_ticks", 240)))
 
-    arena = rs.Arena(rs.GameMode.THE_VOID)
+    if mode == "soccar":
+        ensure_meshes(mesh_dir)
+        arena = rs.Arena(rs.GameMode.SOCCAR)
+    else:
+        arena = rs.Arena(rs.GameMode.THE_VOID)
+
     car = arena.add_car(rs.Team.BLUE)
-    prepare_airborne(arena, car, initial)
+    if mode == "soccar":
+        # Park the default kickoff ball far away so it cannot collide with car tests.
+        try:
+            ball = arena.ball
+            bs = ball.get_state()
+            bs.pos = rs.Vec(0, 0, 3000)
+            bs.vel = rs.Vec(0, 0, 0)
+            bs.ang_vel = rs.Vec(0, 0, 0)
+            ball.set_state(bs)
+        except Exception:
+            pass
+        prepare_ground(arena, car, initial, settle_ticks)
+    else:
+        prepare_airborne(arena, car, initial)
 
     frames: list[dict[str, Any]] = []
     ctrl0 = controls_at_tick(0, defaults, scenario)
@@ -205,7 +298,7 @@ def run_scenario(
         "description": scenario.get("description", ""),
         "engine": "rocketsim",
         "rocketsim_version": getattr(rs, "__version__", "unknown"),
-        "game_mode": "THE_VOID",
+        "game_mode": mode,
         "tick_rate": float(arena.tick_rate),
         "tick_time": float(arena.tick_time),
         "ticks": ticks,
@@ -216,24 +309,10 @@ def run_scenario(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--scenarios",
-        type=Path,
-        default=DEFAULT_SCENARIOS,
-        help="Path to scenarios.json",
-    )
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUT,
-        help="Output directory for trajectory JSON files",
-    )
-    parser.add_argument(
-        "--only",
-        action="append",
-        default=[],
-        help="Optional scenario id filter (repeatable)",
-    )
+    parser.add_argument("--scenarios", type=Path, default=DEFAULT_SCENARIOS)
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--meshes", type=Path, default=DEFAULT_MESHES)
+    parser.add_argument("--only", action="append", default=[])
     args = parser.parse_args()
 
     data = json.loads(args.scenarios.read_text())
@@ -247,6 +326,14 @@ def main() -> None:
             print(f"Unknown scenario ids: {sorted(missing)}", file=sys.stderr)
             sys.exit(1)
 
+    # Init meshes once if any soccar scenario is present.
+    if any(
+        scenario_mode(s, deep_merge(defaults.get("initial", {}), s.get("initial")))
+        == "soccar"
+        for s in scenarios
+    ):
+        ensure_meshes(args.meshes)
+
     args.out.mkdir(parents=True, exist_ok=True)
     const_path = args.out / "rocketsim_constants.json"
     const_path.write_text(json.dumps(dump_constants(), indent=2) + "\n")
@@ -254,7 +341,7 @@ def main() -> None:
 
     index: list[dict[str, str]] = []
     for scenario in scenarios:
-        result = run_scenario(scenario, defaults)
+        result = run_scenario(scenario, defaults, args.meshes)
         path = args.out / f"{scenario['id']}.json"
         path.write_text(json.dumps(result, indent=2) + "\n")
         index.append({"id": scenario["id"], "path": path.name})
