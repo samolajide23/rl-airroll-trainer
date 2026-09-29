@@ -1,4 +1,5 @@
-const STORAGE_KEY = "rl-airroll-trainer-settings-v4";
+const STORAGE_KEY = "rl-airroll-trainer-settings-v5";
+const LEGACY_V4 = "rl-airroll-trainer-settings-v4";
 const LEGACY_V3 = "rl-airroll-trainer-settings-v3";
 const LEGACY_KEY = "rl-airroll-trainer-binds-v1";
 const PREV_KEY = "rl-airroll-trainer-settings-v2";
@@ -73,18 +74,19 @@ export const PAD_AXIS_OPTIONS = [
  * Distance/height are Unreal units (uu); we convert at use sites.
  */
 export const DEFAULT_CAMERA = {
+  // FOV is horizontal degrees (Rocket League / in-game slider).
   fov: 110,
   distance: 270,
-  height: 90,
-  angle: -5,
-  stiffness: 0.35,
-  transitionSpeed: 1.6,
+  height: 100,
+  angle: -3,
+  stiffness: 0.5,
+  transitionSpeed: 1.0,
   shake: false,
 };
 
 /** @type {{ key: CameraSetting, label: string, min: number, max: number, step: number }[]} */
 export const CAMERA_SLIDERS = [
-  { key: "fov", label: "Field of view", min: 60, max: 110, step: 1 },
+  { key: "fov", label: "FOV (horizontal)", min: 60, max: 110, step: 1 },
   { key: "distance", label: "Distance", min: 100, max: 400, step: 5 },
   { key: "height", label: "Height", min: 40, max: 200, step: 5 },
   { key: "angle", label: "Angle", min: -15, max: 0, step: 0.5 },
@@ -93,7 +95,7 @@ export const CAMERA_SLIDERS = [
     key: "transitionSpeed",
     label: "Transition speed",
     min: 0.5,
-    max: 3,
+    max: 2,
     step: 0.1,
   },
 ];
@@ -163,6 +165,12 @@ function mergeCamera(src) {
 function load() {
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
+    /** When upgrading from v4, keep binds/pad but refresh camera to RL defaults. */
+    let resetCameraFromV4 = false;
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_V4);
+      if (raw) resetCameraFromV4 = true;
+    }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V3);
     }
@@ -204,6 +212,11 @@ function load() {
       }
       if (parsed?.pad && typeof parsed.pad === "object") {
         mergePad(parsed.pad);
+      }
+      if (resetCameraFromV4) {
+        camera = { ...DEFAULT_CAMERA };
+        persist();
+        return;
       }
       if (parsed?.camera && typeof parsed.camera === "object") {
         mergeCamera(parsed.camera);

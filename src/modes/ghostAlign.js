@@ -311,16 +311,12 @@ export class GhostAlignMode {
   }
 
   updateCamera(dt) {
-    // Chase the player; bias look toward the side reference ghost.
-    this.midpoint
-      .copy(this.car.position)
-      .add(this.ghost.position)
-      .multiplyScalar(0.5);
+    // True car-cam — ghost sits to the side; don't pull the lens off the car.
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
     this.chase.update(this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
-      lookAt: this.midpoint,
+      onGround: false,
     });
   }
 

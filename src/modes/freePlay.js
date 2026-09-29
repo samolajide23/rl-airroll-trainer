@@ -67,7 +67,6 @@ export class FreePlayMode {
 
     this.forward = new THREE.Vector3();
     this.velThree = new THREE.Vector3();
-    this.lookAhead = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
 
     this.spaceLatch = false;
@@ -286,16 +285,12 @@ export class FreePlayMode {
       this.physCar.vel.z * ARENA_UU,
       -this.physCar.vel.y * ARENA_UU,
     );
-    this.lookAhead
-      .copy(this.carMesh.position)
-      .addScaledVector(this.forward, 8)
-      .addScaledVector(this.worldUp, 1.2);
     this.chase.update(this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
       velocity: this.velThree,
-      lookAt: this.lookAhead,
       worldUp: this.worldUp,
+      onGround: this.physCar.onGround,
     });
   }
 

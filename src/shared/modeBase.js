@@ -137,6 +137,7 @@ export class AerialDrillBase {
       target: this.car.position,
       forward: this.forward,
       lookAt,
+      onGround: false,
     });
   }
 

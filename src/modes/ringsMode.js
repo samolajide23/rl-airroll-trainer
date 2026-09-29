@@ -610,22 +610,10 @@ export class RingsMode {
 
     if (this.onPlatform) {
       // Fixed pad view; invalidate chase so takeoff snaps cleanly.
-      const cfg = getCamera();
-      if (this.ctx.camera.fov !== cfg.fov) {
-        this.ctx.camera.fov = cfg.fov;
-        this.ctx.camera.updateProjectionMatrix();
-      }
-      const dist = cfg.distance * UU;
-      const height = cfg.height * UU;
-      this.ctx.camera.position.set(
-        0,
-        PLATFORM_TOP_Y + height + 2,
-        -dist - 2,
-      );
-      this.tmp.set(0, PLATFORM_TOP_Y + 2, 4).lerp(this.tmp2, 0.55);
-      this.ctx.camera.up.copy(this.worldUp);
-      this.ctx.camera.lookAt(this.tmp);
-      this.chase.invalidate();
+      // Use chase snap so FOV / angle / height match car-cam math.
+      this.forward.set(0, 0, 1);
+      this.tmp.set(0, PLATFORM_TOP_Y + 1.2, 0);
+      this.chase.snap(this.ctx.camera, this.tmp, this.forward, this.tmp2);
       return;
     }
 
@@ -636,6 +624,7 @@ export class RingsMode {
       velocity: this.vel,
       lookAt: this.tmp2,
       worldUp: this.worldUp,
+      onGround: this.onPlatform,
     });
   }
 

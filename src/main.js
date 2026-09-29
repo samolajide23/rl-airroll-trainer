@@ -8,6 +8,7 @@ import {
   pollGamepadButtonPress,
   snapshotPressedButtons,
 } from "./shared/input.js";
+import { horizontalFovToVertical } from "./shared/chaseCamera.js";
 import {
   getPlaySize,
   initTouchControls,
@@ -114,11 +115,12 @@ scene.background = new THREE.Color(0x0b1220);
 scene.fog = new THREE.Fog(0x0b1220, 40, 120);
 
 const camera = new THREE.PerspectiveCamera(
-  getCamera().fov,
+  60,
   window.innerWidth / window.innerHeight,
   0.1,
   200,
 );
+camera.fov = horizontalFovToVertical(getCamera().fov, camera.aspect);
 camera.position.set(0, 4, -10);
 camera.lookAt(0, 0, 0);
 
@@ -575,9 +577,9 @@ function buildCameraList() {
       const n = Number(input.value);
       readout.textContent = fmt(n);
       setCamera(slider.key, n);
-      // Live FOV on the shared camera while browsing settings
+      // Live FOV on the shared camera while browsing settings (RL horizontal → Three vertical)
       if (slider.key === "fov") {
-        camera.fov = n;
+        camera.fov = horizontalFovToVertical(n, camera.aspect);
         camera.updateProjectionMatrix();
       }
     });
@@ -806,7 +808,7 @@ btnResetBinds.addEventListener("click", () => {
     buildCameraList();
   }
   const cam = getCamera();
-  camera.fov = cam.fov;
+  camera.fov = horizontalFovToVertical(cam.fov, camera.aspect);
   camera.updateProjectionMatrix();
 });
 tabControls.addEventListener("click", () => setSettingsTab("controls"));

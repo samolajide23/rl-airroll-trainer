@@ -4,10 +4,30 @@ import { getCamera } from "./settings.js";
 /** Unreal units → Three.js (1 three-unit ≈ 1 m). */
 export const UU = 0.01;
 
+/** Max extra distance (uu) pulled at supersonic when stiffness = 0. */
+const STIFFNESS_ZOOM_UU = 100;
+
 /**
- * Rocket League–style chase camera driven by Settings camera sliders.
- * Keeps world-up (no camera roll), sits behind a blend of look-direction /
- * car forward / velocity, and eases with stiffness / transition speed.
+ * Convert Rocket League horizontal FOV (degrees) to Three.js vertical FOV.
+ * @param {number} horizontalDeg
+ * @param {number} aspect width / height
+ * @returns {number}
+ */
+export function horizontalFovToVertical(horizontalDeg, aspect) {
+  const h = THREE.MathUtils.degToRad(horizontalDeg);
+  const v = 2 * Math.atan(Math.tan(h / 2) / Math.max(aspect, 1e-6));
+  return THREE.MathUtils.radToDeg(v);
+}
+
+/**
+ * Rocket League car-cam chase.
+ *
+ * Matches in-game sliders:
+ * - FOV is **horizontal** (converted for Three.js)
+ * - Distance / height in uu behind & above the car
+ * - Angle pitches the look-at (negative = look down)
+ * - Stiffness lags follow direction and reduces speed zoom-out
+ * - Transition speed scales how fast position/look catch up
  */
 export class ChaseCamera {
   constructor() {
@@ -15,8 +35,10 @@ export class ChaseCamera {
     this.camLook = new THREE.Vector3();
     this.smoothPos = new THREE.Vector3();
     this.smoothLook = new THREE.Vector3();
+    /** Lagged horizontal follow direction (car-forward projected on ground plane). */
     this.smoothDir = new THREE.Vector3(0, 0, 1);
     this.tmp = new THREE.Vector3();
+    this.tmp2 = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
     this._ready = false;
@@ -43,64 +65,83 @@ export class ChaseCamera {
    *   velocity?: THREE.Vector3,
    *   lookAt?: THREE.Vector3,
    *   worldUp?: THREE.Vector3,
+   *   onGround?: boolean,
    *   snap?: boolean,
    * }} opts
    */
   update(camera, dt, opts) {
     const cfg = getCamera();
-    if (camera.fov !== cfg.fov) {
-      camera.fov = cfg.fov;
+    const aspect = camera.aspect || 16 / 9;
+    const vFov = horizontalFovToVertical(cfg.fov, aspect);
+    if (Math.abs(camera.fov - vFov) > 0.05) {
+      camera.fov = vFov;
       camera.updateProjectionMatrix();
     }
 
-    const dist = cfg.distance * UU;
-    const height = cfg.height * UU;
-    const angleRad = (cfg.angle * Math.PI) / 180;
-    const stiff = THREE.MathUtils.clamp(cfg.stiffness, 0, 1);
-    const posRate = (1.2 + stiff * 3.5) * cfg.transitionSpeed;
-    const lookRate = (1.6 + stiff * 2.8) * cfg.transitionSpeed;
-    const dirRate = 1.4 + stiff * 2.2;
-
     const up = opts.worldUp ?? this.worldUp;
-    const focus = opts.lookAt ?? opts.target;
+    const dist0 = cfg.distance * UU;
+    const height = cfg.height * UU;
+    const angleRad = THREE.MathUtils.degToRad(cfg.angle);
+    const stiff = THREE.MathUtils.clamp(cfg.stiffness, 0, 1);
+    const transition = Math.max(0.05, cfg.transitionSpeed);
 
-    // Preferred view direction: toward focus, blended with car forward / velocity.
-    this.tmp.copy(focus).sub(opts.target);
+    // --- Desired follow direction: car forward, flattened to world-up plane ---
+    // RL car-cam stays upright and orbits behind the nose.
+    this.forward.set(0, 0, 1);
+    if (opts.forward && opts.forward.lengthSq() > 1e-8) {
+      this.forward.copy(opts.forward);
+    }
+    this.tmp.copy(this.forward).addScaledVector(up, -this.forward.dot(up));
+    if (this.tmp.lengthSq() < 1e-6 && opts.velocity && opts.velocity.lengthSq() > 1e-4) {
+      this.tmp.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
+    }
     if (this.tmp.lengthSq() < 1e-6) {
-      if (opts.forward && opts.forward.lengthSq() > 1e-6) {
-        this.tmp.copy(opts.forward);
-      } else {
-        this.tmp.set(0, 0, 1);
+      this.tmp.copy(this.smoothDir);
+    }
+    this.tmp.normalize();
+
+    // Light velocity lean (RL softens with motion); keep car forward dominant.
+    if (opts.velocity && opts.velocity.lengthSq() > 1e-4) {
+      this.tmp2.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
+      if (this.tmp2.lengthSq() > 1e-6) {
+        this.tmp2.normalize();
+        const lean = opts.onGround === false ? 0.12 : 0.2;
+        this.tmp.multiplyScalar(1 - lean).addScaledVector(this.tmp2, lean).normalize();
       }
-    } else {
-      this.tmp.normalize();
     }
 
-    if (opts.forward && opts.forward.lengthSq() > 1e-6) {
-      this.forward.copy(opts.forward).normalize();
-      this.tmp.multiplyScalar(0.55).addScaledVector(this.forward, 0.45).normalize();
-    }
-    if (opts.velocity && opts.velocity.lengthSq() > 4) {
-      this.forward.copy(opts.velocity).normalize();
-      this.tmp.multiplyScalar(0.75).addScaledVector(this.forward, 0.25).normalize();
-    }
-
+    // Stiffness: how quickly the camera arm tracks car yaw (higher = snappier).
+    const dirRate = (1.5 + stiff * 18) * transition;
     if (opts.snap || !this._ready) {
       this.smoothDir.copy(this.tmp);
     } else {
       this.smoothDir.lerp(this.tmp, 1 - Math.exp(-dirRate * dt)).normalize();
     }
 
+    // Low stiffness zooms out toward supersonic (up to +100 uu).
+    const speedUu = opts.velocity ? opts.velocity.length() / UU : 0;
+    const superFrac = THREE.MathUtils.clamp(speedUu / 2300, 0, 1);
+    const dist = dist0 + (1 - stiff) * superFrac * STIFFNESS_ZOOM_UU * UU;
+
+    // Arm: behind car along lagged forward, up by height (world-up).
     this.camPos
       .copy(opts.target)
       .addScaledVector(this.smoothDir, -dist)
       .addScaledVector(up, height);
 
-    this.camLook.copy(opts.target);
+    // Angle: pitch look so the view matches the in-game angle slider.
+    // lookLift = height + dist * tan(angle); angle < 0 → look below camera height.
+    const lookLift = height + dist * Math.tan(angleRad);
+    this.camLook.copy(opts.target).addScaledVector(up, lookLift);
+
+    // Optional focus bias (ball / ghost) — keep subtle so car-cam stays primary.
     if (opts.lookAt) {
-      this.camLook.lerp(opts.lookAt, 0.45);
+      this.camLook.lerp(opts.lookAt, 0.12);
     }
-    this.camLook.addScaledVector(up, Math.tan(angleRad) * dist * 0.35);
+
+    // Transition speed: how fast the camera body catches the arm.
+    const posRate = (2.5 + stiff * 10) * transition;
+    const lookRate = (3.5 + stiff * 8) * transition;
 
     if (opts.snap || !this._ready) {
       this.smoothPos.copy(this.camPos);
