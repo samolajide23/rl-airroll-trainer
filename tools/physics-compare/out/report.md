@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-29T13:25:51.700Z
+Generated: 2026-09-29T14:58:06.070Z
 
 Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
 Candidate: **`src/shared/rl-physics.js`**.
@@ -41,6 +41,11 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `yaw_left_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `roll_then_release` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `combo_pitch_roll_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roll_from_pitch45` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roll_from_pitch90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `yaw_from_roll90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `combo_from_yaw90` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `partial_inputs_air` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `boost_and_pitch_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `double_jump_air` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_forward_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
@@ -59,6 +64,7 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `ground_jump_tap` | 0.002 / 0.003 | 0.006 / 0.074 | 0.000 / 0.001 | 0.002 / 0.003 | 0.002 / 0.003 |
 | `ground_flip_forward` | 0.658 / 1.557 | 2.061 / 8.951 | 0.073 / 0.691 | 0.449 / 1.145 | 0.547 / 1.145 |
 | `wall_drive_throttle_3s` | 0.034 / 0.100 | 0.045 / 0.198 | 0.000 / 0.004 | 0.001 / 0.012 | 0.001 / 0.012 |
+| `ground_jump_into_wall` | 1.567 / 7.854 | 6.073 / 26.604 | 0.051 / 1.108 | 0.354 / 0.857 | 0.115 / 1.135 |
 
 ## Per-scenario finals
 
@@ -149,6 +155,46 @@ Pitch up + roll right together for 1s
 - Final pos RS 0.00, 0.00, 472.29 vs JS 0.00, 0.00, 472.29
 - Final ω RS -4.862, -2.439, 0.813 vs JS -4.862, -2.439, 0.813
 - Final forward RS [0.768, 0.081, -0.635] vs JS [0.768, 0.081, -0.635]
+
+### `roll_from_pitch45`
+Start pitched +45°, hold air-roll right — must spin about nose
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS -3.889, 0.000, -3.889 vs JS -3.889, -0.000, -3.889
+- Final forward RS [0.707, -0.000, 0.707] vs JS [0.707, 0.000, 0.707]
+
+### `roll_from_pitch90`
+Start pitched +90° (nose up), hold air-roll right
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS -0.000, -0.000, -5.500 vs JS 0.000, 0.000, -5.500
+- Final forward RS [0.000, 0.000, 1.000] vs JS [-0.000, 0.000, 1.000]
+
+### `yaw_from_roll90`
+Start rolled 90°, hold yaw right — body-up yaw
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 717.40 vs JS 0.00, 0.00, 717.40
+- Final ω RS -0.000, 4.554, -0.000 vs JS 0.000, 4.554, 0.000
+- Final forward RS [0.402, -0.000, -0.916] vs JS [0.402, -0.000, -0.916]
+
+### `combo_from_yaw90`
+Start yawed 90°, pitch+roll together
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 615.16 vs JS 0.00, 0.00, 615.16
+- Final ω RS 2.449, -4.851, 0.845 vs JS 2.449, -4.851, 0.845
+- Final forward RS [-0.758, 0.458, -0.465] vs JS [-0.758, 0.458, -0.465]
+
+### `partial_inputs_air`
+Half pitch + half yaw + half roll for 1s
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS 0.00, 0.00, 472.29 vs JS 0.00, 0.00, 472.29
+- Final ω RS -4.795, -1.352, 2.330 vs JS -4.795, -1.352, 2.330
+- Final forward RS [0.322, -0.025, -0.946] vs JS [0.322, -0.025, -0.946]
 
 ### `boost_and_pitch_1s`
 Boost while pitching up for 1s
@@ -293,6 +339,14 @@ Drive into +X wall and climb with throttle only
 - Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.93, -0.00, 1649.07
 - Final ω RS 0.000, -2.442, 0.000 vs JS 0.000, -2.441, 0.000
 - Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, -0.000, 0.970]
+
+### `ground_jump_into_wall`
+Jump + boost into +X wall curve and climb (wheels on wall)
+
+- Worst position error at tick **180** (7.854 uu)
+- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.83, 687.90
+- Final ω RS -0.000, 0.001, 0.000 vs JS 0.000, 0.001, -0.000
+- Final forward RS [0.010, -0.000, 1.000] vs JS [0.010, 0.012, 1.000]
 
 ## How to re-run
 

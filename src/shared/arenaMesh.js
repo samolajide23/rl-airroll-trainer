@@ -306,11 +306,15 @@ function closestOnTri(px, py, pz, tri, outPoint, outNormal) {
   );
   if (outNormal.lengthSq() < EPS) outNormal.set(0, 0, 1);
   else outNormal.normalize();
-  // Flip so normal points toward query point (into free space).
-  const dx = px - outPoint.x;
-  const dy = py - outPoint.y;
-  const dz = pz - outPoint.z;
-  if (outNormal.x * dx + outNormal.y * dy + outNormal.z * dz < 0) outNormal.negate();
+  // Soccar CMF winding faces playable space. Orient toward arena centre so
+  // points under ramps (inside the solid) get an outward normal, not a
+  // toward-query flip that points deeper into the wedge.
+  const toCenterX = -outPoint.x;
+  const toCenterY = -outPoint.y;
+  const toCenterZ = CEILING / 2 - outPoint.z;
+  if (outNormal.x * toCenterX + outNormal.y * toCenterY + outNormal.z * toCenterZ < 0) {
+    outNormal.negate();
+  }
 
   const ex = px - outPoint.x;
   const ey = py - outPoint.y;
@@ -327,6 +331,8 @@ function pointAabbDistSq(px, py, pz, min, max) {
 
 const _cp = new THREE.Vector3();
 const _cn = new THREE.Vector3();
+const _meshP = new THREE.Vector3();
+const _meshN = new THREE.Vector3();
 
 /**
  * Signed distance to the arena (planes + meshes). Positive = playable side,
@@ -336,7 +342,9 @@ const _cn = new THREE.Vector3();
  * @param {THREE.Vector3} [outNormal]
  */
 export function arenaDistance(x, y, z, outNormal) {
-  let bestAbs = Infinity;
+  // Union of solids: playable SDF = min(signed distances). Using min-|d|
+  // wrongly preferred a small inside-ramp distance with an inverted normal
+  // over the floor/wall, so jump-into-wall sucked the car into the curve.
   let bestSigned = Infinity;
   const bestN = outNormal ?? new THREE.Vector3();
 
@@ -345,9 +353,7 @@ export function arenaDistance(x, y, z, outNormal) {
       (x - plane.point.x) * plane.normal.x +
       (y - plane.point.y) * plane.normal.y +
       (z - plane.point.z) * plane.normal.z;
-    const abs = Math.abs(signed);
-    if (abs < bestAbs) {
-      bestAbs = abs;
+    if (signed < bestSigned) {
       bestSigned = signed;
       bestN.copy(plane.normal);
     }
@@ -364,17 +370,8 @@ export function arenaDistance(x, y, z, outNormal) {
       const d2 = closestOnTri(x, y, z, node.tri, _cp, _cn);
       if (d2 < meshBest) {
         meshBest = d2;
-        const dist = Math.sqrt(d2);
-        const cx = 0 - _cp.x;
-        const cy = 0 - _cp.y;
-        const cz = CEILING / 2 - _cp.z;
-        const towardCenter = _cn.x * cx + _cn.y * cy + _cn.z * cz;
-        const signed = towardCenter >= 0 ? dist : -dist;
-        if (Math.abs(signed) < bestAbs) {
-          bestAbs = Math.abs(signed);
-          bestSigned = signed;
-          bestN.copy(_cn);
-        }
+        _meshP.copy(_cp);
+        _meshN.copy(_cn);
       }
       continue;
     }
@@ -386,6 +383,18 @@ export function arenaDistance(x, y, z, outNormal) {
     } else {
       if (ld < meshBest) _stack[sp++] = node.left;
       if (rd < meshBest) _stack[sp++] = node.right;
+    }
+  }
+
+  if (meshBest < Infinity) {
+    // Outward normal (toward arena centre). Sign from query vs surface.
+    const signed =
+      (x - _meshP.x) * _meshN.x +
+      (y - _meshP.y) * _meshN.y +
+      (z - _meshP.z) * _meshN.z;
+    if (signed < bestSigned) {
+      bestSigned = signed;
+      bestN.copy(_meshN);
     }
   }
 
