@@ -283,5 +283,40 @@ check(
   `maxJumpRad=${maxFlipYawJump.toFixed(3)}`,
 );
 
+// Stationary flip (no momentum): must hold yaw, not reverse when nose faces back.
+chase.invalidate();
+flipCar.set(0, 2, 0);
+flipFwd.set(0, 0, 1);
+const zeroVel = new THREE.Vector3(0, 0, 0);
+chase.update(cam, 1 / 60, {
+  target: flipCar,
+  forward: flipFwd,
+  velocity: zeroVel,
+  onGround: false,
+  snap: true,
+});
+maxFlipYawJump = 0;
+prevFlipYaw = chase._followYaw;
+for (let i = 0; i < 78; i++) {
+  const pitch = (i / 78) * Math.PI * 2;
+  flipFwd.set(0, Math.sin(pitch), Math.cos(pitch));
+  chase.update(cam, 1 / 60, {
+    target: flipCar,
+    forward: flipFwd,
+    velocity: zeroVel,
+    onGround: false,
+  });
+  let dYaw = chase._followYaw - prevFlipYaw;
+  while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+  while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+  maxFlipYawJump = Math.max(maxFlipYawJump, Math.abs(dYaw));
+  prevFlipYaw = chase._followYaw;
+}
+check(
+  "car cam: stationary flip holds yaw (no reverse whip)",
+  maxFlipYawJump < 0.05,
+  `maxJumpRad=${maxFlipYawJump.toFixed(3)}`,
+);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -295,11 +295,12 @@ export class ChaseCamera {
     const velOk = velFlatSq > velMin * velMin;
     const airborne = opts.onGround === false;
 
-    // Prefer momentum in air (RL car-cam) or whenever the nose can't give a
-    // stable yaw — stops the camera whipping 180° mid-flip.
-    if ((airborne || noseUnstable) && velOk) {
+    // Prefer momentum in air (RL car-cam). Never track tumbling nose while
+    // airborne without velocity — that reverses yaw when the car faces back
+    // mid-flip and whips the camera even with FLAT_FORWARD_MAX_UP.
+    if (velOk && (airborne || noseUnstable)) {
       this.tmp.copy(this.tmp2).normalize();
-    } else if (!noseUnstable && flatFwdSq > 1e-6) {
+    } else if (!airborne && !noseUnstable && flatFwdSq > 1e-6) {
       this.tmp.normalize();
     } else if (velOk) {
       this.tmp.copy(this.tmp2).normalize();
@@ -471,11 +472,8 @@ export class ChaseCamera {
       this.camLook.copy(this.carCamLook).lerp(this.ballCamLook, b);
     }
 
-    // ClipToField — keep camera above the floor.
-    const minY = RL_CAMERA.CLIP_MIN_Z_UU * UU;
-    if (this.camPos.y < minY) this.camPos.y = minY;
-
-    // Camera shake (CameraSave.CameraShake).
+    // Camera shake (CameraSave.CameraShake), then ClipToField so shake
+    // cannot push the lens under the floor.
     if (shakeOn && !opts.snap) {
       this.shakePhase += dt * 38;
       const ampUu = opts.boosting
@@ -488,6 +486,8 @@ export class ChaseCamera {
         this.camPos.z += Math.sin(this.shakePhase * 1.1) * a;
       }
     }
+    const minY = RL_CAMERA.CLIP_MIN_Z_UU * UU;
+    if (this.camPos.y < minY) this.camPos.y = minY;
 
     // Body + look snap to the derived view. RL does not add a second look lag
     // on top of TransitionSpeed / stiffness.

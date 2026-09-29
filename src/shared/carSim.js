@@ -990,8 +990,18 @@ function solveArenaContacts(car, fr, dt) {
   }
   contacts.length = 0;
   for (const g of groups) {
+    // Prefer the +local-Y (car-right) corner — not world Y, which only
+    // matches when the car faces +X (the harness spawn). Kickoff yaw
+    // (+Y facing) made left/right ties pick the wrong corner.
     let preferred = g.tied[0];
-    for (const t of g.tied) if (t.rel.y > preferred.rel.y) preferred = t;
+    let preferredRight = preferred.rel.dot(fr.r);
+    for (const t of g.tied) {
+      const right = t.rel.dot(fr.r);
+      if (right > preferredRight) {
+        preferred = t;
+        preferredRight = right;
+      }
+    }
     if (g.tied.length === 1 || RS.CONTACT_EDGE_CORNER_BLEND >= 1 - 1e-9) {
       contacts.push({
         rel: preferred.rel.clone(),

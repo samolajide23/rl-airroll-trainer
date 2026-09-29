@@ -687,9 +687,10 @@ export class RingsMode {
     if (this.onPlatform) {
       // Fixed pad view; invalidate chase so takeoff snaps cleanly.
       // Use chase snap so FOV / angle / height match car-cam math.
+      // Never pass lookAt — Rings is car-cam only (avoid Free Play ballCam leak).
       this.forward.set(0, 0, 1);
       this.tmp.set(0, PLATFORM_TOP_Y + 1.2, 0);
-      this.chase.snap(this.ctx.camera, this.tmp, this.forward, this.tmp2);
+      this.chase.snap(this.ctx.camera, this.tmp, this.forward);
       return;
     }
 
@@ -699,12 +700,12 @@ export class RingsMode {
       target: this.car.position,
       forward: this.forward,
       velocity: this.vel,
-      lookAt: this.tmp2,
       worldUp: this.worldUp,
       onGround: this.onPlatform,
       boosting: Boolean(this.boosting),
       lookRight: input.lookRight,
       lookUp: input.lookUp,
+      ballCam: false,
     });
   }
 

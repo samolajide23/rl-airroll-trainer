@@ -288,17 +288,14 @@ export class FreePlayMode {
     if (!rd) this.rLatch = false;
 
     const camCfg = getCamera();
-    // RL Ball Camera: Toggle (edge) or Hold (while button down).
-    if ((camCfg.ballCamMode ?? "toggle") === "hold") {
-      const held = isActionDown("toggleBallCam");
-      if (held !== Boolean(camCfg.ballCam)) {
-        setCamera("ballCam", held);
-        this.ctx.hud.status.textContent = held ? "Ball cam on" : "Ball cam off";
+    // Toggle persists via settings. Hold is live button only in updateCamera
+    // (do not write held state into settings — that leaked ball-cam into Rings).
+    if ((camCfg.ballCamMode ?? "toggle") !== "hold") {
+      if (pollBallCamToggle(this.ballCamLatch)) {
+        const next = !camCfg.ballCam;
+        setCamera("ballCam", next);
+        this.ctx.hud.status.textContent = next ? "Ball cam on" : "Ball cam off";
       }
-    } else if (pollBallCamToggle(this.ballCamLatch)) {
-      const next = !camCfg.ballCam;
-      setCamera("ballCam", next);
-      this.ctx.hud.status.textContent = next ? "Ball cam on" : "Ball cam off";
     }
   }
 

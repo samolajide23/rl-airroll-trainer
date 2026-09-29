@@ -145,7 +145,6 @@ export function readControls() {
 
   const pad = getActiveGamepad();
   if (pad) {
-    usingPad = true;
     const pitchRaw = applyDeadzone(pad.axes[cfg.pitchAxis] ?? 0, cfg.deadzone);
     const yawRaw = applyDeadzone(pad.axes[cfg.yawAxis] ?? 0, cfg.deadzone);
 
@@ -156,14 +155,24 @@ export function readControls() {
     if (cfg.invertPitch) pitchStick = -pitchStick;
     if (cfg.invertYaw) yawStick = -yawStick;
 
-    pitch = pitchStick;
-    yaw = yawStick;
-    steer = yawStick;
-
     // Triggers: RT accelerate, LT brake/reverse (analog).
     const accel = buttonValue(pad, cfg.throttle);
     const brake = buttonValue(pad, cfg.brake);
-    throttle = accel - brake;
+    const padThrottle = accel - brake;
+    const padDriveActive =
+      Math.abs(pitchStick) > 0 ||
+      Math.abs(yawStick) > 0 ||
+      Math.abs(padThrottle) > 0.02;
+    // A resting pad must not kill keyboard/touch drive (common with pads left plugged in).
+    const kbOrTouchDrive =
+      Math.abs(pitch) > 0 || Math.abs(yaw) > 0 || Math.abs(throttle) > 0;
+    if (padDriveActive || !kbOrTouchDrive) {
+      usingPad = true;
+      pitch = pitchStick;
+      yaw = yawStick;
+      steer = yawStick;
+      throttle = padThrottle;
+    }
 
     airLeft = airLeft || buttonPressed(pad, cfg.airRollLeft);
     airRight = airRight || buttonPressed(pad, cfg.airRollRight);
@@ -183,6 +192,7 @@ export function readControls() {
     lookRight = cfg.invertLookX ? -lookXRaw : lookXRaw;
     // Gamepad API +Y is stick toward player; RL look-up is stick away → negate.
     lookUp = cfg.invertLookY ? lookYRaw : -lookYRaw;
+    if (Math.abs(lookRight) > 0 || Math.abs(lookUp) > 0) usingPad = true;
   }
 
   // Spec: +roll = roll right. Free air-roll (powerslide hold) is applied in stepCar.

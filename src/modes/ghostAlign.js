@@ -158,12 +158,8 @@ export class GhostAlignMode {
       .copy(this.car.position)
       .add(this.ghost.position)
       .multiplyScalar(0.5);
-    this.chase.snap(
-      this.ctx.camera,
-      this.car.position,
-      this.forward,
-      this.midpoint,
-    );
+    // Car-cam only — do not pass lookAt (would inherit Free Play ballCam).
+    this.chase.snap(this.ctx.camera, this.car.position, this.forward);
   }
 
   stop() {
