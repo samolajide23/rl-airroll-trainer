@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "notes": "Shared scenarios for RocketSim (ground truth) vs rl-physics.js. Units: uu/cm, seconds, radians. Frame: Z-up. Identity orientation = forward +X, right +Y, up +Z (RocketSim RotMat).",
+  "defaults": {
+    "tick_rate": 120,
+    "initial": {
+      "pos": [0, 0, 800],
+      "vel": [0, 0, 0],
+      "ang_vel": [0, 0, 0],
+      "yaw": 0,
+      "pitch": 0,
+      "roll": 0,
+      "boost": 100,
+      "on_ground": false
+    },
+    "controls": {
+      "throttle": 0,
+      "steer": 0,
+      "pitch": 0,
+      "yaw": 0,
+      "roll": 0,
+      "boost": false,
+      "jump": false,
+      "handbrake": false
+    }
+  },
+  "scenarios": [
+    {
+      "id": "freefall_1s",
+      "description": "No input mid-air for 1s — gravity only",
+      "ticks": 120
+    },
+    {
+      "id": "air_throttle_1s",
+      "description": "Full forward air throttle for 1s",
+      "ticks": 120,
+      "controls": { "throttle": 1 }
+    },
+    {
+      "id": "air_boost_1s",
+      "description": "Full boost mid-air for 1s",
+      "ticks": 120,
+      "controls": { "boost": true }
+    },
+    {
+      "id": "roll_right_1s",
+      "description": "Hold air-roll right for 1s from rest",
+      "ticks": 120,
+      "controls": { "roll": 1 }
+    },
+    {
+      "id": "roll_left_1s",
+      "description": "Hold air-roll left for 1s from rest",
+      "ticks": 120,
+      "controls": { "roll": -1 }
+    },
+    {
+      "id": "pitch_up_0_5s",
+      "description": "Hold pitch up for 0.5s from rest",
+      "ticks": 60,
+      "controls": { "pitch": 1 }
+    },
+    {
+      "id": "pitch_down_0_5s",
+      "description": "Hold pitch down for 0.5s from rest",
+      "ticks": 60,
+      "controls": { "pitch": -1 }
+    },
+    {
+      "id": "yaw_right_0_5s",
+      "description": "Hold yaw right for 0.5s from rest",
+      "ticks": 60,
+      "controls": { "yaw": 1 }
+    },
+    {
+      "id": "yaw_left_0_5s",
+      "description": "Hold yaw left for 0.5s from rest",
+      "ticks": 60,
+      "controls": { "yaw": -1 }
+    },
+    {
+      "id": "roll_then_release",
+      "description": "Roll right 0.5s then release 0.5s (coast angle)",
+      "ticks": 120,
+      "control_schedule": [
+        { "until_tick": 60, "controls": { "roll": 1 } },
+        { "until_tick": 120, "controls": { "roll": 0 } }
+      ]
+    },
+    {
+      "id": "combo_pitch_roll_1s",
+      "description": "Pitch up + roll right together for 1s",
+      "ticks": 120,
+      "controls": { "pitch": 1, "roll": 1 }
+    },
+    {
+      "id": "boost_and_pitch_1s",
+      "description": "Boost while pitching up for 1s",
+      "ticks": 120,
+      "controls": { "boost": true, "pitch": 1 }
+    }
+  ]
+}
