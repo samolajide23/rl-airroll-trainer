@@ -74,7 +74,12 @@ export function readAerialInput() {
 
 /**
  * Full RL control snapshot for physics.
- * Signs: +pitch nose up, +yaw nose right, +roll roll right (via airLeft/airRight).
+ *
+ * Rocket League mapping:
+ * - Throttle / brake are separate from pitch (triggers on pad, W/S on KB)
+ * - Left stick X = steer (ground) / yaw (air)
+ * - Left stick Y = pitch only (stick back = nose up)
+ * - +pitch nose up, +yaw nose right, +roll roll right, +steer turn right
  *
  * @returns {{
  *   throttle: number,
@@ -84,6 +89,7 @@ export function readAerialInput() {
  *   roll: number,
  *   boost: boolean,
  *   jump: boolean,
+ *   powerslide: boolean,
  *   airLeft: boolean,
  *   airRight: boolean,
  *   usingPad: boolean,
@@ -100,23 +106,32 @@ export function readControls() {
   let airRight = keyHeld("airRollRight");
   let boost = keyHeld("boost");
   let jump = keyHeld("jump");
+  let powerslide = keyHeld("powerslide");
   let usingPad = false;
   let usingTouch = false;
 
-  if (keyHeld("pitchUp")) pitch += 1;
-  if (keyHeld("pitchDown")) pitch -= 1;
-  // Spec: +yaw = nose right
-  if (keyHeld("yawRight")) yaw += 1;
-  if (keyHeld("yawLeft")) yaw -= 1;
+  // Keyboard — RL dual-binds: W = throttle + pitch-down, S = reverse + pitch-up.
   if (keyHeld("throttle")) throttle += 1;
   if (keyHeld("reverse")) throttle -= 1;
+  if (keyHeld("pitchUp")) pitch += 1;
+  if (keyHeld("pitchDown")) pitch -= 1;
+  if (keyHeld("yawRight")) {
+    yaw += 1;
+    steer += 1;
+  }
+  if (keyHeld("yawLeft")) {
+    yaw -= 1;
+    steer -= 1;
+  }
 
   const touch = readTouchControls();
   if (touch.usingTouch) {
     usingTouch = true;
-    if (touch.pitch) pitch = touch.pitch;
-    if (touch.yaw) yaw = touch.yaw;
+    // Virtual stick = left stick: X yaw/steer, Y pitch. Throttle from stick Y
+    // as a mobile convenience (no analog triggers).
+    yaw = touch.yaw;
     steer = touch.yaw;
+    pitch = touch.pitch;
     throttle = touch.pitch;
     airLeft = airLeft || touch.airLeft;
     airRight = airRight || touch.airRight;
@@ -130,30 +145,36 @@ export function readControls() {
     const pitchRaw = applyDeadzone(pad.axes[cfg.pitchAxis] ?? 0, cfg.deadzone);
     const yawRaw = applyDeadzone(pad.axes[cfg.yawAxis] ?? 0, cfg.deadzone);
 
-    // Stick back (positive Y) = nose up; stick right should yaw nose right after sign fix.
-    // Horizontal was inverted vs RL feel — negate X. Toggle Invert yaw in Settings to flip.
+    // Gamepad API: +Y is stick toward player → nose up (+pitch) like RL.
     let pitchStick = pitchRaw;
-    let yawStick = -yawRaw;
+    // +X is stick right → yaw/steer right. (No extra negate.)
+    let yawStick = yawRaw;
     if (cfg.invertPitch) pitchStick = -pitchStick;
     if (cfg.invertYaw) yawStick = -yawStick;
 
-    if (pitchStick) pitch = pitchStick;
-    if (yawStick) yaw = yawStick;
-
-    // Same stick used as steer/throttle on ground when we need them
+    pitch = pitchStick;
+    yaw = yawStick;
     steer = yawStick;
-    throttle = pitchStick;
+
+    // Triggers: RT accelerate, LT brake/reverse (analog).
+    const accel = buttonValue(pad, cfg.throttle);
+    const brake = buttonValue(pad, cfg.brake);
+    throttle = accel - brake;
 
     airLeft = airLeft || buttonPressed(pad, cfg.airRollLeft);
     airRight = airRight || buttonPressed(pad, cfg.airRollRight);
     boost = boost || buttonPressed(pad, cfg.boost);
     jump = jump || buttonPressed(pad, cfg.jump);
+    powerslide =
+      powerslide ||
+      buttonPressed(pad, cfg.powerslide) ||
+      // Many players bind powerslide + air roll on LB.
+      (buttonPressed(pad, cfg.airRollLeft) && !airRight);
 
-    // Analog triggers if bound as boost
     if (!boost && buttonValue(pad, cfg.boost) > 0.3) boost = true;
   }
 
-  // Spec: +roll = roll right
+  // Spec: +roll = roll right. Free air-roll (powerslide hold) is applied in stepCar.
   let roll = 0;
   if (airRight) roll += 1;
   if (airLeft) roll -= 1;
@@ -172,6 +193,7 @@ export function readControls() {
     roll,
     boost,
     jump,
+    powerslide,
     airLeft,
     airRight,
     usingPad,
@@ -206,6 +228,11 @@ export function isActionDown(action) {
   if (action === "newTarget") return buttonPressed(pad, cfg.newTarget);
   if (action === "boost") return buttonPressed(pad, cfg.boost);
   if (action === "jump") return buttonPressed(pad, cfg.jump);
+  if (action === "powerslide") return buttonPressed(pad, cfg.powerslide);
+  if (action === "throttle") return buttonValue(pad, cfg.throttle) > 0.3;
+  if (action === "reverse" || action === "brake") {
+    return buttonValue(pad, cfg.brake) > 0.3;
+  }
   return false;
 }
 

@@ -220,22 +220,9 @@ export class FreePlayMode {
     hud.avg.textContent = extra;
   }
 
-  /** Map pitch/yaw keys onto throttle/steer like a single RL stick. */
+  /** Pass-through RL controls (throttle ≠ pitch; steer from yaw stick). */
   driveControls() {
-    const c = readControls();
-    return {
-      throttle: c.throttle || c.pitch,
-      steer: c.steer || c.yaw,
-      pitch: c.pitch,
-      yaw: c.yaw,
-      roll: c.roll,
-      boost: c.boost,
-      jump: c.jump,
-      airLeft: c.airLeft,
-      airRight: c.airRight,
-      usingPad: c.usingPad,
-      usingTouch: c.usingTouch,
-    };
+    return readControls();
   }
 
   /** @param {number} dt */

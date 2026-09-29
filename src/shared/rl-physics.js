@@ -226,14 +226,18 @@ export function stepCar(car, c, dt = RL.DT) {
   if (car.onGround && !car.jumping && car.stickyTicks === 0 && car.vel.z <= 0.001) {
     /* ---- ground driving (simplified: perfect grip, flat floor) ---- */
     const fwd = car.vel.dot(f);
-    const thr = boosting ? 1 : throttle;
+    // Boost does not replace throttle in RL — it adds acceleration; hold throttle too.
+    const thr = throttle;
     let a = 0;
     if (Math.abs(thr) < 0.01) a = -Math.sign(fwd) * Math.min(RL.COAST, Math.abs(fwd) / dt);
     else if (Math.sign(thr) !== Math.sign(fwd) && Math.abs(fwd) > 1) a = Math.sign(thr) * RL.BRAKE;
     else a = thr * throttleAccel(fwd);
     car.vel.addScaledVector(f, a * dt);
-    car.vel.addScaledVector(l, -car.vel.dot(l)); // kill lateral slip
+    // Powerslide: allow sideways slip; otherwise kill lateral velocity.
+    const slip = c.powerslide ? 0.2 : 1;
+    car.vel.addScaledVector(l, -car.vel.dot(l) * slip);
     const yawRate = clamp(c.steer || 0, -1, 1) * curvature(fwd) * fwd; // rad/s, +steer = right
+    // RH +Z is CCW; right turn is CW → negative angle.
     car.q.premultiply(new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), -yawRate * dt));
     car.vel.z = 0;
     car.pos.z = carRestZ(car);
@@ -243,7 +247,17 @@ export function stepCar(car, c, dt = RL.DT) {
     car.airTime += dt;
     car.vel.z -= RL.GRAVITY * dt;
     car.vel.addScaledVector(f, (throttle >= 0 ? RL.AIR_THROTTLE : RL.AIR_THROTTLE / 2) * throttle * dt);
-    airControl(car, c, dt);
+    // RL free air-roll: hold powerslide → stick X rolls instead of yawing.
+    const air = {
+      pitch: c.pitch,
+      yaw: c.yaw,
+      roll: c.roll,
+    };
+    if (c.powerslide && Math.abs(c.roll) < 0.01) {
+      air.roll = c.yaw || c.steer || 0;
+      air.yaw = 0;
+    }
+    airControl(car, air, dt);
   }
 
   /* ---- integrate + solid Octane hitbox vs arena ---- */

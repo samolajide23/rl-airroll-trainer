@@ -1,4 +1,5 @@
-const STORAGE_KEY = "rl-airroll-trainer-settings-v5";
+const STORAGE_KEY = "rl-airroll-trainer-settings-v6";
+const LEGACY_V5 = "rl-airroll-trainer-settings-v5";
 const LEGACY_V4 = "rl-airroll-trainer-settings-v4";
 const LEGACY_V3 = "rl-airroll-trainer-settings-v3";
 const LEGACY_KEY = "rl-airroll-trainer-binds-v1";
@@ -8,56 +9,80 @@ const PREV_KEY = "rl-airroll-trainer-settings-v2";
 /** @typedef {keyof typeof DEFAULT_PAD} PadSetting */
 /** @typedef {keyof typeof DEFAULT_CAMERA} CameraSetting */
 
+/**
+ * Keyboard defaults mirror Rocket League PC:
+ * W/S accelerate + reverse (also pitch forward/back in air),
+ * A/D steer / yaw, Shift boost, Space jump, Ctrl powerslide/air-roll hold.
+ */
 export const DEFAULT_BINDS = {
-  airRollLeft: "KeyQ",
-  airRollRight: "KeyE",
-  pitchUp: "KeyW",
-  pitchDown: "KeyS",
+  throttle: "KeyW",
+  reverse: "KeyS",
+  // Pitch forward = nose down (same key as throttle, like RL dual-bind).
+  pitchDown: "KeyW",
+  // Pitch back = nose up (same key as reverse).
+  pitchUp: "KeyS",
   yawLeft: "KeyA",
   yawRight: "KeyD",
   boost: "ShiftLeft",
   jump: "Space",
-  throttle: "",
-  reverse: "",
+  powerslide: "ControlLeft",
+  airRollLeft: "KeyQ",
+  airRollRight: "KeyE",
   resetCar: "KeyR",
   newTarget: "KeyN",
 };
 
+/** Pairs that may share one physical key (RL dual-binds). */
+const SHAREABLE_BINDS = [
+  new Set(["throttle", "pitchDown"]),
+  new Set(["reverse", "pitchUp"]),
+];
+
 export const BIND_LABELS = {
-  airRollLeft: "Air roll left",
-  airRollRight: "Air roll right",
-  pitchUp: "Pitch up",
-  pitchDown: "Pitch down",
-  yawLeft: "Yaw left",
-  yawRight: "Yaw right",
+  throttle: "Accelerate",
+  reverse: "Brake / Reverse",
+  pitchUp: "Pitch up (nose up)",
+  pitchDown: "Pitch down (nose down)",
+  yawLeft: "Steer / yaw left",
+  yawRight: "Steer / yaw right",
   boost: "Boost",
   jump: "Jump",
-  throttle: "Throttle (optional)",
-  reverse: "Reverse (optional)",
+  powerslide: "Powerslide",
+  airRollLeft: "Air roll left",
+  airRollRight: "Air roll right",
   resetCar: "Reset car",
   newTarget: "New target / skip",
 };
 
-/** Standard Gamepad API button indices (Xbox-style). */
+/**
+ * Xbox-style Gamepad API indices — Rocket League defaults:
+ * RT accelerate, LT brake, A jump, B boost, X powerslide, LB/RB air roll.
+ */
 export const DEFAULT_PAD = {
+  throttle: 7, // RT / R2
+  brake: 6, // LT / L2
+  boost: 1, // B / Circle
+  jump: 0, // A / Cross
+  powerslide: 2, // X / Square
   airRollLeft: 4, // LB
   airRollRight: 5, // RB
-  boost: 7, // RT
-  jump: 0, // A
-  resetCar: 1, // B / Circle
+  resetCar: 8, // Back / Share
   newTarget: 3, // Y / Triangle
   pitchAxis: 1, // Left stick Y
   yawAxis: 0, // Left stick X
   invertPitch: false,
   invertYaw: false,
-  deadzone: 0.18,
+  deadzone: 0.1,
 };
 
 export const PAD_BUTTON_ACTIONS = [
-  "airRollLeft",
-  "airRollRight",
+  "throttle",
+  "brake",
   "boost",
   "jump",
+  "powerslide",
+  "airRollLeft",
+  "airRollRight",
   "resetCar",
   "newTarget",
 ];
@@ -167,6 +192,12 @@ function load() {
     let raw = localStorage.getItem(STORAGE_KEY);
     /** When upgrading from v4, keep binds/pad but refresh camera to RL defaults. */
     let resetCameraFromV4 = false;
+    /** v5 had wrong pad/keyboard drive binds — refresh controls to RL defaults. */
+    let resetControlsFromV5 = false;
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_V5);
+      if (raw) resetControlsFromV5 = true;
+    }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V4);
       if (raw) resetCameraFromV4 = true;
@@ -212,6 +243,15 @@ function load() {
       }
       if (parsed?.pad && typeof parsed.pad === "object") {
         mergePad(parsed.pad);
+      }
+      if (resetControlsFromV5) {
+        binds = { ...DEFAULT_BINDS };
+        pad = { ...DEFAULT_PAD };
+        if (parsed?.camera && typeof parsed.camera === "object") {
+          mergeCamera(parsed.camera);
+        }
+        persist();
+        return;
       }
       if (resetCameraFromV4) {
         camera = { ...DEFAULT_CAMERA };
@@ -290,12 +330,20 @@ export function getBind(action) {
  * @param {BindAction} action
  * @param {string} code
  */
+/**
+ * @param {string} a
+ * @param {string} b
+ */
+function bindsMayShare(a, b) {
+  return SHAREABLE_BINDS.some((g) => g.has(a) && g.has(b));
+}
+
 export function setBind(action, code) {
   if (!(action in DEFAULT_BINDS)) return;
   if (code === "Escape") return;
 
   for (const key of Object.keys(binds)) {
-    if (key !== action && binds[key] === code) {
+    if (key !== action && binds[key] === code && !bindsMayShare(action, key)) {
       binds[key] = "";
     }
   }
@@ -451,11 +499,12 @@ export function formatControlsHelp() {
   const b = binds;
   const p = pad;
   return (
-    `${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} or ` +
-    `${formatPadButton(p.airRollLeft)}/${formatPadButton(p.airRollRight)} air roll · ` +
-    `${formatKeyCode(b.pitchUp)}${formatKeyCode(b.yawLeft)}${formatKeyCode(b.pitchDown)}${formatKeyCode(b.yawRight)} or stick · ` +
+    `${formatKeyCode(b.throttle)}${formatKeyCode(b.yawLeft)}${formatKeyCode(b.reverse)}${formatKeyCode(b.yawRight)} drive · ` +
+    `stick pitch/steer · ` +
+    `${formatPadButton(p.throttle)}/${formatPadButton(p.brake)} throttle/brake · ` +
     `${formatKeyCode(b.boost)}/${formatPadButton(p.boost)} boost · ` +
     `${formatKeyCode(b.jump)}/${formatPadButton(p.jump)} jump · ` +
+    `${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} air roll · ` +
     `${formatKeyCode(b.resetCar)}/${formatPadButton(p.resetCar)} reset · ` +
     `${formatKeyCode(b.newTarget)}/${formatPadButton(p.newTarget)} new · Esc menu`
   );
