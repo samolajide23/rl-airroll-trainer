@@ -11,8 +11,13 @@ import { RL } from "./rl-physics.js";
  *   physics right   → Three right   (1,0,0)  (pitch torque applied about -right = left)
  *   physics up      → Three up      (0,1,0)
  *
- * Sign convention (RocketSim CarControls):
- *   +pitch = nose up, +yaw = nose right, +roll = roll right.
+ * Sign convention (RocketSim CarControls / chase-cam screen):
+ *   +pitch = nose up, +yaw = nose right (screen-right from behind),
+ *   +roll = roll right.
+ *
+ * Pure RH rotation about +up takes +Z toward +X, but a chase camera looking
+ * along +Z has screen-right = −X — so yaw torque is negated vs the raw RH
+ * rule to keep +yaw = nose screen-right.
  */
 export class AerialBody {
   constructor() {
@@ -36,7 +41,7 @@ export class AerialBody {
    * @param {THREE.Object3D} object
    * @param {number} roll -1..1 (+ = roll right)
    * @param {number} pitch -1..1 (+ = nose up)
-   * @param {number} yaw -1..1 (+ = nose right)
+   * @param {number} yaw -1..1 (+ = nose right on chase-cam)
    * @param {number} dt
    */
   step(object, roll, pitch, yaw, dt) {
@@ -63,13 +68,14 @@ export class AerialBody {
 
     // Local ω about (forward, left, up). Pitch about left (= −right) so
     // +T_PITCH*pitch matches RocketSim’s −T_PITCH about right. Roll about
-    // forward needs −T_ROLL so +roll is roll-right in RH Three.js.
+    // forward needs −T_ROLL so +roll is roll-right in RH Three.js. Yaw
+    // about up needs −T_YAW so +yaw is nose screen-right in chase-cam.
     omegaLocal.set(omega.dot(forward), omega.dot(left), omega.dot(up));
 
     tauLocal.set(
       -RL.T_ROLL * r + RL.D_ROLL * omegaLocal.x,
       RL.T_PITCH * p + RL.D_PITCH * (1 - Math.abs(p)) * omegaLocal.y,
-      RL.T_YAW * y + RL.D_YAW * (1 - Math.abs(y)) * omegaLocal.z,
+      -RL.T_YAW * y + RL.D_YAW * (1 - Math.abs(y)) * omegaLocal.z,
     );
 
     tauWorld

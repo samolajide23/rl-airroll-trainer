@@ -392,23 +392,43 @@ export function physToThree(v, out = V()) {
   return out.set(v.x, v.z, v.y);
 }
 
-/** @param {import("./carSim.js").SimCar} car @param {THREE.Object3D} group @param {number} [scale=0.01] */
+/**
+ * Map a Z-up physics car onto a Y-up Three.js car group.
+ *
+ * `physToThree` flips handedness, so a pure (right, up, front) basis is a
+ * reflection. We build a valid RH basis with +X = physics left, then mirror
+ * the painted mesh on X so geometry right sits on physics right — otherwise
+ * air roll left/right looks inverted and feels like the car is thrown around.
+ *
+ * @param {import("./carSim.js").SimCar} car
+ * @param {THREE.Object3D} group
+ * @param {number} [scale=0.01]
+ */
 export function applyToCarModel(car, group, scale = 0.01) {
   const { f, u } = axes(car.q);
   const front = physToThree(f).normalize();
   const up = physToThree(u).normalize();
+  // up × front = physics left after the physToThree handedness flip.
   const left = up.clone().cross(front).normalize();
   group.position.copy(physToThree(car.pos)).multiplyScalar(scale);
   group.quaternion.setFromRotationMatrix(
     new THREE.Matrix4().makeBasis(left, up, front),
   );
+  const visual = group.userData?.visual;
+  if (visual) {
+    const sx = Math.abs(visual.scale.x) || 1;
+    visual.scale.x = -sx;
+  }
 }
 
 /**
  * Scale + offset a visual car so its length matches the hitbox and its bbox
  * centre sits on the hitbox centre (RocketSim root→offset placement).
  *
- * Model local axes: X=left, Y=up, Z=front. Physics offset is (fwd, right, up).
+ * When used with {@link applyToCarModel}, parent +X = physics left and the
+ * painted `visual` child is X-mirrored there. Y-up aerial drills call this
+ * without applyToCarModel and keep an unmirrored mesh (+X = right).
+ * Physics offset is (fwd, right, up).
  *
  * @param {THREE.Object3D} carMesh `makeCar()` group
  * @param {import("./hitboxPresets.js").HitboxPreset} preset
@@ -422,10 +442,13 @@ export function alignCarVisualToHitbox(carMesh, preset, uu = 0.01) {
   const visual = carMesh.userData.visual;
   if (!visual) return visualScale;
 
-  // Convert hitbox offset (uu) into pre-scale local units.
+  // Convert hitbox offset (uu) into pre-scale parent-local units.
+  // Parent +X is treated as left (−right) for the offset sign so Free Play
+  // (applyToCarModel) and mirrored visual stay aligned with the hitbox.
+  // Aerial drills use a symmetric visual scale and the same formula; the
+  // lateral offset is tiny relative to the body.
   const k = uu / visualScale;
   const [ox, oy, oz] = preset.offset;
-  // model x = left = −right, y = up, z = forward
   visual.position.set(-oy * k, oz * k, ox * k);
   return visualScale;
 }
