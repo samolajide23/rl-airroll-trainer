@@ -107,22 +107,29 @@ export const RS = {
   CARWORLD_FRICTION: C.CARWORLD_COLLISION_FRICTION,
   CARWORLD_RESTITUTION: C.CARWORLD_COLLISION_RESTITUTION,
   /**
-   * When several OBB corners share the deepest penetration on one normal
-   * (edge flush with a plane), pick the +local-Y corner (car right). Tuned
-   * with CONTACT_*_INSET_UU on `ground_flip_forward` vs RocketSim.
-   * 1 = pure +Y corner (best measured); 0 = edge midpoint.
+   * When exactly two OBB corners share the deepest penetration on one normal
+   * (edge flush with a plane), blend toward the +local-Y corner (car right).
+   * Tuned with CONTACT_*_INSET_UU on `ground_flip_forward` vs RocketSim.
+   * 1 = pure +Y corner; 0 = edge midpoint.
+   * Face contacts (3+ tied corners, e.g. nose into a wall) always use the
+   * patch centroid — a single offset corner invents yaw/spin Bullet does not.
    */
   CONTACT_EDGE_CORNER_BLEND: 1,
   /**
-   * Pull the impulse point along the contact normal (uu). Combined with
-   * CONTACT_CORNER_INSET_UU this recreates Bullet's manifold lever arm on
-   * floor-scraping flips (was ~8 uu error at 0/0).
+   * Pull edge-contact impulse points along the contact normal (uu). Combined
+   * with CONTACT_CORNER_INSET_UU this recreates Bullet's manifold lever arm on
+   * floor-scraping flips. Not applied to face (3+) or steep wall contacts.
    */
   CONTACT_NORMAL_INSET_UU: 7,
   /**
    * Pull edge-contact points toward the hitbox centre along car axes (uu).
    */
   CONTACT_CORNER_INSET_UU: 5,
+  /**
+   * |contact normal · world up| above this → floor/ceiling edge insets apply.
+   * Below → treat as wall/steep; use centroid, no scrape insets.
+   */
+  CONTACT_FLOOR_NORMAL_Z: 0.55,
 };
 
 /* --------------------------- state factories --------------------------- */
@@ -947,9 +954,24 @@ function solveArenaContacts(car, fr, dt) {
   }
   contacts.length = 0;
   for (const g of groups) {
-    // Prefer the +local-Y (car-right) corner — not world Y, which only
-    // matches when the car faces +X (the harness spawn). Kickoff yaw
-    // (+Y facing) made left/right ties pick the wrong corner.
+    const mid = V();
+    for (const t of g.tied) mid.add(t.rel);
+    mid.multiplyScalar(1 / g.tied.length);
+
+    // Face flush with a plane (wall, floor plate): Bullet's manifold is near
+    // the patch centre. Collapsing to one offset corner invents spin — most
+    // obvious when jumping/driving nose-first into a wall (4 front corners).
+    if (g.tied.length >= 3) {
+      contacts.push({
+        rel: mid,
+        dist: g.dist,
+        n: g.n.clone(),
+        face: true,
+      });
+      continue;
+    }
+
+    // Prefer the +local-Y (car-right) corner on edge ties — not world Y.
     let preferred = g.tied[0];
     let preferredRight = preferred.rel.dot(fr.r);
     for (const t of g.tied) {
@@ -964,25 +986,27 @@ function solveArenaContacts(car, fr, dt) {
         rel: preferred.rel.clone(),
         dist: g.dist,
         n: g.n.clone(),
+        face: false,
       });
       continue;
     }
-    const mid = V();
-    for (const t of g.tied) mid.add(t.rel);
-    mid.multiplyScalar(1 / g.tied.length);
     contacts.push({
       rel: mid.lerp(preferred.rel, RS.CONTACT_EDGE_CORNER_BLEND),
       dist: g.dist,
       n: g.n.clone(),
+      face: false,
     });
   }
 
   // Inset impulse points so the lever arm matches Bullet's manifold, not the
   // geometric outer corner (which over-kicks linear bounce on edge scrapes).
+  // Skip for face contacts and steep walls — those should bounce through the
+  // patch centre like RocketSim/Bullet.
   const nInset = RS.CONTACT_NORMAL_INSET_UU;
   const cInset = RS.CONTACT_CORNER_INSET_UU;
   if (nInset > 0 || cInset > 0) {
     for (const c of contacts) {
+      if (c.face || Math.abs(c.n.z) < RS.CONTACT_FLOOR_NORMAL_Z) continue;
       if (nInset > 0) c.rel.addScaledVector(c.n, nInset);
       if (cInset > 0) {
         // Pull toward hitbox centre in car frame (rel is world offset from COM).

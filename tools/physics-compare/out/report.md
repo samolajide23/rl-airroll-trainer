@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-29T14:45:05.646Z
+Generated: 2026-09-29T14:58:06.070Z
 
 Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
 Candidate: **`src/shared/rl-physics.js`**.
@@ -72,6 +72,7 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `ground_jump_tap` | 0.002 / 0.003 | 0.006 / 0.074 | 0.000 / 0.001 | 0.002 / 0.003 | 0.002 / 0.003 |
 | `ground_flip_forward` | 0.658 / 1.557 | 2.061 / 8.951 | 0.073 / 0.691 | 0.449 / 1.145 | 0.547 / 1.145 |
 | `wall_drive_throttle_3s` | 0.034 / 0.100 | 0.045 / 0.198 | 0.000 / 0.004 | 0.001 / 0.012 | 0.001 / 0.012 |
+| `ground_jump_into_wall` | 1.567 / 7.854 | 6.073 / 26.604 | 0.051 / 1.108 | 0.354 / 0.857 | 0.115 / 1.135 |
 
 ## Per-scenario finals
 
@@ -346,6 +347,14 @@ Drive into +X wall and climb with throttle only
 - Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.93, 0.00, 1649.07
 - Final ω RS 0.000, -2.442, 0.000 vs JS -0.000, -2.441, -0.000
 - Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, 0.000, 0.970]
+
+### `ground_jump_into_wall`
+Jump + boost into +X wall curve and climb (wheels on wall)
+
+- Worst position error at tick **180** (7.854 uu)
+- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.83, 687.90
+- Final ω RS -0.000, 0.001, 0.000 vs JS 0.000, 0.001, -0.000
+- Final forward RS [0.010, -0.000, 1.000] vs JS [0.010, 0.012, 1.000]
 
 ## How to re-run
 

@@ -67,6 +67,7 @@ Ground scenarios set `"game_mode": "soccar"` and `"on_ground": true`.
 | Ground steer / powerslide | ≤ 0.17 uu |
 | Ground jump (full + tap) | ≤ 0.01 uu |
 | Wall drive (throttle climb) | ≤ 0.10 uu |
+| Jump + boost into wall curve (climb) | ~0.2 uu in XZ; ≤ ~8 uu lateral Y drift |
 | Ground flip that scrapes the floor (musty/wavedash) | ~1.6 uu residual |
 
-Floor-scraping dodges use a Bullet-manifold lever-arm inset on the contact point (`CONTACT_NORMAL_INSET_UU` / `CONTACT_CORNER_INSET_UU`); drive, jump, air, and wall paths are effectively 1:1.
+Floor-scraping dodges use a Bullet-manifold lever-arm inset on edge contacts only (`CONTACT_*_INSET_UU`). Arena SDF uses `min(signed)` so ramp wedges push outward (jump-into-wall climbs like RocketSim).

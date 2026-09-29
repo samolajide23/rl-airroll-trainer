@@ -341,6 +341,21 @@
         "on_ground": true
       },
       "controls": { "throttle": 1 }
+    },
+    {
+      "id": "ground_jump_into_wall",
+      "description": "Jump + boost into +X wall curve and climb (wheels on wall)",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [3600, 0, 17],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "throttle": 1 } },
+        { "until_tick": 180, "controls": { "throttle": 1, "boost": true } }
+      ]
     }
   ]
 }
