@@ -1203,10 +1203,14 @@ export function collideCarCar(car1, car2, opts = {}) {
     const otherAway = victim.vel.dot(velDir);
     if (speedTowards <= otherAway) continue;
 
-    // Approximate manifold local point: contact mid in bumper local frame.
-    const mid = bumperHb.center.clone().add(victimHb.center).multiplyScalar(0.5);
-    const local = mid.clone().sub(bumper.pos);
-    const localX = local.dot(bumperHb.f);
+    // Approximate manifold local-X: closest point on bumper OBB to victim
+    // centre, expressed along bumper forward (RocketSim bumper threshold).
+    const toVictim = victimHb.center.clone().sub(bumper.pos);
+    const localX = clamp(
+      toVictim.dot(bumperHb.f),
+      bumperHb.preset.offset[0] - bumperHb.half[0],
+      bumperHb.preset.offset[0] + bumperHb.half[0],
+    );
     if (localX <= RL.BUMP_MIN_FORWARD_DIST) continue;
 
     let isDemo = false;
