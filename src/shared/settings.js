@@ -675,7 +675,8 @@ export function formatKeyCode(code) {
   if (code.startsWith("Numpad")) return `Num ${code.slice(6)}`;
   if (code.startsWith("Mouse")) {
     const btn = code.slice(5);
-    return { "0": "LMB", "1": "RMB", "2": "MMB", "3": "Mouse 3", "4": "Mouse 4" }[
+    // DOM MouseEvent.button: 0=left, 1=middle, 2=right
+    return { "0": "LMB", "1": "MMB", "2": "RMB", "3": "Mouse 3", "4": "Mouse 4" }[
       btn
     ] ?? code;
   }
