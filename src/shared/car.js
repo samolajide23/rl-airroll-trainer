@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { cloneGlbCar, isCarReady } from "./carAssets.js";
-import { getSelectedCarId } from "./loadout.js";
+import { getHitboxForCarId } from "./hitboxPresets.js";
+import { CARS, getSelectedCar, getSelectedCarId } from "./loadout.js";
 
 /* ------------------------------------------------------------------ */
 /*  Shared helpers                                                     */
@@ -950,8 +951,11 @@ export function makeCar(color = 0xffffff, opacity = 1, opts = {}) {
     root.add(makeAxis(new THREE.Vector3(1, 0, 0), 0xff6b7a));
   }
 
+  const def = CARS.find((c) => c.id === carId) ?? getSelectedCar();
   root.userData.visual = visual;
   root.userData.carId = carId;
+  root.userData.refLength = def?.targetLength ?? 3.2;
+  root.userData.hitboxPreset = getHitboxForCarId(carId);
   root.userData.spinWheels = visual.userData.spinWheels ?? (() => {});
   root.userData.setBoost = visual.userData.setBoost ?? (() => {});
   return root;

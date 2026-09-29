@@ -3,15 +3,19 @@ import { FixedStepClock } from "../shared/aerial.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
+import { getHitboxForCarId } from "../shared/hitboxPresets.js";
 import {
   inputSourceLabel,
   isActionDown,
   readControls,
 } from "../shared/input.js";
+import { getSelectedCarId } from "../shared/loadout.js";
 import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
 import {
   RL,
+  alignCarVisualToHitbox,
   applyToCarModel,
+  carRestZ,
   collideCarBall,
   createHitboxHelper,
   makeBall,
@@ -22,8 +26,6 @@ import {
 } from "../shared/rl-physics.js";
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
-/** Visual car scale so GLB/procedural length ≈ Octane at UU mapping. */
-const CAR_SCALE = 0.4;
 const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
 
 /**
@@ -40,8 +42,10 @@ export class FreePlayMode {
     this.arenaMesh = createSoccarArena();
     this.root.add(this.arenaMesh);
 
-    this.carMesh = makeCar(0xffffff);
-    this.carMesh.scale.setScalar(CAR_SCALE);
+    this.carId = getSelectedCarId();
+    this.hitbox = getHitboxForCarId(this.carId);
+    this.carMesh = makeCar(0xffffff, 1, { carId: this.carId });
+    this.carMesh.userData.physicsOrigin = "root";
     this.root.add(this.carMesh);
 
     this.ballMesh = new THREE.Mesh(
@@ -58,8 +62,9 @@ export class FreePlayMode {
     this.root.add(this.hitboxHelper);
 
     this.physCar = makePhysCar(
-      new THREE.Vector3(0, -2560, RL.REST_HEIGHT),
+      new THREE.Vector3(0, -2560, this.hitbox.restZ),
       Math.PI / 2,
+      this.hitbox,
     );
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.tick = 0;
@@ -84,6 +89,18 @@ export class FreePlayMode {
 
   start() {
     const { hud, scene, arena, camera } = this.ctx;
+    // Refresh body if the player changed cars in the locker.
+    const carId = getSelectedCarId();
+    if (carId !== this.carId) {
+      this.root.remove(this.carMesh);
+      this.carId = carId;
+      this.hitbox = getHitboxForCarId(carId);
+      this.carMesh = makeCar(0xffffff, 1, { carId });
+      this.carMesh.userData.physicsOrigin = "root";
+      this.root.add(this.carMesh);
+      this.trail.attachFlames(this.carMesh);
+    }
+
     hud.modeTitle.textContent = this.title;
     hud.root.classList.remove("hidden");
     if (hud.alignMeter) hud.alignMeter.classList.add("hidden");
@@ -91,7 +108,7 @@ export class FreePlayMode {
     if (hud.help) {
       hud.help.textContent = `${formatControlsHelp()} · Skip resets the ball`;
     }
-    this.setScoreRow(0, 0, 0, "Free");
+    this.setScoreRow(0, 0, 0, this.hitbox.label);
     hud.status.textContent =
       "Drive the arena — WASD / stick to drive, jump, boost, air roll";
 
@@ -146,9 +163,11 @@ export class FreePlayMode {
   }
 
   resetState() {
+    this.hitbox = getHitboxForCarId(this.carId);
     this.physCar = makePhysCar(
-      new THREE.Vector3(0, -2560, RL.REST_HEIGHT),
+      new THREE.Vector3(0, -2560, this.hitbox.restZ),
       Math.PI / 2,
+      this.hitbox,
     );
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.physBall.vel.set(0, 0, 0);
@@ -160,15 +179,14 @@ export class FreePlayMode {
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     this.chase.snap(this.ctx.camera, this.carMesh.position, this.forward);
     this.updateBoostMeter();
-    this.ctx.hud.status.textContent =
-      "Reset — blue half. Drive, jump, boost, air roll.";
+    this.setScoreRow(0, 0, 0, this.hitbox.label);
+    this.ctx.hud.status.textContent = `Reset — ${this.hitbox.label} hitbox · blue half`;
   }
 
   syncMeshes() {
+    // Root joint at physics pos; scale/offset mesh so hitbox sits on the body.
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
-    this.carMesh.scale.setScalar(CAR_SCALE);
-    // Mesh origin is near the wheels; physics pos is root joint at REST_HEIGHT.
-    this.carMesh.position.y -= RL.REST_HEIGHT * ARENA_UU;
+    alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
     this.ballMesh.position.set(
       this.physBall.pos.x * ARENA_UU,
       this.physBall.pos.z * ARENA_UU,
@@ -224,7 +242,7 @@ export class FreePlayMode {
   _stepOnce(dt) {
     const input = this.driveControls();
     this.boosting = Boolean(input.boost);
-    // stepCar resolves the Octane hitbox against floor / walls / ceiling.
+    // stepCar resolves this car's hitbox against floor / walls / ceiling.
     stepCar(this.physCar, input, dt);
     stepBall(this.physBall, dt);
     collideCarBall(this.physCar, this.physBall, this.tick);
@@ -289,6 +307,6 @@ export class FreePlayMode {
 
     const speed = this.physCar.vel.length();
     const state = this.physCar.onGround ? "Ground" : "Air";
-    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · boost ${Math.round(this.physCar.boost)}`;
+    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · z ${carRestZ(this.physCar).toFixed(0)}`;
   }
 }

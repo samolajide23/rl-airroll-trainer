@@ -5,8 +5,11 @@ import { makeCar } from "../shared/car.js";
 import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
 import { ChaseCamera, UU } from "../shared/chaseCamera.js";
+import { getHitboxForCarId } from "../shared/hitboxPresets.js";
+import { getSelectedCarId } from "../shared/loadout.js";
 import {
-  carHitboxYUpFromWheels,
+  alignCarVisualToHitbox,
+  carHitboxYUp,
   createHitboxHelper,
   hitboxExtentOnAxis,
   resolveHitboxPlaneY,
@@ -19,8 +22,6 @@ import {
 } from "../shared/settings.js";
 
 /** Workshop-style Rings: ocean + sky, blue hoops on pillars, boost trail. */
-/** GLB/procedural cars are ~3.2 long; 0.4× ≈ RL Octane (~118 uu). */
-const CAR_SCALE = 0.4;
 const GRAVITY = RL.GRAVITY * UU;
 const BOOST_ACCEL = RL.BOOST_ACCEL_AIR * UU;
 const AIR_THROTTLE = RL.AIR_THROTTLE * UU;
@@ -31,8 +32,6 @@ const RING_PASS_R = 2.15;
 const WATER_Y = 0;
 const PLATFORM_TOP_Y = 4.2;
 const PLATFORM_RADIUS = 5.5;
-/** Visual wheel sit height above a solid surface. */
-const CAR_CLEARANCE = 0.02;
 const RING_BLUE = 0x4da3e6;
 const RING_BLUE_NEXT = 0x7ec8ff;
 const RING_BLUE_DONE = 0x9ad4a8;
@@ -56,8 +55,12 @@ export class RingsMode {
     this.root = new THREE.Group();
     this.aerial = new AerialBody();
     this.clock = new FixedStepClock();
-    this.car = makeCar(0xffffff);
-    this.car.scale.setScalar(CAR_SCALE);
+    this.carId = getSelectedCarId();
+    this.hitbox = getHitboxForCarId(this.carId);
+    this.car = makeCar(0xffffff, 1, { carId: this.carId });
+    this.car.userData.physicsOrigin = "root";
+    this.car.userData.hitboxPreset = this.hitbox;
+    alignCarVisualToHitbox(this.car, this.hitbox, UU);
     this.root.add(this.car);
 
     this.vel = new THREE.Vector3();
@@ -315,7 +318,7 @@ export class RingsMode {
     this.onPlatform = true;
     this.boosting = false;
     this.vel.set(0, 0, 0);
-    this.car.position.set(0, PLATFORM_TOP_Y + CAR_CLEARANCE, 0);
+    this.car.position.set(0, PLATFORM_TOP_Y + this.hitbox.restZ * UU, 0);
     this.car.quaternion.identity();
     this.aerial.reset();
     this.clock.reset();
@@ -491,14 +494,23 @@ export class RingsMode {
    * Solid pad: Octane hitbox vs cylinder top at {@link PLATFORM_TOP_Y}.
    * @returns {boolean} true if the car is supported by the pad this tick
    */
+  /** Root-joint height when wheels sit on a surface at `surfaceY`. */
+  sitY(surfaceY) {
+    return surfaceY + this.hitbox.restZ * UU;
+  }
+
   resolvePlatform() {
-    const hb = carHitboxYUpFromWheels(this.car.position, this.car.quaternion, UU);
+    const hb = carHitboxYUp(
+      this.car.position,
+      this.car.quaternion,
+      UU,
+      this.hitbox,
+    );
     const extY = hitboxExtentOnAxis(hb, this._worldUp);
     const minHitY = hb.center.y - extY;
     const wheelsDown = hb.u.y > 0.55;
-    const contactY = wheelsDown
-      ? Math.min(minHitY, this.car.position.y)
-      : minHitY;
+    const wheelY = this.car.position.y - this.hitbox.restZ * UU;
+    const contactY = wheelsDown ? Math.min(minHitY, wheelY) : minHitY;
     const radial = Math.hypot(hb.center.x, hb.center.z);
     // Allow a little overhang so the OBB edge still catches the rim.
     if (radial > PLATFORM_RADIUS + hb.half[0] * 0.35) return false;
@@ -509,7 +521,7 @@ export class RingsMode {
     if (pen > 0) this.car.position.y += pen;
 
     if (wheelsDown && this.vel.y <= 0.5) {
-      this.car.position.y = PLATFORM_TOP_Y + CAR_CLEARANCE;
+      this.car.position.y = this.sitY(PLATFORM_TOP_Y);
       this.vel.y = 0;
       this.vel.x *= 0.85;
       this.vel.z *= 0.85;
@@ -526,7 +538,7 @@ export class RingsMode {
   _stepOnce(dt) {
     const input = readControls();
     if (this.onPlatform) {
-      this.car.position.set(0, PLATFORM_TOP_Y + CAR_CLEARANCE, 0);
+      this.car.position.set(0, PLATFORM_TOP_Y + this.hitbox.restZ * UU, 0);
       this.vel.set(0, 0, 0);
       this.aerial.reset();
       this.aerial.step(this.car, input.roll, input.pitch, input.yaw, dt);
@@ -549,7 +561,7 @@ export class RingsMode {
       this.boosting = false;
       this.syncHud(input);
       this.prevPos.copy(this.car.position);
-      syncHitboxHelperYUp(this.hitboxHelper, this.car, UU);
+      syncHitboxHelperYUp(this.hitboxHelper, this.car, UU, this.hitbox);
       return;
     }
 
@@ -584,9 +596,10 @@ export class RingsMode {
         WATER_Y,
         0.2,
         UU,
+        this.hitbox,
       );
       if (water.penetrated && water.wheelsDown) {
-        this.car.position.y = Math.max(this.car.position.y, WATER_Y + CAR_CLEARANCE);
+        this.car.position.y = Math.max(this.car.position.y, this.sitY(WATER_Y));
         this.vel.x *= 0.9;
         this.vel.z *= 0.9;
       }
@@ -594,7 +607,7 @@ export class RingsMode {
 
     this.syncHud(input);
     this.car.userData.setBoost?.(this.boosting);
-    syncHitboxHelperYUp(this.hitboxHelper, this.car, UU);
+    syncHitboxHelperYUp(this.hitboxHelper, this.car, UU, this.hitbox);
   }
 
   /** @param {ReturnType<typeof readControls>} input */
