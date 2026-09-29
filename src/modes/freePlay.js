@@ -13,10 +13,12 @@ import {
   RL,
   applyToCarModel,
   collideCarBall,
+  createHitboxHelper,
   makeBall,
   makeCar as makePhysCar,
   stepBall,
   stepCar,
+  syncHitboxHelper,
 } from "../shared/rl-physics.js";
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
@@ -51,6 +53,9 @@ export class FreePlayMode {
       }),
     );
     this.root.add(this.ballMesh);
+
+    this.hitboxHelper = createHitboxHelper();
+    this.root.add(this.hitboxHelper);
 
     this.physCar = makePhysCar(
       new THREE.Vector3(0, -2560, RL.REST_HEIGHT),
@@ -162,13 +167,14 @@ export class FreePlayMode {
   syncMeshes() {
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
     this.carMesh.scale.setScalar(CAR_SCALE);
-    // Mesh origin is near the wheels; physics pos is CoM at REST_HEIGHT.
+    // Mesh origin is near the wheels; physics pos is root joint at REST_HEIGHT.
     this.carMesh.position.y -= RL.REST_HEIGHT * ARENA_UU;
     this.ballMesh.position.set(
       this.physBall.pos.x * ARENA_UU,
       this.physBall.pos.z * ARENA_UU,
       -this.physBall.pos.y * ARENA_UU,
     );
+    syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
   }
 
   updateBoostMeter() {
@@ -214,38 +220,12 @@ export class FreePlayMode {
     };
   }
 
-  /** Soft wall bounce beyond the hard clamp in stepCar. */
-  bounceField() {
-    const margin = 80;
-    const e = 0.35;
-    const xMax = RL.HALF_W - margin;
-    const yMax = RL.HALF_L - margin;
-    const car = this.physCar;
-    if (car.pos.x > xMax) {
-      car.pos.x = xMax;
-      if (car.vel.x > 0) car.vel.x *= -e;
-    } else if (car.pos.x < -xMax) {
-      car.pos.x = -xMax;
-      if (car.vel.x < 0) car.vel.x *= -e;
-    }
-    const inGoal =
-      Math.abs(car.pos.x) < 892 && car.pos.z < 642 + RL.REST_HEIGHT;
-    const yLimit = inGoal ? RL.HALF_L + 400 : yMax;
-    if (car.pos.y > yLimit) {
-      car.pos.y = yLimit;
-      if (car.vel.y > 0) car.vel.y *= -e;
-    } else if (car.pos.y < -yLimit) {
-      car.pos.y = -yLimit;
-      if (car.vel.y < 0) car.vel.y *= -e;
-    }
-  }
-
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = this.driveControls();
     this.boosting = Boolean(input.boost);
+    // stepCar resolves the Octane hitbox against floor / walls / ceiling.
     stepCar(this.physCar, input, dt);
-    this.bounceField();
     stepBall(this.physBall, dt);
     collideCarBall(this.physCar, this.physBall, this.tick);
     this.tick += 1;

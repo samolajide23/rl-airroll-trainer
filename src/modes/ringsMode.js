@@ -6,6 +6,13 @@ import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
 import { ChaseCamera, UU } from "../shared/chaseCamera.js";
 import {
+  carHitboxYUpFromWheels,
+  createHitboxHelper,
+  hitboxExtentOnAxis,
+  resolveHitboxPlaneY,
+  syncHitboxHelperYUp,
+} from "../shared/rl-physics.js";
+import {
   formatControlsHelp,
   getCamera,
   onBindsChange,
@@ -23,8 +30,9 @@ const RING_TUBE = 0.22;
 const RING_PASS_R = 2.15;
 const WATER_Y = 0;
 const PLATFORM_TOP_Y = 4.2;
-/** Sit height above pad / water for the scaled car. */
-const CAR_CLEARANCE = CAR_SCALE * 0.7;
+const PLATFORM_RADIUS = 5.5;
+/** Visual wheel sit height above a solid surface. */
+const CAR_CLEARANCE = 0.02;
 const RING_BLUE = 0x4da3e6;
 const RING_BLUE_NEXT = 0x7ec8ff;
 const RING_BLUE_DONE = 0x9ad4a8;
@@ -82,8 +90,11 @@ export class RingsMode {
     this.root.add(this.env);
     this.platform = this.makePlatform();
     this.root.add(this.platform);
+    this.hitboxHelper = createHitboxHelper();
+    this.root.add(this.hitboxHelper);
     this.trail = new BoostTrail(this.root);
     this.trail.attachFlames(this.car);
+    this._worldUp = new THREE.Vector3(0, 1, 0);
 
     this.nextIndex = 0;
     this.hits = 0;
@@ -476,6 +487,41 @@ export class RingsMode {
     return offset.addScaledVector(n, -offset.dot(n)).length() <= RING_PASS_R;
   }
 
+  /**
+   * Solid pad: Octane hitbox vs cylinder top at {@link PLATFORM_TOP_Y}.
+   * @returns {boolean} true if the car is supported by the pad this tick
+   */
+  resolvePlatform() {
+    const hb = carHitboxYUpFromWheels(this.car.position, this.car.quaternion, UU);
+    const extY = hitboxExtentOnAxis(hb, this._worldUp);
+    const minHitY = hb.center.y - extY;
+    const wheelsDown = hb.u.y > 0.55;
+    const contactY = wheelsDown
+      ? Math.min(minHitY, this.car.position.y)
+      : minHitY;
+    const radial = Math.hypot(hb.center.x, hb.center.z);
+    // Allow a little overhang so the OBB edge still catches the rim.
+    if (radial > PLATFORM_RADIUS + hb.half[0] * 0.35) return false;
+    if (contactY >= PLATFORM_TOP_Y - 0.02 && this.vel.y > 0.05) return false;
+    if (contactY > PLATFORM_TOP_Y + 0.45) return false;
+
+    const pen = PLATFORM_TOP_Y - contactY;
+    if (pen > 0) this.car.position.y += pen;
+
+    if (wheelsDown && this.vel.y <= 0.5) {
+      this.car.position.y = PLATFORM_TOP_Y + CAR_CLEARANCE;
+      this.vel.y = 0;
+      this.vel.x *= 0.85;
+      this.vel.z *= 0.85;
+      return true;
+    }
+    if (this.vel.y < 0) {
+      this.vel.y = -this.vel.y * RL.ARENA_RESTITUTION;
+      this.aerial.omega.multiplyScalar(0.85);
+    }
+    return false;
+  }
+
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = readControls();
@@ -503,6 +549,7 @@ export class RingsMode {
       this.boosting = false;
       this.syncHud(input);
       this.prevPos.copy(this.car.position);
+      syncHitboxHelperYUp(this.hitboxHelper, this.car, UU);
       return;
     }
 
@@ -524,15 +571,30 @@ export class RingsMode {
     if (this.vel.length() > MAX_SPEED) this.vel.setLength(MAX_SPEED);
     this.prevPos.copy(this.car.position);
     this.car.position.addScaledVector(this.vel, dt);
-    const waterMin = WATER_Y + CAR_CLEARANCE;
-    if (this.car.position.y < waterMin) {
-      this.car.position.y = waterMin;
-      if (this.vel.y < 0) this.vel.y *= -0.2;
-      this.vel.x *= 0.9;
-      this.vel.z *= 0.9;
+
+    // Pad first (higher), then water — both use the Octane OBB.
+    if (this.resolvePlatform()) {
+      this.onPlatform = true;
+      this.aerial.reset();
+    } else {
+      const water = resolveHitboxPlaneY(
+        this.car,
+        this.vel,
+        this.aerial.omega,
+        WATER_Y,
+        0.2,
+        UU,
+      );
+      if (water.penetrated && water.wheelsDown) {
+        this.car.position.y = Math.max(this.car.position.y, WATER_Y + CAR_CLEARANCE);
+        this.vel.x *= 0.9;
+        this.vel.z *= 0.9;
+      }
     }
+
     this.syncHud(input);
     this.car.userData.setBoost?.(this.boosting);
+    syncHitboxHelperYUp(this.hitboxHelper, this.car, UU);
   }
 
   /** @param {ReturnType<typeof readControls>} input */

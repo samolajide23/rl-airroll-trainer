@@ -46,9 +46,9 @@ export const RL = {
   D_ROLL: -50 * RS_TORQUE_SCALE, // [V] always on
   D_PITCH: -30 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
   D_YAW: -20 * RS_TORQUE_SCALE, // [V] scaled by (1-|input|)
-  // Octane hitbox (OBB)
+  // Octane hitbox (OBB) — used for ball + arena solid collision
   HITBOX_SIZE: [118.0074, 84.19941, 36.15907], // [V] length, width, height
-  HITBOX_OFFSET: [13.87566, 0, 20.75499], // [A] from memory, verify vs halfwaydead sheet
+  HITBOX_OFFSET: [13.87566, 0, 20.75499], // [V] root → hitbox centre (Octane)
   // --- ball ---
   BALL_RADIUS: 91.25, // [V]
   BALL_MASS: 30, // [V]
@@ -65,6 +65,10 @@ export const RL = {
   HALF_W: 4096, // [V]
   HALF_L: 5120, // [V]
   CEILING: 2048, // [V]
+  GOAL_HALF_W: 892.755, // [V]
+  GOAL_HEIGHT: 642.775, // [V]
+  GOAL_DEPTH: 880, // [A] soft back of net
+  ARENA_RESTITUTION: 0.35, // [A] car↔arena bounce
 };
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -198,15 +202,10 @@ export function stepCar(car, c, dt = RL.DT) {
     airControl(car, c, dt);
   }
 
-  /* ---- integrate, clamp ---- */
+  /* ---- integrate + solid Octane hitbox vs arena ---- */
   if (car.vel.length() > RL.MAX_SPEED) car.vel.setLength(RL.MAX_SPEED);
   car.pos.addScaledVector(car.vel, dt);
-  car.pos.x = clamp(car.pos.x, -RL.HALF_W + 60, RL.HALF_W - 60);
-  car.pos.y = clamp(car.pos.y, -RL.HALF_L + 60, RL.HALF_L - 60);
-  if (car.pos.z > RL.CEILING - 40) { car.pos.z = RL.CEILING - 40; car.vel.z = Math.min(0, car.vel.z); }
-
-  /* ---- landing ---- */
-  if (!car.onGround && car.pos.z <= RL.REST_HEIGHT && car.vel.z <= 0) land(car);
+  resolveCarArena(car);
 }
 
 function airControl(car, c, dt) {
@@ -246,13 +245,305 @@ function land(car) {
     car.omega.set(0, 0, 0);
     car.vel.z = 0;
     car.pos.z = RL.REST_HEIGHT;
+    car.crashed = false;
   } else {
-    // bad landing (roof / side): simple bounce + flag; real game tumbles
+    // Roof / side: bounce is applied by resolveCarArena (no teleport through floor).
     car.crashed = true;
-    car.pos.z = RL.REST_HEIGHT;
-    car.vel.z = -car.vel.z * 0.3;
+    car.onGround = false;
     car.omega.multiplyScalar(0.5);
   }
+}
+
+/* --------------------- Octane OBB ↔ arena solids --------------------- */
+
+const AXIS_X = V(1, 0, 0);
+const AXIS_Y = V(0, 1, 0);
+const AXIS_Z = V(0, 0, 1);
+
+/**
+ * World-space Octane hitbox (OBB) for a physics car (Z-up).
+ * @param {ReturnType<typeof makeCar>} car
+ */
+export function carHitbox(car) {
+  const { f, l, u } = axes(car.q);
+  const [ox, oy, oz] = RL.HITBOX_OFFSET;
+  /** @type {[number, number, number]} */
+  const half = [RL.HITBOX_SIZE[0] * 0.5, RL.HITBOX_SIZE[1] * 0.5, RL.HITBOX_SIZE[2] * 0.5];
+  const center = car.pos
+    .clone()
+    .addScaledVector(f, ox)
+    .addScaledVector(l, oy)
+    .addScaledVector(u, oz);
+  return { f, l, u, center, half };
+}
+
+/**
+ * Half-extent of an OBB projected onto a unit world axis.
+ * @param {{ f: THREE.Vector3, l: THREE.Vector3, u: THREE.Vector3, half: [number, number, number] }} hb
+ * @param {THREE.Vector3} axis
+ */
+export function hitboxExtentOnAxis(hb, axis) {
+  return (
+    hb.half[0] * Math.abs(hb.f.dot(axis)) +
+    hb.half[1] * Math.abs(hb.l.dot(axis)) +
+    hb.half[2] * Math.abs(hb.u.dot(axis))
+  );
+}
+
+/**
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {number} nx
+ * @param {number} ny
+ * @param {number} nz
+ * @param {number} pen
+ */
+function pushCar(car, nx, ny, nz, pen) {
+  car.pos.x += nx * pen;
+  car.pos.y += ny * pen;
+  car.pos.z += nz * pen;
+}
+
+/**
+ * Reflect velocity along a unit normal if moving into the surface.
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {number} nx
+ * @param {number} ny
+ * @param {number} nz
+ * @param {number} e
+ */
+function bounceNormal(car, nx, ny, nz, e) {
+  const vn = car.vel.x * nx + car.vel.y * ny + car.vel.z * nz;
+  if (vn >= 0) return;
+  const j = -(1 + e) * vn;
+  car.vel.x += j * nx;
+  car.vel.y += j * ny;
+  car.vel.z += j * nz;
+  car.omega.multiplyScalar(0.85);
+}
+
+/**
+ * Keep the Octane hitbox outside the soccar box (floor, ceiling, walls, goals).
+ * Wheels-down contacts still snap to {@link RL.REST_HEIGHT}; roof/side use the OBB.
+ * @param {ReturnType<typeof makeCar>} car
+ */
+export function resolveCarArena(car) {
+  const e = RL.ARENA_RESTITUTION;
+
+  // --- Floor: wheels when upright, otherwise hitbox bottom ---
+  {
+    const hb = carHitbox(car);
+    const wheelsDown = hb.u.z > 0.55;
+    const minHitZ = hb.center.z - hitboxExtentOnAxis(hb, AXIS_Z);
+
+    if (car.onGround && !car.jumping && car.stickyTicks === 0) {
+      car.pos.z = RL.REST_HEIGHT;
+      car.vel.z = 0;
+    } else if (!car.onGround) {
+      if (wheelsDown && car.pos.z <= RL.REST_HEIGHT && car.vel.z <= 0) {
+        land(car);
+      } else if (minHitZ < 0) {
+        pushCar(car, 0, 0, 1, -minHitZ);
+        if (wheelsDown && car.vel.z <= 0) {
+          land(car);
+        } else {
+          bounceNormal(car, 0, 0, 1, e);
+          car.crashed = true;
+          car.onGround = false;
+        }
+      }
+    }
+  }
+
+  // --- Ceiling ---
+  {
+    const hb = carHitbox(car);
+    const maxHitZ = hb.center.z + hitboxExtentOnAxis(hb, AXIS_Z);
+    if (maxHitZ > RL.CEILING) {
+      pushCar(car, 0, 0, -1, maxHitZ - RL.CEILING);
+      bounceNormal(car, 0, 0, -1, e);
+      car.onGround = false;
+    }
+  }
+
+  // --- Side walls (world ±X) ---
+  for (const sign of [1, -1]) {
+    const hb = carHitbox(car);
+    const edge = hb.center.x + sign * hitboxExtentOnAxis(hb, AXIS_X);
+    if (sign > 0 && edge > RL.HALF_W) {
+      pushCar(car, -1, 0, 0, edge - RL.HALF_W);
+      bounceNormal(car, -1, 0, 0, e);
+    } else if (sign < 0 && edge < -RL.HALF_W) {
+      pushCar(car, 1, 0, 0, -RL.HALF_W - edge);
+      bounceNormal(car, 1, 0, 0, e);
+    }
+  }
+
+  // --- End walls (world ±Y) with goal mouths ---
+  for (const sign of [1, -1]) {
+    const hb = carHitbox(car);
+    const extY = hitboxExtentOnAxis(hb, AXIS_Y);
+    const extX = hitboxExtentOnAxis(hb, AXIS_X);
+    const extZ = hitboxExtentOnAxis(hb, AXIS_Z);
+    const edge = hb.center.y + sign * extY;
+    const wall = sign * RL.HALF_L;
+    const past = sign > 0 ? edge > wall : edge < wall;
+    if (!past) continue;
+
+    const inGoalX = Math.abs(hb.center.x) + extX < RL.GOAL_HALF_W;
+    const underCrossbar = hb.center.z + extZ < RL.GOAL_HEIGHT;
+    if (inGoalX && underCrossbar) {
+      const back = sign * (RL.HALF_L + RL.GOAL_DEPTH);
+      const backEdge = hb.center.y + sign * extY;
+      if (sign > 0 && backEdge > back) {
+        pushCar(car, 0, -1, 0, backEdge - back);
+        bounceNormal(car, 0, -1, 0, e);
+      } else if (sign < 0 && backEdge < back) {
+        pushCar(car, 0, 1, 0, back - backEdge);
+        bounceNormal(car, 0, 1, 0, e);
+      }
+      continue;
+    }
+
+    const pen = sign > 0 ? edge - wall : wall - edge;
+    pushCar(car, 0, -sign, 0, pen);
+    bounceNormal(car, 0, -sign, 0, e);
+  }
+}
+
+/**
+ * Octane OBB for a Three.js car (Y-up, local +Z forward, +X right).
+ * `rootPos` is the RL root joint in metres (same units as `scale` uu→m).
+ * @param {THREE.Vector3} rootPos
+ * @param {THREE.Quaternion} quaternion
+ * @param {number} [scale=0.01]
+ */
+export function carHitboxYUp(rootPos, quaternion, scale = 0.01) {
+  const f = V(0, 0, 1).applyQuaternion(quaternion);
+  const r = V(1, 0, 0).applyQuaternion(quaternion);
+  const u = V(0, 1, 0).applyQuaternion(quaternion);
+  const [ox, oy, oz] = RL.HITBOX_OFFSET;
+  /** @type {[number, number, number]} */
+  const half = [
+    RL.HITBOX_SIZE[0] * 0.5 * scale,
+    RL.HITBOX_SIZE[1] * 0.5 * scale,
+    RL.HITBOX_SIZE[2] * 0.5 * scale,
+  ];
+  const center = rootPos
+    .clone()
+    .addScaledVector(f, ox * scale)
+    .addScaledVector(r, oy * scale)
+    .addScaledVector(u, oz * scale);
+  return { f, l: r, u, center, half };
+}
+
+/**
+ * Procedural/GLB cars sit on the wheels; the RL root joint is REST_HEIGHT along car-up.
+ * @param {THREE.Vector3} wheelPos
+ * @param {THREE.Quaternion} quaternion
+ * @param {number} [scale=0.01]
+ */
+export function rootFromWheelsYUp(wheelPos, quaternion, scale = 0.01) {
+  const u = V(0, 1, 0).applyQuaternion(quaternion);
+  return wheelPos.clone().addScaledVector(u, RL.REST_HEIGHT * scale);
+}
+
+/**
+ * @param {THREE.Vector3} wheelPos
+ * @param {THREE.Quaternion} quaternion
+ * @param {number} [scale=0.01]
+ */
+export function carHitboxYUpFromWheels(wheelPos, quaternion, scale = 0.01) {
+  return carHitboxYUp(rootFromWheelsYUp(wheelPos, quaternion, scale), quaternion, scale);
+}
+
+/**
+ * Push a Y-up car (mesh origin ≈ wheels) out of an infinite horizontal plane using the Octane OBB.
+ * @param {THREE.Object3D} object
+ * @param {THREE.Vector3} vel
+ * @param {THREE.Vector3} [omega]
+ * @param {number} planeY
+ * @param {number} [restitution=0.35]
+ * @param {number} [scale=0.01]
+ * @returns {{ penetrated: boolean, wheelsDown: boolean }}
+ */
+export function resolveHitboxPlaneY(
+  object,
+  vel,
+  omega,
+  planeY,
+  restitution = RL.ARENA_RESTITUTION,
+  scale = 0.01,
+) {
+  const hb = carHitboxYUpFromWheels(object.position, object.quaternion, scale);
+  const up = V(0, 1, 0);
+  const wheelsDown = hb.u.y > 0.55;
+  const minHitY = hb.center.y - hitboxExtentOnAxis(hb, up);
+  // Wheels sit below the OBB when upright — use the lower of wheels / hitbox.
+  const contactY = wheelsDown ? Math.min(minHitY, object.position.y) : minHitY;
+  if (contactY >= planeY) {
+    return { penetrated: false, wheelsDown };
+  }
+  const pen = planeY - contactY;
+  object.position.y += pen;
+  const vn = vel.dot(up);
+  if (vn < 0) {
+    vel.addScaledVector(up, -(1 + restitution) * vn);
+  }
+  if (omega) omega.multiplyScalar(0.85);
+  return { penetrated: true, wheelsDown };
+}
+
+/**
+ * Wireframe helper for the Octane hitbox (Three Y-up). Update each frame with
+ * {@link syncHitboxHelper}.
+ * @returns {THREE.LineSegments}
+ */
+export function createHitboxHelper() {
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const edges = new THREE.EdgesGeometry(geo);
+  const mat = new THREE.LineBasicMaterial({
+    color: 0x7CFFB2,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const lines = new THREE.LineSegments(edges, mat);
+  lines.name = "octane-hitbox";
+  geo.dispose();
+  return lines;
+}
+
+/**
+ * @param {THREE.Object3D} helper
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {number} [scale=0.01]
+ */
+export function syncHitboxHelper(helper, car, scale = 0.01) {
+  const hb = carHitbox(car);
+  const P = (v) => V(v.x, v.z, -v.y);
+  const left = hb.l.clone().multiplyScalar(-1);
+  helper.position.copy(P(hb.center)).multiplyScalar(scale);
+  helper.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(
+      P(left).normalize(),
+      P(hb.u).normalize(),
+      P(hb.f).normalize(),
+    ),
+  );
+  // Model axes: X = width, Y = height, Z = length
+  helper.scale.set(hb.half[1] * 2 * scale, hb.half[2] * 2 * scale, hb.half[0] * 2 * scale);
+}
+
+/**
+ * Sync wireframe to a Three.js Y-up car whose `position` is the wheel origin.
+ * @param {THREE.Object3D} helper
+ * @param {THREE.Object3D} object
+ * @param {number} [scale=0.01]
+ */
+export function syncHitboxHelperYUp(helper, object, scale = 0.01) {
+  const hb = carHitboxYUpFromWheels(object.position, object.quaternion, scale);
+  helper.position.copy(hb.center);
+  helper.quaternion.copy(object.quaternion);
+  helper.scale.set(hb.half[1] * 2, hb.half[2] * 2, hb.half[0] * 2);
 }
 
 /* ------------------------------ ball step ------------------------------ */
