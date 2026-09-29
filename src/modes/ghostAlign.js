@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { AerialBody, FixedStepClock } from "../shared/aerial.js";
 import { makeCar, makeTargetGuide } from "../shared/car.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
-import { isActionDown, readControls } from "../shared/input.js";
+import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
 import {
   angleErrorDeg,
   formatConsistency,
@@ -299,8 +299,8 @@ export class GhostAlignMode {
 
   updateHud(input, align) {
     const { hud } = this.ctx;
-    hud.padStatus.textContent = input.usingPad ? "Gamepad" : "Keyboard";
-    hud.padStatus.classList.toggle("on", input.usingPad);
+    hud.padStatus.textContent = inputSourceLabel(input);
+    hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
     hud.arl.classList.toggle("on", input.airLeft);
     hud.arr.classList.toggle("on", input.airRight);
     hud.alignFill.style.width = `${Math.round(align * 100)}%`;

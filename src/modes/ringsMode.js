@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { AerialBody, FixedStepClock, RL } from "../shared/aerial.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
-import { isActionDown, readControls } from "../shared/input.js";
+import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
 import { ChaseCamera, UU } from "../shared/chaseCamera.js";
 import {
@@ -538,8 +538,8 @@ export class RingsMode {
   /** @param {ReturnType<typeof readControls>} input */
   syncHud(input) {
     const { hud } = this.ctx;
-    hud.padStatus.textContent = input.usingPad ? "Gamepad" : "Keyboard";
-    hud.padStatus.classList.toggle("on", input.usingPad);
+    hud.padStatus.textContent = inputSourceLabel(input);
+    hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
     hud.arl.classList.toggle("on", input.airLeft);
     hud.arr.classList.toggle("on", input.airRight);
   }

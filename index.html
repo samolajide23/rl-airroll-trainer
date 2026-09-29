@@ -2,7 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="screen-orientation" content="landscape" />
     <title>RL Air Roll Trainer</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -150,6 +156,51 @@
       <div class="seq-queue-title">Queue</div>
       <div id="seq-queue-list" class="seq-queue-list"></div>
       <p class="seq-queue-hint">Match NOW — next moves stack below</p>
+    </div>
+
+    <div id="rotate-prompt" class="hidden" role="dialog" aria-live="polite">
+      <div class="rotate-card">
+        <div class="rotate-icon" aria-hidden="true">↻</div>
+        <p class="rotate-title">Rotate your phone</p>
+        <p class="rotate-sub">Play in landscape for on-screen controls.</p>
+      </div>
+    </div>
+
+    <div id="touch-controls" class="hidden" aria-hidden="true">
+      <div class="touch-left">
+        <div
+          id="touch-stick"
+          class="touch-stick"
+          role="slider"
+          aria-label="Pitch and yaw stick"
+        >
+          <div id="touch-stick-knob" class="touch-stick-knob"></div>
+        </div>
+      </div>
+
+      <div class="touch-util">
+        <button type="button" class="touch-btn touch-btn-util" data-touch-action="resetCar">
+          Reset
+        </button>
+        <button type="button" class="touch-btn touch-btn-util" data-touch-action="newTarget">
+          Skip
+        </button>
+      </div>
+
+      <div class="touch-right">
+        <button type="button" class="touch-btn" data-touch-action="airRollLeft">
+          AR L
+        </button>
+        <button type="button" class="touch-btn" data-touch-action="airRollRight">
+          AR R
+        </button>
+        <button type="button" class="touch-btn touch-btn-boost" data-touch-action="boost">
+          Boost
+        </button>
+        <button type="button" class="touch-btn touch-btn-jump" data-touch-action="jump">
+          Jump
+        </button>
+      </div>
     </div>
 
     <canvas id="game"></canvas>

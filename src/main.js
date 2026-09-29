@@ -8,6 +8,10 @@ import {
   pollGamepadButtonPress,
   snapshotPressedButtons,
 } from "./shared/input.js";
+import {
+  initTouchControls,
+  setTouchControlsVisible,
+} from "./shared/touchControls.js";
 import { createMenuGamepad } from "./shared/menuGamepad.js";
 import {
   hideLockerPreview,
@@ -255,6 +259,7 @@ function stopActiveMode() {
     activeMode = null;
   }
   pendingMode = null;
+  setTouchControlsVisible(false);
 }
 
 function showHub() {
@@ -332,6 +337,7 @@ function startMode(def, options = {}) {
   hideAllScreens();
   menuGamepad.onScreenChange();
   activeMode.start();
+  setTouchControlsVisible(true);
 }
 
 function onModeCardClick(def) {
@@ -897,6 +903,19 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+const touchRoot = document.getElementById("touch-controls");
+const touchStick = document.getElementById("touch-stick");
+const touchStickKnob = document.getElementById("touch-stick-knob");
+const rotatePrompt = document.getElementById("rotate-prompt");
+if (touchRoot && touchStick && touchStickKnob && rotatePrompt) {
+  initTouchControls({
+    root: touchRoot,
+    stickBase: touchStick,
+    stickKnob: touchStickKnob,
+    rotatePrompt,
+  });
+}
 
 refreshHelpText();
 showHub();

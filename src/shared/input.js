@@ -1,4 +1,5 @@
 import { getBind, getBinds, getPad } from "./settings.js";
+import { isTouchActionDown, readTouchControls } from "./touchControls.js";
 
 /** @type {Set<string>} */
 export const keys = new Set();
@@ -86,6 +87,7 @@ export function readAerialInput() {
  *   airLeft: boolean,
  *   airRight: boolean,
  *   usingPad: boolean,
+ *   usingTouch: boolean,
  * }}
  */
 export function readControls() {
@@ -99,6 +101,7 @@ export function readControls() {
   let boost = keyHeld("boost");
   let jump = keyHeld("jump");
   let usingPad = false;
+  let usingTouch = false;
 
   if (keyHeld("pitchUp")) pitch += 1;
   if (keyHeld("pitchDown")) pitch -= 1;
@@ -107,6 +110,19 @@ export function readControls() {
   if (keyHeld("yawLeft")) yaw -= 1;
   if (keyHeld("throttle")) throttle += 1;
   if (keyHeld("reverse")) throttle -= 1;
+
+  const touch = readTouchControls();
+  if (touch.usingTouch) {
+    usingTouch = true;
+    if (touch.pitch) pitch = touch.pitch;
+    if (touch.yaw) yaw = touch.yaw;
+    steer = touch.yaw;
+    throttle = touch.pitch;
+    airLeft = airLeft || touch.airLeft;
+    airRight = airRight || touch.airRight;
+    boost = boost || touch.boost;
+    jump = jump || touch.jump;
+  }
 
   const pad = getActiveGamepad();
   if (pad) {
@@ -159,7 +175,17 @@ export function readControls() {
     airLeft,
     airRight,
     usingPad,
+    usingTouch,
   };
+}
+
+/**
+ * @param {{ usingPad?: boolean, usingTouch?: boolean }} controls
+ */
+export function inputSourceLabel(controls) {
+  if (controls.usingPad) return "Gamepad";
+  if (controls.usingTouch) return "Touch";
+  return "Keyboard";
 }
 
 /**
@@ -168,6 +194,7 @@ export function readControls() {
  */
 export function isActionDown(action) {
   if (keyHeld(action)) return true;
+  if (isTouchActionDown(action)) return true;
 
   const cfg = getPad();
   const pad = getActiveGamepad();

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { AerialBody, FixedStepClock } from "./aerial.js";
 import { makeCar } from "./car.js";
 import { ChaseCamera } from "./chaseCamera.js";
-import { isActionDown, readControls } from "./input.js";
+import { inputSourceLabel, isActionDown, readControls } from "./input.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
 
 /**
@@ -106,8 +106,8 @@ export class AerialDrillBase {
     this.aerial.step(this.car, roll, input.pitch, input.yaw, dt);
 
     const { hud } = this.ctx;
-    hud.padStatus.textContent = input.usingPad ? "Gamepad" : "Keyboard";
-    hud.padStatus.classList.toggle("on", input.usingPad);
+    hud.padStatus.textContent = inputSourceLabel(input);
+    hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
     hud.arl.classList.toggle("on", airLeft);
     hud.arr.classList.toggle("on", airRight);
 
