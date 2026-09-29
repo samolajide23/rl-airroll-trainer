@@ -74,6 +74,14 @@ export const RL_CAMERA = {
    * "reasonable value"; keep aerials readable without flipping over.
    */
   BALL_CAM_MAX_PITCH: (80 * Math.PI) / 180, // [A]
+  /**
+   * |carForward·worldUp| above this → nose is too vertical to derive a
+   * stable chase yaw (forward flip mid-tumble). RL car-cam does not whip
+   * 180° here — hold last yaw or fall back to horizontal velocity.
+   */
+  FLAT_FORWARD_MAX_UP: 0.9, // [A]
+  /** Min horizontal speed (three m/s ≈ uu/s×UU) to trust velocity follow. */
+  AIR_FOLLOW_VEL_MIN: 1.5, // [A] 150 uu/s
 };
 
 /**
@@ -264,17 +272,40 @@ export class ChaseCamera {
     const ballCam = Boolean(opts.ballCam ?? cfg.ballCam);
     const shakeOn = Boolean(cfg.shake);
 
-    // --- Follow forward: car nose flattened to world-up ---
+    // --- Follow forward: stable horizontal chase yaw ---
+    // RL car-cam does not tumble with the nose through a flip. On the ground
+    // we track flattened car-forward; in air / when the nose is near vertical
+    // we prefer horizontal velocity (momentum), else hold the last yaw.
     this.forward.set(0, 0, 1);
     if (opts.forward && opts.forward.lengthSq() > 1e-8) {
       this.forward.copy(opts.forward);
     }
+    const noseUp = Math.abs(this.forward.dot(up));
     this.tmp.copy(this.forward).addScaledVector(up, -this.forward.dot(up));
-    if (this.tmp.lengthSq() < 1e-6 && opts.velocity && opts.velocity.lengthSq() > 1e-4) {
-      this.tmp.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
+    const flatFwdSq = this.tmp.lengthSq();
+    const noseUnstable =
+      noseUp > RL_CAMERA.FLAT_FORWARD_MAX_UP || flatFwdSq < 1e-4;
+
+    let velFlatSq = 0;
+    if (opts.velocity && opts.velocity.lengthSq() > 1e-8) {
+      this.tmp2.copy(opts.velocity).addScaledVector(up, -opts.velocity.dot(up));
+      velFlatSq = this.tmp2.lengthSq();
     }
-    if (this.tmp.lengthSq() < 1e-6) this.tmp.copy(this.smoothDir);
-    this.tmp.normalize();
+    const velMin = RL_CAMERA.AIR_FOLLOW_VEL_MIN;
+    const velOk = velFlatSq > velMin * velMin;
+    const airborne = opts.onGround === false;
+
+    // Prefer momentum in air (RL car-cam) or whenever the nose can't give a
+    // stable yaw — stops the camera whipping 180° mid-flip.
+    if ((airborne || noseUnstable) && velOk) {
+      this.tmp.copy(this.tmp2).normalize();
+    } else if (!noseUnstable && flatFwdSq > 1e-6) {
+      this.tmp.normalize();
+    } else if (velOk) {
+      this.tmp.copy(this.tmp2).normalize();
+    } else {
+      this.tmp.copy(this.smoothDir);
+    }
 
     // Stiffness → how fast the arm yaw tracks the car (car cam only).
     // TransitionSpeed must NOT scale this — it only blends car↔ball views.
@@ -291,6 +322,11 @@ export class ChaseCamera {
       let dYaw = targetYaw - this._followYaw;
       while (dYaw > Math.PI) dYaw -= Math.PI * 2;
       while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      // During a tumble the desired yaw can still glitch; ignore near-reversals
+      // in a single frame so stiffness can't whip the arm around the car.
+      if (Math.abs(dYaw) > Math.PI * 0.75 && noseUnstable) {
+        dYaw = 0;
+      }
       this._followYaw += dYaw * (1 - Math.exp(-rotRate * Math.max(dt, 0)));
     }
     this.smoothDir.set(

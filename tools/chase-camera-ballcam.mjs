@@ -245,5 +245,43 @@ check(
   `err=${poleErr.toFixed(4)}`,
 );
 
+// Forward flip tumble: chase yaw must not whip ~180° (RL keeps momentum/stable yaw).
+setCamera("stiffness", 0.5);
+setCamera("ballCam", false);
+chase.invalidate();
+const flipCar = new THREE.Vector3(0, 2, 0);
+const flipFwd = new THREE.Vector3(0, 0, 1);
+const flipVel = new THREE.Vector3(0, 0, 15); // forward momentum
+chase.update(cam, 1 / 60, {
+  target: flipCar,
+  forward: flipFwd,
+  velocity: flipVel,
+  onGround: false,
+  snap: true,
+});
+let maxFlipYawJump = 0;
+let prevFlipYaw = chase._followYaw;
+for (let i = 0; i < 78; i++) {
+  const pitch = (i / 78) * Math.PI * 2;
+  flipFwd.set(0, Math.sin(pitch), Math.cos(pitch));
+  flipCar.z += flipVel.z / 60;
+  chase.update(cam, 1 / 60, {
+    target: flipCar,
+    forward: flipFwd,
+    velocity: flipVel,
+    onGround: false,
+  });
+  let dYaw = chase._followYaw - prevFlipYaw;
+  while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+  while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+  maxFlipYawJump = Math.max(maxFlipYawJump, Math.abs(dYaw));
+  prevFlipYaw = chase._followYaw;
+}
+check(
+  "car cam: flip tumble does not whip yaw (>45°/frame)",
+  maxFlipYawJump < Math.PI / 4,
+  `maxJumpRad=${maxFlipYawJump.toFixed(3)}`,
+);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
