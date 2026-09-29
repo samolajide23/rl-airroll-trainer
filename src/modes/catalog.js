@@ -36,7 +36,7 @@ export const PHASES = [
         id: "arena",
         title: "Arena",
         description:
-          "Free roam with RL-style driving. Jump, boost, air roll, and hit the ball. Reset car / skip ball.",
+          "Free roam with RL-style driving. Jump, dodge, finite boost + pads, air roll, ball. Reset car / skip ball.",
         available: true,
         create: (ctx) => new FreePlayMode(ctx),
       },

@@ -41,7 +41,27 @@ export const RL = {
   JUMP_HOLD_MAX: 0.2, // [V]
   JUMP_HOLD_MIN_TICKS: 3, // [V]
   STICKY: 325, // [V] for 3 ticks after jump
-  FLIP_WINDOW: 1.25, // [V] seconds (+ hold time)
+  FLIP_WINDOW: 1.25, // [V] RocketSim DOUBLEJUMP_MAX_DELAY (after first jump ends)
+  DODGE_DEADZONE: 0.5, // [V] Octane default
+  FLIP_TORQUE_TIME: 0.65, // [V]
+  FLIP_TORQUE_MIN_TIME: 0.41, // [V]
+  FLIP_PITCHLOCK_EXTRA: 0.3, // [V] after FLIP_TORQUE_TIME
+  FLIP_Z_DAMP_120: 0.35, // [V]
+  FLIP_Z_DAMP_START: 0.15, // [V]
+  FLIP_Z_DAMP_END: 0.21, // [V]
+  FLIP_INITIAL_VEL: 500, // [V]
+  FLIP_TORQUE_X: 260, // [V] local about forward (side dodge)
+  FLIP_TORQUE_Y: 224, // [V] local about right (forward/back dodge)
+  FLIP_FWD_SPEED_SCALE: 1, // [V]
+  FLIP_SIDE_SPEED_SCALE: 1.9, // [V]
+  FLIP_BACK_SPEED_SCALE: 2.5, // [V]
+  FLIP_BACK_IMPULSE_X: 16 / 15, // [V]
+  BOOST_MIN_TIME: 0.1, // [V]
+  SUPERSONIC_START: 2200, // [V]
+  SUPERSONIC_KEEP: 2100, // [V]
+  SUPERSONIC_KEEP_TIME: 1, // [V]
+  POWERSLIDE_RISE: 5, // [V] per second
+  POWERSLIDE_FALL: 2, // [V] per second
   REST_HEIGHT: HITBOX_PRESETS.octane.restZ, // [V] default Octane root height
   // Air-control (RocketSim): magnitudes are TORQUE/DAMPING * CAR_TORQUE_SCALE.
   // World-frame signs at identity (f=+X, right=+Y, u=+Z):
@@ -137,14 +157,32 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     omega: V(), // world angular velocity
     q: new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), yaw),
     boost: RL.BOOST_MAX,
+    /** When true, boost never depletes (orientation drills). Free Play leaves this false. */
+    infiniteBoost: false,
     onGround: true,
     prevJump: false,
     jumping: false,
     jumpTime: 0,
+    hasJumped: false,
+    hasDoubleJumped: false,
+    hasFlipped: false,
+    /** @deprecated use {@link canFlipOrJump} — kept true while a flip/double-jump is still available. */
     hasFlip: true,
+    isFlipping: false,
+    flipTime: 0,
+    /** Local dodge torque direction (about forward / right); set on flip start. */
+    flipRelTorque: V(),
     airTime: 0,
+    /** Time since first jump ended — double-jump / flip window. */
+    airTimeSinceJump: 0,
     stickyTicks: 0,
     crashed: false,
+    isBoosting: false,
+    boostingTime: 0,
+    isSupersonic: false,
+    supersonicTime: 0,
+    handbrakeVal: 0,
+    dodgeDeadzone: RL.DODGE_DEADZONE,
     /** Underside (wheels / hitbox bottom) touching a surface this tick. */
     wheelsContact: true,
     /** @type {THREE.Vector3} unit surface normal at wheel contact (outward from surface). */
@@ -152,6 +190,16 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     /** @type {import("./hitboxPresets.js").HitboxPreset} */
     hitbox,
   };
+}
+
+/** True while the car can still first-jump, double-jump, or flip. */
+export function canFlipOrJump(car) {
+  if (car.onGround || car.wheelsContact) return true;
+  return (
+    !car.hasFlipped &&
+    !car.hasDoubleJumped &&
+    car.airTimeSinceJump < RL.FLIP_WINDOW
+  );
 }
 
 /** @param {ReturnType<typeof makeCar>} car */
@@ -170,74 +218,92 @@ export function makeWorld() {
 /* ------------------------------ car step ------------------------------ */
 
 /**
- * controls: { throttle, steer, pitch, yaw, roll, boost:bool, jump:bool }  (axes in [-1,1])
- * On the ground, steer is used; in the air, pitch/yaw/roll are used.
- * Directional air roll should be done in your input layer by remapping stick -> (pitch, yaw, roll).
+ * controls: { throttle, steer, pitch, yaw, roll, boost:bool, jump:bool, powerslide?:bool }
+ * Axes in [-1,1]. Ground uses steer; air uses pitch/yaw/roll (+ dodge on second jump).
  */
 export function stepCar(car, c, dt = RL.DT) {
   const { f, l, u } = axes(car.q);
-  const throttle = clamp(c.throttle || 0, -1, 1);
-  const boosting = !!c.boost;
+  let throttle = clamp(c.throttle || 0, -1, 1);
+  const pitch = clamp(c.pitch || 0, -1, 1);
+  const yaw = clamp(c.yaw || 0, -1, 1);
+  const roll = clamp(c.roll || 0, -1, 1);
+  const tickScale = dt / RL.DT;
 
-  /* ---- jump ----
-   * First jump when underside is on a surface (floor / wall / ceiling).
-   * Second press in air = flip (dodge stub) while hasFlip is still true.
-   */
+  /* ---- powerslide analog (RocketSim rise/fall) ---- */
+  if (c.powerslide) car.handbrakeVal = Math.min(1, car.handbrakeVal + RL.POWERSLIDE_RISE * dt);
+  else car.handbrakeVal = Math.max(0, car.handbrakeVal - RL.POWERSLIDE_FALL * dt);
+
+  /* ---- jump / double-jump / dodge ---- */
   const pressed = !!c.jump && !car.prevJump;
   car.prevJump = !!c.jump;
   const canFirstJump = car.onGround || car.wheelsContact;
-  if (canFirstJump && pressed) {
+
+  if (car.onGround && !car.jumping) {
+    // Pad so a min-time jump does not instantly re-arm on the same surface.
+    if (car.hasJumped && car.jumpTime < RL.JUMP_HOLD_MIN_TICKS * RL.DT + 0.025) {
+      /* keep hasJumped briefly */
+    } else {
+      car.hasJumped = false;
+      car.jumpTime = 0;
+    }
+  }
+
+  if (canFirstJump && pressed && !car.jumping) {
     car.vel.addScaledVector(u, RL.JUMP_IMPULSE);
     car.onGround = false;
     car.wheelsContact = false;
     car.jumping = true;
     car.jumpTime = 0;
+    car.hasJumped = true;
+    car.hasDoubleJumped = false;
+    car.hasFlipped = false;
+    car.isFlipping = false;
+    car.flipTime = 0;
+    car.flipRelTorque.set(0, 0, 0);
     car.hasFlip = true;
     car.airTime = 0;
+    car.airTimeSinceJump = 0;
     car.stickyTicks = 3;
-  } else if (
-    !canFirstJump &&
-    pressed &&
-    !car.jumping &&
-    car.hasFlip &&
-    car.airTime < RL.FLIP_WINDOW + car.jumpTime
-  ) {
-    car.vel.addScaledVector(u, RL.JUMP_IMPULSE); // NOTE: directional flips (dodges) not implemented yet
-    car.hasFlip = false;
+  } else if (!canFirstJump && pressed && !car.jumping) {
+    maybeDoubleJumpOrFlip(car, c, pitch, yaw, roll, dt);
   }
+
   if (car.jumping) {
-    const minTicks = car.jumpTime < (RL.JUMP_HOLD_MIN_TICKS * dt) - 1e-9;
+    const minTicks = car.jumpTime < RL.JUMP_HOLD_MIN_TICKS * RL.DT - 1e-9;
     if ((c.jump && car.jumpTime < RL.JUMP_HOLD_MAX) || minTicks) {
       car.vel.addScaledVector(u, RL.JUMP_HOLD_ACCEL * dt);
-      car.jumpTime += dt;
-    } else car.jumping = false;
+    } else {
+      car.jumping = false;
+    }
   }
+  if (car.jumping || car.hasJumped) car.jumpTime += dt;
   if (car.stickyTicks > 0) {
     car.vel.addScaledVector(u, -RL.STICKY * dt);
     car.stickyTicks--;
   }
 
-  /* ---- boost (trainer: infinite) ---- */
-  if (boosting) {
-    car.vel.addScaledVector(f, (car.onGround ? RL.BOOST_ACCEL_GROUND : RL.BOOST_ACCEL_AIR) * dt);
-    car.boost = RL.BOOST_MAX;
-  }
+  /* ---- boost (finite unless car.infiniteBoost) ---- */
+  stepBoost(car, c, f, dt);
 
   if (car.onGround && !car.jumping && car.stickyTicks === 0 && car.vel.z <= 0.001) {
-    /* ---- ground driving (simplified: perfect grip, flat floor) ---- */
+    car.isFlipping = false;
+    car.airTime = 0;
+    car.airTimeSinceJump = 0;
+    car.hasDoubleJumped = false;
+    car.hasFlipped = false;
+    car.hasFlip = true;
     const fwd = car.vel.dot(f);
-    // Boost does not replace throttle in RL — it adds acceleration; hold throttle too.
-    const thr = throttle;
+    // Boost forces drive throttle to 1 on the ground only (RocketSim wheels path).
+    const thr = car.isBoosting ? 1 : throttle;
     let a = 0;
     if (Math.abs(thr) < 0.01) a = -Math.sign(fwd) * Math.min(RL.COAST, Math.abs(fwd) / dt);
     else if (Math.sign(thr) !== Math.sign(fwd) && Math.abs(fwd) > 1) a = Math.sign(thr) * RL.BRAKE;
     else a = thr * throttleAccel(fwd);
     car.vel.addScaledVector(f, a * dt);
-    // Powerslide: allow sideways slip; otherwise kill lateral velocity.
-    const slip = c.powerslide ? 0.2 : 1;
+    // Powerslide: blend lateral kill with handbrake amount.
+    const slip = 1 - 0.8 * car.handbrakeVal;
     car.vel.addScaledVector(l, -car.vel.dot(l) * slip);
-    const yawRate = clamp(c.steer || 0, -1, 1) * curvature(fwd) * fwd; // rad/s, +steer = right
-    // RH +Z is CCW; right turn is CW → negative angle.
+    const yawRate = clamp(c.steer || 0, -1, 1) * curvature(fwd) * fwd;
     car.q.premultiply(new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), -yawRate * dt));
     car.vel.z = 0;
     car.pos.z = carRestZ(car);
@@ -245,14 +311,34 @@ export function stepCar(car, c, dt = RL.DT) {
   } else {
     /* ---- airborne ---- */
     car.airTime += dt;
+    if (car.hasJumped && !car.jumping) car.airTimeSinceJump += dt;
+    else car.airTimeSinceJump = 0;
+
     car.vel.z -= RL.GRAVITY * dt;
-    car.vel.addScaledVector(f, (throttle >= 0 ? RL.AIR_THROTTLE : RL.AIR_THROTTLE / 2) * throttle * dt);
-    // RL free air-roll: hold powerslide → stick X rolls instead of yawing.
-    const air = {
-      pitch: c.pitch,
-      yaw: c.yaw,
-      roll: c.roll,
-    };
+    car.vel.addScaledVector(
+      f,
+      (throttle >= 0 ? RL.AIR_THROTTLE : RL.AIR_THROTTLE / 2) * throttle * dt,
+    );
+
+    // Flip Z damp (RocketSim): kill downward vz mid-dodge.
+    if (car.isFlipping) {
+      car.flipTime += dt;
+      if (car.flipTime <= RL.FLIP_TORQUE_TIME) {
+        if (
+          car.flipTime >= RL.FLIP_Z_DAMP_START &&
+          (car.vel.z < 0 || car.flipTime < RL.FLIP_Z_DAMP_END)
+        ) {
+          car.vel.z *= (1 - RL.FLIP_Z_DAMP_120) ** tickScale;
+        }
+      }
+      if (!(car.hasFlipped && car.flipTime < RL.FLIP_TORQUE_TIME)) {
+        car.isFlipping = false;
+      }
+    } else if (car.hasFlipped) {
+      car.flipTime += dt;
+    }
+
+    const air = { pitch, yaw, roll };
     if (c.powerslide && Math.abs(c.roll) < 0.01) {
       air.roll = c.yaw || c.steer || 0;
       air.yaw = 0;
@@ -260,34 +346,191 @@ export function stepCar(car, c, dt = RL.DT) {
     airControl(car, air, dt);
   }
 
-  /* ---- integrate + solid Octane hitbox vs arena ---- */
+  car.hasFlip = canFlipOrJump(car);
+  updateSupersonic(car, dt);
+
   if (car.vel.length() > RL.MAX_SPEED) car.vel.setLength(RL.MAX_SPEED);
   car.pos.addScaledVector(car.vel, dt);
   resolveCarArena(car);
 }
 
+/**
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {{ boost?: boolean }} c
+ * @param {THREE.Vector3} forward
+ * @param {number} dt
+ */
+function stepBoost(car, c, forward, dt) {
+  const want = !!c.boost;
+  const hasBoost = car.infiniteBoost || car.boost > 0;
+  if (hasBoost) {
+    if (car.isBoosting) {
+      car.isBoosting = want || car.boostingTime < RL.BOOST_MIN_TIME;
+    } else if (want) {
+      car.isBoosting = true;
+    }
+  } else {
+    car.isBoosting = false;
+  }
+
+  if (car.isBoosting) {
+    car.boostingTime += dt;
+    const accel = car.onGround ? RL.BOOST_ACCEL_GROUND : RL.BOOST_ACCEL_AIR;
+    car.vel.addScaledVector(forward, accel * dt);
+    if (!car.infiniteBoost) {
+      car.boost = Math.max(0, car.boost - RL.BOOST_USE * dt);
+      if (car.boost <= 0) car.isBoosting = false;
+    } else {
+      car.boost = RL.BOOST_MAX;
+    }
+  } else {
+    car.boostingTime = 0;
+  }
+  car.boost = Math.min(RL.BOOST_MAX, car.boost);
+}
+
+/** @param {ReturnType<typeof makeCar>} car @param {number} dt */
+function updateSupersonic(car, dt) {
+  const speed = car.vel.length();
+  if (car.isSupersonic && car.supersonicTime < RL.SUPERSONIC_KEEP_TIME) {
+    car.isSupersonic = speed >= RL.SUPERSONIC_KEEP;
+  } else {
+    car.isSupersonic = speed >= RL.SUPERSONIC_START;
+  }
+  if (car.isSupersonic) car.supersonicTime += dt;
+  else car.supersonicTime = 0;
+}
+
+/**
+ * Second jump: dodge if stick past deadzone, else double-jump impulse.
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {object} c
+ * @param {number} pitch
+ * @param {number} yaw
+ * @param {number} roll
+ * @param {number} dt
+ */
+function maybeDoubleJumpOrFlip(car, c, pitch, yaw, roll, dt) {
+  if (car.airTimeSinceJump >= RL.FLIP_WINDOW) return;
+  if (car.hasDoubleJumped || car.hasFlipped) return;
+
+  const dz = car.dodgeDeadzone ?? RL.DODGE_DEADZONE;
+  const mag = Math.abs(yaw) + Math.abs(pitch) + Math.abs(roll);
+  const isFlip = mag >= dz;
+  const { f, l } = axes(car.q);
+  const tickScale = dt / RL.DT;
+
+  if (isFlip) {
+    car.flipTime = 0;
+    car.hasFlipped = true;
+    car.isFlipping = true;
+    car.hasFlip = false;
+
+    // RocketSim: dodgeDir = (-pitch, yaw+roll, 0)
+    let dx = -pitch;
+    let dy = yaw + roll;
+    if (Math.abs(dy) < 0.1 && Math.abs(dx) < 0.1) {
+      dx = 0;
+      dy = 0;
+    } else {
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+    }
+    // Local torque axes: x about forward, y about right (before FLIP_TORQUE_* scale).
+    car.flipRelTorque.set(-dy / tickScale, dx / tickScale, 0);
+
+    if (Math.abs(dx) < 0.1) dx = 0;
+    if (Math.abs(dy) < 0.1) dy = 0;
+
+    if (dx !== 0 || dy !== 0) {
+      const fwdSpeed = car.vel.dot(f);
+      const speedRatio = Math.abs(fwdSpeed) / RL.MAX_SPEED;
+      let back;
+      if (Math.abs(fwdSpeed) < 100) back = dx < 0;
+      else back = dx >= 0 !== fwdSpeed >= 0;
+
+      let ix = dx * RL.FLIP_INITIAL_VEL;
+      let iy = dy * RL.FLIP_INITIAL_VEL;
+      const scaleX = back ? RL.FLIP_BACK_SPEED_SCALE : RL.FLIP_FWD_SPEED_SCALE;
+      ix *= (scaleX - 1) * speedRatio + 1;
+      iy *= (RL.FLIP_SIDE_SPEED_SCALE - 1) * speedRatio + 1;
+      if (back) ix *= RL.FLIP_BACK_IMPULSE_X;
+
+      // Horizontal impulse only (flatten forward/right onto XY).
+      const f2 = V(f.x, f.y, 0);
+      if (f2.lengthSq() > 1e-8) f2.normalize();
+      else f2.set(1, 0, 0);
+      const r2 = V(-f2.y, f2.x, 0);
+      car.vel.addScaledVector(f2, ix).addScaledVector(r2, iy);
+    }
+  } else {
+    const { u } = axes(car.q);
+    car.vel.addScaledVector(u, RL.JUMP_IMPULSE);
+    car.hasDoubleJumped = true;
+    car.hasFlip = false;
+  }
+}
+
+/**
+ * Air torque + dodge torque (RocketSim-aligned).
+ * @param {ReturnType<typeof makeCar>} car
+ * @param {{ pitch?: number, yaw?: number, roll?: number }} c
+ * @param {number} dt
+ */
 function airControl(car, c, dt) {
   const { f, l, u } = axes(car.q); // l = car right
   const pitch = clamp(c.pitch || 0, -1, 1);
   const yaw = clamp(c.yaw || 0, -1, 1);
   const roll = clamp(c.roll || 0, -1, 1);
-  // Local ω about (forward, right, up) — RocketSim air-control axes.
-  const w = V(car.omega.dot(f), car.omega.dot(l), car.omega.dot(u));
-  // Signs match RocketSim CarControls: +pitch nose up, +yaw nose right, +roll right.
-  const a = V(
-    -RL.T_ROLL * roll + RL.D_ROLL * w.x,
-    -RL.T_PITCH * pitch + RL.D_PITCH * (1 - Math.abs(pitch)) * w.y,
-    RL.T_YAW * yaw + RL.D_YAW * (1 - Math.abs(yaw)) * w.z,
-  );
-  const dOmega = f.clone().multiplyScalar(a.x).addScaledVector(l, a.y).addScaledVector(u, a.z);
-  const next = car.omega.clone().addScaledVector(dOmega, dt);
-  if (next.length() > RL.MAX_ANG_VEL) next.setLength(RL.MAX_ANG_VEL);
-  // RocketSim integrates orientation with post-torque ω (not the tick average).
-  const phi = next.length() * dt;
-  if (phi > 1e-9) {
-    car.q.premultiply(new THREE.Quaternion().setFromAxisAngle(next.clone().normalize(), phi)).normalize();
+
+  let doAir = !car.isFlipping;
+  let pitchScale = 1;
+
+  if (car.isFlipping) {
+    const rel = car.flipRelTorque;
+    if (rel.x !== 0 || rel.y !== 0 || rel.z !== 0) {
+      let relTy = rel.y;
+      // Flip cancel: opposite? RocketSim cancels when pitch sign matches dodge torque Y.
+      if (relTy !== 0 && pitch !== 0 && Math.sign(relTy) === Math.sign(pitch)) {
+        relTy *= 1 - Math.min(Math.abs(pitch), 1);
+        doAir = true;
+      }
+      const alpha = f
+        .clone()
+        .multiplyScalar(rel.x * RL.FLIP_TORQUE_X)
+        .addScaledVector(l, relTy * RL.FLIP_TORQUE_Y);
+      car.omega.addScaledVector(alpha, dt);
+      if (doAir) pitchScale = 0; // during cancel, pitch air-control stays off
+    } else {
+      doAir = true;
+    }
   }
-  car.omega.copy(next);
+
+  if (car.hasFlipped && !car.isFlipping) {
+    if (car.flipTime < RL.FLIP_TORQUE_TIME + RL.FLIP_PITCHLOCK_EXTRA) pitchScale = 0;
+  }
+  if (car.isFlipping) pitchScale = 0;
+
+  if (doAir) {
+    const w = V(car.omega.dot(f), car.omega.dot(l), car.omega.dot(u));
+    const p = pitch * pitchScale;
+    const a = V(
+      -RL.T_ROLL * roll + RL.D_ROLL * w.x,
+      -RL.T_PITCH * p + RL.D_PITCH * (1 - Math.abs(p)) * w.y,
+      RL.T_YAW * yaw + RL.D_YAW * (1 - Math.abs(yaw)) * w.z,
+    );
+    const dOmega = f.clone().multiplyScalar(a.x).addScaledVector(l, a.y).addScaledVector(u, a.z);
+    car.omega.addScaledVector(dOmega, dt);
+  }
+
+  if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
+  const phi = car.omega.length() * dt;
+  if (phi > 1e-9) {
+    car.q
+      .premultiply(new THREE.Quaternion().setFromAxisAngle(car.omega.clone().normalize(), phi))
+      .normalize();
+  }
 }
 
 /**
@@ -313,7 +556,14 @@ export function isUndersideContact(car, nx, ny, nz) {
 export function grantWheelContact(car, nx, ny, nz) {
   if (!isUndersideContact(car, nx, ny, nz)) return false;
   car.wheelsContact = true;
+  car.hasFlipped = false;
+  car.hasDoubleJumped = false;
+  car.hasJumped = false;
+  car.isFlipping = false;
+  car.flipTime = 0;
+  car.flipRelTorque.set(0, 0, 0);
   car.hasFlip = true;
+  car.airTimeSinceJump = 0;
   car.contactNormal.set(nx, ny, nz);
   car.airTime = 0;
   car.crashed = false;
@@ -331,7 +581,13 @@ function land(car) {
     car.onGround = true;
     car.wheelsContact = true;
     car.contactNormal.set(0, 0, 1);
+    car.hasFlipped = false;
+    car.hasDoubleJumped = false;
+    car.isFlipping = false;
+    car.flipTime = 0;
+    car.flipRelTorque.set(0, 0, 0);
     car.hasFlip = true;
+    car.airTimeSinceJump = 0;
     car.omega.set(0, 0, 0);
     car.vel.z = 0;
     car.pos.z = carRestZ(car);

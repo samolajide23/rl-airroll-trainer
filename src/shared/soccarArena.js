@@ -147,48 +147,7 @@ export function createSoccarArena() {
     }
   }
 
-  // Boost pads (visual only)
-  const padGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.12, 24);
-  const smallPadMat = new THREE.MeshStandardMaterial({
-    color: 0xd4a017,
-    emissive: 0x5a3a00,
-    emissiveIntensity: 0.35,
-    roughness: 0.5,
-  });
-  const bigPadMat = smallPadMat.clone();
-  bigPadMat.color = new THREE.Color(0xffc94a);
-  bigPadMat.emissiveIntensity = 0.55;
-
-  const smallLocs = [
-    [0, -28],
-    [0, 28],
-    [-18, 0],
-    [18, 0],
-    [-25, -20],
-    [25, -20],
-    [-25, 20],
-    [25, 20],
-  ];
-  for (const [x, z] of smallLocs) {
-    const pad = new THREE.Mesh(padGeo, smallPadMat);
-    pad.position.set(x, 0.06, z);
-    root.add(pad);
-  }
-  for (const [x, z] of [
-    [-30, 0],
-    [30, 0],
-    [-25, -35],
-    [25, -35],
-    [-25, 35],
-    [25, 35],
-  ]) {
-    const pad = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.8, 1.8, 0.14, 28),
-      bigPadMat,
-    );
-    pad.position.set(x, 0.07, z);
-    root.add(pad);
-  }
+  // Boost pads are added by Free Play via boostPads.js (full soccar layout + pickup).
 
   return root;
 }

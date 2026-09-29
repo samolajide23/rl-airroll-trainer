@@ -64,7 +64,7 @@ Simplifications in the prototype: flat floor, perfect lateral grip, no powerslid
 | Sticky force after leaving ground | 325 uu/s² down-relative, first 3 ticks | V |
 | Second jump (no flip) | +292 uu/s along the roof | V |
 | Second-jump window | 1.25 s after jump (+ up to 0.2 s if the first jump was held) | V |
-| Flip / dodge impulses and torques | not implemented | – |
+| Flip / dodge impulses and torques | RocketSim FLIP_* FSM in `rl-physics.js` | V (constants) |
 
 Prototype checks: tap jump peaks at about 94 uu, full-hold jump at about 242 uu (centre height).
 
@@ -296,8 +296,8 @@ These test internal consistency with the published model. They do **not** prove 
 
 ## 10. Known gaps (backlog)
 
-1. Dodges/flips (impulse, torque, cancel behavior). Needed for stage 1.
-2. Real ground physics: suspension, wheel contact, powerslide, wall driving, curved ramps and goals.
+1. Dodges/flips (impulse, torque, cancel, Z-damp) — implemented in browser JS; validate vs RocketSim void scenarios `flip_*`.
+2. Real ground physics: suspension, wheel contact, powerslide grip curves, wall driving, curved ramps and goals (OBB box + pads are in; meshes still missing).
 3. Full rigid-body car–ball collision (rotation, Coulomb friction) and ball spin coupling.
 4. Verify the hitbox offset, throttle curve, extra-impulse curve and cooldown, and the directional air roll mapping.
 5. Other car hitboxes (Dominus, Plank, etc.).

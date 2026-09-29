@@ -109,6 +109,24 @@
       ]
     },
     {
+      "id": "flip_forward_air",
+      "description": "Forward dodge from rest in air (pitch down + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 90, "controls": { "jump": false, "pitch": 0 } }
+      ]
+    },
+    {
+      "id": "flip_side_air",
+      "description": "Side dodge right from rest in air (yaw right + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "yaw": 1 } },
+        { "until_tick": 90, "controls": { "jump": false, "yaw": 0 } }
+      ]
+    },
+    {
       "id": "coast_from_spin",
       "description": "Release inputs with initial roll rate 5.5 rad/s — damping coast",
       "ticks": 120,

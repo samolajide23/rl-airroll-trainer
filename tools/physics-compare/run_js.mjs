@@ -82,14 +82,25 @@ function initCar(initial) {
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   car.boost = initial.boost ?? RL.BOOST_MAX;
+  car.infiniteBoost = false;
   car.onGround = initial.on_ground ?? false;
+  car.wheelsContact = initial.on_ground ?? false;
   car.prevJump = false;
   car.jumping = false;
   car.jumpTime = 0;
+  car.hasJumped = false;
+  car.hasDoubleJumped = false;
+  car.hasFlipped = false;
+  car.isFlipping = false;
+  car.flipTime = 0;
+  car.flipRelTorque.set(0, 0, 0);
   car.hasFlip = true;
   car.airTime = 0;
+  car.airTimeSinceJump = 0;
   car.stickyTicks = 0;
   car.crashed = false;
+  car.isBoosting = false;
+  car.boostingTime = 0;
   setOrientation(
     car,
     initial.yaw ?? 0,

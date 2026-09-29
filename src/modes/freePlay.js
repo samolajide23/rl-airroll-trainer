@@ -12,10 +12,16 @@ import {
 import { getSelectedCarId } from "../shared/loadout.js";
 import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
 import {
+  createBoostPadMeshes,
+  createSoccarBoostPads,
+  resetBoostPads,
+  stepBoostPads,
+} from "../shared/boostPads.js";
+import {
   RL,
   alignCarVisualToHitbox,
   applyToCarModel,
-  carRestZ,
+  canFlipOrJump,
   collideCarBall,
   createHitboxHelper,
   makeBall,
@@ -41,6 +47,9 @@ export class FreePlayMode {
 
     this.arenaMesh = createSoccarArena();
     this.root.add(this.arenaMesh);
+
+    this.pads = createSoccarBoostPads();
+    this.padMeshes = createBoostPadMeshes(this.root, this.pads);
 
     this.carId = getSelectedCarId();
     this.hitbox = getHitboxForCarId(this.carId);
@@ -110,7 +119,7 @@ export class FreePlayMode {
     }
     this.setScoreRow(0, 0, 0, this.hitbox.label);
     hud.status.textContent =
-      "Drive the arena — WASD / stick to drive, jump, boost, air roll";
+      "Drive the arena — jump, dodge, boost pads, air roll";
 
     this._prevScene = {
       bg: scene.background?.getHex?.() ?? 0x0b1220,
@@ -169,10 +178,13 @@ export class FreePlayMode {
       Math.PI / 2,
       this.hitbox,
     );
+    this.physCar.infiniteBoost = false;
+    this.physCar.boost = 33;
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.physBall.vel.set(0, 0, 0);
     this.tick = 0;
     this.boosting = false;
+    resetBoostPads(this.pads);
     this.clock.reset();
     this.chase.invalidate();
     this.syncMeshes();
@@ -198,11 +210,11 @@ export class FreePlayMode {
   updateBoostMeter() {
     const el = this.ctx.hud.boostValue;
     const fill = this.ctx.hud.boostFill;
-    // Trainer physics keeps boost topped up while boosting.
-    if (el) el.textContent = "∞";
+    const amt = Math.max(0, Math.min(100, this.physCar?.boost ?? 0));
+    if (el) el.textContent = String(Math.round(amt));
     if (fill) {
-      fill.style.setProperty("--boost-pct", "100");
-      fill.classList.remove("empty");
+      fill.style.setProperty("--boost-pct", String(amt));
+      fill.classList.toggle("empty", amt < 0.5);
     }
   }
 
@@ -228,9 +240,10 @@ export class FreePlayMode {
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = this.driveControls();
-    this.boosting = Boolean(input.boost);
-    // stepCar resolves this car's hitbox against floor / walls / ceiling.
+    // stepCar: drive, jump/dodge, finite boost, hitbox vs arena.
     stepCar(this.physCar, input, dt);
+    stepBoostPads(this.pads, this.physCar, dt);
+    this.boosting = Boolean(this.physCar.isBoosting);
     stepBall(this.physBall, dt);
     collideCarBall(this.physCar, this.physBall, this.tick);
     this.tick += 1;
@@ -297,8 +310,11 @@ export class FreePlayMode {
       ? "Ground"
       : this.physCar.wheelsContact
         ? "Wheels"
-        : "Air";
-    const flip = this.physCar.hasFlip ? "flip✓" : "flip✗";
-    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}`;
+        : this.physCar.isFlipping
+          ? "Flip"
+          : "Air";
+    const flip = canFlipOrJump(this.physCar) ? "flip✓" : "flip✗";
+    const ss = this.physCar.isSupersonic ? " · SS" : "";
+    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}${ss}`;
   }
 }

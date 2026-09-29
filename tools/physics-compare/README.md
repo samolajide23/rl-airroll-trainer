@@ -54,9 +54,26 @@ Frame: Z-up, identity car faces +X with right = +Y.
 
 ## Scope / limits
 
-- **Covered now:** freefall, air throttle/boost, pitch/yaw/roll, coast-after-roll.
-- **Not covered yet:** ground driving, jumps/flips, walls, car-ball collisions (need `SOCCAR` + dumped collision meshes from [RLArenaCollisionDumper](https://github.com/ZealanL/RLArenaCollisionDumper)).
+- **Covered now:** freefall, air throttle/boost, pitch/yaw/roll, coast-after-roll, double jump, forward/side flip (void).
+- **Not covered yet:** ground driving, suspension, walls/meshes, car-ball collisions (need `SOCCAR` + dumped collision meshes from [RLArenaCollisionDumper](https://github.com/ZealanL/RLArenaCollisionDumper)).
 - Orientation drills in the app also use `AerialBody` (`aerial.js`) on a Three.js Y-up car — that path is a separate coordinate mapping and should be validated after `rl-physics.js` matches.
+
+## Pure-browser upgrade path
+
+Keeping the sim in JS (no native RocketSim runtime in the app):
+
+| Upgrade | Status in `rl-physics.js` |
+|---|---|
+| Air control torques | Done (matches void) |
+| Directional dodges / flip cancel / Z-damp | Done (JS FSM from RocketSim constants) |
+| Finite boost + min boost time | Done |
+| Soccar boost pads | Done in Free Play (`boostPads.js`) |
+| Supersonic flag | Done |
+| Powerslide analog rise/fall | Partial (handbrake blend; no Bullet wheels) |
+| Arena collision meshes | Still box OBB; load dumped OBJ/trimesh next |
+| Suspension / wavedashes | Still simplified ground grip |
+
+Optional later (still browser-only): Rapier/Ammo WASM for mesh colliders once arena dumps are in-repo — keep gameplay constants in `rl-physics.js`.
 
 ## Current status
 
