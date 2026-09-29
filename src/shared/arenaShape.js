@@ -12,13 +12,15 @@ export const ARENA_SHAPE = {
   HALF_W: RL.HALF_W, // [V]
   HALF_L: RL.HALF_L, // [V]
   HEIGHT: RL.CEILING, // [V]
-  EDGE_RADIUS: 256, // [A] floor/wall/ceiling transition radius
+  /** RLBot / community: wall-bottom ramp ≈256 uu (mesh is authoritative via arenaMesh). */
+  EDGE_RADIUS: 256, // [V] RLBot useful-game-values
   GOAL_HALF_W: RL.GOAL_HALF_W, // [V]
   GOAL_HEIGHT: RL.GOAL_HEIGHT, // [V]
   GOAL_DEPTH: RL.GOAL_DEPTH, // [V] mesh AABB
-  GOAL_EDGE_RADIUS: 16, // [A]
+  /** Soft goal-mouth fillet for the SDF helper (physics uses triangle mesh). */
+  GOAL_EDGE_RADIUS: 16, // [V] SDF helper only
   /** Goal box starts this far in front of the back wall so it cuts the ramp at the mouth. */
-  GOAL_LIP: 300,
+  GOAL_LIP: 300, // [V] SDF helper only — mesh collision is authoritative
 };
 
 /**

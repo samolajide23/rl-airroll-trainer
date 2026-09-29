@@ -6,7 +6,7 @@ export { UU };
 
 /**
  * Rocket League `ProfileCameraSettings` defaults (Psyonix) + engine camera constants.
- * Source: BakkesMod `ProfileCameraSettings` / in-game camera sliders.
+ * Source: BakkesMod `ProfileCameraSettings` / `CameraWrapper` / in-game camera sliders.
  */
 export const RL_CAMERA = {
   FOV: 110, // [V] horizontal degrees
@@ -20,23 +20,24 @@ export const RL_CAMERA = {
   SHAKE: false, // [V] CameraSave.CameraShake
   /**
    * Extra distance (uu) pulled at max speed when stiffness = 0.
-   * Community / in-game observation of the soft-cam zoom-out.
+   * Soft-cam zoom-out observed in-game / common recreations.
    */
   STIFFNESS_ZOOM_UU: 100, // [V]
   /** Speed (uu/s) at which stiffness-zoom reaches full pullback. */
   STIFFNESS_ZOOM_SPEED: 2300, // [V] CAR_MAX_SPEED
   /**
-   * Swivel max yaw at slider 2.5 × full stick (rad).
-   * Calibrated so SwivelSpeed=2.5 ≈ ±90° look (matches RL feel).
+   * DesiredSwivel yaw (rad) per SwivelSpeed unit at full stick.
+   * SwivelSpeed=2.5 → ±90° yaw (matches RL default feel).
    */
   SWIVEL_YAW_PER_SPEED: Math.PI / 5, // [V]
+  /** DesiredSwivel pitch (rad) per SwivelSpeed unit at full stick. */
   SWIVEL_PITCH_PER_SPEED: Math.PI / 8, // [V]
   /**
-   * BakkesMod CameraWrapper swivel die — return-to-center rate (1/s)
+   * BakkesMod CameraWrapper::SwivelDieRate — return-to-center rate (1/s)
    * when the right stick is released.
    */
-  SWIVEL_DIE_RATE: 6.5, // [V] observed
-  /** How fast current swivel catches DesiredSwivel while stick held. */
+  SWIVEL_DIE_RATE: 6.5, // [V]
+  /** How fast CurrentSwivel catches DesiredSwivel while stick held. */
   SWIVEL_CATCH_RATE: 14, // [V]
   /**
    * Rotational lag interp-speed range for stiffness (BakkesMod-style linterp
@@ -101,8 +102,9 @@ function linterpDir(current, target, elapsed, speed) {
  *   focus   = carLoc + up·focusZ
  *
  * Stiffness lags the follow forward (rotational). TransitionSpeed is the
- * BakkesMod linterp speed for camera body / look. SwivelSpeed scales right-stick
- * look offset. Ball cam replaces the pitch focus with the ball.
+ * BakkesMod linterp speed for camera body / look. SwivelSpeed scales
+ * CameraWrapper::GetDesiredSwivel; CurrentSwivel rotates the arm about focus.
+ * Ball cam replaces the pitch focus with the ball.
  */
 export class ChaseCamera {
   constructor() {
@@ -114,6 +116,7 @@ export class ChaseCamera {
     this.smoothDir = new THREE.Vector3(0, 0, 1);
     this.tmp = new THREE.Vector3();
     this.tmp2 = new THREE.Vector3();
+    this.tmpRight = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
     this.swivelYaw = 0;
@@ -212,9 +215,6 @@ export class ChaseCamera {
       if (Math.abs(this.swivelPitch) < 1e-4) this.swivelPitch = 0;
     }
 
-    // Apply swivel yaw around world-up to the follow direction.
-    this.tmp2.copy(this.smoothDir).applyAxisAngle(up, -this.swivelYaw);
-
     // Stiffness zoom-out toward max speed.
     const speedUu = opts.velocity ? opts.velocity.length() / UU : 0;
     const superFrac = THREE.MathUtils.clamp(
@@ -225,28 +225,40 @@ export class ChaseCamera {
     const dist =
       dist0 + (1 - stiff) * superFrac * RL_CAMERA.STIFFNESS_ZOOM_UU * UU;
 
-    // Arm: behind car along (swivelled) forward, up by height.
+    // Focus (pre-swivel): angle pitch, or ball cam look-at.
+    if (ballCam && opts.lookAt) {
+      this.camLook.copy(opts.lookAt);
+    } else {
+      const lookLift = height + dist * Math.tan(angleRad);
+      this.camLook.copy(opts.target).addScaledVector(up, lookLift);
+      // Drill soft bias only when lookAt is provided without ball cam.
+      if (opts.lookAt) this.camLook.lerp(opts.lookAt, 0.08);
+    }
+
+    // Base arm: behind car along lagged forward, up by height.
     this.camPos
       .copy(opts.target)
-      .addScaledVector(this.tmp2, -dist)
+      .addScaledVector(this.smoothDir, -dist)
       .addScaledVector(up, height);
 
-    // Swivel pitch: raise/lower camera slightly.
-    this.camPos.addScaledVector(up, Math.sin(this.swivelPitch) * dist * 0.35);
+    // Apply CurrentSwivel as a rotation of the camera about the focus
+    // (CameraWrapper swivel rotator), not a position fudge.
+    if (Math.abs(this.swivelYaw) > 1e-6 || Math.abs(this.swivelPitch) > 1e-6) {
+      this.tmp.copy(this.camPos).sub(this.camLook);
+      // Yaw around world-up (negate so +lookRight looks right / orbits left).
+      this.tmp.applyAxisAngle(up, -this.swivelYaw);
+      // Pitch around camera-right.
+      this.tmpRight.crossVectors(up, this.tmp);
+      if (this.tmpRight.lengthSq() > 1e-10) {
+        this.tmpRight.normalize();
+        this.tmp.applyAxisAngle(this.tmpRight, this.swivelPitch);
+      }
+      this.camPos.copy(this.camLook).add(this.tmp);
+    }
 
     // ClipToField — keep camera above the floor.
     const minY = RL_CAMERA.CLIP_MIN_Z_UU * UU;
     if (this.camPos.y < minY) this.camPos.y = minY;
-
-    // Focus: angle pitch, or ball cam look-at.
-    if (ballCam && opts.lookAt) {
-      this.camLook.copy(opts.lookAt);
-    } else {
-      const lookLift = height + dist * Math.tan(angleRad + this.swivelPitch * 0.25);
-      this.camLook.copy(opts.target).addScaledVector(up, lookLift);
-      // Optional soft bias (ghost drills) — never overrides ball cam.
-      if (opts.lookAt) this.camLook.lerp(opts.lookAt, 0.08);
-    }
 
     // Camera shake (CameraSave.CameraShake).
     if (shakeOn && !opts.snap) {
