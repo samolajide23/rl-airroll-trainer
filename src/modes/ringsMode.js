@@ -551,15 +551,12 @@ export class RingsMode {
         this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
         this.up.set(0, 1, 0).applyQuaternion(this.car.quaternion);
         this.vel.set(0, 0, 0);
+        // Match RocketSim jump impulse / boost accel — no drill fudge.
         if (input.jump) {
           this.vel.addScaledVector(this.up, RL.JUMP_IMPULSE * UU);
-          this.vel.addScaledVector(this.forward, RL.JUMP_IMPULSE * UU * 0.15);
         }
         if (input.boost) {
-          this.vel.addScaledVector(this.forward, BOOST_ACCEL * 0.05);
-        }
-        if (!input.jump && input.boost) {
-          this.vel.addScaledVector(this.up, RL.JUMP_IMPULSE * UU * 0.08);
+          this.vel.addScaledVector(this.forward, BOOST_ACCEL * RL.DT);
         }
       }
       this.boosting = false;

@@ -18,6 +18,7 @@ export {
   stepCar,
   stepWorld,
   advance,
+  collideCarCar,
 } from "./carSim.js";
 
 export {

@@ -138,6 +138,14 @@ const scalars = [
   ["CARWORLD_RESTITUTION", RS.CARWORLD_RESTITUTION, 0.3],
   ["GOAL_DEPTH", RL.GOAL_DEPTH, 880],
   ["CONTACT_EDGE_BLEND", RS.CONTACT_EDGE_CORNER_BLEND, 0.85],
+  ["CARCAR_FRICTION", RL.CARCAR_FRICTION, 0.09],
+  ["CARCAR_RESTITUTION", RL.CARCAR_RESTITUTION, 0.1],
+  ["CAR_COLLISION_FRICTION", RL.CAR_COLLISION_FRICTION, 0.3],
+  ["CAR_COLLISION_RESTITUTION", RL.CAR_COLLISION_RESTITUTION, 0.1],
+  ["BUMP_COOLDOWN_TIME", RL.BUMP_COOLDOWN_TIME, 0.25],
+  ["BUMP_MIN_FORWARD_DIST", RL.BUMP_MIN_FORWARD_DIST, 64.5],
+  ["DEMO_RESPAWN_TIME", RL.DEMO_RESPAWN_TIME, 3],
+  ["BUMP_FORCE_SCALE", RL.BUMP_FORCE_SCALE, 1],
 ];
 
 for (const [name, got, want] of scalars) {
@@ -231,6 +239,31 @@ check(
   "extraImpulse(1400 mid)",
   near(extraImpulseScale(1400), 0.65 + ((1400 - 500) / 1800) * (0.55 - 0.65)),
 );
+
+const BUMP_GROUND = [
+  [0, 1 / 1.2],
+  [1400, 1100],
+  [2200, 1530],
+];
+const BUMP_AIR = [
+  [0, 1 / 1.2],
+  [1400, 1390],
+  [2200, 1945],
+];
+const BUMP_UP = [
+  [0, 1 / 3],
+  [1400, 278],
+  [2200, 417],
+];
+for (const [x, y] of BUMP_GROUND) {
+  check(`bumpVelGround(${x})`, near(RS_CURVES.bumpVelGround(x), y));
+}
+for (const [x, y] of BUMP_AIR) {
+  check(`bumpVelAir(${x})`, near(RS_CURVES.bumpVelAir(x), y));
+}
+for (const [x, y] of BUMP_UP) {
+  check(`bumpVelUp(${x})`, near(RS_CURVES.bumpVelUp(x), y));
+}
 
 console.log("\n=== Boost pads (all locations + BOX_*) ===");
 check("SMALL amount", BOOST_PAD.SMALL_AMOUNT === 12);

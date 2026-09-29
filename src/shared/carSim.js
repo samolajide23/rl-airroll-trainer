@@ -6,7 +6,15 @@ import {
   getHitboxPreset,
   HITBOX_PRESETS,
 } from "./hitboxPresets.js";
-import { RL, axes, collideCarBall, makeBall, stepBall } from "./rl-physics.js";
+import {
+  RL,
+  axes,
+  carHitbox,
+  collideCarBall,
+  hitboxExtentOnAxis,
+  makeBall,
+  stepBall,
+} from "./rl-physics.js";
 
 /* =====================================================================
  *  Car simulation — a port of RocketSim's Car + btVehicleRL tick
@@ -80,6 +88,24 @@ export const RS_CURVES = {
   handbrakeLongFriction: linearPieceCurve([
     [0, 0.5],
     [1, 0.9],
+  ]),
+  /** RocketSim `BUMP_VEL_AMOUNT_GROUND_CURVE` (speed toward other → Δv scale). */
+  bumpVelGround: linearPieceCurve([
+    [0, 1 / 1.2],
+    [1400, 1100],
+    [2200, 1530],
+  ]),
+  /** RocketSim `BUMP_VEL_AMOUNT_AIR_CURVE`. */
+  bumpVelAir: linearPieceCurve([
+    [0, 1 / 1.2],
+    [1400, 1390],
+    [2200, 1945],
+  ]),
+  /** RocketSim `BUMP_UPWARD_VEL_AMOUNT_CURVE`. */
+  bumpVelUp: linearPieceCurve([
+    [0, 1 / 3],
+    [1400, 278],
+    [2200, 417],
   ]),
 };
 
@@ -238,6 +264,15 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     worldContact: { hasContact: false, normal: V(0, 0, 1) },
     /** Averaged wheel contact normal (car up when airborne). */
     contactNormal: V(0, 0, 1),
+    /** Stable id for car↔car bump cooldown (RocketSim `Car::id`). */
+    id: 0,
+    team: 0,
+    isDemoed: false,
+    demoRespawnTimer: 0,
+    /** RocketSim `carContact` — bumper bump cooldown against another car. */
+    carContact: { otherCarId: 0, cooldownTimer: 0 },
+    /** Deferred Δv from bumps (applied next tick like RocketSim impulse cache). */
+    velocityImpulseCache: V(),
     hitbox,
     /** Box inertia about the root (Bullet `btBoxShape::calculateLocalInertia`), inverted. */
     invInertiaLocal: V(
@@ -1072,6 +1107,11 @@ export function stepCar(car, controls, dt = RL.DT) {
   // Bullet step: integrate forces, solve contacts, integrate transform.
   car.vel.addScaledVector(accel, dt);
   car.vel.z -= RL.GRAVITY * dt;
+  // RocketSim applies `_velocityImpulseCache` (bumps) before the world step.
+  if (car.velocityImpulseCache.lengthSq() > 0) {
+    car.vel.add(car.velocityImpulseCache);
+    car.velocityImpulseCache.set(0, 0, 0);
+  }
   car.omega.addScaledVector(angAccel, dt);
   const { push, turn } = solveArenaContacts(car, fr, dt);
   car.pos.addScaledVector(car.vel, dt).addScaledVector(push, dt);
@@ -1079,9 +1119,134 @@ export function stepCar(car, controls, dt = RL.DT) {
 
   updateSupersonic(car, dt);
   car.prevJump = c.jump;
+  if (car.carContact.cooldownTimer > 0) {
+    car.carContact.cooldownTimer = Math.max(0, car.carContact.cooldownTimer - dt);
+  }
+  if (car.isDemoed) {
+    car.demoRespawnTimer = Math.max(0, car.demoRespawnTimer - dt);
+  }
 
   if (car.vel.length() > RL.MAX_SPEED) car.vel.setLength(RL.MAX_SPEED);
   if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
+}
+
+/**
+ * Separating-axis test for two car hitbox OBBs (uu, Z-up).
+ * @param {ReturnType<typeof carHitbox>} a
+ * @param {ReturnType<typeof carHitbox>} b
+ */
+function obbOverlap(a, b) {
+  const axesList = [a.f, a.l, a.u, b.f, b.l, b.u];
+  const d = b.center.clone().sub(a.center);
+  for (const axis of axesList) {
+    if (Math.abs(d.dot(axis)) > hitboxExtentOnAxis(a, axis) + hitboxExtentOnAxis(b, axis)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * RocketSim `Arena::_BtCallback_OnCarCarCollision` bump / demo logic.
+ * Bullet already resolves penetration; this applies the Psyonix bumper impulse
+ * (or demolish) when the contact is on the forward bumper.
+ *
+ * @param {SimCar} car1 bumper car (attacker)
+ * @param {SimCar} car2 victim
+ * @param {{
+ *   demoMode?: "normal" | "on_contact" | "disabled",
+ *   enableTeamDemos?: boolean,
+ *   bumpForceScale?: number,
+ *   respawnDelay?: number,
+ * }} [opts]
+ * @returns {null | { demo: boolean, bumperId: number, victimId: number }}
+ */
+export function collideCarCar(car1, car2, opts = {}) {
+  if (car1.isDemoed || car2.isDemoed) return null;
+  const hb1 = carHitbox(car1);
+  const hb2 = carHitbox(car2);
+  if (!obbOverlap(hb1, hb2)) return null;
+
+  const demoMode = opts.demoMode ?? "normal";
+  const enableTeamDemos = opts.enableTeamDemos ?? false;
+  const bumpForceScale = opts.bumpForceScale ?? RL.BUMP_FORCE_SCALE;
+  const respawnDelay = opts.respawnDelay ?? RL.DEMO_RESPAWN_TIME;
+
+  /** @type {null | { demo: boolean, bumperId: number, victimId: number }} */
+  let event = null;
+
+  // Test collision both ways (RocketSim loop i = 0..1 with swap).
+  for (let pass = 0; pass < 2; pass++) {
+    const bumper = pass === 0 ? car1 : car2;
+    const victim = pass === 0 ? car2 : car1;
+    const bumperHb = pass === 0 ? hb1 : hb2;
+    const victimHb = pass === 0 ? hb2 : hb1;
+
+    if (
+      bumper.carContact.otherCarId === victim.id &&
+      bumper.carContact.cooldownTimer > 0
+    ) {
+      continue;
+    }
+
+    const deltaPos = victim.pos.clone().sub(bumper.pos);
+    if (bumper.vel.dot(deltaPos) <= 0) continue;
+
+    const speed = bumper.vel.length();
+    if (speed < 1e-6) continue;
+    const velDir = bumper.vel.clone().multiplyScalar(1 / speed);
+    const dirToOther = deltaPos.clone();
+    if (dirToOther.lengthSq() < 1e-8) continue;
+    dirToOther.normalize();
+
+    const speedTowards = bumper.vel.dot(dirToOther);
+    const otherAway = victim.vel.dot(velDir);
+    if (speedTowards <= otherAway) continue;
+
+    // Approximate manifold local point: contact mid in bumper local frame.
+    const mid = bumperHb.center.clone().add(victimHb.center).multiplyScalar(0.5);
+    const local = mid.clone().sub(bumper.pos);
+    const localX = local.dot(bumperHb.f);
+    if (localX <= RL.BUMP_MIN_FORWARD_DIST) continue;
+
+    let isDemo = false;
+    if (demoMode === "on_contact") isDemo = true;
+    else if (demoMode === "disabled") isDemo = false;
+    else isDemo = bumper.isSupersonic;
+
+    if (isDemo && !enableTeamDemos && bumper.team === victim.team) {
+      isDemo = false;
+    }
+
+    if (isDemo) {
+      victim.isDemoed = true;
+      victim.demoRespawnTimer = respawnDelay;
+      victim.vel.set(0, 0, 0);
+      victim.omega.set(0, 0, 0);
+    } else {
+      const groundHit = victim.onGround;
+      const baseScale = (
+        groundHit ? RS_CURVES.bumpVelGround : RS_CURVES.bumpVelAir
+      )(speedTowards);
+      const hitUp = groundHit
+        ? axes(victim.q).u.clone()
+        : V(0, 0, 1);
+      const bumpImpulse = velDir
+        .clone()
+        .multiplyScalar(baseScale)
+        .addScaledVector(
+          hitUp,
+          RS_CURVES.bumpVelUp(speedTowards) * bumpForceScale,
+        );
+      victim.velocityImpulseCache.add(bumpImpulse);
+    }
+
+    bumper.carContact.otherCarId = victim.id;
+    bumper.carContact.cooldownTimer = RL.BUMP_COOLDOWN_TIME;
+    event = { demo: isDemo, bumperId: bumper.id, victimId: victim.id };
+  }
+
+  return event;
 }
 
 /* ------------------------------ world step ------------------------------ */

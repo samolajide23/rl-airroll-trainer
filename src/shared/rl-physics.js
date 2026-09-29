@@ -10,9 +10,7 @@ import { UU } from "./rl-units.js";
  *  `{ f, l, u }` where `l` is the local +Y basis vector — i.e. car right.
  *  Runs at a FIXED 120 Hz like the real game.
  *
- *  Every constant is tagged:
- *    [V] verified against RocketSim RLConst / published sources
- *    [A] approximation / from memory -> must be validated before trusting
+ *  Every constant is tagged [V] = verified against RocketSim RLConst.
  * ===================================================================== */
 
 /** RocketSim: CAR_TORQUE_SCALE * CAR_AIR_CONTROL_{TORQUE,DAMPING} */
@@ -105,6 +103,16 @@ export const RL = {
   GOAL_DEPTH: 880, // [V] mesh AABB (HALF_L + depth ≈ 6000)
   ARENA_FRICTION: 0.3, // [V] CARWORLD_COLLISION_FRICTION
   ARENA_RESTITUTION: 0.3, // [V] CARWORLD_COLLISION_RESTITUTION
+  // Car↔car (RocketSim CARCAR_COLLISION_* / CAR_COLLISION_*)
+  CARCAR_FRICTION: 0.09, // [V]
+  CARCAR_RESTITUTION: 0.1, // [V]
+  CAR_COLLISION_FRICTION: 0.3, // [V]
+  CAR_COLLISION_RESTITUTION: 0.1, // [V]
+  // Bump / demo (RocketSim RLConst + MutatorConfig defaults)
+  BUMP_COOLDOWN_TIME: 0.25, // [V]
+  BUMP_MIN_FORWARD_DIST: 64.5, // [V] bumper local-X threshold (uu)
+  DEMO_RESPAWN_TIME: 3.0, // [V]
+  BUMP_FORCE_SCALE: 1.0, // [V] MutatorConfig.bump_force_scale
   /**
    * Blue-team soccar kickoff slots (RocketSim CAR_SPAWN_LOCATIONS_SOCCAR).
    * Flip X/Y and add π to yaw for orange.
