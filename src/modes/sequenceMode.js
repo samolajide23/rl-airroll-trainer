@@ -141,7 +141,6 @@ export class SequenceMode extends AerialDrillBase {
     this.streak = 0;
     this.best = 0;
     this.modeId = "dar-sequences";
-    this.camOffset.set(-0.6, 4, -11);
     this._gF = new THREE.Vector3();
     this._gU = new THREE.Vector3();
     this._targetQ = new THREE.Quaternion();
@@ -278,10 +277,7 @@ export class SequenceMode extends AerialDrillBase {
     this.ghost.scale.setScalar(1 + Math.sin(now * 0.008) * 0.01);
     this.ctx.hud.alignFill.style.width = `${Math.round(Math.max(0, 1 - avgErr / 90) * 100)}%`;
 
-    const mid = this.car.position
-      .clone()
-      .add(this.ghost.position)
-      .multiplyScalar(0.5);
-    this.updateCamera(dt, mid);
+    // Car-cam only — same ProfileCameraSettings path as Free Play / Rings.
+    this.updateCamera(dt);
   }
 }

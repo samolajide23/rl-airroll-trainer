@@ -5,7 +5,7 @@ import {
   aerialControlAxes,
 } from "../shared/carPhysics.js";
 import { makeCar, makeTargetGuide } from "../shared/car.js";
-import { ChaseCamera } from "../shared/chaseCamera.js";
+import { applyModeChaseCamera, ChaseCamera } from "../shared/chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
 import {
   angleErrorDeg,
@@ -115,6 +115,7 @@ export class GhostAlignMode {
     this.midpoint = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
+    this.worldUp = new THREE.Vector3(0, 1, 0);
     this.ghostForward = new THREE.Vector3();
     this.ghostUp = new THREE.Vector3();
 
@@ -314,14 +315,16 @@ export class GhostAlignMode {
     // True car-cam — ghost sits to the side; don't pull the lens off the car.
     const input = this._lastInput ?? readControls();
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
-    this.chase.update(this.ctx.camera, dt, {
+    applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
+      worldUp: this.worldUp,
       onGround: false,
       boosting: Boolean(input.boost),
       lookRight: input.lookRight ?? 0,
       lookUp: input.lookUp ?? 0,
       lookBehind: Boolean(input.lookBehind),
+      ballCam: false,
     });
   }
 

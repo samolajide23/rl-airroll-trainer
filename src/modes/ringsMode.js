@@ -14,15 +14,11 @@ import {
   resolveHitboxPlaneY,
   syncHitboxHelperYUp,
 } from "../shared/carPhysics.js";
-import { ChaseCamera, UU } from "../shared/chaseCamera.js";
+import { applyModeChaseCamera, ChaseCamera, UU } from "../shared/chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
 import { getSelectedCarId } from "../shared/loadout.js";
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
-import {
-  formatControlsHelp,
-  getCamera,
-  onBindsChange,
-} from "../shared/settings.js";
+import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
 
 /** Workshop-style Rings: ocean + sky, blue hoops on pillars, boost trail. */
 const GRAVITY = RL.GRAVITY * UU;
@@ -328,11 +324,10 @@ export class RingsMode {
     this.prevPos.copy(this.car.position);
     this.chase.invalidate();
     this.ctx.camera.up.set(0, 1, 0);
-    const camCfg = getCamera();
-    this.ctx.camera.fov = camCfg.fov;
-    this.ctx.camera.updateProjectionMatrix();
-    this.ctx.camera.position.set(0, PLATFORM_TOP_Y + 3.5, -6);
-    this.ctx.camera.lookAt(0, PLATFORM_TOP_Y + 0.6, 5);
+    // FOV / angle / height come from ProfileCameraSettings via chase.snap.
+    this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+    this.tmp.copy(this.car.position);
+    this.chase.snap(this.ctx.camera, this.tmp, this.forward);
     this.refreshRingLooks();
     this.updateBoostMeter();
     this.ctx.hud.status.textContent =
@@ -572,12 +567,13 @@ export class RingsMode {
     this.aerial.step(this.car, axes.roll, axes.pitch, axes.yaw, dt);
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
     this.vel.y -= GRAVITY * dt;
-    this.boosting = Boolean(input.boost);
+    // Same boost consume / air throttle as Free Play (RocketSim RL consts).
+    this.boosting = Boolean(input.boost) && this.boost > 0;
     if (this.boosting) {
       this.vel.addScaledVector(this.forward, BOOST_ACCEL * dt);
-      this.boost = RL.BOOST_MAX;
+      this.boost = Math.max(0, this.boost - RL.BOOST_USE * dt);
     }
-    if (!input.usingPad && Math.abs(input.throttle) > 0.01) {
+    if (Math.abs(input.throttle) > 0.01) {
       const sign = input.throttle >= 0 ? 1 : 0.5;
       this.vel.addScaledVector(
         this.forward,
@@ -598,7 +594,7 @@ export class RingsMode {
         this.vel,
         this.aerial.omega,
         WATER_Y,
-        0.2,
+        RL.ARENA_RESTITUTION,
         UU,
         this.hitbox,
       );
@@ -688,18 +684,15 @@ export class RingsMode {
     }
 
     if (this.onPlatform) {
-      // Fixed pad view; invalidate chase so takeoff snaps cleanly.
-      // Use chase snap so FOV / angle / height match car-cam math.
-      // Never pass lookAt — Rings is car-cam only (avoid Free Play ballCam leak).
-      this.forward.set(0, 0, 1);
-      this.tmp.set(0, PLATFORM_TOP_Y + 1.2, 0);
-      this.chase.snap(this.ctx.camera, this.tmp, this.forward);
+      // Pad view: same chase snap as Free Play (settings FOV/distance/height).
+      this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+      this.chase.snap(this.ctx.camera, this.car.position, this.forward);
       return;
     }
 
     const input = readControls();
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
-    this.chase.update(this.ctx.camera, dt, {
+    applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
       velocity: this.vel,

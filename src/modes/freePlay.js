@@ -22,7 +22,7 @@ import {
   syncHitboxHelper,
   withFreeAirRoll,
 } from "../shared/carPhysics.js";
-import { ChaseCamera } from "../shared/chaseCamera.js";
+import { applyModeChaseCamera, ChaseCamera } from "../shared/chaseCamera.js";
 import {
   inputSourceLabel,
   isActionDown,
@@ -302,7 +302,7 @@ export class FreePlayMode {
     const feedBall = ballCam || this.chase.ballCamBlend > 0.001;
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
-    this.chase.update(this.ctx.camera, dt, {
+    applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
       velocity: this.velThree,

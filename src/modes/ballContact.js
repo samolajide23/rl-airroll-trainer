@@ -40,7 +40,6 @@ export class BallContactMode extends AerialDrillBase {
     this.retryDelay = 0;
     this.contactPoint = new THREE.Vector3();
     this.tmp = new THREE.Vector3();
-    this.camOffset.set(0, 5, -12);
   }
 
   start() {
@@ -94,7 +93,8 @@ export class BallContactMode extends AerialDrillBase {
     this.stepCar(dt);
 
     if (this.variant !== "static") {
-      this.ball.step(dt, { gravity: 6 });
+      // PracticeBall defaults = RL.GRAVITY / RL.BALL_DRAG (same as Free Play scale).
+      this.ball.step(dt);
     }
 
     this.contactPoint
@@ -145,11 +145,7 @@ export class BallContactMode extends AerialDrillBase {
     const align = Math.max(0, 1 - dist / 4);
     this.ctx.hud.alignFill.style.width = `${Math.round(align * 100)}%`;
 
-    const look = this.car.position
-      .clone()
-      .add(this.ball.mesh.position)
-      .multiplyScalar(0.5);
-    this.updateCamera(dt, look);
+    this.updateCamera(dt);
   }
 
   /** @param {number} touches */
