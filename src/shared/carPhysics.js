@@ -47,6 +47,8 @@ export { arenaDistance, arenaNormal, raycastArena, ARENA_TRI_COUNT } from "./are
 
 export { AerialBody, FixedStepClock } from "./aerial.js";
 
+export { withFreeAirRoll, aerialControlAxes } from "./airRoll.js";
+
 export {
   HITBOX_PRESETS,
   cloneHitbox,

@@ -1,5 +1,9 @@
 import * as THREE from "three";
-import { AerialBody, FixedStepClock } from "../shared/carPhysics.js";
+import {
+  AerialBody,
+  FixedStepClock,
+  aerialControlAxes,
+} from "../shared/carPhysics.js";
 import { makeCar, makeTargetGuide } from "../shared/car.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
@@ -234,19 +238,19 @@ export class GhostAlignMode {
    */
   stepPhysics(tickDt) {
     const input = readControls();
-    let airLeft = input.airLeft;
-    let airRight = input.airRight;
-    if (this.airRollLock === "left") airRight = false;
-    if (this.airRollLock === "right") airLeft = false;
-
-    // Spec: +roll = roll right
-    let roll = 0;
-    if (airRight) roll += 1;
-    if (airLeft) roll -= 1;
-    roll = THREE.MathUtils.clamp(roll, -1, 1);
-
-    this.aerial.step(this.car, roll, input.pitch, input.yaw, tickDt);
-    this._lastInput = { ...input, airLeft, airRight, roll };
+    const axes = aerialControlAxes(input, {
+      onGround: false,
+      airRollLock: this.airRollLock,
+    });
+    this.aerial.step(this.car, axes.roll, axes.pitch, axes.yaw, tickDt);
+    this._lastInput = {
+      ...input,
+      airLeft: axes.airLeft,
+      airRight: axes.airRight,
+      roll: axes.roll,
+      yaw: axes.yaw,
+      pitch: axes.pitch,
+    };
     return this._lastInput;
   }
 

@@ -5,6 +5,7 @@ import {
   AerialBody,
   FixedStepClock,
   RL,
+  aerialControlAxes,
   alignCarVisualToHitbox,
   carHitboxYUp,
   createHitboxHelper,
@@ -541,11 +542,13 @@ export class RingsMode {
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = readControls();
+    // RL free air-roll: powerslide remaps yaw→roll while airborne (not on pad).
+    const axes = aerialControlAxes(input, { onGround: this.onPlatform });
     if (this.onPlatform) {
       this.car.position.set(0, PLATFORM_TOP_Y + this.hitbox.restZ * UU, 0);
       this.vel.set(0, 0, 0);
       this.aerial.reset();
-      this.aerial.step(this.car, input.roll, input.pitch, input.yaw, dt);
+      this.aerial.step(this.car, axes.roll, axes.pitch, axes.yaw, dt);
       if (input.boost || input.jump) {
         this.onPlatform = false;
         this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
@@ -560,13 +563,13 @@ export class RingsMode {
         }
       }
       this.boosting = false;
-      this.syncHud(input);
+      this.syncHud({ ...input, ...axes });
       this.prevPos.copy(this.car.position);
       syncHitboxHelperYUp(this.hitboxHelper, this.car, UU, this.hitbox);
       return;
     }
 
-    this.aerial.step(this.car, input.roll, input.pitch, input.yaw, dt);
+    this.aerial.step(this.car, axes.roll, axes.pitch, axes.yaw, dt);
     this.forward.set(0, 0, 1).applyQuaternion(this.car.quaternion);
     this.vel.y -= GRAVITY * dt;
     this.boosting = Boolean(input.boost);
@@ -606,12 +609,12 @@ export class RingsMode {
       }
     }
 
-    this.syncHud(input);
+    this.syncHud({ ...input, ...axes });
     this.car.userData.setBoost?.(this.boosting);
     syncHitboxHelperYUp(this.hitboxHelper, this.car, UU, this.hitbox);
   }
 
-  /** @param {ReturnType<typeof readControls>} input */
+  /** @param {ReturnType<typeof readControls> & { airLeft?: boolean, airRight?: boolean }} input */
   syncHud(input) {
     const { hud } = this.ctx;
     hud.padStatus.textContent = inputSourceLabel(input);

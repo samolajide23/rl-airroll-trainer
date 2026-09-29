@@ -128,7 +128,8 @@ export const RS = {
   AUTOFLIP_ROLL_THRESH: 2.8,
   AUTOROLL_FORCE: 100,
   AUTOROLL_TORQUE: 80,
-  CAR_TORQUE_SCALE: ((2 * Math.PI) / (1 << 16)) * 1000,
+  /** RocketSim RLConst — float32 of `(2π/65536)*1000`. */
+  CAR_TORQUE_SCALE: 0.09587380290031433,
   AIR_CONTROL_TORQUE: { pitch: 130, yaw: 95, roll: 400 },
   AIR_CONTROL_DAMPING: { pitch: 30, yaw: 20, roll: 50 },
   SUSPENSION_FORCE_SCALE_FRONT: 36 - 1 / 4,

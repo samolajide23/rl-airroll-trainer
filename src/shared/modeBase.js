@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { makeCar } from "./car.js";
-import { AerialBody, FixedStepClock } from "./carPhysics.js";
+import { AerialBody, FixedStepClock, aerialControlAxes } from "./carPhysics.js";
 import { ChaseCamera } from "./chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "./input.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
@@ -94,26 +94,29 @@ export class AerialDrillBase {
    */
   _stepOnce(dt) {
     const input = readControls();
-    let airLeft = input.airLeft;
-    let airRight = input.airRight;
-    if (this.airRollLock === "left") airRight = false;
-    if (this.airRollLock === "right") airLeft = false;
+    // Pinned aerial drills are always "airborne" — apply RL free air-roll
+    // (powerslide remaps yaw→roll) so DAR practice matches Free Play / RL.
+    const axes = aerialControlAxes(input, {
+      onGround: false,
+      airRollLock: this.airRollLock,
+    });
 
-    // Spec: +roll = roll right
-    let roll = 0;
-    if (airRight) roll += 1;
-    if (airLeft) roll -= 1;
-    roll = THREE.MathUtils.clamp(roll, -1, 1);
-
-    this.aerial.step(this.car, roll, input.pitch, input.yaw, dt);
+    this.aerial.step(this.car, axes.roll, axes.pitch, axes.yaw, dt);
 
     const { hud } = this.ctx;
     hud.padStatus.textContent = inputSourceLabel(input);
     hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
-    hud.arl.classList.toggle("on", airLeft);
-    hud.arr.classList.toggle("on", airRight);
+    hud.arl.classList.toggle("on", axes.airLeft);
+    hud.arr.classList.toggle("on", axes.airRight);
 
-    this._lastInput = { ...input, airLeft, airRight, roll };
+    this._lastInput = {
+      ...input,
+      airLeft: axes.airLeft,
+      airRight: axes.airRight,
+      roll: axes.roll,
+      yaw: axes.yaw,
+      pitch: axes.pitch,
+    };
     return this._lastInput;
   }
 

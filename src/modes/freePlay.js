@@ -20,6 +20,7 @@ import {
   stepBoostPads,
   stepCar,
   syncHitboxHelper,
+  withFreeAirRoll,
 } from "../shared/carPhysics.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
 import {
@@ -38,17 +39,6 @@ import {
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
 const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
-
-/**
- * RL's free air-roll bind: holding powerslide while airborne turns the yaw
- * axis into roll (unless a directional air-roll button is already held).
- * @param {ReturnType<typeof readControls>} input
- * @param {{ onGround: boolean }} car
- */
-function withFreeAirRoll(input, car) {
-  if (car.onGround || !input.powerslide || input.roll !== 0) return input;
-  return { ...input, roll: input.yaw, yaw: 0 };
-}
 
 /**
  * Free drive around a soccar arena — ground + aerials + ball.

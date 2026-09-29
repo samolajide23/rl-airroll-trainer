@@ -95,6 +95,40 @@
       "controls": { "pitch": 1, "roll": 1 }
     },
     {
+      "id": "roll_from_pitch45",
+      "description": "Start pitched +45°, hold air-roll right — must spin about nose",
+      "ticks": 90,
+      "initial": { "pitch": 0.7853981633974483 },
+      "controls": { "roll": 1 }
+    },
+    {
+      "id": "roll_from_pitch90",
+      "description": "Start pitched +90° (nose up), hold air-roll right",
+      "ticks": 90,
+      "initial": { "pitch": 1.5707963267948966 },
+      "controls": { "roll": 1 }
+    },
+    {
+      "id": "yaw_from_roll90",
+      "description": "Start rolled 90°, hold yaw right — body-up yaw",
+      "ticks": 60,
+      "initial": { "roll": 1.5707963267948966 },
+      "controls": { "yaw": 1 }
+    },
+    {
+      "id": "combo_from_yaw90",
+      "description": "Start yawed 90°, pitch+roll together",
+      "ticks": 90,
+      "initial": { "yaw": 1.5707963267948966 },
+      "controls": { "pitch": 1, "roll": 1 }
+    },
+    {
+      "id": "partial_inputs_air",
+      "description": "Half pitch + half yaw + half roll for 1s",
+      "ticks": 120,
+      "controls": { "pitch": 0.5, "yaw": 0.5, "roll": 0.5 }
+    },
+    {
       "id": "boost_and_pitch_1s",
       "description": "Boost while pitching up for 1s",
       "ticks": 120,
