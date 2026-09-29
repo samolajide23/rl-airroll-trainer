@@ -1,20 +1,22 @@
 import * as THREE from "three";
-import { AerialBody, FixedStepClock, RL } from "../shared/aerial.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
-import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
-import { formatConsistency, recordAttempt } from "../shared/metrics.js";
-import { ChaseCamera, UU } from "../shared/chaseCamera.js";
-import { getHitboxForCarId } from "../shared/hitboxPresets.js";
-import { getSelectedCarId } from "../shared/loadout.js";
 import {
+  AerialBody,
+  FixedStepClock,
+  RL,
   alignCarVisualToHitbox,
   carHitboxYUp,
   createHitboxHelper,
+  getHitboxForCarId,
   hitboxExtentOnAxis,
   resolveHitboxPlaneY,
   syncHitboxHelperYUp,
-} from "../shared/rl-physics.js";
+} from "../shared/carPhysics.js";
+import { ChaseCamera, UU } from "../shared/chaseCamera.js";
+import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";
+import { getSelectedCarId } from "../shared/loadout.js";
+import { formatConsistency, recordAttempt } from "../shared/metrics.js";
 import {
   formatControlsHelp,
   getCamera,

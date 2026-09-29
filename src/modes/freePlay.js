@@ -1,9 +1,26 @@
 import * as THREE from "three";
-import { FixedStepClock } from "../shared/aerial.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
+import {
+  FixedStepClock,
+  RL,
+  alignCarVisualToHitbox,
+  applyToCarModel,
+  canFlipOrJump,
+  collideCarBall,
+  createBoostPadMeshes,
+  createHitboxHelper,
+  createSoccarBoostPads,
+  getHitboxForCarId,
+  makeBall,
+  makePhysCar,
+  resetBoostPads,
+  stepBall,
+  stepBoostPads,
+  stepCar,
+  syncHitboxHelper,
+} from "../shared/carPhysics.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
-import { getHitboxForCarId } from "../shared/hitboxPresets.js";
 import {
   inputSourceLabel,
   isActionDown,
@@ -11,31 +28,13 @@ import {
 } from "../shared/input.js";
 import { getSelectedCarId } from "../shared/loadout.js";
 import { formatControlsHelp, onBindsChange } from "../shared/settings.js";
-import {
-  createBoostPadMeshes,
-  createSoccarBoostPads,
-  resetBoostPads,
-  stepBoostPads,
-} from "../shared/boostPads.js";
-import {
-  RL,
-  alignCarVisualToHitbox,
-  applyToCarModel,
-  canFlipOrJump,
-  collideCarBall,
-  createHitboxHelper,
-  makeBall,
-  makeCar as makePhysCar,
-  stepBall,
-  stepCar,
-  syncHitboxHelper,
-} from "../shared/rl-physics.js";
 import { ARENA_UU, createSoccarArena } from "../shared/soccarArena.js";
 
 const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
 
 /**
  * Free drive around a soccar arena — ground + aerials + ball.
+ * Car / hitbox motion uses the shared {@link stepCar} from `carPhysics.js`.
  */
 export class FreePlayMode {
   /** @param {object} ctx */
@@ -98,7 +97,6 @@ export class FreePlayMode {
 
   start() {
     const { hud, scene, arena, camera } = this.ctx;
-    // Refresh body if the player changed cars in the locker.
     const carId = getSelectedCarId();
     if (carId !== this.carId) {
       this.root.remove(this.carMesh);
@@ -119,7 +117,7 @@ export class FreePlayMode {
     }
     this.setScoreRow(0, 0, 0, this.hitbox.label);
     hud.status.textContent =
-      "Drive the arena — jump, dodge, boost pads, air roll";
+      "Drive the arena — WASD moves the car & hitbox";
 
     this._prevScene = {
       bg: scene.background?.getHex?.() ?? 0x0b1220,
@@ -196,7 +194,6 @@ export class FreePlayMode {
   }
 
   syncMeshes() {
-    // Root joint at physics pos; scale/offset mesh so hitbox sits on the body.
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
     alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
     this.ballMesh.position.set(
@@ -232,15 +229,9 @@ export class FreePlayMode {
     hud.avg.textContent = extra;
   }
 
-  /** Pass-through RL controls (throttle ≠ pitch; steer from yaw stick). */
-  driveControls() {
-    return readControls();
-  }
-
   /** @param {number} dt */
   _stepOnce(dt) {
-    const input = this.driveControls();
-    // stepCar: drive, jump/dodge, finite boost, hitbox vs arena.
+    const input = readControls();
     stepCar(this.physCar, input, dt);
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);

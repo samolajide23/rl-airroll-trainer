@@ -911,15 +911,12 @@ export function createHitboxHelper() {
  */
 export function syncHitboxHelper(helper, car, scale = 0.01) {
   const hb = carHitbox(car);
-  const P = (v) => V(v.x, v.z, -v.y);
-  const left = hb.l.clone().multiplyScalar(-1);
-  helper.position.copy(P(hb.center)).multiplyScalar(scale);
+  const front = physToThree(hb.f).normalize();
+  const up = physToThree(hb.u).normalize();
+  const left = up.clone().cross(front).normalize();
+  helper.position.copy(physToThree(hb.center)).multiplyScalar(scale);
   helper.quaternion.setFromRotationMatrix(
-    new THREE.Matrix4().makeBasis(
-      P(left).normalize(),
-      P(hb.u).normalize(),
-      P(hb.f).normalize(),
-    ),
+    new THREE.Matrix4().makeBasis(left, up, front),
   );
   // Model axes: X = width, Y = height, Z = length
   helper.scale.set(hb.half[1] * 2 * scale, hb.half[2] * 2 * scale, hb.half[0] * 2 * scale);
@@ -1021,14 +1018,25 @@ export function advance(w, getControls, elapsed, acc = { t: 0 }) {
   return acc;
 }
 
-/** Physics (Z-up) -> Three.js (Y-up). Car model: X=left, Y=up, Z=front. 1 three-unit = `scale` uu. */
+/**
+ * Physics Z-up → Three.js Y-up. Car model axes: X=left, Y=up, Z=front.
+ * Builds a proper right-handed basis so visual nose matches physics forward
+ * (an earlier P(-right),P(up),P(fwd) mapping flipped the mesh 180°).
+ */
+export function physToThree(v, out = V()) {
+  return out.set(v.x, v.z, -v.y);
+}
+
+/** @param {ReturnType<typeof makeCar>} car @param {THREE.Object3D} group @param {number} [scale=0.01] */
 export function applyToCarModel(car, group, scale = 0.01) {
-  const P = (v) => V(v.x, v.z, -v.y);
-  const { f, l, u } = axes(car.q); // l = car right
-  const left = l.clone().multiplyScalar(-1);
-  group.position.copy(P(car.pos)).multiplyScalar(scale);
+  const { f, u } = axes(car.q);
+  const front = physToThree(f).normalize();
+  const up = physToThree(u).normalize();
+  // RH Three.js: X × Y = Z → left = up × front
+  const left = up.clone().cross(front).normalize();
+  group.position.copy(physToThree(car.pos)).multiplyScalar(scale);
   group.quaternion.setFromRotationMatrix(
-    new THREE.Matrix4().makeBasis(P(left), P(u), P(f)),
+    new THREE.Matrix4().makeBasis(left, up, front),
   );
 }
 

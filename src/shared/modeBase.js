@@ -1,13 +1,13 @@
 import * as THREE from "three";
-import { AerialBody, FixedStepClock } from "./aerial.js";
 import { makeCar } from "./car.js";
+import { AerialBody, FixedStepClock } from "./carPhysics.js";
 import { ChaseCamera } from "./chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "./input.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
 
 /**
  * Shared setup for aerial drills (orientation-focused, pinned in place).
- * Physics ticks at fixed 120 Hz per the RL model.
+ * Air torque comes from the shared {@link AerialBody} in `carPhysics.js`.
  */
 export class AerialDrillBase {
   /**

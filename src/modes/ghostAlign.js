@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { AerialBody, FixedStepClock } from "../shared/aerial.js";
+import { AerialBody, FixedStepClock } from "../shared/carPhysics.js";
 import { makeCar, makeTargetGuide } from "../shared/car.js";
 import { ChaseCamera } from "../shared/chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "../shared/input.js";

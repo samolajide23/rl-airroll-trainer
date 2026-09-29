@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { RL } from "./rl-physics.js";
 
 /**
- * Rocket League aerial torque (RocketSim / rl-physics.js), on a Three.js Object3D.
+ * Rocket League aerial torque (shared via `carPhysics.js`) on a Three.js Object3D.
+ * Modes should import {@link AerialBody} from `carPhysics.js`, not this file.
  *
  * Physics frame is Z-up with car local x=front, y=right, z=up.
  * Render cars use Y-up with local z=front, y=up, x=right — map:
