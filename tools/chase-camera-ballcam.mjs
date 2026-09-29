@@ -168,5 +168,82 @@ check(
   `steps=${steps} expected≈${expectedSteps} blend=${chase.ballCamBlend.toFixed(3)}`,
 );
 
+// --- Car-cam follow: translation never lags; yaw softens with stiffness. ---
+setCamera("ballCam", false);
+setCamera("stiffness", 0.5);
+setCamera("distance", DEFAULT_CAMERA.distance);
+setCamera("height", DEFAULT_CAMERA.height);
+chase.invalidate();
+const driveCar = new THREE.Vector3(0, 0, 0);
+const driveFwd = new THREE.Vector3(0, 0, 1);
+chase.update(cam, 1 / 60, {
+  target: driveCar,
+  forward: driveFwd,
+  snap: true,
+});
+driveCar.z = 50;
+chase.update(cam, 1 / 60, { target: driveCar, forward: driveFwd });
+const jumpErr = Math.hypot(
+  cam.position.x - 0,
+  cam.position.y - heightM,
+  cam.position.z - (50 - distM),
+);
+check(
+  "car cam: body snaps with car on 50m jump (no TransitionSpeed crawl)",
+  jumpErr < 1e-4,
+  `err=${jumpErr.toExponential(2)} pos=${cam.position.toArray().map((n) => n.toFixed(3))}`,
+);
+
+// After a hard 90° turn at default stiffness, settle within ~10 frames (~167ms).
+chase.invalidate();
+driveCar.set(0, 0, 0);
+driveFwd.set(0, 0, 1);
+chase.update(cam, 1 / 60, {
+  target: driveCar,
+  forward: driveFwd,
+  snap: true,
+});
+driveFwd.set(1, 0, 0);
+let turnSteps = 0;
+let turnErr = Infinity;
+while (turnSteps < 30) {
+  chase.update(cam, 1 / 60, { target: driveCar, forward: driveFwd });
+  const ideal = new THREE.Vector3(
+    driveCar.x - distM,
+    heightM,
+    driveCar.z,
+  );
+  turnErr = cam.position.distanceTo(ideal);
+  turnSteps += 1;
+  if (turnErr < 0.08) break;
+}
+check(
+  "car cam: stiff 0.5 settles 90° turn within ~10 frames",
+  turnSteps <= 12 && turnErr < 0.08,
+  `steps=${turnSteps} err=${turnErr.toFixed(3)}`,
+);
+
+// Stiffness 1 is a metal pole — nearly locked within 3 frames (~50ms).
+setCamera("stiffness", 1);
+chase.invalidate();
+driveCar.set(0, 0, 0);
+driveFwd.set(0, 0, 1);
+chase.update(cam, 1 / 60, {
+  target: driveCar,
+  forward: driveFwd,
+  snap: true,
+});
+driveFwd.set(1, 0, 0);
+for (let i = 0; i < 3; i++) {
+  chase.update(cam, 1 / 60, { target: driveCar, forward: driveFwd });
+}
+const poleIdeal = new THREE.Vector3(-distM, heightM, 0);
+const poleErr = cam.position.distanceTo(poleIdeal);
+check(
+  "car cam: stiff 1.0 metal-pole within 3 frames",
+  poleErr < 0.05,
+  `err=${poleErr.toFixed(4)}`,
+);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

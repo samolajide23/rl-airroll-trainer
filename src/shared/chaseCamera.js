@@ -46,11 +46,16 @@ export const RL_CAMERA = {
   SWIVEL_CATCH_RATE: 14, // [V]
   /**
    * Rotational lag rate range for stiffness (car cam only).
-   * Exponential `1-exp(-rate*dt)` — stiffness=0 slow arm, 1 nearly locked.
+   * Exponential approach on yaw: `dYaw *= exp(-rate*dt)`.
+   * Tuned so default stiffness 0.5 settles a hard 90° turn in ~100ms
+   * (RL "slight give"), stiffness 1 is a metal pole (~2 frames), and
+   * stiffness 0 is soft but still usable (~0.35s) — not a multi-second crawl.
    * [A] — exact Psyonix curve not public.
    */
-  STIFF_ROT_RATE_MIN: 1.5, // [A]
-  STIFF_ROT_RATE_MAX: 22, // [A]
+  STIFF_ROT_RATE_MIN: 10, // [A]
+  STIFF_ROT_RATE_MAX: 120, // [A]
+  /** Maps slider → rate with more weight on the snappy end of the range. */
+  STIFF_ROT_POWER: 0.55, // [A]
   /**
    * BakkesMod CameraWrapper::linterp is `t = min(1, elapsed * speed)`.
    * In-game TransitionSpeed 1–2 alone is too slow as raw 1/speed seconds
@@ -171,6 +176,8 @@ export class ChaseCamera {
     this.smoothLook = new THREE.Vector3();
     /** Lagged horizontal follow direction (car-forward on world-up plane). */
     this.smoothDir = new THREE.Vector3(0, 0, 1);
+    /** Lagged follow yaw (rad); source of truth for smoothDir. */
+    this._followYaw = 0;
     this.tmp = new THREE.Vector3();
     this.tmp2 = new THREE.Vector3();
     this.tmpRight = new THREE.Vector3();
@@ -242,8 +249,17 @@ export class ChaseCamera {
     const dist0 = cfg.distance * UU;
     const height = cfg.height * UU;
     const angleRad = THREE.MathUtils.degToRad(cfg.angle);
-    const stiff = THREE.MathUtils.clamp(cfg.stiffness, 0, 1);
-    const transition = Math.max(0.05, cfg.transitionSpeed);
+    const stiff = THREE.MathUtils.clamp(
+      Number.isFinite(cfg.stiffness) ? cfg.stiffness : RL_CAMERA.STIFFNESS,
+      0,
+      1,
+    );
+    const transition = Math.max(
+      0.05,
+      Number.isFinite(cfg.transitionSpeed)
+        ? cfg.transitionSpeed
+        : RL_CAMERA.TRANSITION_SPEED,
+    );
     const swivelSpeed = cfg.swivelSpeed ?? RL_CAMERA.SWIVEL_SPEED;
     const ballCam = Boolean(opts.ballCam ?? cfg.ballCam);
     const shakeOn = Boolean(cfg.shake);
@@ -262,16 +278,26 @@ export class ChaseCamera {
 
     // Stiffness → how fast the arm yaw tracks the car (car cam only).
     // TransitionSpeed must NOT scale this — it only blends car↔ball views.
+    // Body translation is NEVER lagged: focus = car every frame; only yaw softens.
+    const stiffT = Math.pow(stiff, RL_CAMERA.STIFF_ROT_POWER);
     const rotRate =
       RL_CAMERA.STIFF_ROT_RATE_MIN +
-      stiff * (RL_CAMERA.STIFF_ROT_RATE_MAX - RL_CAMERA.STIFF_ROT_RATE_MIN);
+      stiffT * (RL_CAMERA.STIFF_ROT_RATE_MAX - RL_CAMERA.STIFF_ROT_RATE_MIN);
+    const targetYaw = Math.atan2(this.tmp.x, this.tmp.z);
     if (opts.snap || !this._ready) {
-      this.smoothDir.copy(this.tmp);
+      this._followYaw = targetYaw;
     } else {
-      this.smoothDir
-        .lerp(this.tmp, 1 - Math.exp(-rotRate * dt))
-        .normalize();
+      // Shortest-path exponential yaw catch-up (constant angular rate feel).
+      let dYaw = targetYaw - this._followYaw;
+      while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+      while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      this._followYaw += dYaw * (1 - Math.exp(-rotRate * Math.max(dt, 0)));
     }
+    this.smoothDir.set(
+      Math.sin(this._followYaw),
+      0,
+      Math.cos(this._followYaw),
+    );
 
     // --- Swivel (right stick) ---
     const lookRight = THREE.MathUtils.clamp(opts.lookRight ?? 0, -1, 1);
@@ -442,6 +468,8 @@ export class ChaseCamera {
     this._ready = false;
     this.swivelYaw = 0;
     this.swivelPitch = 0;
+    this._followYaw = 0;
+    this.smoothDir.set(0, 0, 1);
     this.ballCamBlend = 0;
     this._transitionElapsed = 0;
     this._transitionFrom = 0;
