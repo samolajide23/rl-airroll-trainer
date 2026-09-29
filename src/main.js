@@ -265,6 +265,9 @@ function stopActiveMode() {
   }
   pendingMode = null;
   setTouchControlsVisible(false);
+  if (import.meta.env.DEV) {
+    globalThis.__activeMode = null;
+  }
 }
 
 function showHub() {
@@ -343,6 +346,11 @@ function startMode(def, options = {}) {
   menuGamepad.onScreenChange();
   activeMode.start();
   setTouchControlsVisible(true);
+  if (import.meta.env.DEV) {
+    // Playwright / manual chase-camera probes (dev server only).
+    globalThis.__activeMode = activeMode;
+    globalThis.__gameCamera = camera;
+  }
 }
 
 function onModeCardClick(def) {
