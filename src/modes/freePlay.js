@@ -287,8 +287,16 @@ export class FreePlayMode {
     }
     if (!rd) this.rLatch = false;
 
-    if (pollBallCamToggle(this.ballCamLatch)) {
-      const next = !getCamera().ballCam;
+    const camCfg = getCamera();
+    // RL Ball Camera: Toggle (edge) or Hold (while button down).
+    if ((camCfg.ballCamMode ?? "toggle") === "hold") {
+      const held = isActionDown("toggleBallCam");
+      if (held !== Boolean(camCfg.ballCam)) {
+        setCamera("ballCam", held);
+        this.ctx.hud.status.textContent = held ? "Ball cam on" : "Ball cam off";
+      }
+    } else if (pollBallCamToggle(this.ballCamLatch)) {
+      const next = !camCfg.ballCam;
       setCamera("ballCam", next);
       this.ctx.hud.status.textContent = next ? "Ball cam on" : "Ball cam off";
     }
@@ -297,15 +305,21 @@ export class FreePlayMode {
   /** @param {number} dt */
   updateCamera(dt) {
     const input = readControls();
-    const ballCam = Boolean(getCamera().ballCam);
+    const camCfg = getCamera();
+    // Hold mode: effective ball cam is the live button state (avoid storage lag).
+    const ballCam =
+      (camCfg.ballCamMode ?? "toggle") === "hold"
+        ? isActionDown("toggleBallCam")
+        : Boolean(camCfg.ballCam);
+    // Keep feeding the ball while TransitionSpeed blends in/out of ball cam.
+    const feedBall = ballCam || this.chase.ballCamBlend > 0.001;
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
     this.chase.update(this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
       velocity: this.velThree,
-      // Only feed ball position when ball cam is on — car-cam must not bias.
-      lookAt: ballCam ? this.ballMesh.position : undefined,
+      lookAt: feedBall ? this.ballMesh.position : undefined,
       worldUp: this.worldUp,
       onGround: this.physCar.onGround,
       boosting: this.boosting,

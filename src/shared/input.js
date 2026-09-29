@@ -217,19 +217,26 @@ export function readControls() {
 }
 
 /**
- * Edge-detect ball-cam toggle: R3 (button 11) or KeyC — RL Toggle Camera.
- * Call once per frame; returns true on press edge.
- * @param {{ wasDown?: boolean }} latch mutable latch object
+ * Edge-detect for a bind action (keyboard / pad / touch).
+ * Call once per frame with a stable latch object; returns true on press edge.
+ * @param {import("./settings.js").BindAction} action
+ * @param {{ wasDown?: boolean }} latch
  * @returns {boolean}
  */
-export function pollBallCamToggle(latch) {
-  const pad = getActiveGamepad();
-  const padDown = Boolean(pad?.buttons[11]?.pressed);
-  const keyDown = keys.has("KeyC");
-  const down = padDown || keyDown;
+export function pollActionEdge(action, latch) {
+  const down = isActionDown(action);
   const edged = down && !latch.wasDown;
   latch.wasDown = down;
   return edged;
+}
+
+/**
+ * Edge-detect RL "Toggle Ball Cam" bind.
+ * @param {{ wasDown?: boolean }} latch
+ * @returns {boolean}
+ */
+export function pollBallCamToggle(latch) {
+  return pollActionEdge("toggleBallCam", latch);
 }
 
 /**
@@ -257,6 +264,7 @@ export function isActionDown(action) {
   if (action === "airRollRight") return buttonPressed(pad, cfg.airRollRight);
   if (action === "resetCar") return buttonPressed(pad, cfg.resetCar);
   if (action === "newTarget") return buttonPressed(pad, cfg.newTarget);
+  if (action === "toggleBallCam") return buttonPressed(pad, cfg.toggleBallCam);
   if (action === "boost") return buttonPressed(pad, cfg.boost);
   if (action === "jump") return buttonPressed(pad, cfg.jump);
   if (action === "powerslide") return buttonPressed(pad, cfg.powerslide);

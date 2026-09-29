@@ -29,6 +29,7 @@ import {
   setSelectedCarId,
 } from "./shared/loadout.js";
 import {
+  BALL_CAM_MODE_OPTIONS,
   BIND_LABELS,
   CAMERA_SLIDERS,
   DEFAULT_BINDS,
@@ -546,18 +547,7 @@ function buildCameraList() {
   const cam = getCamera();
   cameraListEl.replaceChildren();
 
-  cameraListEl.append(
-    makeToggleRow("Camera shake", cam.shake, (checked) => {
-      setCamera("shake", checked);
-    }),
-  );
-
-  cameraListEl.append(
-    makeToggleRow("Ball cam", cam.ballCam, (checked) => {
-      setCamera("ballCam", checked);
-    }),
-  );
-
+  // Order matches Rocket League Camera Settings: sliders, then Shake, then Ball Camera.
   for (const slider of CAMERA_SLIDERS) {
     const row = document.createElement("div");
     row.className = "bind-row";
@@ -593,6 +583,23 @@ function buildCameraList() {
     row.append(label, wrap);
     cameraListEl.append(row);
   }
+
+  cameraListEl.append(
+    makeToggleRow("Camera Shake", cam.shake, (checked) => {
+      setCamera("shake", checked);
+    }),
+  );
+
+  cameraListEl.append(
+    makeStringSelectRow(
+      "Ball Camera",
+      cam.ballCamMode ?? "toggle",
+      BALL_CAM_MODE_OPTIONS,
+      (v) => {
+        setCamera("ballCamMode", v);
+      },
+    ),
+  );
 }
 
 function buildBindList() {
@@ -754,6 +761,37 @@ function makeSelectRow(title, value, options, onChange) {
   }
   select.addEventListener("change", () => {
     onChange(Number(select.value));
+  });
+
+  row.append(label, select);
+  return row;
+}
+
+/**
+ * @param {string} title
+ * @param {string} value
+ * @param {{ value: string, label: string }[]} options
+ * @param {(v: string) => void} onChange
+ */
+function makeStringSelectRow(title, value, options, onChange) {
+  const row = document.createElement("div");
+  row.className = "bind-row";
+
+  const label = document.createElement("span");
+  label.className = "bind-label";
+  label.textContent = title;
+
+  const select = document.createElement("select");
+  select.className = "bind-control";
+  for (const opt of options) {
+    const option = document.createElement("option");
+    option.value = opt.value;
+    option.textContent = opt.label;
+    if (opt.value === value) option.selected = true;
+    select.append(option);
+  }
+  select.addEventListener("change", () => {
+    onChange(select.value);
   });
 
   row.append(label, select);

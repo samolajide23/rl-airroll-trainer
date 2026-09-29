@@ -1,4 +1,5 @@
-const STORAGE_KEY = "rl-airroll-trainer-settings-v7";
+const STORAGE_KEY = "rl-airroll-trainer-settings-v8";
+const LEGACY_V7 = "rl-airroll-trainer-settings-v7";
 const LEGACY_V6 = "rl-airroll-trainer-settings-v6";
 const LEGACY_V5 = "rl-airroll-trainer-settings-v5";
 const LEGACY_V4 = "rl-airroll-trainer-settings-v4";
@@ -31,6 +32,8 @@ export const DEFAULT_BINDS = {
   airRollRight: "KeyE",
   resetCar: "KeyR",
   newTarget: "KeyN",
+  /** RL Ball Camera bind — Toggle or Hold per `ballCamMode`; pad uses R3. */
+  toggleBallCam: "KeyC",
 };
 
 /** Pairs that may share one physical key (RL dual-binds). */
@@ -53,6 +56,7 @@ export const BIND_LABELS = {
   airRollRight: "Air roll right",
   resetCar: "Reset car",
   newTarget: "New target / skip",
+  toggleBallCam: "Ball cam",
 };
 
 /**
@@ -69,6 +73,8 @@ export const DEFAULT_PAD = {
   airRollRight: 5, // RB
   resetCar: 8, // Back / Share
   newTarget: 3, // Y / Triangle
+  /** RL Toggle Ball Cam — Right stick click (R3). */
+  toggleBallCam: 11,
   pitchAxis: 1, // Left stick Y
   yawAxis: 0, // Left stick X
   lookXAxis: 2, // Right stick X (camera swivel)
@@ -90,6 +96,7 @@ export const PAD_BUTTON_ACTIONS = [
   "airRollRight",
   "resetCar",
   "newTarget",
+  "toggleBallCam",
 ];
 
 export const PAD_AXIS_OPTIONS = [
@@ -102,6 +109,7 @@ export const PAD_AXIS_OPTIONS = [
 /**
  * Rocket League `ProfileCameraSettings` defaults (Psyonix).
  * Distance/height are Unreal units (uu); convert at use sites via {@link UU}.
+ * Slider ranges match in-game Camera Settings (FOV 60–110, Dist 100–400, …).
  */
 export const DEFAULT_CAMERA = {
   // FOV is horizontal degrees (Rocket League / in-game slider).
@@ -113,24 +121,36 @@ export const DEFAULT_CAMERA = {
   swivelSpeed: 2.5,
   transitionSpeed: 1.0,
   shake: false,
+  /** Live ball-cam state (toggle mode); hold mode ignores this while driving. */
   ballCam: false,
+  /**
+   * RL "Ball Camera" button behavior — Toggle (default) or Hold.
+   * @type {"toggle" | "hold"}
+   */
+  ballCamMode: "toggle",
 };
 
 /** @type {{ key: CameraSetting, label: string, min: number, max: number, step: number }[]} */
 export const CAMERA_SLIDERS = [
-  { key: "fov", label: "FOV (horizontal)", min: 60, max: 110, step: 1 },
-  { key: "distance", label: "Distance", min: 100, max: 400, step: 5 },
-  { key: "height", label: "Height", min: 40, max: 200, step: 5 },
-  { key: "angle", label: "Angle", min: -15, max: 0, step: 0.5 },
-  { key: "stiffness", label: "Stiffness", min: 0, max: 1, step: 0.05 },
-  { key: "swivelSpeed", label: "Swivel speed", min: 1, max: 10, step: 0.1 },
+  { key: "fov", label: "Camera FOV", min: 60, max: 110, step: 1 },
+  { key: "distance", label: "Camera Distance", min: 100, max: 400, step: 5 },
+  { key: "height", label: "Camera Height", min: 40, max: 200, step: 5 },
+  { key: "angle", label: "Camera Angle", min: -15, max: 0, step: 0.5 },
+  { key: "stiffness", label: "Camera Stiffness", min: 0, max: 1, step: 0.05 },
+  { key: "swivelSpeed", label: "Camera Swivel Speed", min: 1, max: 10, step: 0.1 },
   {
     key: "transitionSpeed",
-    label: "Transition speed",
+    label: "Transition Speed",
     min: 1,
     max: 2,
     step: 0.1,
   },
+];
+
+/** RL Camera Settings → Ball Camera: Toggle or Hold. */
+export const BALL_CAM_MODE_OPTIONS = [
+  { value: "toggle", label: "Toggle" },
+  { value: "hold", label: "Hold" },
 ];
 
 /** Xbox-ish button names for Gamepad API indices */
@@ -185,6 +205,10 @@ function mergeCamera(src) {
       if (typeof val === "boolean") camera[key] = val;
       continue;
     }
+    if (key === "ballCamMode") {
+      if (val === "toggle" || val === "hold") camera.ballCamMode = val;
+      continue;
+    }
     if (typeof val !== "number" || !Number.isFinite(val)) continue;
     const meta = CAMERA_SLIDERS.find((s) => s.key === key);
     if (meta) {
@@ -204,6 +228,12 @@ function load() {
     let resetControlsFromV5 = false;
     /** v6 lacked swivelSpeed / ballCam — fill from ProfileCameraSettings defaults. */
     let upgradeCameraFromV6 = false;
+    /** v7 lacked ballCamMode (Toggle/Hold). */
+    let upgradeCameraFromV7 = false;
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_V7);
+      if (raw) upgradeCameraFromV7 = true;
+    }
     if (!raw) {
       raw = localStorage.getItem(LEGACY_V6);
       if (raw) upgradeCameraFromV6 = true;
@@ -282,6 +312,16 @@ function load() {
         }
         if (typeof camera.ballCam !== "boolean") {
           camera.ballCam = DEFAULT_CAMERA.ballCam;
+        }
+        if (camera.ballCamMode !== "toggle" && camera.ballCamMode !== "hold") {
+          camera.ballCamMode = DEFAULT_CAMERA.ballCamMode;
+        }
+        persist();
+      }
+      // v7 → v8: Ball Camera Toggle/Hold (RL Camera Settings).
+      if (upgradeCameraFromV7) {
+        if (camera.ballCamMode !== "toggle" && camera.ballCamMode !== "hold") {
+          camera.ballCamMode = DEFAULT_CAMERA.ballCamMode;
         }
         persist();
       }
@@ -463,6 +503,13 @@ export function setCamera(key, value) {
     persist();
     return;
   }
+  if (key === "ballCamMode") {
+    if (value === "toggle" || value === "hold") {
+      camera.ballCamMode = value;
+      persist();
+    }
+    return;
+  }
   const n = Number(value);
   if (!Number.isFinite(n)) return;
   const meta = CAMERA_SLIDERS.find((s) => s.key === key);
@@ -546,6 +593,6 @@ export function formatControlsHelp() {
     `${formatKeyCode(b.airRollLeft)}/${formatKeyCode(b.airRollRight)} air roll · ` +
     `${formatKeyCode(b.resetCar)}/${formatPadButton(p.resetCar)} reset · ` +
     `${formatKeyCode(b.newTarget)}/${formatPadButton(p.newTarget)} new · ` +
-    `C/R3 ball cam · Esc menu`
+    `${formatKeyCode(b.toggleBallCam)}/${formatPadButton(p.toggleBallCam)} ball cam · Esc menu`
   );
 }

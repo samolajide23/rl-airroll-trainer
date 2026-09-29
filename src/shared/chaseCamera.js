@@ -7,6 +7,11 @@ export { UU };
 /**
  * Rocket League `ProfileCameraSettings` defaults (Psyonix) + engine camera constants.
  * Source: BakkesMod `ProfileCameraSettings` / `CameraWrapper` / in-game camera sliders.
+ * Ball-cam model: Psyonix engineer (r/unrealengine) — Focus / Rotation / Distance.
+ *
+ * Honest parity note: slider defaults/ranges match RL. Runtime rates marked [A] are
+ * approximated (car-cam stiffness internals / exact TransitionSpeed scale are not
+ * public). Transition itself uses BakkesMod `linterp` timing (elapsed × speed).
  */
 export const RL_CAMERA = {
   FOV: 110, // [V] horizontal degrees
@@ -40,16 +45,30 @@ export const RL_CAMERA = {
   /** How fast CurrentSwivel catches DesiredSwivel while stick held. */
   SWIVEL_CATCH_RATE: 14, // [V]
   /**
-   * Rotational lag interp-speed range for stiffness (BakkesMod-style linterp
-   * speed). At stiffness=0 → slow arm; at 1 → nearly locked behind the car.
+   * Rotational lag rate range for stiffness (car cam only).
+   * Exponential `1-exp(-rate*dt)` — stiffness=0 slow arm, 1 nearly locked.
+   * [A] — exact Psyonix curve not public.
    */
-  STIFF_ROT_SPEED_MIN: 1.2, // [V]
-  STIFF_ROT_SPEED_MAX: 22, // [V]
+  STIFF_ROT_RATE_MIN: 1.5, // [A]
+  STIFF_ROT_RATE_MAX: 22, // [A]
+  /**
+   * BakkesMod CameraWrapper::linterp is `t = min(1, elapsed * speed)`.
+   * In-game TransitionSpeed 1–2 alone is too slow as raw 1/speed seconds
+   * (players treat 2.0 as near hard-cut). Scale so:
+   *   1.0 → ~0.17s, 1.5 → ~0.11s, 2.0 → ~0.08s.
+   * [A] exact internal multiplier unknown; shape matches player reports.
+   */
+  TRANSITION_SPEED_SCALE: 6, // [A]
   /** Camera shake amplitude (uu) when boosting with shake enabled. */
-  SHAKE_BOOST_UU: 4.5, // [V]
+  SHAKE_BOOST_UU: 4.5, // [A]
   SHAKE_IDLE_UU: 0, // [V]
   /** Soft floor clip — BakkesMod CameraWrapper::ClipToField analogue. */
   CLIP_MIN_Z_UU: 20, // [V]
+  /**
+   * Ball-cam max pitch (rad). Psyonix clamps look-at-ball pitch to a
+   * "reasonable value"; keep aerials readable without flipping over.
+   */
+  BALL_CAM_MAX_PITCH: (80 * Math.PI) / 180, // [A]
 };
 
 /**
@@ -66,7 +85,20 @@ export function horizontalFovToVertical(horizontalDeg, aspect) {
 
 /**
  * BakkesMod `CameraWrapper::linterp` — linear approach with speed.
- * `result = start + (end - start) * min(1, elapsed * speed)`
+ * `t = saturate(elapsed * speed)`; then lerp(start, end, t).
+ * @param {number} start
+ * @param {number} end
+ * @param {number} elapsed seconds since blend began
+ * @param {number} speed
+ * @returns {number}
+ */
+export function linterpScalar(start, end, elapsed, speed) {
+  const t = Math.min(1, Math.max(0, elapsed * speed));
+  return start + (end - start) * t;
+}
+
+/**
+ * BakkesMod `CameraWrapper::linterp` for vectors.
  * @param {THREE.Vector3} out
  * @param {THREE.Vector3} start
  * @param {THREE.Vector3} end
@@ -80,31 +112,56 @@ export function linterp(out, start, end, elapsed, speed) {
 }
 
 /**
- * Directional linterp (nlerp) for unit follow vectors.
- * @param {THREE.Vector3} current
- * @param {THREE.Vector3} target
- * @param {number} elapsed
- * @param {number} speed
+ * Shortest-path lerp for yaw angles (radians).
+ * @param {number} a
+ * @param {number} b
+ * @param {number} t
  */
-function linterpDir(current, target, elapsed, speed) {
-  const t = Math.min(1, Math.max(0, elapsed * speed));
-  current.lerp(target, t);
-  if (current.lengthSq() > 1e-12) current.normalize();
-  else current.copy(target);
+function lerpAngle(a, b, t) {
+  let d = b - a;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return a + d * t;
+}
+
+/**
+ * Build a unit forward from yaw (about world-up) and pitch (signed: +up).
+ * @param {THREE.Vector3} out
+ * @param {number} yawRad
+ * @param {number} pitchRad
+ * @param {THREE.Vector3} up
+ * @param {THREE.Vector3} tmpRight
+ */
+function forwardFromYawPitch(out, yawRad, pitchRad, up, tmpRight) {
+  // Yaw 0 → +Z in our Three Y-up arena (car spawn faces +Z).
+  // Pitch: +look up. Right-handed rotate-about-right uses −pitch.
+  out.set(Math.sin(yawRad), 0, Math.cos(yawRad));
+  tmpRight.crossVectors(up, out);
+  if (tmpRight.lengthSq() > 1e-10) {
+    tmpRight.normalize();
+    out.applyAxisAngle(tmpRight, -pitchRad);
+  } else {
+    out.set(0, Math.sin(pitchRad), Math.cos(pitchRad));
+  }
+  out.normalize();
+  return out;
 }
 
 /**
  * Rocket League car-cam / ball-cam chase.
  *
- * Arm math (ProfileCameraSettings):
+ * Car-cam arm (ProfileCameraSettings):
  *   camLoc  = carLoc − forward·Distance + up·Height
  *   focusZ  = Height + Distance·tan(Pitch)
  *   focus   = carLoc + up·focusZ
  *
- * Stiffness lags the follow forward (rotational). TransitionSpeed is the
- * BakkesMod linterp speed for camera body / look. SwivelSpeed scales
- * CameraWrapper::GetDesiredSwivel; CurrentSwivel rotates the arm about focus.
- * Ball cam replaces the pitch focus with the ball.
+ * Ball-cam (Psyonix Focus / Rotation / Distance model):
+ *   Focus   = carLoc + up·Height
+ *   Rotation = look Focus→ball, pitch clamped to ≥ Angle (stable near ground)
+ *   camLoc  = Focus − Rot.Forward·Distance
+ *
+ * TransitionSpeed: BakkesMod linterp on the Focus/Rotation view (not a
+ * world-space position crawl, and not stiffness).
  */
 export class ChaseCamera {
   constructor() {
@@ -117,12 +174,25 @@ export class ChaseCamera {
     this.tmp = new THREE.Vector3();
     this.tmp2 = new THREE.Vector3();
     this.tmpRight = new THREE.Vector3();
+    this.tmpBallFwd = new THREE.Vector3();
+    this.carCamPos = new THREE.Vector3();
+    this.carCamLook = new THREE.Vector3();
+    this.ballCamPos = new THREE.Vector3();
+    this.ballCamLook = new THREE.Vector3();
     this.forward = new THREE.Vector3();
     this.worldUp = new THREE.Vector3(0, 1, 0);
     this.swivelYaw = 0;
     this.swivelPitch = 0;
     this.shakePhase = 0;
     this._ready = false;
+    /** 0 = car cam, 1 = ball cam after current transition completes. */
+    this.ballCamBlend = 0;
+    /** Elapsed seconds in the current car↔ball transition. */
+    this._transitionElapsed = 0;
+    /** Blend value when the current transition started. */
+    this._transitionFrom = 0;
+    /** Last desired ball-cam target (0/1) — detects toggles. */
+    this._ballTarget = 0;
   }
 
   /**
@@ -135,6 +205,10 @@ export class ChaseCamera {
     this._ready = false;
     this.swivelYaw = 0;
     this.swivelPitch = 0;
+    this.ballCamBlend = 0;
+    this._transitionElapsed = 0;
+    this._transitionFrom = 0;
+    this._ballTarget = 0;
     this.update(camera, 1 / 60, { target, forward, lookAt, snap: true });
   }
 
@@ -174,7 +248,7 @@ export class ChaseCamera {
     const ballCam = Boolean(opts.ballCam ?? cfg.ballCam);
     const shakeOn = Boolean(cfg.shake);
 
-    // --- Follow forward: car nose flattened to world-up (no velocity lean) ---
+    // --- Follow forward: car nose flattened to world-up ---
     this.forward.set(0, 0, 1);
     if (opts.forward && opts.forward.lengthSq() > 1e-8) {
       this.forward.copy(opts.forward);
@@ -186,15 +260,20 @@ export class ChaseCamera {
     if (this.tmp.lengthSq() < 1e-6) this.tmp.copy(this.smoothDir);
     this.tmp.normalize();
 
-    // Stiffness → rotational linterp speed (higher = snappier arm).
-    const rotSpeed =
-      (RL_CAMERA.STIFF_ROT_SPEED_MIN +
-        stiff * (RL_CAMERA.STIFF_ROT_SPEED_MAX - RL_CAMERA.STIFF_ROT_SPEED_MIN)) *
-      transition;
-    if (opts.snap || !this._ready) this.smoothDir.copy(this.tmp);
-    else linterpDir(this.smoothDir, this.tmp, dt, rotSpeed);
+    // Stiffness → how fast the arm yaw tracks the car (car cam only).
+    // TransitionSpeed must NOT scale this — it only blends car↔ball views.
+    const rotRate =
+      RL_CAMERA.STIFF_ROT_RATE_MIN +
+      stiff * (RL_CAMERA.STIFF_ROT_RATE_MAX - RL_CAMERA.STIFF_ROT_RATE_MIN);
+    if (opts.snap || !this._ready) {
+      this.smoothDir.copy(this.tmp);
+    } else {
+      this.smoothDir
+        .lerp(this.tmp, 1 - Math.exp(-rotRate * dt))
+        .normalize();
+    }
 
-    // --- Swivel (right stick) — CameraWrapper::GetDesiredSwivel / UpdateSwivel ---
+    // --- Swivel (right stick) ---
     const lookRight = THREE.MathUtils.clamp(opts.lookRight ?? 0, -1, 1);
     const lookUp = THREE.MathUtils.clamp(opts.lookUp ?? 0, -1, 1);
     const desireYaw = lookRight * swivelSpeed * RL_CAMERA.SWIVEL_YAW_PER_SPEED;
@@ -215,7 +294,7 @@ export class ChaseCamera {
       if (Math.abs(this.swivelPitch) < 1e-4) this.swivelPitch = 0;
     }
 
-    // Stiffness zoom-out toward max speed.
+    // Stiffness zoom-out toward max speed (also applies in ball cam per RL).
     const speedUu = opts.velocity ? opts.velocity.length() / UU : 0;
     const superFrac = THREE.MathUtils.clamp(
       speedUu / RL_CAMERA.STIFFNESS_ZOOM_SPEED,
@@ -225,35 +304,109 @@ export class ChaseCamera {
     const dist =
       dist0 + (1 - stiff) * superFrac * RL_CAMERA.STIFFNESS_ZOOM_UU * UU;
 
-    // Focus (pre-swivel): angle pitch, or ball cam look-at.
-    if (ballCam && opts.lookAt) {
-      this.camLook.copy(opts.lookAt);
-    } else {
-      const lookLift = height + dist * Math.tan(angleRad);
-      this.camLook.copy(opts.target).addScaledVector(up, lookLift);
-      // Drill soft bias only when lookAt is provided without ball cam.
-      if (opts.lookAt) this.camLook.lerp(opts.lookAt, 0.08);
-    }
+    // Focus pivot shared by both views (vehicle + Height).
+    this.tmp2.copy(opts.target).addScaledVector(up, height);
 
-    // Base arm: behind car along lagged forward, up by height.
-    this.camPos
+    // ========== Car-cam rotation (yaw from stiffness arm, pitch = Angle) ==========
+    const baseCarYaw = Math.atan2(this.smoothDir.x, this.smoothDir.z);
+    const carYaw = baseCarYaw - this.swivelYaw;
+    const carPitch = angleRad + this.swivelPitch;
+
+    // ProfileCameraSettings arm: horizontal back + Height, look via tan(Angle).
+    // Keep this exact endpoint for blend=0 so car cam matches prior parity.
+    const carLookLift = height + dist * Math.tan(angleRad);
+    this.carCamLook.copy(opts.target).addScaledVector(up, carLookLift);
+    this.carCamPos
       .copy(opts.target)
       .addScaledVector(this.smoothDir, -dist)
       .addScaledVector(up, height);
-
-    // Apply CurrentSwivel as a rotation of the camera about the focus
-    // (CameraWrapper swivel rotator), not a position fudge.
     if (Math.abs(this.swivelYaw) > 1e-6 || Math.abs(this.swivelPitch) > 1e-6) {
-      this.tmp.copy(this.camPos).sub(this.camLook);
-      // Yaw around world-up (negate so +lookRight looks right / orbits left).
+      this.tmp.copy(this.carCamPos).sub(this.carCamLook);
       this.tmp.applyAxisAngle(up, -this.swivelYaw);
-      // Pitch around camera-right.
       this.tmpRight.crossVectors(up, this.tmp);
       if (this.tmpRight.lengthSq() > 1e-10) {
         this.tmpRight.normalize();
         this.tmp.applyAxisAngle(this.tmpRight, this.swivelPitch);
       }
-      this.camPos.copy(this.camLook).add(this.tmp);
+      this.carCamPos.copy(this.carCamLook).add(this.tmp);
+    }
+
+    // ========== Ball-cam (Focus − Forward×Distance) ==========
+    let baseBallYaw = baseCarYaw;
+    let baseBallPitch = angleRad;
+    if (opts.lookAt) {
+      this.tmp.copy(opts.lookAt).sub(this.tmp2);
+      const horizSq = this.tmp.x * this.tmp.x + this.tmp.z * this.tmp.z;
+      const horiz = Math.sqrt(horizSq);
+      if (horizSq > 1e-8) {
+        baseBallYaw = Math.atan2(this.tmp.x, this.tmp.z);
+      }
+      if (horiz > 1e-5 || Math.abs(this.tmp.y) > 1e-5) {
+        const rawPitch = Math.atan2(this.tmp.y, Math.max(horiz, 1e-6));
+        // Only pitch *up* from Angle toward the ball (stable near ground).
+        baseBallPitch = THREE.MathUtils.clamp(
+          Math.max(angleRad, rawPitch),
+          angleRad,
+          RL_CAMERA.BALL_CAM_MAX_PITCH,
+        );
+      }
+    }
+    const ballYaw = baseBallYaw - this.swivelYaw;
+    const ballPitch = THREE.MathUtils.clamp(
+      baseBallPitch + this.swivelPitch,
+      angleRad - RL_CAMERA.SWIVEL_PITCH_PER_SPEED * 10,
+      RL_CAMERA.BALL_CAM_MAX_PITCH,
+    );
+    forwardFromYawPitch(
+      this.tmpBallFwd,
+      ballYaw,
+      ballPitch,
+      up,
+      this.tmpRight,
+    );
+    this.ballCamPos.copy(this.tmp2).addScaledVector(this.tmpBallFwd, -dist);
+    this.ballCamLook.copy(this.tmp2).addScaledVector(this.tmpBallFwd, dist);
+
+    // ========== TransitionSpeed: timed linterp on Focus/Rotation view ==========
+    const ballTarget = ballCam && opts.lookAt ? 1 : 0;
+    if (opts.snap) {
+      this._ballTarget = ballTarget;
+      this._transitionFrom = ballTarget;
+      this._transitionElapsed = 1;
+      this.ballCamBlend = ballTarget;
+    } else if (ballTarget !== this._ballTarget) {
+      // Restart blend from the current visual blend (supports mid-transition toggle).
+      this._transitionFrom = this.ballCamBlend;
+      this._ballTarget = ballTarget;
+      this._transitionElapsed = dt;
+    } else {
+      this._transitionElapsed += dt;
+    }
+    const blendSpeed = transition * RL_CAMERA.TRANSITION_SPEED_SCALE;
+    this.ballCamBlend = linterpScalar(
+      this._transitionFrom,
+      this._ballTarget,
+      this._transitionElapsed,
+      blendSpeed,
+    );
+    const b = this.ballCamBlend;
+
+    if (b <= 1e-4) {
+      this.camPos.copy(this.carCamPos);
+      this.camLook.copy(this.carCamLook);
+    } else if (b >= 1 - 1e-4) {
+      this.camPos.copy(this.ballCamPos);
+      this.camLook.copy(this.ballCamLook);
+    } else {
+      // Blend rotation around Focus (Psyonix view model), not world-space
+      // positions — world lerp tunnels through the car on ~180° flips.
+      const yaw = lerpAngle(carYaw, ballYaw, b);
+      const pitch = carPitch + (ballPitch - carPitch) * b;
+      forwardFromYawPitch(this.tmp, yaw, pitch, up, this.tmpRight);
+      this.camPos.copy(this.tmp2).addScaledVector(this.tmp, -dist);
+      // Look: car elevated focus → along blended forward through Focus.
+      this.ballCamLook.copy(this.tmp2).addScaledVector(this.tmp, dist);
+      this.camLook.copy(this.carCamLook).lerp(this.ballCamLook, b);
     }
 
     // ClipToField — keep camera above the floor.
@@ -274,15 +427,11 @@ export class ChaseCamera {
       }
     }
 
-    // TransitionSpeed → BakkesMod linterp speed for body + look.
-    if (opts.snap || !this._ready) {
-      this.smoothPos.copy(this.camPos);
-      this.smoothLook.copy(this.camLook);
-      this._ready = true;
-    } else {
-      linterp(this.smoothPos, this.smoothPos, this.camPos, dt, transition);
-      linterp(this.smoothLook, this.smoothLook, this.camLook, dt, transition * 1.15);
-    }
+    // Body + look snap to the derived view. RL does not add a second look lag
+    // on top of TransitionSpeed / stiffness.
+    this.smoothPos.copy(this.camPos);
+    this.smoothLook.copy(this.camLook);
+    this._ready = true;
 
     camera.position.copy(this.smoothPos);
     camera.up.copy(up);
@@ -293,5 +442,9 @@ export class ChaseCamera {
     this._ready = false;
     this.swivelYaw = 0;
     this.swivelPitch = 0;
+    this.ballCamBlend = 0;
+    this._transitionElapsed = 0;
+    this._transitionFrom = 0;
+    this._ballTarget = 0;
   }
 }
