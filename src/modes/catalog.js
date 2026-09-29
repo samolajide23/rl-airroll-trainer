@@ -112,7 +112,7 @@ export const PHASES = [
   {
     id: "air-dribble",
     title: "Air Dribble",
-    blurb: "Pop, boost tap, hover, wall, and steer — Shift/A to boost.",
+    blurb: "Pop, boost tap, hover, wall, and steer — uses your boost bind.",
     modes: [
       {
         id: "dribble-pop",

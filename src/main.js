@@ -32,10 +32,9 @@ import {
 import {
   BALL_CAM_MODE_OPTIONS,
   BIND_LABELS,
+  BIND_SECTIONS,
   CAMERA_SLIDERS,
-  DEFAULT_BINDS,
   PAD_AXIS_OPTIONS,
-  PAD_BUTTON_ACTIONS,
   formatControlsHelp,
   formatKeyCode,
   formatPadButton,
@@ -611,66 +610,96 @@ function buildCameraList() {
   );
 }
 
+/**
+ * @param {string | null} padSpec
+ * @returns {{ kind: "button", key: string } | { kind: "stick", label: string } | { kind: "none" }}
+ */
+function parsePadSpec(padSpec) {
+  if (!padSpec) return { kind: "none" };
+  if (padSpec.startsWith("stick:")) {
+    return { kind: "stick", label: padSpec.slice("stick:".length) };
+  }
+  return { kind: "button", key: padSpec };
+}
+
 function buildBindList() {
   const binds = getBinds();
   const pad = getPad();
-  const padActions = new Set(PAD_BUTTON_ACTIONS);
   bindListEl.replaceChildren();
   updatePadStatusLine();
 
-  for (const action of Object.keys(DEFAULT_BINDS)) {
-    const row = document.createElement("div");
-    row.className = "bind-row";
+  for (const section of BIND_SECTIONS) {
+    const sectionTitle = document.createElement("p");
+    sectionTitle.className = "settings-section-title bind-section-title";
+    sectionTitle.textContent = section.title;
+    bindListEl.append(sectionTitle);
 
-    const label = document.createElement("span");
-    label.className = "bind-label";
-    label.textContent = BIND_LABELS[action] ?? action;
+    for (const entry of section.actions) {
+      const action = entry.id;
+      const row = document.createElement("div");
+      row.className = "bind-row bind-row-cols";
 
-    const keysWrap = document.createElement("div");
-    keysWrap.className = "bind-keys";
+      const label = document.createElement("span");
+      label.className = "bind-label";
+      label.textContent = BIND_LABELS[action] ?? action;
 
-    const keyBtn = document.createElement("button");
-    keyBtn.type = "button";
-    keyBtn.className = "bind-key";
-    keyBtn.title = "Keyboard";
-    if (listeningKeyAction === action) {
-      keyBtn.classList.add("listening");
-      keyBtn.textContent = "Press a key…";
-    } else {
-      const code = binds[action];
-      keyBtn.textContent = code ? formatKeyCode(code) : "—";
-    }
-    keyBtn.addEventListener("click", () => {
-      listeningPadAction = null;
-      listeningKeyAction = action;
-      rebuildControls();
-    });
-    keysWrap.append(keyBtn);
-
-    if (padActions.has(action)) {
-      const padBtn = document.createElement("button");
-      padBtn.type = "button";
-      padBtn.className = "bind-key bind-key-pad";
-      padBtn.title = "Controller";
-      if (listeningPadAction === action) {
-        padBtn.classList.add("listening");
-        padBtn.textContent = "Press a button…";
+      const keyBtn = document.createElement("button");
+      keyBtn.type = "button";
+      keyBtn.className = "bind-key";
+      keyBtn.title = "Click, then press any key or mouse button. Backspace clears.";
+      if (listeningKeyAction === action) {
+        keyBtn.classList.add("listening");
+        keyBtn.textContent = "Press key / mouse…";
       } else {
-        padBtn.textContent = formatPadButton(
-          /** @type {number} */ (pad[/** @type {keyof typeof pad} */ (action)]),
-        );
+        const code = binds[action];
+        keyBtn.textContent = code ? formatKeyCode(code) : "—";
       }
-      padBtn.addEventListener("click", () => {
-        listeningKeyAction = null;
-        listeningPadAction = action;
-        padListenIgnore = snapshotPressedButtons();
+      keyBtn.addEventListener("click", () => {
+        listeningPadAction = null;
+        listeningKeyAction = action;
         rebuildControls();
       });
-      keysWrap.append(padBtn);
-    }
 
-    row.append(label, keysWrap);
-    bindListEl.append(row);
+      const padSpec = parsePadSpec(entry.pad);
+      /** @type {HTMLElement} */
+      let padCell;
+      if (padSpec.kind === "stick") {
+        padCell = document.createElement("span");
+        padCell.className = "bind-key bind-key-pad bind-key-fixed";
+        padCell.textContent = padSpec.label;
+        padCell.title = "Always Left Stick (Rocket League)";
+      } else if (padSpec.kind === "button") {
+        const padKey = padSpec.key;
+        const padBtn = document.createElement("button");
+        padBtn.type = "button";
+        padBtn.className = "bind-key bind-key-pad";
+        padBtn.title = "Click, then press a controller button";
+        if (listeningPadAction === padKey) {
+          padBtn.classList.add("listening");
+          padBtn.textContent = "Press a button…";
+        } else {
+          padBtn.textContent = formatPadButton(
+            /** @type {number | null} */ (
+              pad[/** @type {keyof typeof pad} */ (padKey)]
+            ),
+          );
+        }
+        padBtn.addEventListener("click", () => {
+          listeningKeyAction = null;
+          listeningPadAction = padKey;
+          padListenIgnore = snapshotPressedButtons();
+          rebuildControls();
+        });
+        padCell = padBtn;
+      } else {
+        padCell = document.createElement("span");
+        padCell.className = "bind-key bind-key-pad bind-key-fixed";
+        padCell.textContent = "—";
+      }
+
+      row.append(label, keyBtn, padCell);
+      bindListEl.append(row);
+    }
   }
 }
 
@@ -899,15 +928,51 @@ window.addEventListener(
     if (!listeningKeyAction) return;
     e.preventDefault();
     e.stopPropagation();
-    if (e.code === "Escape") return;
+    if (e.code === "Escape") {
+      // Cancel listen only — latch Esc so the frame loop does not also leave Settings.
+      cancelListening();
+      escLatch = true;
+      return;
+    }
+    // Backspace / Delete clear the bind (unbind), matching RL Controls.
+    const code =
+      e.code === "Backspace" || e.code === "Delete" ? "" : e.code;
     setBind(
       /** @type {import("./shared/settings.js").BindAction} */ (
         listeningKeyAction
       ),
-      e.code,
+      code,
     );
     listeningKeyAction = null;
     rebuildControls();
+  },
+  true,
+);
+
+// Any mouse button can be bound while listening (LMB/RMB/MMB/Mouse3/4).
+window.addEventListener(
+  "mousedown",
+  (e) => {
+    if (!listeningKeyAction) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setBind(
+      /** @type {import("./shared/settings.js").BindAction} */ (
+        listeningKeyAction
+      ),
+      `Mouse${e.button}`,
+    );
+    listeningKeyAction = null;
+    rebuildControls();
+  },
+  true,
+);
+
+window.addEventListener(
+  "contextmenu",
+  (e) => {
+    if (!listeningKeyAction) return;
+    e.preventDefault();
   },
   true,
 );

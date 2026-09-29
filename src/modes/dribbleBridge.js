@@ -1,12 +1,19 @@
 import * as THREE from "three";
 import { PracticeBall } from "../shared/ball.js";
-import { keys, readAerialInput } from "../shared/input.js";
+import { RL } from "../shared/carPhysics.js";
+import { applyModeChaseCamera, UU } from "../shared/chaseCamera.js";
 import { formatConsistency, recordAttempt } from "../shared/metrics.js";
 import { AerialDrillBase } from "../shared/modeBase.js";
+
+const BOOST_ACCEL = RL.BOOST_ACCEL_AIR * UU;
+const MAX_SPEED = RL.MAX_SPEED * UU;
 
 /**
  * Phase 3 bridge drills.
  * variant: popChase | boostTap | hover | wallAir | steerDribble
+ *
+ * Orientation uses shared {@link AerialBody}; boost translation uses the same
+ * RocketSim air-boost accel / use-rate / max-speed as Free Play & Rings.
  */
 export class DribbleBridgeMode extends AerialDrillBase {
   /**
@@ -33,11 +40,12 @@ export class DribbleBridgeMode extends AerialDrillBase {
     this.best = 0;
     this.touches = 0;
     this.boostHeld = 0;
-    this.speed = 0;
+    this.boost = RL.BOOST_MAX;
+    this.boosting = false;
+    this.vel = new THREE.Vector3();
     this.hoverTime = 0;
     this.touchCooldown = 0;
     this.tmp = new THREE.Vector3();
-    this.camOffset.set(0, 5.5, -13);
 
     if (variant === "wallAir") {
       const wall = new THREE.Mesh(
@@ -64,7 +72,9 @@ export class DribbleBridgeMode extends AerialDrillBase {
   beginRound() {
     this.touches = 0;
     this.boostHeld = 0;
-    this.speed = 0;
+    this.boost = RL.BOOST_MAX;
+    this.boosting = false;
+    this.vel.set(0, 0, 0);
     this.hoverTime = 0;
     this.touchCooldown = 0;
     this.resetCar();
@@ -78,7 +88,7 @@ export class DribbleBridgeMode extends AerialDrillBase {
     } else if (this.variant === "boostTap") {
       this.ball.setPosition([0, 2.5, 4]);
       this.ctx.hud.status.textContent =
-        "Pulse Shift/A boost to reach the ball — don't hold it";
+        "Pulse boost to reach the ball — don't hold it";
     } else if (this.variant === "hover") {
       this.ball.setPosition([0, 2.2, 1.8]);
       this.ctx.hud.status.textContent = "Keep the ball near your nose (~3s)";
@@ -89,17 +99,28 @@ export class DribbleBridgeMode extends AerialDrillBase {
     } else {
       this.ball.setPosition([0, 2.0, 2.2]);
       this.ctx.hud.status.textContent =
-        "Pop the ball, then chase for 2–3 touches (Shift/A = boost)";
+        "Pop the ball, then chase for 2–3 touches";
     }
   }
 
-  isBoosting() {
-    if (keys.has("ShiftLeft") || keys.has("ShiftRight")) return true;
-    const pads = navigator.getGamepads?.() ?? [];
-    for (const pad of pads) {
-      if (pad?.buttons[0]?.pressed) return true;
-    }
-    return false;
+  /**
+   * @param {number} dt
+   */
+  updateCamera(dt) {
+    this.carAxes();
+    const input = this._lastInput;
+    applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
+      target: this.car.position,
+      forward: this.forward,
+      velocity: this.vel,
+      worldUp: this.worldUp,
+      onGround: false,
+      boosting: this.boosting,
+      lookRight: input?.lookRight ?? 0,
+      lookUp: input?.lookUp ?? 0,
+      lookBehind: Boolean(input?.lookBehind),
+      ballCam: false,
+    });
   }
 
   /**
@@ -116,19 +137,22 @@ export class DribbleBridgeMode extends AerialDrillBase {
     const input = this.stepCar(dt);
     this.touchCooldown = Math.max(0, this.touchCooldown - dt);
 
-    const boosting = this.isBoosting();
-    if (boosting) {
+    // Same air-boost params as Free Play / Rings (settings bind, not hardcoded Shift).
+    this.boosting = Boolean(input.boost) && this.boost > 0;
+    if (this.boosting) {
       this.boostHeld += dt;
       const { forward } = this.carAxes();
-      this.speed = Math.min(28, this.speed + 18 * dt);
-      this.car.position.addScaledVector(forward, this.speed * dt * 0.35);
+      this.vel.addScaledVector(forward, BOOST_ACCEL * dt);
+      this.boost = Math.max(0, this.boost - RL.BOOST_USE * dt);
       this.car.userData.setBoost?.(true);
     } else {
-      this.speed = Math.max(0, this.speed - 12 * dt);
       this.car.userData.setBoost?.(false);
     }
+    if (this.vel.length() > MAX_SPEED) this.vel.setLength(MAX_SPEED);
+    this.car.position.addScaledVector(this.vel, dt);
 
-    this.ball.step(dt, { gravity: 8, drag: 0.2 });
+    // RL practice-ball gravity / drag (defaults match Free Play scale).
+    this.ball.step(dt);
 
     const nose = this.tmp
       .set(0, 0.1, 1.15)
@@ -170,7 +194,8 @@ export class DribbleBridgeMode extends AerialDrillBase {
     }
 
     if (this.variant === "steerDribble") {
-      const steering = Math.abs(input.yaw) + (input.airLeft || input.airRight ? 1 : 0);
+      const steering =
+        Math.abs(input.yaw) + (input.airLeft || input.airRight ? 1 : 0);
       if (dist < 1.8 && steering > 0.2) {
         this.hoverTime += dt;
         this.ctx.hud.alignFill.style.width = `${Math.min(100, Math.round((this.hoverTime / 2.5) * 100))}%`;
@@ -184,14 +209,7 @@ export class DribbleBridgeMode extends AerialDrillBase {
       this.ctx.hud.alignFill.style.width = `${Math.round(Math.max(0, 1 - dist / 5) * 100)}%`;
     }
 
-    // silence unused if readAerialInput imported for future
-    void readAerialInput;
-
-    const look = this.car.position
-      .clone()
-      .add(this.ball.mesh.position)
-      .multiplyScalar(0.5);
-    this.updateCamera(dt, look);
+    this.updateCamera(dt);
   }
 
   onSuccess() {

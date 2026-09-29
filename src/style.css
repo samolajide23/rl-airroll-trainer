@@ -615,7 +615,7 @@ kbd {
 }
 
 .settings-panel {
-  width: min(560px, 100%);
+  width: min(720px, 100%);
 }
 
 .settings-title {
@@ -680,8 +680,47 @@ kbd {
   color: var(--accent);
 }
 
+.bind-section-title {
+  margin: 12px 0 4px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 16, 24, 0.96) 60%,
+    rgba(8, 16, 24, 0)
+  );
+  padding: 4px 0 8px;
+  z-index: 1;
+}
+
+.bind-section-title:first-child {
+  margin-top: 0;
+}
+
+.bind-columns-header {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1.2fr) minmax(7rem, 1fr) minmax(7.5rem, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 0 12px;
+}
+
+.bind-col-head {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+.bind-col-spacer {
+  display: block;
+}
+
 #panel-controls .bind-list {
-  max-height: min(36vh, 320px);
+  max-height: min(42vh, 380px);
 }
 
 #panel-controls .pad-options-list {
@@ -759,6 +798,13 @@ kbd {
   background: var(--panel);
 }
 
+.bind-row-cols {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1.2fr) minmax(7rem, 1fr) minmax(7.5rem, 1fr);
+  justify-content: stretch;
+  gap: 10px;
+}
+
 .bind-label {
   font-size: 0.92rem;
   font-weight: 600;
@@ -766,11 +812,12 @@ kbd {
 }
 
 .bind-key {
-  min-width: 7.5rem;
+  min-width: 0;
+  width: 100%;
   font: inherit;
   font-size: 0.85rem;
   font-weight: 650;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.05);
@@ -780,8 +827,17 @@ kbd {
 }
 
 .bind-key-pad {
-  min-width: 8.5rem;
   border-color: rgba(61, 214, 198, 0.28);
+}
+
+.bind-key-fixed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  opacity: 0.85;
+  color: var(--muted);
+  pointer-events: none;
 }
 
 .bind-key:hover {
@@ -1037,6 +1093,21 @@ kbd {
   .bind-list,
   #panel-controls .bind-list {
     max-height: min(38vh, 220px);
+  }
+
+  .bind-columns-header,
+  .bind-row-cols {
+    grid-template-columns: minmax(5.5rem, 1.1fr) minmax(5.5rem, 1fr) minmax(5.5rem, 1fr);
+    gap: 6px;
+  }
+
+  .bind-key {
+    font-size: 0.78rem;
+    padding: 7px 6px;
+  }
+
+  .bind-col-head {
+    font-size: 0.6rem;
   }
 }
 

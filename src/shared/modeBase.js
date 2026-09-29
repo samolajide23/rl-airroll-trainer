@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { makeCar } from "./car.js";
 import { AerialBody, FixedStepClock, aerialControlAxes } from "./carPhysics.js";
-import { ChaseCamera } from "./chaseCamera.js";
+import { applyModeChaseCamera, ChaseCamera } from "./chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "./input.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
 
 /**
  * Shared setup for aerial drills (orientation-focused, pinned in place).
  * Air torque comes from the shared {@link AerialBody} in `carPhysics.js`.
+ * Camera uses the same ProfileCameraSettings chase as Free Play / Rings.
  */
 export class AerialDrillBase {
   /**
@@ -27,6 +28,9 @@ export class AerialDrillBase {
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
     this.right = new THREE.Vector3();
+    this.worldUp = new THREE.Vector3(0, 1, 0);
+    /** Zero velocity — pinned drills; keeps stiffness-zoom path consistent. */
+    this.velZero = new THREE.Vector3(0, 0, 0);
 
     this.spaceLatch = false;
     this.rLatch = false;
@@ -36,21 +40,8 @@ export class AerialDrillBase {
     /** @type {"both" | "left" | "right"} */
     this.airRollLock = "both";
 
-    /** @type {ReturnType<typeof readControls> & { roll: number }} */
-    this._lastInput = {
-      throttle: 0,
-      steer: 0,
-      pitch: 0,
-      yaw: 0,
-      roll: 0,
-      lookRight: 0,
-      lookUp: 0,
-      boost: false,
-      jump: false,
-      airLeft: false,
-      airRight: false,
-      usingPad: false,
-    };
+    /** @type {ReturnType<typeof readControls>} */
+    this._lastInput = readControls();
   }
 
   start() {
@@ -95,7 +86,7 @@ export class AerialDrillBase {
   _stepOnce(dt) {
     const input = readControls();
     // Pinned aerial drills are always "airborne" — apply RL free air-roll
-    // (powerslide remaps yaw→roll) so DAR practice matches Free Play / RL.
+    // (Air Roll remaps yaw→roll) so DAR practice matches Free Play / RL.
     const axes = aerialControlAxes(input, {
       onGround: false,
       airRollLock: this.airRollLock,
@@ -132,21 +123,23 @@ export class AerialDrillBase {
   }
 
   /**
-   * RL chase camera behind the car (Settings → Camera).
+   * Same ProfileCameraSettings chase as Free Play / Rings (car-cam only).
    * @param {number} dt
-   * @param {THREE.Vector3} [lookAt]
    */
-  updateCamera(dt, lookAt) {
+  updateCamera(dt) {
     this.carAxes();
     const input = this._lastInput;
-    this.chase.update(this.ctx.camera, dt, {
+    applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
       target: this.car.position,
       forward: this.forward,
-      lookAt,
+      velocity: this.velZero,
+      worldUp: this.worldUp,
       onGround: false,
       boosting: Boolean(input?.boost),
       lookRight: input?.lookRight ?? 0,
       lookUp: input?.lookUp ?? 0,
+      lookBehind: Boolean(input?.lookBehind),
+      ballCam: false,
     });
   }
 

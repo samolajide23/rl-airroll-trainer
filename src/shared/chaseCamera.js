@@ -224,7 +224,14 @@ export class ChaseCamera {
     this._transitionElapsed = 0;
     this._transitionFrom = 0;
     this._ballTarget = 0;
-    this.update(camera, 1 / 60, { target, forward, lookAt, snap: true });
+    // Car-cam unless a mode explicitly opts into ball cam (Free Play only).
+    this.update(camera, 1 / 60, {
+      target,
+      forward,
+      lookAt,
+      ballCam: false,
+      snap: true,
+    });
   }
 
   /**
@@ -240,6 +247,7 @@ export class ChaseCamera {
    *   boosting?: boolean,
    *   lookRight?: number,
    *   lookUp?: number,
+   *   lookBehind?: boolean,
    *   ballCam?: boolean,
    *   snap?: boolean,
    * }} opts
@@ -269,7 +277,9 @@ export class ChaseCamera {
         : RL_CAMERA.TRANSITION_SPEED,
     );
     const swivelSpeed = cfg.swivelSpeed ?? RL_CAMERA.SWIVEL_SPEED;
-    const ballCam = Boolean(opts.ballCam ?? cfg.ballCam);
+    // Default OFF — Free Play must pass ballCam explicitly. Prevents Settings
+    // ballCam / Free Play toggle leaking into Rings / drills via lookAt.
+    const ballCam = Boolean(opts.ballCam);
     const shakeOn = Boolean(cfg.shake);
 
     // --- Follow forward: stable horizontal chase yaw ---
@@ -371,7 +381,11 @@ export class ChaseCamera {
     this.tmp2.copy(opts.target).addScaledVector(up, height);
 
     // ========== Car-cam rotation (yaw from stiffness arm, pitch = Angle) ==========
-    const baseCarYaw = Math.atan2(this.smoothDir.x, this.smoothDir.z);
+    // Rear View (look behind) flips the chase arm 180° around the car.
+    const lookBehind = Boolean(opts.lookBehind);
+    const rearFlip = lookBehind ? Math.PI : 0;
+    const baseCarYaw =
+      Math.atan2(this.smoothDir.x, this.smoothDir.z) + rearFlip;
     const carYaw = baseCarYaw - this.swivelYaw;
     const carPitch = angleRad + this.swivelPitch;
 
@@ -379,9 +393,11 @@ export class ChaseCamera {
     // Keep this exact endpoint for blend=0 so car cam matches prior parity.
     const carLookLift = height + dist * Math.tan(angleRad);
     this.carCamLook.copy(opts.target).addScaledVector(up, carLookLift);
+    // When looking behind, place the camera on the opposite side of the car.
+    const armSign = lookBehind ? 1 : -1;
     this.carCamPos
       .copy(opts.target)
-      .addScaledVector(this.smoothDir, -dist)
+      .addScaledVector(this.smoothDir, armSign * dist)
       .addScaledVector(up, height);
     if (Math.abs(this.swivelYaw) > 1e-6 || Math.abs(this.swivelPitch) > 1e-6) {
       this.tmp.copy(this.carCamPos).sub(this.carCamLook);
@@ -395,9 +411,10 @@ export class ChaseCamera {
     }
 
     // ========== Ball-cam (Focus − Forward×Distance) ==========
+    // Rear View overrides ball cam while held (RL: show behind the car).
     let baseBallYaw = baseCarYaw;
     let baseBallPitch = angleRad;
-    if (opts.lookAt) {
+    if (opts.lookAt && !lookBehind) {
       this.tmp.copy(opts.lookAt).sub(this.tmp2);
       const horizSq = this.tmp.x * this.tmp.x + this.tmp.z * this.tmp.z;
       const horiz = Math.sqrt(horizSq);
@@ -511,4 +528,47 @@ export class ChaseCamera {
     this._transitionFrom = 0;
     this._ballTarget = 0;
   }
+}
+
+const DEFAULT_WORLD_UP = new THREE.Vector3(0, 1, 0);
+const ZERO_VEL = new THREE.Vector3(0, 0, 0);
+
+/**
+ * Shared chase update used by every mode so camera opts stay one contract.
+ * ProfileCameraSettings (FOV/distance/height/angle/stiffness/swivel/transition)
+ * always come from {@link getCamera} inside {@link ChaseCamera.update}.
+ *
+ * @param {ChaseCamera} chase
+ * @param {THREE.PerspectiveCamera} camera
+ * @param {number} dt
+ * @param {{
+ *   target: THREE.Vector3,
+ *   forward?: THREE.Vector3,
+ *   velocity?: THREE.Vector3,
+ *   lookAt?: THREE.Vector3,
+ *   worldUp?: THREE.Vector3,
+ *   onGround?: boolean,
+ *   boosting?: boolean,
+ *   lookRight?: number,
+ *   lookUp?: number,
+ *   lookBehind?: boolean,
+ *   ballCam?: boolean,
+ *   snap?: boolean,
+ * }} opts
+ */
+export function applyModeChaseCamera(chase, camera, dt, opts) {
+  chase.update(camera, dt, {
+    target: opts.target,
+    forward: opts.forward,
+    velocity: opts.velocity ?? ZERO_VEL,
+    lookAt: opts.ballCam ? opts.lookAt : undefined,
+    worldUp: opts.worldUp ?? DEFAULT_WORLD_UP,
+    onGround: Boolean(opts.onGround),
+    boosting: Boolean(opts.boosting),
+    lookRight: opts.lookRight ?? 0,
+    lookUp: opts.lookUp ?? 0,
+    lookBehind: Boolean(opts.lookBehind),
+    ballCam: Boolean(opts.ballCam),
+    snap: Boolean(opts.snap),
+  });
 }

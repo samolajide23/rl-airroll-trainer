@@ -12,6 +12,22 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => keys.delete(e.code));
 
+// Mouse buttons as bindable codes: Mouse0 (LMB), Mouse1 (RMB), Mouse2 (MMB), …
+window.addEventListener("mousedown", (e) => {
+  keys.add(`Mouse${e.button}`);
+  const binds = getBinds();
+  const code = `Mouse${e.button}`;
+  if (Object.values(binds).includes(code)) e.preventDefault();
+});
+window.addEventListener("mouseup", (e) => {
+  keys.delete(`Mouse${e.button}`);
+});
+window.addEventListener("blur", () => {
+  for (const code of [...keys]) {
+    if (code.startsWith("Mouse")) keys.delete(code);
+  }
+});
+
 /**
  * @param {number} v
  * @param {number} deadzone
@@ -77,8 +93,9 @@ export function readAerialInput() {
  *
  * Rocket League mapping:
  * - Throttle / brake are separate from pitch (triggers on pad, W/S on KB)
- * - Left stick X = steer (ground) / yaw (air)
+ * - Steer (ground) and yaw (air) are separate keyboard binds; pad left stick drives both
  * - Left stick Y = pitch only (stick back = nose up)
+ * - Air Roll hold remaps yaw → roll while airborne (see {@link ../airRoll.js})
  * - +pitch nose up, +yaw nose right, +roll roll right, +steer turn right
  *
  * @returns {{
@@ -92,6 +109,8 @@ export function readAerialInput() {
  *   boost: boolean,
  *   jump: boolean,
  *   powerslide: boolean,
+ *   airRoll: boolean,
+ *   lookBehind: boolean,
  *   airLeft: boolean,
  *   airRight: boolean,
  *   usingPad: boolean,
@@ -111,22 +130,21 @@ export function readControls() {
   let boost = keyHeld("boost");
   let jump = keyHeld("jump");
   let powerslide = keyHeld("powerslide");
+  let airRoll = keyHeld("airRoll");
+  let lookBehind = keyHeld("lookBehind");
   let usingPad = false;
   let usingTouch = false;
 
   // Keyboard — RL dual-binds: W = throttle + pitch-down, S = reverse + pitch-up.
+  // Steer and yaw are separate actions (may share A/D by default).
   if (keyHeld("throttle")) throttle += 1;
   if (keyHeld("reverse")) throttle -= 1;
   if (keyHeld("pitchUp")) pitch += 1;
   if (keyHeld("pitchDown")) pitch -= 1;
-  if (keyHeld("yawRight")) {
-    yaw += 1;
-    steer += 1;
-  }
-  if (keyHeld("yawLeft")) {
-    yaw -= 1;
-    steer -= 1;
-  }
+  if (keyHeld("steerRight")) steer += 1;
+  if (keyHeld("steerLeft")) steer -= 1;
+  if (keyHeld("yawRight")) yaw += 1;
+  if (keyHeld("yawLeft")) yaw -= 1;
 
   const touch = readTouchControls();
   if (touch.usingTouch) {
@@ -165,7 +183,10 @@ export function readControls() {
       Math.abs(padThrottle) > 0.02;
     // A resting pad must not kill keyboard/touch drive (common with pads left plugged in).
     const kbOrTouchDrive =
-      Math.abs(pitch) > 0 || Math.abs(yaw) > 0 || Math.abs(throttle) > 0;
+      Math.abs(pitch) > 0 ||
+      Math.abs(yaw) > 0 ||
+      Math.abs(steer) > 0 ||
+      Math.abs(throttle) > 0;
     if (padDriveActive || !kbOrTouchDrive) {
       usingPad = true;
       pitch = pitchStick;
@@ -178,11 +199,9 @@ export function readControls() {
     airRight = airRight || buttonPressed(pad, cfg.airRollRight);
     boost = boost || buttonPressed(pad, cfg.boost);
     jump = jump || buttonPressed(pad, cfg.jump);
-    powerslide =
-      powerslide ||
-      buttonPressed(pad, cfg.powerslide) ||
-      // Many players bind powerslide + air roll on LB.
-      (buttonPressed(pad, cfg.airRollLeft) && !airRight);
+    powerslide = powerslide || buttonPressed(pad, cfg.powerslide);
+    airRoll = airRoll || buttonPressed(pad, cfg.airRoll);
+    lookBehind = lookBehind || buttonPressed(pad, cfg.lookBehind);
 
     if (!boost && buttonValue(pad, cfg.boost) > 0.3) boost = true;
 
@@ -195,7 +214,7 @@ export function readControls() {
     if (Math.abs(lookRight) > 0 || Math.abs(lookUp) > 0) usingPad = true;
   }
 
-  // Spec: +roll = roll right. Free air-roll (powerslide hold) is applied in stepCar.
+  // Spec: +roll = roll right. Free air-roll (Air Roll hold) is applied in stepCar.
   let roll = 0;
   if (airRight) roll += 1;
   if (airLeft) roll -= 1;
@@ -219,6 +238,8 @@ export function readControls() {
     boost,
     jump,
     powerslide,
+    airRoll,
+    lookBehind,
     airLeft,
     airRight,
     usingPad,
@@ -275,9 +296,11 @@ export function isActionDown(action) {
   if (action === "resetCar") return buttonPressed(pad, cfg.resetCar);
   if (action === "newTarget") return buttonPressed(pad, cfg.newTarget);
   if (action === "toggleBallCam") return buttonPressed(pad, cfg.toggleBallCam);
+  if (action === "lookBehind") return buttonPressed(pad, cfg.lookBehind);
   if (action === "boost") return buttonPressed(pad, cfg.boost);
   if (action === "jump") return buttonPressed(pad, cfg.jump);
   if (action === "powerslide") return buttonPressed(pad, cfg.powerslide);
+  if (action === "airRoll") return buttonPressed(pad, cfg.airRoll);
   if (action === "throttle") return buttonValue(pad, cfg.throttle) > 0.3;
   if (action === "reverse" || action === "brake") {
     return buttonValue(pad, cfg.brake) > 0.3;
