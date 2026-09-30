@@ -349,18 +349,19 @@ export class ChaseCamera {
     // --- Swivel (right stick) ---
     const lookRight = THREE.MathUtils.clamp(opts.lookRight ?? 0, -1, 1);
     const lookUp = THREE.MathUtils.clamp(opts.lookUp ?? 0, -1, 1);
-    const desireYaw = lookRight * swivelSpeed * RL_CAMERA.SWIVEL_YAW_PER_SPEED;
-    const desirePitch = lookUp * swivelSpeed * RL_CAMERA.SWIVEL_PITCH_PER_SPEED;
+    const desireYaw = lookRight * RL_CAMERA.SWIVEL_SPEED * RL_CAMERA.SWIVEL_YAW_PER_SPEED;
+    const desirePitch = lookUp * RL_CAMERA.SWIVEL_SPEED * RL_CAMERA.SWIVEL_PITCH_PER_SPEED;
     const stickHeld = Math.abs(lookRight) + Math.abs(lookUp) > 0.02;
     if (opts.snap) {
       this.swivelYaw = 0;
       this.swivelPitch = 0;
     } else if (stickHeld) {
-      const catchT = Math.min(1, dt * RL_CAMERA.SWIVEL_CATCH_RATE);
+      const catchRate = RL_CAMERA.SWIVEL_CATCH_RATE * swivelSpeed / RL_CAMERA.SWIVEL_SPEED;
+      const catchT = 1 - Math.exp(-Math.max(0, dt) * catchRate);
       this.swivelYaw += (desireYaw - this.swivelYaw) * catchT;
       this.swivelPitch += (desirePitch - this.swivelPitch) * catchT;
     } else {
-      const die = Math.min(1, dt * RL_CAMERA.SWIVEL_DIE_RATE);
+      const die = 1 - Math.exp(-Math.max(0, dt) * RL_CAMERA.SWIVEL_DIE_RATE);
       this.swivelYaw *= 1 - die;
       this.swivelPitch *= 1 - die;
       if (Math.abs(this.swivelYaw) < 1e-4) this.swivelYaw = 0;

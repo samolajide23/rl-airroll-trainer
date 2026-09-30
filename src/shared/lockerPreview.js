@@ -4,6 +4,7 @@
  */
 import * as THREE from "three";
 import { makeCar } from "./car.js";
+import { disposeScene } from "./disposeScene.js";
 import { isCarReady, preloadCars } from "./carAssets.js";
 
 /** @type {THREE.Scene | null} */
@@ -96,17 +97,7 @@ function applyCamera() {
 function disposePreviewCar() {
   if (!previewCar) return;
   if (scene) scene.remove(previewCar);
-  previewCar.traverse((obj) => {
-    if (obj.isMesh) {
-      obj.geometry?.dispose();
-      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-      // Dispose materials only — GLB texture maps are shared with the template cache.
-      for (const m of mats) m?.dispose();
-    } else if (obj.isLine) {
-      obj.geometry?.dispose();
-      obj.material?.dispose();
-    }
-  });
+  disposeScene(previewCar);
   previewCar = null;
   shownCarId = null;
 }

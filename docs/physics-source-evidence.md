@@ -1,5 +1,185 @@
 # Physics source evidence
 
+## Further offline contact probes
+
+Bullet 3.24 convex-plane collision begins with a supporting vertex and can add
+perturbed contacts to a persistent manifold. Applying only a support vertex to
+the trainer's flush-floor contact grouping worsened roof-recovery up-vector
+error to 171.181011 degrees. The change was removed.
+
+The reference's inverted initial pose has a float32 residual tilt of roughly
+8.742e-8. Tightening the corner depth-tie threshold from 1e-5 to 1e-7 did not
+resolve that contact: roof up-vector error worsened to 163.213973 degrees.
+This change was also removed. Original 66/73 movement results were restored.
+
+Version-matched vehicle source confirms wheel extra pushback is divided by total
+wheel count, not contacting wheel count, and the unilateral impulse formula
+already matches the trainer. Those suspected discrepancies were ruled out.
+Exact-reference-pose replay still shows the first Dominus two-wheel landing
+angular response discrepancy, so accumulated pose drift alone is insufficient.
+
+No solver improvement was retained from this pass. A support vertex, contact
+margin, perturbation, manifold reduction and persistence must be validated as a
+coherent contact-generation model rather than tuning these components separately.
+
+## Offline first-divergence isolation
+
+`node tools/physics-compare/first-divergence.mjs <scenario>` validates fixture
+compatibility and reports the first tick exceeding 0.5 uu/s velocity-vector
+error or 0.01 rad/s angular-velocity-vector error, with nearby frames.
+These diagnostic thresholds do not replace or relax existing regression budgets.
+
+| Scenario | First diagnostic tick | Velocity error (uu/s) | Angular velocity error (rad/s) |
+| --- | ---: | ---: | ---: |
+| Roof recovery | 28 | 239.362086 | 2.076086 |
+| Dominus landing | 59 | 0.000525 | 0.014701 |
+| Plank landing | 62 | 1.486208 | 0.005322 |
+| Breakout landing | 62 | 1.267728 | 0.001513 |
+| Hybrid landing | 63 | 0.583926 | 0.003156 |
+| Ceiling impact | 38 | 0.475583 | 0.011812 |
+| Powerslide release | 247 | 0.516746 | 0.000659 |
+
+At roof tick 28, reference vertical velocity is -204.691895 uu/s while JS is
++34.254987 uu/s. At tick 27 both are approximately -246.25 uu/s. Divergence begins
+at first chassis contact, before the recovery jump at tick 60. This localizes the
+problem to contact generation/response rather than aerial torque or jump force.
+
+Two offline probes were rejected and removed:
+
+- Using pre-force impact velocities for all contact restitution regressed the
+   previously passing floor-scrape flip to 4.914703 uu maximum position error.
+- Applying Bullet's split-turn ERP of 0.1 to all contact directions regressed that
+   flip to 1.927181 uu and roof recovery to 38.050335 uu. The existing contact
+   approximation depends on its current correction behavior; changing scaling
+   alone is not a complete Bullet manifold implementation.
+
+After removal, the original 66/73 movement gate results were restored. This pass
+adds reproducible diagnostics, not a retained solver improvement or parity claim.
+
+## Contact probe and camera correction: 2026-09-30
+
+A flush-floor multi-point contact probe worsened roof-recovery up-vector error
+from 13.374739 to 169.356005 degrees. It was removed; rerunning all 73 movement
+cases restored the original errors. A complete persistent-manifold solution
+remains unresolved. No tolerances were changed.
+
+Camera Swivel Speed no longer scales the maximum swivel angle. It scales the
+approach rate while preserving the former default yaw/pitch range. Exponential
+approach/return smoothing makes swivel state frame-rate independent. Tests check
+equal endpoints at speed 1 and 10, faster approach at speed 10, and equivalent
+state at 30 and 120 FPS. These tests establish internal consistency, not exact
+Rocket League timing or limits; synchronized live-game recordings are still
+needed to calibrate those values.
+
+## Additional movement coverage check: 2026-09-30
+
+Expanded the reference suite from 69 to 73 scenarios. Sustained forward-flip
+cancellation at 1800 uu/s, partial cancellation, opposing-yaw/roll stall, and
+neutral jump from an airborne flip-reset state all pass unchanged trajectory
+budgets against fresh RocketSim 2.2.1 references. Overall movement is 66/73;
+the existing seven contact/landing failures remain.
+
+The older `flip_forward_cancel` scenario only holds cancellation through tick
+45, then releases it while dodge torque remains active. Its final spin is not
+evidence that sustained flip cancellation was tested. The new sustained case
+holds opposing pitch through tick 90.
+
+Additional gaps identified, not resolved or certified:
+
+- Gamepad snapshots are polled per render frame, not independently at 120 Hz.
+   Catch-up steps replay one snapshot; fast directional changes are not reconstructed.
+- Fixed keyboard/mouse jump taps lost between render frames: Free Play now
+   consumes queued press/release transitions on physics ticks, including two
+   rapid taps. Blur, car reset and mode exit clear pending transitions.
+   This preserves edges but does not reconstruct their original timestamps or
+   the pitch/yaw state at each edge. Other modes still read held input directly.
+- The controller deadzone is independently remapped on each axis, followed by
+   sensitivity and clamping. Current-game diagonal deadzone behavior and whether
+   dodge selection uses pre-sensitivity input have not been independently measured.
+- Fixed shared camera/driving deadzone: Camera Swivel Deadzone is independently
+   configurable and defaults to 0.10, matching the local INI free-look threshold.
+- Acquiring a flip reset through actual wheel-ball contact is not covered by the
+   new preset-state test. Chained wavedashes, speedflips, half-flip recovery,
+   wall/ceiling resets, rapid boost taps and post/corner pinches need dedicated
+   contact-rich fixtures and live-game recordings.
+- Car-car OBB overlap tests omit the nine edge cross-product SAT axes and the
+   response lacks full angular contact resolution. This does not affect the
+   current single-car Free Play mode but is not complete multi-car parity.
+
+No physics parameters were tuned to force these added scenarios to pass.
+
+## Fresh Windows reference audit: 2026-09-30
+
+Installed RocketSim 2.2.1 and NumPy in the isolated project `.venv`, verified all
+16 hash-pinned soccar fixtures, and regenerated movement, ball and contact
+references. No tolerance budgets were changed.
+
+- Movement: 62/69 scenarios pass. Failures: Dominus, Plank, Breakout and Hybrid
+   landings; roof recovery; ceiling impact; powerslide release.
+- Roof recovery: maximum position error 36.332240 uu, velocity error 277.917403
+   uu/s, up-vector error 13.374739 degrees. This remains unresolved.
+- Ceiling impact: maximum position error 0.349082 uu and forward-vector error
+   0.512466 degrees in this fresh audit. Earlier larger figures below are historical.
+- Coupled contacts: 2/5 scenarios pass overall. All five ball trajectories pass;
+   nose, offset and spinning-ball car orientation remain above the 0.05-degree
+   budget (maximum 0.108465 degrees).
+- Isolated ball: 10/10 pass. Goal-ramp maximum position error 0.155 uu and
+   velocity error 3.741 uu/s; other position errors are around 0.001 uu or less.
+- Orientation signs: 13/13 pass. Aerial formula/mapping checks: 18/18 pass.
+- Scalar/config parity checks, including live reference values, pass.
+
+Fixed a separate browser slowdown: the render loop formerly discarded elapsed
+time beyond 50 ms, limiting physics to 90 ticks/second at 15 render FPS. It now
+uses the fixed-step clock's existing 100 ms catch-up budget. A regression compares
+high-speed boosted combined-axis trajectories at 15 and 120 render FPS.
+Stalls beyond 100 ms still discard time; input remains sampled per render frame.
+
+This is a bounded audit of the existing scenarios, not every possible variable,
+mechanic or current-game behavior. Persistent chassis contact manifolds,
+high-speed sweeps, device input processing, camera response and live-game
+Free Play command values are not certified. RocketSim itself is not identical
+to the proprietary current Rocket League build.
+
+## Free Play ball controls
+
+[Psyonix v2.06 patch notes](https://www.rocketleague.com/en/news/patch-notes-v2-06)
+establish Take Possession (in front), Start Dribble (on hood), Pass Ball (toward
+car), Launch Ball (Hoops-like pop), and Defend Shot (toward nearest goal).
+These descriptions do not provide numerical speeds, offsets, aim prediction,
+or randomness. The trainer uses deterministic placement and discrete trajectory aiming
+with explicitly chosen speeds of 1500/1800/2000 uu/s for pass/pop/shot.
+Passes predict the car's horizontal position at arrival; passes and shots account
+for the simulation's per-tick exponential damping and gravity. A minimum flight
+time prevents close passes from spiking downwards. Stationary dribble placement
+includes a small nonzero vertical velocity so the ball falls into hood contact
+instead of triggering the simulator's exact-zero-velocity sleep rule.
+These are functional approximations, not measured exact Rocket League behavior.
+RocketSim supplies subsequent physics, not these game-side Free Play commands.
+Keyboard 1–5 and gamepad down/up/left/right/L1 match the local Rocket League
+control-preset INI. Ball Reset is separately bindable and unbound by default.
+Commands fire on press edges in Free Play only; they can share gameplay bindings.
+
+## Browser control settings
+
+Controller steering and aerial sensitivity are independent gains applied to the
+existing deadzone-processed stick axes and clamped to [-1, 1]. They do not change
+keyboard input, throttle, directional air-roll buttons, or camera swivel.
+This is a frontend implementation, not certified current Rocket League input parity:
+RocketSim consumes normalized controls and does not implement the game's UI,
+device input processing, vibration, or mouse sensitivity.
+
+The configured dodge threshold is passed into the existing car simulation each
+Free Play physics tick. [RocketSim Car.cpp](https://github.com/ZealanL/RocketSim/blob/master/src/Sim/Car/Car.cpp)
+uses `abs(yaw) + abs(pitch) + abs(roll) >= config.dodgeDeadzone`.
+Unit coverage checks below-threshold, exact-threshold, negative diagonal, and
+roll-only inputs. This source confirms the decision rule, not exact controller
+stick processing in the proprietary game.
+
+Mouse sensitivity, keyboard acceleration/aerial safety, vibration intensity and
+rumble activation buffer are not implemented. Their precise game-side behavior
+needs independent measurements; RocketSim alone cannot establish it. Trainer
+modes also lack Rumble pickups and associated activation state.
+
 Checked 2026-09-30. These are actual source/research pages, not inferred citations.
 None certifies exact equivalence to the current proprietary Rocket League build.
 

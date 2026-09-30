@@ -3,6 +3,7 @@ import { cloneGlbCar, isCarReady } from "./carAssets.js";
 import { getHitboxForCarId } from "./hitboxPresets.js";
 import { getSelectedCarId } from "./loadout.js";
 import { prepareCarVisual } from "./carVisualCalibration.js";
+import { disposeScene } from "./disposeScene.js";
 
 /* ------------------------------------------------------------------ */
 /*  Shared helpers                                                     */
@@ -870,8 +871,8 @@ function buildVisual(opts = {}) {
     if (glb) {
       prepareCarVisual(glb, carId);
       if (isGhost) applyGhostLook(glb, opts.opacity ?? 0.32);
-      glb.userData.spinWheels = () => {};
-      glb.userData.setBoost = () => {};
+      glb.userData.spinWheels = () => { };
+      glb.userData.setBoost = () => { };
       return glb;
     }
   }
@@ -964,9 +965,24 @@ export function makeCar(color = 0xffffff, opacity = 1, opts = {}) {
   root.userData.visualBounds = visualBounds;
   root.userData.refLength = visualBounds.max.z - visualBounds.min.z;
   root.userData.hitboxPreset = getHitboxForCarId(carId);
-  root.userData.spinWheels = visual.userData.spinWheels ?? (() => {});
-  root.userData.setBoost = visual.userData.setBoost ?? (() => {});
+  root.userData.spinWheels = visual.userData.spinWheels ?? (() => { });
+  root.userData.setBoost = visual.userData.setBoost ?? (() => { });
   return root;
+}
+
+export function disposeCarVisualMaterials(car) {
+  const materials = new Set();
+  car.userData.visual?.traverse(object => {
+    if (!object.material) return;
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+      materials.add(material);
+    }
+  });
+  for (const material of materials) material.dispose();
+}
+
+export function disposeCarVisual(car) {
+  if (car.userData.visual) disposeScene(car.userData.visual);
 }
 
 /**

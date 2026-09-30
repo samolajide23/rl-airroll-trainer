@@ -12,21 +12,34 @@ const STORAGE_KEY = "rl-airroll-trainer-metrics-v1";
  */
 
 /** @type {Record<string, AttemptRecord[]>} */
-let history = {};
+let history = Object.create(null);
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") history = parsed;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+    for (const [modeId, records] of Object.entries(parsed)) {
+      if (!Array.isArray(records)) continue;
+      history[modeId] = records.filter(record => {
+        if (!record || typeof record !== "object" || Array.isArray(record)) return false;
+        if (typeof record.success !== "boolean") return false;
+        for (const key of ["angleErrorDeg", "timeOnTarget", "touches", "duration", "at"]) {
+          if (record[key] !== undefined && (typeof record[key] !== "number" || !Number.isFinite(record[key]) || record[key] < 0)) return false;
+        }
+        return record.label === undefined || typeof record.label === "string";
+      }).slice(-40);
+    }
   } catch {
-    history = {};
+    history = Object.create(null);
   }
 }
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch {}
 }
 
 load();

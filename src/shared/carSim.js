@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { ContactManifold } from "./contactManifold.js";
 import { arenaDistance, arenaNormal, raycastArena } from "./arenaMesh.js";
 import {
   cloneHitbox,
@@ -68,6 +69,7 @@ export const RS_CURVES = {
 
 /** RocketSim RLConst / Bullet solver constants used by the car tick. */
 export const RS = {
+  EXPERIMENTAL_PERSISTENT_CONTACTS: false,
   THROTTLE_TORQUE_AMOUNT: C.THROTTLE_TORQUE_AMOUNT,
   BRAKE_TORQUE_AMOUNT: C.BRAKE_TORQUE_AMOUNT,
   STOPPING_FORWARD_VEL: C.STOPPING_FORWARD_VEL,
@@ -927,7 +929,10 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
       }
     }
   }
-  if (contacts.length === 0) return { push, turn };
+  if (contacts.length === 0 && !RS.EXPERIMENTAL_PERSISTENT_CONTACTS) {
+    car.arenaManifold?.clear();
+    return { push, turn };
+  }
 
   // Merge near-duplicate normals so 8 OBB corners against one plane do not
   // each apply a full bounce. Keep the deepest sample per normal group.
@@ -973,6 +978,14 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
     // the patch centre. Collapsing to one offset corner invents spin — most
     // obvious when jumping/driving nose-first into a wall (4 front corners).
     if (g.tied.length >= 3) {
+      if (RS.EXPERIMENTAL_PERSISTENT_CONTACTS) {
+        const support = V()
+          .addScaledVector(fr.f, offset[0] + (fr.f.dot(g.n) <= 0 ? 1 : -1) * size[0] / 2)
+          .addScaledVector(fr.r, offset[1] + (fr.r.dot(g.n) <= 0 ? 1 : -1) * size[1] / 2)
+          .addScaledVector(fr.u, offset[2] + (fr.u.dot(g.n) <= 0 ? 1 : -1) * size[2] / 2);
+        contacts.push({ rel: support, dist: g.dist, n: g.n.clone(), face: true });
+        continue;
+      }
       contacts.push({
         rel: mid,
         dist: g.dist,
@@ -1034,6 +1047,17 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
     }
   }
 
+  if (RS.EXPERIMENTAL_PERSISTENT_CONTACTS) {
+    car.arenaManifold ??= new ContactManifold(RS.CONTACT_BREAKING_THRESHOLD);
+    const refreshed = car.arenaManifold.update(car.pos, car.q, contacts);
+    contacts.splice(0, contacts.length, ...refreshed);
+  }
+
+  if (contacts.length === 0) {
+    car.arenaManifold?.clear();
+    return { push, turn };
+  }
+
   let deepest = contacts[0];
   for (const c of contacts) if (c.dist < deepest.dist) deepest = c;
   car.worldContact.hasContact = true;
@@ -1055,9 +1079,18 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
     const tangentVel = vel.clone().addScaledVector(c.n, -c.n.dot(vel));
     c.t = tangentVel.lengthSq() > 1e-12 ? tangentVel.normalize() : perpendicular(c.n);
     c.kt = impulseDenominator(car, fr, c.rel, c.t);
-    c.normalImpulse = 0;
-    c.frictionImpulse = 0;
+    c.normalImpulse = c.cachedNormalImpulse ?? 0;
+    const frictionLimit = RS.CARWORLD_FRICTION * c.normalImpulse;
+    c.frictionImpulse = clamp(c.cachedFriction?.dot(c.t) ?? 0, -frictionLimit, frictionLimit);
     c.pushImpulse = 0;
+  }
+
+  if (RS.EXPERIMENTAL_PERSISTENT_CONTACTS) {
+    for (const contact of contacts) {
+      const impulse = contact.n.clone().multiplyScalar(contact.normalImpulse)
+        .addScaledVector(contact.t, contact.frictionImpulse);
+      applyImpulse(car, fr, impulse, contact.rel);
+    }
   }
 
   for (let iter = 0; iter < RS.SOLVER_ITERATIONS; iter++) {
@@ -1094,6 +1127,7 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
       transformTurn.addScaledVector(angularImpulse, c.n.z === -1 ? 0.1 : 1);
     }
   }
+  if (RS.EXPERIMENTAL_PERSISTENT_CONTACTS) car.arenaManifold.store(car.pos, car.q, contacts);
   return { push, turn: transformTurn };
 }
 

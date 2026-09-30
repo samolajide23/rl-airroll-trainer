@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { RL } from "./rl-physics.js";
 
+export function frameElapsed(now, previous) {
+  return Math.max(0, Math.min(0.1, (now - previous) / 1000));
+}
+
 /**
  * Rocket League aerial torque (shared via `carPhysics.js`) on a Three.js Object3D.
  * Modes should import {@link AerialBody} from `carPhysics.js`, not this file.

@@ -10,7 +10,8 @@ const BTN_LEFT = 14;
 const BTN_RIGHT = 15;
 
 const STICK_THRESHOLD = 0.55;
-const NAV_REPEAT_MS = 240;
+const NAV_INITIAL_DELAY_MS = 320;
+const NAV_REPEAT_MS = 120;
 const FOCUS_CLASS = "menu-focus";
 
 /**
@@ -35,6 +36,7 @@ export function createMenuGamepad(hooks) {
   let ignoreButtons = new Set();
   let stickLatched = false;
   let lastNavAt = 0;
+  let nextNavAt = 0;
   let confirmLatched = false;
   let backLatched = false;
   /** Track screen identity so rebuilds / switches clear latch state. */
@@ -68,6 +70,7 @@ export function createMenuGamepad(hooks) {
     confirmLatched = true;
     backLatched = true;
     lastNavAt = 0;
+    nextNavAt = 0;
   }
 
   /**
@@ -246,6 +249,25 @@ export function createMenuGamepad(hooks) {
     }
 
     const delta = dir === "up" ? -1 : 1;
+    const bindingRow = focused.closest(".bind-row-cols");
+    if (bindingRow && !onTab) {
+      const rows = [...bindingRow.parentElement.querySelectorAll(".bind-row-cols")];
+      const nextRow = rows[rows.indexOf(bindingRow) + delta];
+      if (nextRow) {
+        const column = [...bindingRow.children].indexOf(focused.closest(".binding-cell") ?? focused);
+        const nextCell = nextRow.children[column];
+        const candidates = items.filter(item => nextCell?.contains(item));
+        const target = focused.classList.contains("binding-clear")
+          ? candidates.find(item => item.classList.contains("binding-clear")) ?? candidates[0]
+          : candidates[0];
+        if (target) setFocused(target);
+        else {
+          const fallback = items.find(item => nextRow.contains(item));
+          if (fallback) setFocused(fallback);
+        }
+        return;
+      }
+    }
     if (onTab) {
       if (dir === "down" && main.length) setFocused(main[0]);
       else if (dir === "up" && main.length) setFocused(main[main.length - 1]);
@@ -307,6 +329,7 @@ export function createMenuGamepad(hooks) {
     if (!stickActive) stickLatched = false;
     if (!anyHeld) {
       lastNavAt = 0;
+      nextNavAt = 0;
       return null;
     }
 
@@ -323,10 +346,11 @@ export function createMenuGamepad(hooks) {
     // "first" only for a fresh d-pad press or stick leaving neutral — not a stick
     // still held after onScreenChange latched it.
     const first = lastNavAt === 0 && (dpadHeld || stickEdge);
-    const repeat = lastNavAt > 0 && now - lastNavAt >= NAV_REPEAT_MS;
+    const repeat = lastNavAt > 0 && now >= nextNavAt;
 
     if (!(stickEdge || first || repeat)) return null;
     if (stickActive) stickLatched = true;
+    nextNavAt = now + (stickEdge || first ? NAV_INITIAL_DELAY_MS : NAV_REPEAT_MS);
     lastNavAt = now;
     return held;
   }
@@ -344,7 +368,14 @@ export function createMenuGamepad(hooks) {
       return;
     }
 
-    // While remapping, leave pad to the listener — B still cancels (like Escape).
+    // Controller remapping must allow every button, including B / Circle.
+    if (hooks.isListeningPad()) {
+      if (focused) {
+        clearFocusClass();
+        focused = null;
+      }
+      return;
+    }
     if (hooks.isListeningPad() || hooks.isListeningKey()) {
       const pad = getActiveGamepad();
       if (pad) {

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { makeCar } from "../shared/car.js";
+import { disposeScene } from "../shared/disposeScene.js";
 import {
   AerialBody,
   FixedStepClock,
@@ -306,6 +307,13 @@ export class RingsMode {
       this._unbindHelp();
       this._unbindHelp = null;
     }
+    this.trail.dispose();
+    disposeScene(this.root);
+    for (const material of [this.matNext, this.matSoon, this.matDone]) {
+      if (!this.rings.some(ring => ring.mesh.material === material)) material.dispose();
+    }
+    this.rings = [];
+    this.chase.invalidate();
   }
 
   beginCourse() {

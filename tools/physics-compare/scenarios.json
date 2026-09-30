@@ -27,6 +27,43 @@
   },
   "scenarios": [
     {
+      "id": "flip_cancel_sustained", "ticks": 120,
+      "description": "Hold opposing pitch until the entire dodge torque window ends",
+      "initial": { "pos": [0, 0, 2500], "vel": [1800, 0, 0] },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 90, "controls": { "pitch": 1 } },
+        { "until_tick": 120, "controls": {} }
+      ]
+    },
+    {
+      "id": "flip_cancel_partial", "ticks": 90,
+      "description": "Partial opposing pitch reduces rather than removes dodge torque",
+      "initial": { "pos": [0, 0, 2500] },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 90, "controls": { "pitch": 0.5 } }
+      ]
+    },
+    {
+      "id": "air_stall", "ticks": 90,
+      "description": "Opposing yaw and roll select a flip but cancel its direction",
+      "initial": { "pos": [0, 0, 2500] },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true, "yaw": 1, "roll": -1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "flip_reset_jump", "ticks": 90,
+      "description": "A car with a restored airborne flip uses a neutral second jump",
+      "initial": { "pos": [0, 0, 2500], "air_time_since_jump": 0, "has_jumped": false },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
       "id": "flip_window_last_tick", "ticks": 30,
       "initial": { "pos": [0, 0, 2000], "air_time_since_jump": 1.2333333333333334 },
       "control_schedule": [

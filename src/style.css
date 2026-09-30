@@ -668,11 +668,281 @@ kbd {
 }
 
 .settings-panel {
-  width: min(720px, 100%);
+  width: min(920px, 100%);
 }
 
 .settings-title {
-  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  font-size: 2.5rem;
+}
+
+#settings.screen {
+  --accent: #a4e8ff;
+  --text: #e5f3ff;
+  --muted: #b9cddd;
+  align-items: stretch;
+  padding: 24px 18px;
+  background: linear-gradient(180deg, #304f7d 0%, #172a49 36%, #080f1d 100%);
+}
+#settings .settings-panel {
+  width: min(1000px, 100%);
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  max-height: 100%;
+  overflow-y: auto;
+}
+#settings .settings-title {
+  margin: 0 0 24px;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 300;
+  letter-spacing: 0;
+  color: #a5e8ff;
+}
+#settings .settings-tabs { justify-content: center; gap: 8px; margin-bottom: 0; }
+#settings .settings-tab {
+  flex: 0 1 170px;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #4382a6;
+  background: linear-gradient(#234c65, #163045);
+  color: #dfedf6;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 1.1rem;
+}
+#settings .settings-tab.active {
+  color: #174566;
+  background: #b8eeff;
+  border-color: #b8eeff;
+  box-shadow: 0 0 14px #70d3ff55;
+}
+#settings .settings-tab-panel {
+  padding: 28px 24px;
+  border: 1px solid #3a6089;
+  border-radius: 4px;
+  min-height: 470px;
+  background: linear-gradient(180deg, #14244088, #070e1988);
+}
+#settings #camera-list {
+  width: min(640px, 100%);
+  margin: 0 auto;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  gap: 0;
+}
+#settings #camera-list .bind-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 7px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  min-height: 35px;
+}
+#settings #camera-list .bind-label {
+  text-align: right;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+#settings #camera-list .bind-range { min-width: 0; width: 100%; gap: 12px; }
+#settings #camera-list .bind-range-value { min-width: 64px; text-align: left; color: #e1effa; font-size: 1rem; }
+#settings #camera-list input[type="range"] {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 8px;
+  border-radius: 4px;
+  border: 1px solid #5483a2;
+  background: #102535;
+  box-shadow: inset 0 0 3px #000;
+  cursor: pointer;
+}
+#settings #camera-list input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 19px;
+  border-radius: 2px;
+  background: linear-gradient(#bdeaff, #6a98b5);
+  border: 1px solid #30516b;
+  box-shadow: 0 1px 4px #000;
+}
+#settings #camera-list input[type="range"]::-moz-range-thumb {
+  width: 9px; height: 19px; border-radius: 2px; background: #a4d5eb; border: 1px solid #30516b;
+}
+#settings #camera-list .bind-control {
+  width: min(100%, 225px);
+  color: #e9f4ff;
+  background: #081923;
+  border: 1px solid #51829d;
+  border-radius: 2px;
+  padding: 5px 8px;
+  font: inherit;
+}
+#settings #camera-list .bind-toggle { justify-content: flex-start; }
+#settings #camera-list .bind-toggle span { display: none; }
+#settings #camera-list input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: #a4e8ff; }
+#settings .settings-actions { justify-content: flex-start; }
+#settings .settings-actions button {
+  border-radius: 3px;
+  padding: 8px 24px;
+  text-transform: uppercase;
+  border: 1px solid #5c9abd;
+  color: #e1f5ff;
+  background: linear-gradient(#295875, #163447);
+}
+.bindings-entry { display: flex; justify-content: center; margin: 0 0 22px; }
+.binding-preset-row { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; align-items: flex-start; }
+.binding-preset-row label { font-size: 0.75rem; text-transform: uppercase; }
+#control-preset { color: #e9f4ff; background: #081923; border: 1px solid #51829d; border-radius: 2px; padding: 3px 8px; width: 155px; font: inherit; font-size: 0.8rem; }
+#bindings-editor .pad-status-line { font-size: 0.72rem; margin-bottom: 8px; }
+#settings #bindings-editor .bind-columns-header,
+#settings #bindings-editor .bind-row-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+#bindings-editor .bind-columns-header { padding: 0 12px 8px; }
+#bindings-editor .bind-col-head { font-size: 0.8rem; text-transform: uppercase; text-align: center; }
+#bindings-editor #bind-list { gap: 4px; max-height: min(40vh, 360px); padding: 0 8px 0 0; scrollbar-color: #58a3c8 #112a42; scrollbar-width: thin; }
+#settings #bindings-editor .bind-row {
+  min-height: 33px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid #356787;
+  background: linear-gradient(180deg, #234f6c, #15334c);
+}
+#settings #bindings-editor .bind-label { grid-column: auto; font-size: 0.8rem; text-transform: uppercase; font-weight: 400; align-self: center; }
+#settings #bindings-editor .bind-key { border: 0; border-radius: 0; background: transparent; font-size: 0.8rem; padding: 4px; font-weight: 400; }
+#settings #bindings-editor .bind-row:hover,
+#settings #bindings-editor .bind-row:focus-within,
+#settings #bindings-editor .bind-row:has(.menu-focus),
+#settings #bindings-editor .bind-row:has(.listening) { background: #b8eeff; border-color: #dcf8ff; }
+#settings #bindings-editor .bind-row:hover *,
+#settings #bindings-editor .bind-row:focus-within *,
+#settings #bindings-editor .bind-row:has(.menu-focus) *,
+#settings #bindings-editor .bind-row:has(.listening) * { color: #143d58; }
+.binding-axis-options { margin-top: 16px; font-size: 0.8rem; }
+.binding-cell { display: flex; align-items: center; min-width: 0; gap: 4px; }
+.gamepad-icons { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 24px; }
+.gamepad-icon { display: inline-flex; align-items: center; justify-content: center; height: 23px; min-width: 23px; font-size: 0.75rem; font-weight: 700; line-height: 1; }
+.gamepad-icon.face-icon { border: 1.5px solid currentColor; border-radius: 50%; }
+.gamepad-icon.playstation { font-size: 1.1rem; }
+.gamepad-icon.xbox.face-0 { color: #8de69d !important; }
+.gamepad-icon.xbox.face-1 { color: #ff9b97 !important; }
+.gamepad-icon.xbox.face-2 { color: #8dcfff !important; }
+.gamepad-icon.xbox.face-3 { color: #ffe08c !important; }
+.gamepad-icon.playstation.face-0 { color: #8dcfff !important; }
+.gamepad-icon.playstation.face-1 { color: #ff9b97 !important; }
+.gamepad-icon.playstation.face-2 { color: #f6a5dc !important; }
+.gamepad-icon.playstation.face-3 { color: #8de6c7 !important; }
+.gamepad-icon.shoulder-icon { border: 1px solid currentColor; border-radius: 4px; padding: 0 5px; font-size: 0.6rem; }
+.gamepad-icon.stick-icon { border: 2px solid currentColor; border-radius: 50%; box-shadow: inset 0 0 0 3px #17364f; }
+.gamepad-icon.dpad-icon { font-size: 1.25rem; }
+#settings #bindings-editor .bind-key:has(.gamepad-icons) { padding: 0; }
+#settings #bindings-editor .bind-row:hover .face-icon,
+#settings #bindings-editor .bind-row:focus-within .face-icon { background: #17364f; }
+@media (max-width: 520px) { .gamepad-icons { gap: 5px; } .gamepad-icon.shoulder-icon { padding: 0 3px; font-size: 0.5rem; } }
+.binding-cell .bind-key { flex: 1; min-width: 0; }
+#settings #bindings-editor .binding-clear {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #74a8c055;
+  border-radius: 2px;
+  background: transparent;
+  color: #d9edf8;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+#settings #bindings-editor .binding-clear:disabled { opacity: 0.25; cursor: default; }
+#settings #bindings-editor .binding-clear:hover:not(:disabled) { background: #f6c6c6; color: #542222; }
+.binding-axis-options summary { cursor: pointer; text-transform: uppercase; padding: 8px 0; }
+@media (max-width: 520px) {
+  #settings #bindings-editor .bind-row-cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 4px; }
+  #settings #bindings-editor .bind-row { padding: 3px 5px; }
+  #settings #bindings-editor .bind-label, #settings #bindings-editor .bind-key { font-size: 0.65rem; }
+  #bindings-editor .bind-col-head { font-size: 0.65rem; }
+}
+#settings .bindings-entry button {
+  border-radius: 3px;
+  border: 1px solid #5c9abd;
+  background: linear-gradient(#295875, #163447);
+  color: #e1f5ff;
+  padding: 8px 24px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+#settings #control-options {
+  width: min(640px, 100%);
+  margin: 0 auto;
+  max-height: none;
+  overflow: visible;
+  gap: 0;
+  padding: 0;
+}
+#settings #control-options .bind-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+  background: none;
+}
+#settings #control-options .bind-label {
+  text-align: right;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+#settings #control-options .bind-range { min-width: 0; gap: 12px; }
+#settings #control-options .bind-range-value { min-width: 64px; text-align: left; color: #e1effa; font-size: 1rem; }
+#settings #control-options input[type="range"] {
+  appearance: none;
+  min-width: 0;
+  width: 100%;
+  height: 8px;
+  border: 1px solid #5483a2;
+  border-radius: 4px;
+  background: #102535;
+}
+#settings #control-options input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 19px;
+  border-radius: 2px;
+  background: linear-gradient(#bdeaff, #6a98b5);
+  border: 1px solid #30516b;
+}
+#settings #control-options .bind-control {
+  width: min(100%, 225px);
+  color: #e9f4ff;
+  background: #081923;
+  border: 1px solid #51829d;
+  border-radius: 2px;
+  padding: 5px 8px;
+  font: inherit;
+}
+.camera-preset-source { min-height: 18px; margin: 16px 0 0; text-align: center; font-size: 0.75rem; }
+.camera-preset-source a { color: #9fc5dc; }
+@media (max-width: 600px) {
+  #settings.screen { padding: 16px 10px; }
+  #settings .settings-title { font-size: 2rem; margin-bottom: 16px; }
+  #settings .settings-tab-panel { padding: 20px 14px; min-height: 0; }
+  #settings #camera-list .bind-row { gap: 12px; }
+  #settings #camera-list .bind-label { font-size: 0.75rem; grid-column: auto; }
+  #settings #camera-list .bind-range-value { font-size: 0.85rem; min-width: 48px; }
+  #settings #control-options .bind-row { gap: 12px; }
+  #settings #control-options .bind-label { font-size: 0.75rem; grid-column: auto; }
+  #settings #control-options .bind-range-value { min-width: 48px; font-size: 0.85rem; }
 }
 
 .settings-tabs {

@@ -4,7 +4,8 @@ import { cloneBallMesh, preloadBall } from "../shared/ball.js";
 import { preloadCars, isCarReady } from "../shared/carAssets.js";
 import { syncCarWheels, syncCarExhaust } from "../shared/carVisualCalibration.js";
 import { stepCarBall } from "../shared/carSim.js";
-import { makeCar } from "../shared/car.js";
+import { applyFreePlayBallControl } from "../shared/freePlayBallControls.js";
+import { disposeCarVisual, makeCar } from "../shared/car.js";
 import {
   FixedStepClock,
   RL,
@@ -28,12 +29,18 @@ import {
   inputSourceLabel,
   isActionDown,
   pollBallCamToggle,
+  pollActionEdge,
   readControls,
+  readPhysicsControls,
+  resetJumpTransitions,
 } from "../shared/input.js";
 import { getSelectedCarId } from "../shared/loadout.js";
 import {
   formatControlsHelp,
+  FREEPLAY_BALL_ACTIONS,
+  BIND_LABELS,
   getCamera,
+  getPad,
   onBindsChange,
   setCamera,
 } from "../shared/settings.js";
@@ -142,6 +149,7 @@ export class FreePlayMode {
       this.root.add(this.carMesh);
       this.trail.attachFlames(this.carMesh);
       old.removeFromParent();
+      disposeCarVisual(old);
       this.syncMeshes();
     });
 
@@ -151,6 +159,7 @@ export class FreePlayMode {
 
     this.spaceLatch = false;
     this.rLatch = false;
+    this.ballControlLatches = Object.fromEntries(FREEPLAY_BALL_ACTIONS.map(action => [action, { wasDown: isActionDown(action) }]));
     /** @type {{ wasDown: boolean }} */
     this.ballCamLatch = { wasDown: false };
     /** @type {null | (() => void)} */
@@ -163,6 +172,7 @@ export class FreePlayMode {
     const { hud, scene, arena, camera } = this.ctx;
     const carId = getSelectedCarId();
     if (carId !== this.carId) {
+      disposeCarVisual(this.carMesh);
       this.root.remove(this.carMesh);
       this.carId = carId;
       this.hitbox = getHitboxForCarId(carId);
@@ -210,6 +220,7 @@ export class FreePlayMode {
   }
 
   stop() {
+    resetJumpTransitions();
     const { hud, scene, arena, camera } = this.ctx;
     this._stopped = true;
     hud.root.classList.remove("freeplay-hud");
@@ -236,6 +247,7 @@ export class FreePlayMode {
     this.chase.invalidate();
     this.arenaMesh.userData.dispose?.();
     this.trail.dispose();
+    disposeCarVisual(this.carMesh);
     this._shadowTexture.dispose();
     for (const mesh of [this.carShadow, this.ballShadow, this.ballMesh, this.hitboxHelper]) {
       mesh.geometry.dispose(); mesh.material.dispose();
@@ -251,6 +263,7 @@ export class FreePlayMode {
   }
 
   resetState() {
+    resetJumpTransitions();
     this.hitbox = getHitboxForCarId(this.carId);
     // RocketSim center kickoff slot (CAR_SPAWN_LOCATIONS_SOCCAR[4]).
     const spawn = RL.SOCCAR_SPAWNS[4];
@@ -265,6 +278,7 @@ export class FreePlayMode {
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.physBall.vel.set(0, 0, 0);
     this.ballVisual.quaternion.identity();
+    for (const action of FREEPLAY_BALL_ACTIONS) this.ballControlLatches[action].wasDown = isActionDown(action);
     this.tick = 0;
     this.boosting = false;
     resetBoostPads(this.pads);
@@ -335,6 +349,7 @@ export class FreePlayMode {
 
   /** @param {number} dt */
   _stepOnce(dt, input = readControls()) {
+    this.physCar.dodgeDeadzone = getPad().dodgeDeadzone;
     stepCarBall(this.physCar, this.physBall, withFreeAirRoll(input, this.physCar), this.tick, dt);
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);
@@ -350,6 +365,12 @@ export class FreePlayMode {
   }
 
   pollUtilityKeys() {
+    for (const action of FREEPLAY_BALL_ACTIONS) {
+      if (!pollActionEdge(action, this.ballControlLatches[action])) continue;
+      this.physBall = applyFreePlayBallControl(action, this.physCar, this.physBall);
+      this.ballVisual.quaternion.identity();
+      this.ctx.hud.status.textContent = BIND_LABELS[action];
+    }
     const nt = isActionDown("newTarget");
     if (nt && !this.spaceLatch) {
       this.spaceLatch = true;
@@ -412,7 +433,7 @@ export class FreePlayMode {
     this.pollUtilityKeys();
     const input = readControls();
     this.clock.advance(dt, (tickDt) => {
-      this._stepOnce(tickDt, input);
+      this._stepOnce(tickDt, readPhysicsControls());
     });
     const { hud } = this.ctx;
     const source = inputSourceLabel(input);

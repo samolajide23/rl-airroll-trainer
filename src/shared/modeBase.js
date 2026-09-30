@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { makeCar } from "./car.js";
+import { disposeScene } from "./disposeScene.js";
 import { AerialBody, FixedStepClock, aerialControlAxes } from "./carPhysics.js";
 import { applyModeChaseCamera, ChaseCamera } from "./chaseCamera.js";
 import { inputSourceLabel, isActionDown, readControls } from "./input.js";
@@ -69,6 +70,7 @@ export class AerialDrillBase {
       this._unbindHelp = null;
     }
     this.chase.invalidate();
+    disposeScene(this.root);
   }
 
   resetCar() {

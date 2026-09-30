@@ -110,6 +110,7 @@ export function cloneGlbCar(id) {
   const template = templates.get(id);
   if (!template) return null;
   const clone = template.clone(true);
+  clone.userData.sharedAssets = true;
   clone.traverse((obj) => {
     if (obj.isMesh && obj.material) {
       if (Array.isArray(obj.material)) {

@@ -6,6 +6,73 @@ import { RL } from "../../src/shared/rl-physics.js";
 import { makeCar } from "../../src/shared/carSim.js";
 import { createStadium } from "../../src/shared/stadium.js";
 import { BoostTrail } from "../../src/shared/boostTrail.js";
+import { disposeCarVisualMaterials } from "../../src/shared/car.js";
+import { disposeScene } from "../../src/shared/disposeScene.js";
+import viteConfig from "../../vite.config.js";
+import { SOCCAR_TRI_COUNT, SOCCAR_TRIS } from "../../src/shared/soccarMeshData.js";
+
+test("compact production arena data preserves every Float32 coordinate exactly", async () => {
+  const plugin = viteConfig.plugins.find(plugin => plugin.name === "compact-arena-data");
+  const transformed = plugin.transform("", "/src/shared/soccarMeshData.js");
+  const compact = await import(`data:text/javascript;base64,${Buffer.from(transformed.code).toString("base64")}`);
+  assert.equal(compact.SOCCAR_TRI_COUNT, SOCCAR_TRI_COUNT);
+  assert.deepEqual(compact.SOCCAR_TRIS, SOCCAR_TRIS);
+});
+
+test("scene cleanup releases owned resources once and preserves shared assets", () => {
+  const root = new THREE.Group();
+  const shared = new THREE.Group();
+  shared.userData.sharedAssets = true;
+  root.add(shared);
+  const geometry = new THREE.BoxGeometry();
+  const texture = new THREE.Texture();
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  root.add(new THREE.Mesh(geometry, material), new THREE.Mesh(geometry, material));
+  const cachedGeometry = new THREE.BoxGeometry();
+  const cachedTexture = new THREE.Texture();
+  const clonedMaterial = new THREE.MeshBasicMaterial({ map: cachedTexture });
+  shared.add(new THREE.Mesh(cachedGeometry, clonedMaterial));
+  const counts = new Map();
+  for (const resource of [geometry, texture, material, cachedGeometry, cachedTexture, clonedMaterial]) {
+    counts.set(resource, 0);
+    resource.addEventListener("dispose", () => counts.set(resource, counts.get(resource) + 1));
+  }
+  disposeScene(root);
+  for (const resource of [geometry, texture, material, clonedMaterial]) assert.equal(counts.get(resource), 1);
+  assert.equal(counts.get(cachedGeometry), 0);
+  assert.equal(counts.get(cachedTexture), 0);
+  cachedGeometry.dispose();
+  cachedTexture.dispose();
+});
+
+test("car cleanup disposes instance materials once without releasing cached assets or flames", () => {
+  const car = new THREE.Group();
+  const visual = new THREE.Group();
+  car.add(visual);
+  car.userData.visual = visual;
+  const geometry = new THREE.BoxGeometry();
+  const texture = new THREE.Texture();
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  const otherMaterial = new THREE.MeshBasicMaterial();
+  visual.add(new THREE.Mesh(geometry, material), new THREE.Mesh(geometry, [material, otherMaterial]));
+  const flameMaterial = new THREE.MeshBasicMaterial();
+  car.add(new THREE.Mesh(geometry, flameMaterial));
+  let materialDisposals = 0;
+  let otherDisposals = 0;
+  let sharedDisposals = 0;
+  material.addEventListener("dispose", () => materialDisposals++);
+  otherMaterial.addEventListener("dispose", () => otherDisposals++);
+  for (const resource of [geometry, texture, flameMaterial]) {
+    resource.addEventListener("dispose", () => sharedDisposals++);
+  }
+  disposeCarVisualMaterials(car);
+  assert.equal(materialDisposals, 1);
+  assert.equal(otherDisposals, 1);
+  assert.equal(sharedDisposals, 0);
+  geometry.dispose();
+  texture.dispose();
+  flameMaterial.dispose();
+});
 
 test("boost trail reuses bounded particles and stops work when empty", () => {
   const previous = globalThis.document;

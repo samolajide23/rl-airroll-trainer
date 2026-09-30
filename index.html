@@ -89,11 +89,7 @@
 
     <div id="settings" class="screen hidden">
       <div class="menu-panel settings-panel">
-        <p class="menu-kicker">Options</p>
         <h1 class="menu-title settings-title">Settings</h1>
-        <p class="menu-sub" id="settings-sub">
-          Bind any keyboard key or mouse button — same options as Rocket League.
-        </p>
 
         <div class="settings-tabs" role="tablist">
           <button type="button" class="settings-tab active" data-tab="controls" id="tab-controls">
@@ -105,24 +101,42 @@
         </div>
 
         <div id="panel-controls" class="settings-tab-panel">
+          <div id="controls-overview">
+            <div class="bindings-entry">
+              <button type="button" id="btn-view-bindings" class="btn-secondary">View/Change Bindings</button>
+            </div>
+            <div id="control-options" class="bind-list"></div>
+          </div>
+          <div id="bindings-editor" class="hidden">
+            <div class="binding-preset-row">
+              <label for="control-preset">Control Presets</label>
+              <select id="control-preset" aria-label="Control Presets">
+                <option value="custom">Custom</option>
+                <option value="default">Default</option>
+              </select>
+            </div>
           <p id="pad-status-line" class="pad-status-line">No controller detected — plug one in to rebind buttons.</p>
           <div class="bind-columns-header" aria-hidden="true">
             <span class="bind-col-spacer"></span>
             <span class="bind-col-head">Keyboard / Mouse</span>
-            <span class="bind-col-head">Controller</span>
+            <span class="bind-col-head">Gamepad</span>
           </div>
           <div id="bind-list" class="bind-list"></div>
-          <p class="settings-section-title">Controller options</p>
-          <div id="pad-bind-list" class="bind-list pad-options-list"></div>
+          <details class="binding-axis-options">
+            <summary>Controller Axes</summary>
+            <div id="pad-bind-list" class="bind-list pad-options-list"></div>
+          </details>
+          </div>
         </div>
 
         <div id="panel-camera" class="settings-tab-panel hidden">
           <div id="camera-list" class="bind-list"></div>
+          <p id="camera-preset-source" class="camera-preset-source"></p>
         </div>
 
         <div class="settings-actions">
-          <button type="button" id="btn-reset-binds" class="btn-secondary">Reset defaults</button>
           <button type="button" id="btn-settings-back" class="btn-primary">Back</button>
+          <button type="button" id="btn-reset-binds" class="btn-secondary">Default</button>
         </div>
       </div>
     </div>

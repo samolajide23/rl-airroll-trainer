@@ -1,29 +1,51 @@
-import { getBind, getBinds, getPad } from "./settings.js";
+import { FREEPLAY_BALL_ACTIONS, getBind, getBinds, getPad } from "./settings.js";
 import { isTouchActionDown, readTouchControls } from "./touchControls.js";
 
 /** @type {Set<string>} */
 export const keys = new Set();
+const jumpTransitions = [];
+
+function captureJumpTransition(code, down) {
+  if (code === getBind("jump") && keys.has(code) !== down) jumpTransitions.push(down);
+}
+
+export function resetJumpTransitions() {
+  jumpTransitions.length = 0;
+}
+
+export function readPhysicsControls() {
+  const controls = readControls();
+  if (jumpTransitions.length) controls.jump = jumpTransitions.shift();
+  return controls;
+}
 
 window.addEventListener("keydown", (e) => {
+  captureJumpTransition(e.code, true);
   keys.add(e.code);
   const binds = getBinds();
   const boundCodes = new Set(Object.values(binds).filter(Boolean));
   if (e.code === "Escape" || boundCodes.has(e.code)) e.preventDefault();
 });
-window.addEventListener("keyup", (e) => keys.delete(e.code));
+window.addEventListener("keyup", (e) => {
+  captureJumpTransition(e.code, false);
+  keys.delete(e.code);
+});
 
 // Mouse buttons as bindable codes: Mouse0 (LMB), Mouse1 (RMB), Mouse2 (MMB), …
 window.addEventListener("mousedown", (e) => {
+  captureJumpTransition(`Mouse${e.button}`, true);
   keys.add(`Mouse${e.button}`);
   const binds = getBinds();
   const code = `Mouse${e.button}`;
   if (Object.values(binds).includes(code)) e.preventDefault();
 });
 window.addEventListener("mouseup", (e) => {
+  captureJumpTransition(`Mouse${e.button}`, false);
   keys.delete(`Mouse${e.button}`);
 });
 window.addEventListener("blur", () => {
   keys.clear();
+  resetJumpTransitions();
 });
 
 /**
@@ -121,8 +143,8 @@ export function readControls() {
   let yaw = 0;
   let throttle = 0;
   let steer = 0;
-  let lookRight = 0;
-  let lookUp = 0;
+  let lookRight = Number(keyHeld("lookRight")) - Number(keyHeld("lookLeft"));
+  let lookUp = Number(keyHeld("lookUp")) - Number(keyHeld("lookDown"));
   let airLeft = keyHeld("airRollLeft");
   let airRight = keyHeld("airRollRight");
   let boost = keyHeld("boost");
@@ -187,9 +209,9 @@ export function readControls() {
       Math.abs(throttle) > 0;
     if (padDriveActive || !kbOrTouchDrive) {
       usingPad = true;
-      pitch = pitchStick;
-      yaw = yawStick;
-      steer = yawStick;
+      pitch = pitchStick * cfg.aerialSensitivity;
+      yaw = yawStick * cfg.aerialSensitivity;
+      steer = yawStick * cfg.steeringSensitivity;
       throttle = padThrottle;
     }
 
@@ -204,11 +226,11 @@ export function readControls() {
     if (!boost && buttonValue(pad, cfg.boost) > 0.3) boost = true;
 
     // Right stick = camera swivel (LookRight / LookUp → GetDesiredSwivel).
-    const lookXRaw = applyDeadzone(pad.axes[cfg.lookXAxis] ?? 0, cfg.deadzone);
-    const lookYRaw = applyDeadzone(pad.axes[cfg.lookYAxis] ?? 0, cfg.deadzone);
-    lookRight = cfg.invertLookX ? -lookXRaw : lookXRaw;
+    const lookXRaw = applyDeadzone(pad.axes[cfg.lookXAxis] ?? 0, cfg.freeLookDeadzone);
+    const lookYRaw = applyDeadzone(pad.axes[cfg.lookYAxis] ?? 0, cfg.freeLookDeadzone);
+    if (lookXRaw !== 0) lookRight = cfg.invertLookX ? -lookXRaw : lookXRaw;
     // Gamepad API +Y is stick toward player; RL look-up is stick away → negate.
-    lookUp = cfg.invertLookY ? lookYRaw : -lookYRaw;
+    if (lookYRaw !== 0) lookUp = cfg.invertLookY ? lookYRaw : -lookYRaw;
     if (Math.abs(lookRight) > 0 || Math.abs(lookUp) > 0) usingPad = true;
   }
 
@@ -288,6 +310,8 @@ export function isActionDown(action) {
   const cfg = getPad();
   const pad = getActiveGamepad();
   if (!pad) return false;
+
+  if (FREEPLAY_BALL_ACTIONS.includes(action)) return buttonPressed(pad, cfg[action]);
 
   if (action === "airRollLeft") return buttonPressed(pad, cfg.airRollLeft);
   if (action === "airRollRight") return buttonPressed(pad, cfg.airRollRight);

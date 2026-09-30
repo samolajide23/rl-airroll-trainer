@@ -5,12 +5,57 @@ import { makeCar, stepCar } from "../../src/shared/carSim.js";
 import { RL, makeBall, stepBall, carHitbox, collideCarBall, alignCarVisualToHitbox } from "../../src/shared/rl-physics.js";
 import { HITBOX_PRESETS } from "../../src/shared/hitboxPresets.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
-import { AerialBody } from "../../src/shared/aerial.js";
+import { AerialBody, FixedStepClock, frameElapsed } from "../../src/shared/aerial.js";
 import { applyToCarModel } from "../../src/shared/rl-physics.js";
 import { sphereArenaContacts } from "../../src/shared/arenaMesh.js";
 import { compareScenario, failuresFor } from "./trajectory.mjs";
+import { firstDivergence } from "./first-divergence.mjs";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
+
+test("high-speed simulation keeps the same tick count and trajectory at 15 and 120 render FPS", () => {
+  const simulate = fps => {
+    const car = makeCar(new THREE.Vector3(0, 0, 3000), 0);
+    car.arenaCollisions = false;
+    car.infiniteBoost = true;
+    car.vel.set(1800, 200, 100);
+    const clock = new FixedStepClock();
+    let ticks = 0;
+    let previous = 0;
+    for (let frame = 1; frame <= fps * 2; frame++) {
+      const now = frame * 1000 / fps;
+      clock.advance(frameElapsed(now, previous), () => {
+        stepCar(car, { boost: true, pitch: 0.4, yaw: -0.5, roll: 1 });
+        ticks++;
+      });
+      previous = now;
+    }
+    return { car, ticks };
+  };
+  const fast = simulate(120), slow = simulate(15);
+  assert(Math.abs(fast.ticks - slow.ticks) <= 1);
+  if (fast.ticks < slow.ticks) stepCar(fast.car, { boost: true, pitch: 0.4, yaw: -0.5, roll: 1 });
+  if (slow.ticks < fast.ticks) stepCar(slow.car, { boost: true, pitch: 0.4, yaw: -0.5, roll: 1 });
+  assert(fast.car.pos.distanceTo(slow.car.pos) < 1e-6);
+  assert(fast.car.q.angleTo(slow.car.q) < 1e-6);
+  close(frameElapsed(10000, 0), 0.1);
+  close(frameElapsed(0, 100), 0);
+});
+
+test("configured dodge threshold uses RocketSim summed absolute axes and inclusive boundary", () => {
+  for (const controls of [{ pitch: 0.959 }, { pitch: 0.96 }, { pitch: -0.5, yaw: -0.46 }, { roll: 0.96 }]) {
+    const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+    car.arenaCollisions = false;
+    car.onGround = false;
+    car.wheelsContact = false;
+    car.hasJumped = true;
+    car.dodgeDeadzone = 0.96;
+    stepCar(car, { ...controls, jump: true });
+    const magnitude = Math.abs(controls.pitch ?? 0) + Math.abs(controls.yaw ?? 0) + Math.abs(controls.roll ?? 0);
+    assert.equal(car.hasFlipped, magnitude >= 0.96);
+    assert.equal(car.hasDoubleJumped, magnitude < 0.96);
+  }
+});
 
 test("ceiling support response preserves the measured correction", () => {
   const car = makeCar(new THREE.Vector3(-1000, 0, 1800), 0);
@@ -200,6 +245,15 @@ test("car-ball impulses cannot leave over-cap state", () => {
 function fixture() {
   return { id: "ball", entity: "ball", game_mode: "void", scenario_sha256: "test", ticks: 1, tick_rate: 120, tick_time: 1 / 120, initial: {}, frames: [0, 1].map(tick => ({ tick, pos: [0, 0, 0], vel: [0, 0, 0], ang_vel: [0, 0, 0] })) };
 }
+
+test("first-divergence diagnostic identifies the earliest velocity mismatch", () => {
+  const reference = fixture(), candidate = fixture();
+  assert.equal(firstDivergence(reference, candidate).first_tick, null);
+  candidate.frames[1].vel[0] = 2;
+  const result = firstDivergence(reference, candidate);
+  assert.equal(result.first_tick, 1);
+  assert.equal(result.context[1].velocity_error, 2);
+});
 
 test("comparison rejects malformed, stale, and truncated trajectories", () => {
   for (const corrupt of [

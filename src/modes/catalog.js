@@ -1,9 +1,4 @@
-import { BallContactMode } from "./ballContact.js";
-import { DribbleBridgeMode } from "./dribbleBridge.js";
-import { FreePlayMode } from "./freePlay.js";
-import { GhostAlignMode, GHOST_ALIGN_DIFFICULTIES } from "./ghostAlign.js";
-import { RingsMode } from "./ringsMode.js";
-import { SequenceMode } from "./sequenceMode.js";
+import { GHOST_ALIGN_DIFFICULTIES } from "./ghostDifficulties.js";
 
 /**
  * @typedef {{
@@ -12,7 +7,8 @@ import { SequenceMode } from "./sequenceMode.js";
  *   description: string,
  *   available: boolean,
  *   needsDifficulty?: boolean,
- *   create?: (ctx: object, options?: object) => { start(): void, stop(): void, update(dt: number, now: number): void }
+ *   load?: () => Promise<any>,
+ *   create?: (ctx: object, options: object, module: any) => { start(): void, stop(): void, update(dt: number, now: number): void }
  * }} GameModeDef
  */
 
@@ -38,7 +34,8 @@ export const PHASES = [
         description:
           "Free roam with RL-style driving. Jump, dodge, finite boost + pads, air roll, ball. Reset car / skip ball.",
         available: true,
-        create: (ctx) => new FreePlayMode(ctx),
+        load: () => import("./freePlay.js"),
+        create: (ctx, options, module) => new module.FreePlayMode(ctx),
       },
     ],
   },
@@ -54,7 +51,8 @@ export const PHASES = [
           "Match a ghost car orientation and hold it. Core fine control drill.",
         available: true,
         needsDifficulty: true,
-        create: (ctx, options) => new GhostAlignMode(ctx, options),
+        load: () => import("./ghostAlign.js"),
+        create: (ctx, options, module) => new module.GhostAlignMode(ctx, options),
       },
       {
         id: "dar-sequences",
@@ -62,7 +60,8 @@ export const PHASES = [
         description:
           "Tetris-style move queue — clear NOW, peek the next rolls/pitches on the left.",
         available: true,
-        create: (ctx) => new SequenceMode(ctx),
+        load: () => import("./sequenceMode.js"),
+        create: (ctx, options, module) => new module.SequenceMode(ctx),
       },
       {
         id: "rings",
@@ -70,7 +69,8 @@ export const PHASES = [
         description:
           "Free-fly a hoop course — boost and air roll to thread glowing rings.",
         available: true,
-        create: (ctx) => new RingsMode(ctx),
+        load: () => import("./ringsMode.js"),
+        create: (ctx, options, module) => new module.RingsMode(ctx),
       },
     ],
   },
@@ -84,28 +84,32 @@ export const PHASES = [
         title: "Static Ball Contact",
         description: "Hit a still mid-air ball with nose, roof, or side.",
         available: true,
-        create: (ctx) => new BallContactMode(ctx, { variant: "static" }),
+        load: () => import("./ballContact.js"),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "static" }),
       },
       {
         id: "ball-roll-touch",
         title: "Roll-to-Touch",
         description: "Roll during the approach to present the right contact.",
         available: true,
-        create: (ctx) => new BallContactMode(ctx, { variant: "rollTouch" }),
+        load: () => import("./ballContact.js"),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "rollTouch" }),
       },
       {
         id: "ball-soft",
         title: "Soft Touches",
         description: "Nudge the ball a few car-lengths — strength matters.",
         available: true,
-        create: (ctx) => new BallContactMode(ctx, { variant: "soft" }),
+        load: () => import("./ballContact.js"),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "soft" }),
       },
       {
         id: "ball-recovery",
         title: "Recovery",
         description: "After the touch, get back wheels-down quickly.",
         available: true,
-        create: (ctx) => new BallContactMode(ctx, { variant: "recovery" }),
+        load: () => import("./ballContact.js"),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "recovery" }),
       },
     ],
   },
@@ -119,36 +123,40 @@ export const PHASES = [
         title: "Pop & Chase",
         description: "Small pop, then jump/boost for 2–3 touches.",
         available: true,
-        create: (ctx) => new DribbleBridgeMode(ctx, { variant: "popChase" }),
+        load: () => import("./dribbleBridge.js"),
+        create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "popChase" }),
       },
       {
         id: "dribble-boost",
         title: "Boost Tapping",
         description: "Pulse boost to a target — holding too long fails.",
         available: true,
-        create: (ctx) => new DribbleBridgeMode(ctx, { variant: "boostTap" }),
+        load: () => import("./dribbleBridge.js"),
+        create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "boostTap" }),
       },
       {
         id: "dribble-hover",
         title: "Hover & Hold",
         description: "Keep the ball near your nose while barely moving.",
         available: true,
-        create: (ctx) => new DribbleBridgeMode(ctx, { variant: "hover" }),
+        load: () => import("./dribbleBridge.js"),
+        create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "hover" }),
       },
       {
         id: "dribble-wall",
         title: "Wall-to-Air",
         description: "Pop off the wall and follow with air rolls.",
         available: true,
-        create: (ctx) => new DribbleBridgeMode(ctx, { variant: "wallAir" }),
+        load: () => import("./dribbleBridge.js"),
+        create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "wallAir" }),
       },
       {
         id: "dribble-steer",
         title: "Side-Steer Dribble",
         description: "Carry on the nose while steering with DAR.",
         available: true,
-        create: (ctx) =>
-          new DribbleBridgeMode(ctx, { variant: "steerDribble" }),
+        load: () => import("./dribbleBridge.js"),
+        create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "steerDribble" }),
       },
     ],
   },

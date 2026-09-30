@@ -36,9 +36,21 @@ export const DEFAULT_BINDS = {
   airRollRight: "KeyE",
   toggleBallCam: "KeyC",
   lookBehind: "AltLeft",
+  lookUp: "",
+  lookDown: "",
+  lookLeft: "",
+  lookRight: "",
   resetCar: "KeyR",
   newTarget: "KeyN",
+  takePossession: "Digit1",
+  startDribble: "Digit2",
+  passBall: "Digit3",
+  launchBall: "Digit4",
+  defendShot: "Digit5",
+  resetBall: "",
 };
+
+export const FREEPLAY_BALL_ACTIONS = ["takePossession", "startDribble", "passBall", "launchBall", "defendShot", "resetBall"];
 
 /** Pairs that may share one physical key (RL dual-binds). */
 const SHAREABLE_BINDS = [
@@ -50,24 +62,34 @@ const SHAREABLE_BINDS = [
 ];
 
 export const BIND_LABELS = {
-  throttle: "Accelerate",
-  reverse: "Brake / Reverse",
+  throttle: "Drive Forward",
+  reverse: "Drive Backwards",
   steerLeft: "Steer Left",
   steerRight: "Steer Right",
   pitchUp: "Pitch Up",
   pitchDown: "Pitch Down",
-  yawLeft: "Yaw Left",
-  yawRight: "Yaw Right",
+  yawLeft: "Air Steer Left",
+  yawRight: "Air Steer Right",
   boost: "Boost",
   jump: "Jump",
   powerslide: "Powerslide",
   airRoll: "Air Roll",
   airRollLeft: "Air Roll Left",
   airRollRight: "Air Roll Right",
-  toggleBallCam: "Toggle Ball Cam",
+  toggleBallCam: "Focus on Ball",
   lookBehind: "Rear View",
+  lookUp: "Look Up",
+  lookDown: "Look Down",
+  lookLeft: "Look Left",
+  lookRight: "Look Right",
   resetCar: "Reset Shot",
   newTarget: "Skip / Next",
+  takePossession: "Take Possession",
+  startDribble: "Start Dribble",
+  passBall: "Pass Ball",
+  launchBall: "Launch Ball",
+  defendShot: "Defend Shot",
+  resetBall: "Ball Reset",
 };
 
 /**
@@ -83,22 +105,24 @@ export const BIND_SECTIONS = [
     actions: [
       { id: "throttle", pad: "throttle" },
       { id: "reverse", pad: "brake" },
-      { id: "steerLeft", pad: "stick:Left Stick" },
       { id: "steerRight", pad: "stick:Left Stick" },
-      { id: "boost", pad: "boost" },
+      { id: "steerLeft", pad: "stick:Left Stick" },
       { id: "jump", pad: "jump" },
+      { id: "boost", pad: "boost" },
       { id: "powerslide", pad: "powerslide" },
+      { id: "airRoll", pad: "airRoll" },
+      { id: "toggleBallCam", pad: "toggleBallCam" },
+      { id: "lookBehind", pad: "lookBehind" },
     ],
   },
   {
     id: "air",
     title: "Air Control",
     actions: [
+      { id: "yawRight", pad: "stick:Left Stick" },
+      { id: "yawLeft", pad: "stick:Left Stick" },
       { id: "pitchUp", pad: "stick:Left Stick" },
       { id: "pitchDown", pad: "stick:Left Stick" },
-      { id: "yawLeft", pad: "stick:Left Stick" },
-      { id: "yawRight", pad: "stick:Left Stick" },
-      { id: "airRoll", pad: "airRoll" },
       { id: "airRollLeft", pad: "airRollLeft" },
       { id: "airRollRight", pad: "airRollRight" },
     ],
@@ -107,9 +131,16 @@ export const BIND_SECTIONS = [
     id: "camera",
     title: "Camera",
     actions: [
-      { id: "toggleBallCam", pad: "toggleBallCam" },
-      { id: "lookBehind", pad: "lookBehind" },
+      { id: "lookUp", pad: "stick:Right Stick ↑" },
+      { id: "lookDown", pad: "stick:Right Stick ↓" },
+      { id: "lookLeft", pad: "stick:Right Stick ←" },
+      { id: "lookRight", pad: "stick:Right Stick →" },
     ],
+  },
+  {
+    id: "freeplay-ball",
+    title: "Free Play Ball Control",
+    actions: FREEPLAY_BALL_ACTIONS.map(id => ({ id, pad: id })),
   },
   {
     id: "training",
@@ -139,6 +170,12 @@ export const DEFAULT_PAD = {
   /** RL Toggle Ball Cam — Right stick click (R3). */
   toggleBallCam: 11,
   lookBehind: 10, // L3
+  takePossession: 13,
+  startDribble: 12,
+  passBall: 14,
+  launchBall: 15,
+  defendShot: 4,
+  resetBall: null,
   pitchAxis: 1, // Left stick Y
   yawAxis: 0, // Left stick X
   lookXAxis: 2, // Right stick X (camera swivel)
@@ -148,7 +185,19 @@ export const DEFAULT_PAD = {
   invertLookX: false,
   invertLookY: false,
   deadzone: 0.1,
+  freeLookDeadzone: 0.1,
+  steeringSensitivity: 1,
+  aerialSensitivity: 1,
+  dodgeDeadzone: 0.5,
 };
+
+export const CONTROL_SLIDERS = [
+  { key: "steeringSensitivity", label: "Steering Sensitivity", min: 1, max: 10, step: 0.01 },
+  { key: "aerialSensitivity", label: "Aerial Sensitivity", min: 1, max: 10, step: 0.01 },
+  { key: "deadzone", label: "Controller Deadzone", min: 0, max: 0.5, step: 0.01 },
+  { key: "freeLookDeadzone", label: "Camera Swivel Deadzone", min: 0.05, max: 0.5, step: 0.01 },
+  { key: "dodgeDeadzone", label: "Dodge Deadzone", min: 0.1, max: 1, step: 0.01 },
+];
 
 export const PAD_BUTTON_ACTIONS = [
   "throttle",
@@ -163,6 +212,7 @@ export const PAD_BUTTON_ACTIONS = [
   "newTarget",
   "toggleBallCam",
   "lookBehind",
+  ...FREEPLAY_BALL_ACTIONS,
 ];
 
 export const PAD_AXIS_OPTIONS = [
@@ -254,10 +304,12 @@ function notify() {
 }
 
 function persist() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({ binds, pad, camera }),
-  );
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ binds, pad, camera }),
+    );
+  } catch {}
   notify();
 }
 
@@ -291,19 +343,19 @@ function mergeCamera(src) {
  * @param {Record<string, unknown>} [savedPad]
  */
 function applyV9Defaults(savedBinds, savedPad) {
-  if (typeof binds.steerLeft !== "string" || !binds.steerLeft) {
+  if (savedBinds?.steerLeft === undefined) {
     binds.steerLeft =
       typeof savedBinds?.yawLeft === "string"
         ? savedBinds.yawLeft
         : DEFAULT_BINDS.steerLeft;
   }
-  if (typeof binds.steerRight !== "string" || !binds.steerRight) {
+  if (savedBinds?.steerRight === undefined) {
     binds.steerRight =
       typeof savedBinds?.yawRight === "string"
         ? savedBinds.yawRight
         : DEFAULT_BINDS.steerRight;
   }
-  if (typeof binds.airRoll !== "string" || !binds.airRoll) {
+  if (savedBinds?.airRoll === undefined) {
     binds.airRoll =
       typeof savedBinds?.powerslide === "string"
         ? savedBinds.powerslide
@@ -312,9 +364,9 @@ function applyV9Defaults(savedBinds, savedPad) {
   if (typeof binds.lookBehind !== "string") {
     binds.lookBehind = DEFAULT_BINDS.lookBehind;
   }
-  if (pad.airRoll === undefined || pad.airRoll === null) {
+  if (savedPad?.airRoll === undefined) {
     pad.airRoll =
-      typeof savedPad?.powerslide === "number"
+      typeof savedPad?.powerslide === "number" && Number.isInteger(savedPad.powerslide) && savedPad.powerslide >= 0
         ? savedPad.powerslide
         : DEFAULT_PAD.airRoll;
   }
@@ -476,6 +528,11 @@ function load() {
 function mergePad(src) {
   for (const key of Object.keys(DEFAULT_PAD)) {
     const val = src[key];
+    const slider = CONTROL_SLIDERS.find(slider => slider.key === key);
+    if (slider) {
+      if (typeof val === "number" && Number.isFinite(val)) pad[key] = Math.min(slider.max, Math.max(slider.min, val));
+      continue;
+    }
     if (
       key === "invertPitch" ||
       key === "invertYaw" ||
@@ -487,6 +544,8 @@ function mergePad(src) {
       if (typeof val === "number" && Number.isFinite(val)) {
         pad.deadzone = Math.min(0.5, Math.max(0.05, val));
       }
+    } else if (key === "pitchAxis" || key === "yawAxis" || key === "lookXAxis" || key === "lookYAxis") {
+      if (typeof val === "number" && Number.isInteger(val) && val >= 0 && val <= 3) pad[key] = val;
     } else if (typeof val === "number" && Number.isInteger(val) && val >= 0) {
       pad[key] = val;
     } else if (val === null) {
@@ -524,7 +583,8 @@ export function getBind(action) {
  * @param {string} b
  */
 function bindsMayShare(a, b) {
-  return SHAREABLE_BINDS.some((g) => g.has(a) && g.has(b));
+  return FREEPLAY_BALL_ACTIONS.includes(a) !== FREEPLAY_BALL_ACTIONS.includes(b) ||
+    SHAREABLE_BINDS.some((g) => g.has(a) && g.has(b));
 }
 
 /**
@@ -550,6 +610,17 @@ export function resetBinds() {
   persist();
 }
 
+export function getControlPreset() {
+  return Object.entries(DEFAULT_BINDS).every(([key, value]) => binds[key] === value) &&
+    PAD_BUTTON_ACTIONS.every(key => pad[key] === DEFAULT_PAD[key]) ? "default" : "custom";
+}
+
+export function resetControlBindings() {
+  binds = { ...DEFAULT_BINDS };
+  for (const key of PAD_BUTTON_ACTIONS) pad[key] = DEFAULT_PAD[key];
+  persist();
+}
+
 /** @returns {Readonly<typeof DEFAULT_PAD>} */
 export function getPad() {
   return pad;
@@ -561,6 +632,13 @@ export function getPad() {
  */
 export function setPad(key, value) {
   if (!(key in DEFAULT_PAD)) return;
+  const slider = CONTROL_SLIDERS.find(slider => slider.key === key);
+  if (slider) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return;
+    pad[key] = Math.min(slider.max, Math.max(slider.min, value));
+    persist();
+    return;
+  }
 
   if (
     key === "invertPitch" ||
@@ -606,6 +684,7 @@ export function setPad(key, value) {
  */
 function padButtonsMayShare(a, b) {
   return (
+    FREEPLAY_BALL_ACTIONS.includes(a) !== FREEPLAY_BALL_ACTIONS.includes(b) ||
     (a === "powerslide" && b === "airRoll") ||
     (a === "airRoll" && b === "powerslide")
   );
@@ -626,6 +705,11 @@ export function resetAllControls() {
 /** @returns {Readonly<typeof DEFAULT_CAMERA>} */
 export function getCamera() {
   return camera;
+}
+
+export function applyCameraPreset(values) {
+  mergeCamera(values);
+  persist();
 }
 
 /**

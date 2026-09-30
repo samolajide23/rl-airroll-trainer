@@ -91,6 +91,7 @@ export function isBallReady() {
 export function cloneBallMesh() {
   if (!ballTemplate) return null;
   const clone = ballTemplate.clone(true);
+  clone.userData.sharedAssets = true;
   clone.traverse((obj) => {
     if (obj.isMesh && obj.material) {
       if (Array.isArray(obj.material)) {

@@ -1,6 +1,6 @@
 # Physics compare report
 
-Generated: 2026-09-30T15:08:27.603Z
+Generated: 2026-09-30T22:00:46.506Z
 
 Reference: **RocketSim 2.2.1**, SOCCAR or THE_VOID as declared per scenario.
 Candidate: **`carSim.js` / `rl-physics.js`**.
@@ -63,6 +63,10 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 
 | Scenario | pos mean/max (uu) | vel mean/max | ω mean/max | fwd° mean/max | up° mean/max |
 |---|---:|---:|---:|---:|---:|
+| `flip_cancel_sustained` | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `flip_cancel_partial` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `air_stall` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `flip_reset_jump` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_window_last_tick` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_window_expired` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `dominus_jump` | 0.021 / 0.045 | 0.046 / 0.050 | 0.000 / 0.001 | 0.014 / 0.020 | 0.014 / 0.020 |
@@ -134,6 +138,38 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `ground_jump_into_wall` | 1.574 / 7.884 | 6.092 / 26.621 | 0.051 / 1.108 | 0.355 / 0.860 | 0.115 / 1.134 |
 
 ## Per-scenario finals
+
+### `flip_cancel_sustained`
+Hold opposing pitch until the entire dodge torque window ends
+
+- Worst position error at tick **119** (0.002 uu)
+- Final pos RS 2297.30, 0.00, 2437.94 vs JS 2297.30, 0.00, 2437.94
+- Final ω RS 0.000, 0.225, 0.000 vs JS 0.000, 0.225, 0.000
+- Final forward RS [0.291, 0.000, -0.957] vs JS [0.291, 0.000, -0.957]
+
+### `flip_cancel_partial`
+Partial opposing pitch reduces rather than removes dodge torque
+
+- Worst position error at tick **83** (0.001 uu)
+- Final pos RS 375.00, 0.00, 2478.97 vs JS 375.00, 0.00, 2478.97
+- Final ω RS 0.000, 4.212, 0.000 vs JS 0.000, 4.212, 0.000
+- Final forward RS [-0.252, 0.000, 0.968] vs JS [-0.252, 0.000, 0.968]
+
+### `air_stall`
+Opposing yaw and roll select a flip but cancel its direction
+
+- Worst position error at tick **83** (0.001 uu)
+- Final pos RS 0.00, 0.00, 2478.97 vs JS 0.00, 0.00, 2478.97
+- Final ω RS 0.008, -0.001, 0.018 vs JS 0.008, -0.001, 0.018
+- Final forward RS [1.000, 0.030, 0.001] vs JS [1.000, 0.030, 0.001]
+
+### `flip_reset_jump`
+A car with a restored airborne flip uses a neutral second jump
+
+- Worst position error at tick **64** (0.000 uu)
+- Final pos RS 0.00, 0.00, 2533.91 vs JS 0.00, 0.00, 2533.91
+- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
+- Final forward RS [1.000, 0.000, 0.000] vs JS [1.000, 0.000, 0.000]
 
 ### `flip_window_last_tick`
 - Worst position error at tick **24** (0.000 uu)

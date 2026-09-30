@@ -11,6 +11,19 @@ npm run dev
 
 Open the Vite URL (usually `http://localhost:5173`).
 
+## Validation
+
+```bash
+npm test
+npm run build
+```
+
+Drill implementations load on demand. Production builds encode arena coordinates
+losslessly as Float32 data and split Three.js into a separately cached chunk.
+Saved metrics and settings tolerate unavailable browser storage; malformed stored
+values are discarded or fall back to defaults. Unavailable storage cannot persist
+changes across reloads.
+
 ## Curriculum
 
 ### Free Play
@@ -22,9 +35,8 @@ Open the Vite URL (usually `http://localhost:5173`).
 | Drill | What it trains |
 |---|---|
 | **Target Pose** | Match ghost orientation and hold (Easy / Medium / Hard) |
-| **Freeze & Stop** | Full 360° roll, then freeze wheels-down or sideways |
 | **DAR Sequences** | Nose up → roll left 90° → nose down → roll right 90° |
-| **One Direction** | Left-only or right-only air roll until it's automatic |
+| **Rings** | Boost and air roll through a hoop course |
 
 ### Phase 2 — Ball contact
 | Drill | What it trains |

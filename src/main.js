@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { frameElapsed } from "./shared/aerial.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PHASES, GHOST_ALIGN_DIFFICULTIES } from "./modes/catalog.js";
 import { preloadBall } from "./shared/ball.js";
@@ -32,22 +33,28 @@ import {
 } from "./shared/loadout.js";
 import {
   BALL_CAM_MODE_OPTIONS,
+  applyCameraPreset,
   BIND_LABELS,
   BIND_SECTIONS,
   CAMERA_SLIDERS,
+  CONTROL_SLIDERS,
   PAD_AXIS_OPTIONS,
   formatControlsHelp,
   formatKeyCode,
   formatPadButton,
   getBinds,
   getCamera,
+  getControlPreset,
   getPad,
   onBindsChange,
+  resetCamera,
+  resetControlBindings,
   resetAllControls,
   setBind,
   setCamera,
   setPad,
 } from "./shared/settings.js";
+import { CAMERA_PRESETS, CAMERA_PRESET_SOURCE, matchingCameraPreset } from "./shared/cameraPresets.js";
 
 const canvas = document.getElementById("game");
 const hubEl = document.getElementById("hub");
@@ -69,6 +76,10 @@ const bindListEl = document.getElementById("bind-list");
 const padBindListEl = document.getElementById("pad-bind-list");
 const panelControls = document.getElementById("panel-controls");
 const panelCamera = document.getElementById("panel-camera");
+const controlsOverview = document.getElementById("controls-overview");
+const bindingsEditor = document.getElementById("bindings-editor");
+const controlOptions = document.getElementById("control-options");
+let editingBindings = false;
 const cameraListEl = document.getElementById("camera-list");
 const padStatusLine = document.getElementById("pad-status-line");
 const menuHintEl = document.getElementById("menu-hint");
@@ -180,6 +191,7 @@ const modeCtx = { scene, camera, hud, arena };
 
 /** @type {null | { start(): void, stop(): void, update(dt: number, now: number): void }} */
 let activeMode = null;
+let modeStartId = 0;
 /** @type {import("./modes/catalog.js").GameModeDef | null} */
 let pendingMode = null;
 let activePhaseIndex = 0;
@@ -195,6 +207,7 @@ let settingsTab = "controls";
 let listeningKeyAction = null;
 /** @type {string | null} */
 let listeningPadAction = null;
+let padCaptureTimer = null;
 /** @type {Set<number>} */
 let padListenIgnore = new Set();
 
@@ -244,6 +257,10 @@ function handleMenuBack() {
     return;
   }
   if (!settingsEl.classList.contains("hidden")) {
+    if (editingBindings) {
+      setBindingsView(false);
+      return;
+    }
     showHub();
   }
 }
@@ -269,6 +286,7 @@ function refreshEquippedLabel() {
 }
 
 function stopActiveMode() {
+  modeStartId++;
   if (activeMode) {
     activeMode.stop();
     activeMode = null;
@@ -346,20 +364,29 @@ function showDifficultySelect(def) {
   menuGamepad.onScreenChange();
 }
 
-function startMode(def, options = {}) {
+async function startMode(def, options = {}) {
   if (!def.available || !def.create) return;
   cancelListening();
-  if (activeMode) activeMode.stop();
-  activeMode = def.create(modeCtx, options);
-  pendingMode = null;
-  hideAllScreens();
-  menuGamepad.onScreenChange();
-  activeMode.start();
-  setTouchControlsVisible(true);
-  if (import.meta.env.DEV) {
-    // Playwright / manual chase-camera probes (dev server only).
-    globalThis.__activeMode = activeMode;
-    globalThis.__gameCamera = camera;
+  stopActiveMode();
+  const requestId = modeStartId;
+  try {
+    const module = await def.load?.();
+    if (requestId !== modeStartId) return;
+    activeMode = def.create(modeCtx, options, module);
+    pendingMode = null;
+    hideAllScreens();
+    menuGamepad.onScreenChange();
+    activeMode.start();
+    setTouchControlsVisible(true);
+    if (import.meta.env.DEV) {
+      globalThis.__activeMode = activeMode;
+      globalThis.__gameCamera = camera;
+    }
+  } catch (error) {
+    if (requestId !== modeStartId) return;
+    console.error("Failed to start mode:", error);
+    showHub();
+    menuHintEl.textContent = "Unable to load drill. Check your connection and try again.";
   }
 }
 
@@ -528,9 +555,53 @@ function buildDifficultyList() {
 function rebuildControls() {
   buildBindList();
   buildPadOptionsList();
+  buildControlOptions();
+}
+
+function setBindingsView(editing) {
+  editingBindings = editing;
+  controlsOverview.classList.toggle("hidden", editing);
+  bindingsEditor.classList.toggle("hidden", !editing);
+  cancelListening();
+  menuGamepad.onScreenChange();
+}
+
+function buildControlOptions() {
+  controlOptions.replaceChildren();
+  for (const meta of CONTROL_SLIDERS) {
+    const row = document.createElement("div");
+    row.className = "bind-row";
+    const label = document.createElement("label");
+    label.className = "bind-label";
+    label.textContent = meta.label;
+    const wrap = document.createElement("div");
+    wrap.className = "bind-range";
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.id = `control-${meta.key}`;
+    label.htmlFor = slider.id;
+    slider.min = String(meta.min);
+    slider.max = String(meta.max);
+    slider.step = String(meta.step);
+    slider.value = String(getPad()[meta.key]);
+    const value = document.createElement("span");
+    value.className = "bind-range-value";
+    value.textContent = Number(slider.value).toFixed(2);
+    slider.addEventListener("input", () => {
+      setPad(meta.key, Number(slider.value));
+      value.textContent = Number(slider.value).toFixed(2);
+    });
+    wrap.append(slider, value);
+    row.append(label, wrap);
+    controlOptions.append(row);
+  }
+  controlOptions.append(makeStringSelectRow("Ball Camera Mode", getCamera().ballCamMode, BALL_CAM_MODE_OPTIONS, value => {
+    setCamera("ballCamMode", value);
+  }));
 }
 
 function cancelListening() {
+  stopPadCapture();
   listeningKeyAction = null;
   listeningPadAction = null;
   padListenIgnore = new Set();
@@ -543,11 +614,35 @@ function cancelListening() {
   }
 }
 
+function stopPadCapture() {
+  if (padCaptureTimer !== null) clearInterval(padCaptureTimer);
+  padCaptureTimer = null;
+}
+
+function capturePadBinding() {
+  if (!listeningPadAction) return;
+  const pad = getActiveGamepad();
+  for (const index of [...padListenIgnore]) {
+    if (!pad?.buttons[index]?.pressed) padListenIgnore.delete(index);
+  }
+  const pressed = pollGamepadButtonPress(padListenIgnore);
+  if (pressed === null) return;
+  setPad(listeningPadAction, pressed);
+  listeningPadAction = null;
+  padListenIgnore = new Set();
+  stopPadCapture();
+  rebuildControls();
+  menuGamepad.onScreenChange();
+}
+
 /**
  * @param {"controls" | "camera"} tab
  */
 function setSettingsTab(tab) {
   settingsTab = tab;
+  editingBindings = false;
+  controlsOverview.classList.remove("hidden");
+  bindingsEditor.classList.add("hidden");
   cancelListening();
   tabControls.classList.toggle("active", tab === "controls");
   tabCamera.classList.toggle("active", tab === "camera");
@@ -565,14 +660,57 @@ function buildCameraList() {
   const cam = getCamera();
   cameraListEl.replaceChildren();
 
-  // Order matches Rocket League Camera Settings: sliders, then Shake, then Ball Camera.
+  const presetRow = makeStringSelectRow("Camera Preset", matchingCameraPreset(cam), [
+    { value: "custom", label: "Custom" },
+    { value: "default", label: "Default" },
+    ...CAMERA_PRESETS.map(preset => ({ value: preset.id, label: preset.label })),
+  ], value => {
+    if (value === "custom") return;
+    if (value === "default") resetCamera();
+    else {
+      const preset = CAMERA_PRESETS.find(preset => preset.id === value);
+      if (!preset) return;
+      applyCameraPreset(preset.camera);
+      if (value === "my-camera") {
+        setPad("invertLookX", false);
+        setPad("invertLookY", false);
+      }
+    }
+    camera.fov = horizontalFovToVertical(getCamera().fov, camera.aspect);
+    camera.updateProjectionMatrix();
+    buildCameraList();
+  });
+  const presetSelect = presetRow.querySelector("select");
+  presetSelect.id = "camera-preset";
+  const source = document.getElementById("camera-preset-source");
+  const updatePreset = () => {
+    const id = matchingCameraPreset(getCamera());
+    presetSelect.value = id;
+    const preset = CAMERA_PRESETS.find(preset => preset.id === id);
+    source.replaceChildren();
+    if (preset && id !== "my-camera") {
+      const link = document.createElement("a");
+      link.href = CAMERA_PRESET_SOURCE;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = `Liquipedia · ${preset.updated}`;
+      source.append(link);
+    }
+  };
+  cameraListEl.append(presetRow);
+  cameraListEl.append(makeToggleRow("Camera Shake", cam.shake, checked => {
+    setCamera("shake", checked);
+    updatePreset();
+  }));
+  updatePreset();
+
   for (const slider of CAMERA_SLIDERS) {
     const row = document.createElement("div");
     row.className = "bind-row";
 
     const label = document.createElement("span");
     label.className = "bind-label";
-    label.textContent = slider.label;
+    label.textContent = slider.key === "fov" ? "Field of View" : slider.label.replace("Camera ", "");
 
     const wrap = document.createElement("div");
     wrap.className = "bind-range";
@@ -582,15 +720,17 @@ function buildCameraList() {
     input.max = String(slider.max);
     input.step = String(slider.step);
     input.value = String(cam[slider.key]);
+    input.id = `camera-${slider.key}`;
+    input.setAttribute("aria-label", label.textContent);
     const readout = document.createElement("span");
     readout.className = "bind-range-value";
-    const fmt =
-      slider.step < 1 ? (n) => n.toFixed(2) : (n) => String(Math.round(n));
+    const fmt = slider.key === "fov" ? n => `${Math.round(n)}°` : n => n.toFixed(2);
     readout.textContent = fmt(Number(cam[slider.key]));
     input.addEventListener("input", () => {
       const n = Number(input.value);
       readout.textContent = fmt(n);
       setCamera(slider.key, n);
+      updatePreset();
       // Live FOV on the shared camera while browsing settings (RL horizontal → Three vertical)
       if (slider.key === "fov") {
         camera.fov = horizontalFovToVertical(n, camera.aspect);
@@ -602,11 +742,9 @@ function buildCameraList() {
     cameraListEl.append(row);
   }
 
-  cameraListEl.append(
-    makeToggleRow("Camera Shake", cam.shake, (checked) => {
-      setCamera("shake", checked);
-    }),
-  );
+  cameraListEl.append(makeToggleRow("Invert Swivel", getPad().invertLookY, checked => {
+    setPad("invertLookY", checked);
+  }));
 
   cameraListEl.append(
     makeStringSelectRow(
@@ -615,6 +753,7 @@ function buildCameraList() {
       BALL_CAM_MODE_OPTIONS,
       (v) => {
         setCamera("ballCamMode", v);
+        updatePreset();
       },
     ),
   );
@@ -632,22 +771,77 @@ function parsePadSpec(padSpec) {
   return { kind: "button", key: padSpec };
 }
 
+function bindingCell(button, label, bound, clear) {
+  const cell = document.createElement("div");
+  cell.className = "binding-cell";
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "binding-clear";
+  remove.textContent = "×";
+  remove.title = `Remove ${label}`;
+  remove.setAttribute("aria-label", `Remove ${label}`);
+  remove.disabled = !bound;
+  remove.addEventListener("click", () => {
+    stopPadCapture();
+    listeningKeyAction = null;
+    listeningPadAction = null;
+    padListenIgnore = new Set();
+    clear();
+    rebuildControls();
+  });
+  cell.append(button, remove);
+  return cell;
+}
+
+function renderGamepadIcons(element, index, stick = null) {
+  element.replaceChildren();
+  const labels = [
+    ["A", "×"], ["B", "○"], ["X", "□"], ["Y", "△"],
+    ["LB", "L1"], ["RB", "R1"], ["LT", "L2"], ["RT", "R2"],
+    ["⧉", "SHARE"], ["☰", "OPTIONS"], ["LS", "L3"], ["RS", "R3"],
+    ["↑"], ["↓"], ["←"], ["→"],
+  ];
+  const symbols = stick ? [stick.startsWith("Right") ? "R" : "L"] : labels[index];
+  if (!symbols) {
+    element.textContent = formatPadButton(index);
+    return;
+  }
+  const group = document.createElement("span");
+  group.className = "gamepad-icons";
+  group.setAttribute("aria-hidden", "true");
+  symbols.forEach((symbol, position) => {
+    const icon = document.createElement("span");
+    icon.className = `gamepad-icon ${stick ? "stick-icon" : index < 4 ? `face-icon ${position === 0 ? "xbox" : "playstation"} face-${index}` : index >= 12 ? "dpad-icon" : "shoulder-icon"}`;
+    icon.textContent = symbol;
+    group.append(icon);
+  });
+  if (stick) {
+    const direction = stick.match(/[↑↓←→]/)?.[0];
+    if (direction) {
+      const arrow = document.createElement("span");
+      arrow.textContent = direction;
+      group.append(arrow);
+    }
+  }
+  element.append(group);
+  const name = stick ?? formatPadButton(index);
+  element.title = name;
+  element.setAttribute("aria-label", `${element.getAttribute("aria-label") ?? "Gamepad"}: ${name}`);
+}
+
 function buildBindList() {
   const binds = getBinds();
   const pad = getPad();
   bindListEl.replaceChildren();
   updatePadStatusLine();
+  document.getElementById("control-preset").value = getControlPreset();
 
   for (const section of BIND_SECTIONS) {
-    const sectionTitle = document.createElement("p");
-    sectionTitle.className = "settings-section-title bind-section-title";
-    sectionTitle.textContent = section.title;
-    bindListEl.append(sectionTitle);
-
     for (const entry of section.actions) {
       const action = entry.id;
       const row = document.createElement("div");
       row.className = "bind-row bind-row-cols";
+      row.dataset.action = action;
 
       const label = document.createElement("span");
       label.className = "bind-label";
@@ -656,6 +850,7 @@ function buildBindList() {
       const keyBtn = document.createElement("button");
       keyBtn.type = "button";
       keyBtn.className = "bind-key";
+      keyBtn.setAttribute("aria-label", `${BIND_LABELS[action]} keyboard binding`);
       keyBtn.title = "Click, then press any key or mouse button. Backspace clears.";
       if (listeningKeyAction === action) {
         keyBtn.classList.add("listening");
@@ -665,6 +860,7 @@ function buildBindList() {
         keyBtn.textContent = code ? formatKeyCode(code) : "—";
       }
       keyBtn.addEventListener("click", () => {
+        stopPadCapture();
         listeningPadAction = null;
         listeningKeyAction = action;
         rebuildControls();
@@ -676,38 +872,37 @@ function buildBindList() {
       if (padSpec.kind === "stick") {
         padCell = document.createElement("span");
         padCell.className = "bind-key bind-key-pad bind-key-fixed";
-        padCell.textContent = padSpec.label;
-        padCell.title = "Always Left Stick (Rocket League)";
+        renderGamepadIcons(padCell, null, padSpec.label);
       } else if (padSpec.kind === "button") {
         const padKey = padSpec.key;
         const padBtn = document.createElement("button");
         padBtn.type = "button";
         padBtn.className = "bind-key bind-key-pad";
+        padBtn.setAttribute("aria-label", `${BIND_LABELS[action]} gamepad binding`);
         padBtn.title = "Click, then press a controller button";
         if (listeningPadAction === padKey) {
           padBtn.classList.add("listening");
           padBtn.textContent = "Press a button…";
         } else {
-          padBtn.textContent = formatPadButton(
-            /** @type {number | null} */ (
-              pad[/** @type {keyof typeof pad} */ (padKey)]
-            ),
-          );
+          renderGamepadIcons(padBtn, pad[padKey]);
         }
         padBtn.addEventListener("click", () => {
+          stopPadCapture();
           listeningKeyAction = null;
           listeningPadAction = padKey;
           padListenIgnore = snapshotPressedButtons();
           rebuildControls();
+          padCaptureTimer = setInterval(capturePadBinding, 50);
         });
-        padCell = padBtn;
+        padCell = bindingCell(padBtn, `${BIND_LABELS[action]} gamepad binding`, pad[padKey] != null, () => setPad(padKey, null));
       } else {
         padCell = document.createElement("span");
         padCell.className = "bind-key bind-key-pad bind-key-fixed";
         padCell.textContent = "—";
       }
 
-      row.append(label, keyBtn, padCell);
+      const keyCell = bindingCell(keyBtn, `${BIND_LABELS[action]} keyboard binding`, Boolean(binds[action]), () => setBind(action, ""));
+      row.append(label, keyCell, padCell);
       bindListEl.append(row);
     }
   }
@@ -831,6 +1026,7 @@ function makeStringSelectRow(title, value, options, onChange) {
 
   const select = document.createElement("select");
   select.className = "bind-control";
+  select.setAttribute("aria-label", title);
   for (const opt of options) {
     const option = document.createElement("option");
     option.value = opt.value;
@@ -863,6 +1059,7 @@ function makeToggleRow(title, checked, onChange) {
   wrap.className = "bind-toggle";
   const input = document.createElement("input");
   input.type = "checkbox";
+  input.setAttribute("aria-label", title);
   input.checked = checked;
   input.addEventListener("change", () => onChange(input.checked));
   const text = document.createElement("span");
@@ -891,7 +1088,7 @@ function makeDeadzoneRow(value) {
   wrap.className = "bind-range";
   const input = document.createElement("input");
   input.type = "range";
-  input.min = "0.05";
+  input.min = "0";
   input.max = "0.45";
   input.step = "0.01";
   input.value = String(value);
@@ -913,12 +1110,19 @@ btnMenu.addEventListener("click", showHub);
 btnPlay.addEventListener("click", showPlay);
 btnLocker.addEventListener("click", showLocker);
 btnSettings.addEventListener("click", showSettings);
+document.getElementById("btn-view-bindings").addEventListener("click", () => setBindingsView(true));
+document.getElementById("control-preset").addEventListener("change", event => {
+  if (event.target.value === "default") resetControlBindings();
+  rebuildControls();
+});
 btnPlayBack.addEventListener("click", handleMenuBack);
 btnLockerBack.addEventListener("click", showHub);
-btnSettingsBack.addEventListener("click", showHub);
+btnSettingsBack.addEventListener("click", handleMenuBack);
 btnDifficultyBack.addEventListener("click", () => showDrills(activePhaseIndex));
 btnResetBinds.addEventListener("click", () => {
-  resetAllControls();
+  if (editingBindings) resetControlBindings();
+  else if (settingsTab === "camera") resetCamera();
+  else resetAllControls();
   cancelListening();
   if (settingsTab === "controls") {
     rebuildControls();
@@ -1006,7 +1210,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) keys.clear();
 });
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = frameElapsed(now, last);
   last = now;
 
   if (keys.has("Escape") && !escLatch) {
@@ -1031,25 +1235,7 @@ function frame(now) {
   menuGamepad.update(now);
 
   // Capture controller button while remapping
-  if (listeningPadAction) {
-    // Drop ignore mask once those buttons are released
-    for (const idx of [...padListenIgnore]) {
-      const pad = getActiveGamepad();
-      if (!pad || !pad.buttons[idx]?.pressed) padListenIgnore.delete(idx);
-    }
-    const pressed = pollGamepadButtonPress(padListenIgnore);
-    if (pressed !== null) {
-      setPad(
-        /** @type {import("./shared/settings.js").PadSetting} */ (
-          listeningPadAction
-        ),
-        pressed,
-      );
-      listeningPadAction = null;
-      padListenIgnore = new Set();
-      rebuildControls();
-    }
-  }
+  capturePadBinding();
 
   if (
     !settingsEl.classList.contains("hidden") &&
