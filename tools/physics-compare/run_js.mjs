@@ -54,6 +54,9 @@ function vecList(v) {
 
 /** Match RocketSim Angle / RotMat: yaw, pitch, roll about Z, Y-after-yaw? Angle.as_rot_mat. */
 function setOrientation(car, yaw, pitch, roll) {
+  yaw = Math.fround(yaw);
+  pitch = Math.fround(pitch);
+  roll = Math.fround(roll);
   // RocketSim Angle YPR → RotMat (f, right, up). `axes().l` is local +Y
   // = car right, so pass right as the Y column (not -right; that would be improper).
   const cy = Math.cos(yaw);
@@ -98,7 +101,7 @@ function idleControls() {
 }
 
 function initCar(initial) {
-  const car = makePhysCar(new THREE.Vector3(...initial.pos), 0);
+  const car = makePhysCar(new THREE.Vector3(...initial.pos), 0, initial.hitbox ?? "octane");
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   car.boost = initial.boost ?? RL.BOOST_MAX;
@@ -160,6 +163,11 @@ function prepareAirborne(car, initial) {
   // Reference set_state replaces gameplay state after its warmup tick.
   car.airTime = 0;
   car.airTimeSinceJump = 0;
+  if (initial.air_time_since_jump !== undefined) {
+    car.hasJumped = initial.has_jumped ?? true;
+    car.jumping = false;
+    car.airTimeSinceJump = initial.air_time_since_jump;
+  }
 }
 
 function rotPayload(car) {
@@ -278,7 +286,7 @@ function runScenario(scenario, defaults) {
   const car = initCar(initial);
   car.arenaCollisions = mode !== "void";
   const pads = mode === "soccar" ? createSoccarBoostPads() : [];
-  if (mode === "soccar") prepareGround(car, initial, settleTicks, pads);
+  if (initial.on_ground) prepareGround(car, initial, settleTicks, pads);
   else prepareAirborne(car, initial);
 
   const ballInitial = scenario.ball ?? null;

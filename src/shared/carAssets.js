@@ -5,7 +5,7 @@ import { CARS } from "./loadout.js";
 /** @type {Map<string, THREE.Object3D>} */
 const templates = new Map();
 
-let preloadPromise = null;
+const pendingLoads = new Map();
 
 /**
  * Normalize a GLB so nose ≈ +Z, upright ≈ +Y, length ≈ targetLength,
@@ -61,29 +61,33 @@ function normalizeModel(root, targetLength = 3.2) {
 }
 
 /**
- * Preload every glTF body once at boot.
+ * Load requested bodies once; omitting IDs loads every glTF body.
+ * @param {string[]} [ids]
  * @returns {Promise<void>}
  */
-export function preloadCars() {
-  if (preloadPromise) return preloadPromise;
-  const loader = new GLTFLoader();
-  const jobs = CARS.filter((c) => c.kind === "glb" && c.url).map(
-    async (def) => {
-      try {
-        const gltf = await loader.loadAsync(def.url);
-        const template = normalizeModel(
-          gltf.scene,
-          def.targetLength ?? 3.2,
-        );
-        template.name = `car-template-${def.id}`;
-        templates.set(def.id, template);
-      } catch (err) {
-        console.warn(`Failed to load car "${def.id}":`, err);
-      }
+export function preloadCars(ids = CARS.map(car => car.id)) {
+  const jobs = CARS.filter((car) => ids.includes(car.id) && car.kind === "glb" && car.url).map(
+    (def) => {
+      if (templates.has(def.id)) return Promise.resolve();
+      if (pendingLoads.has(def.id)) return pendingLoads.get(def.id);
+      const job = (async () => {
+        try {
+          const gltf = await new GLTFLoader().loadAsync(def.url);
+          const template = normalizeModel(
+            gltf.scene,
+            def.targetLength ?? 3.2,
+          );
+          template.name = `car-template-${def.id}`;
+          templates.set(def.id, template);
+        } catch (err) {
+          console.warn(`Failed to load car "${def.id}":`, err);
+        }
+      })();
+      pendingLoads.set(def.id, job);
+      return job;
     },
   );
-  preloadPromise = Promise.all(jobs).then(() => undefined);
-  return preloadPromise;
+  return Promise.all(jobs).then(() => undefined);
 }
 
 /**

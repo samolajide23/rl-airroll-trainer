@@ -200,7 +200,7 @@ function check(name, cond) {
   for (let i = 0; i < 30; i++) ab.step(obj, 1, 0, 0, 1 / 120);
   check(
     "AerialBody +roll → right-wing down",
-    new THREE.Vector3(1, 0, 0).applyQuaternion(obj.quaternion).y < -0.2,
+    new THREE.Vector3(-1, 0, 0).applyQuaternion(obj.quaternion).y < -0.2,
   );
 
   ab.reset();
@@ -208,7 +208,7 @@ function check(name, cond) {
   for (let i = 0; i < 30; i++) ab.step(obj, -1, 0, 0, 1 / 120);
   check(
     "AerialBody -roll → right-wing up",
-    new THREE.Vector3(1, 0, 0).applyQuaternion(obj.quaternion).y > 0.2,
+    new THREE.Vector3(-1, 0, 0).applyQuaternion(obj.quaternion).y > 0.2,
   );
 
   ab.reset();

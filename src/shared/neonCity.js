@@ -63,5 +63,22 @@ export function createNeonCity() {
     }));
     screen.position.set(0, 18, side * (end + 15)); root.add(screen);
   }
+  for (const material of lineMaterial) {
+    const accents = root.children.filter(child => child.isMesh && child.material === material);
+    const instances = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, accents.length);
+    instances.name = "city-light-accents";
+    accents.forEach((mesh, index) => {
+      const { width, height, depth } = mesh.geometry.parameters;
+      dummy.position.copy(mesh.position);
+      dummy.rotation.copy(mesh.rotation);
+      dummy.scale.set(width, height, depth);
+      dummy.updateMatrix();
+      instances.setMatrixAt(index, dummy.matrix);
+      mesh.removeFromParent();
+      mesh.geometry.dispose();
+    });
+    instances.computeBoundingSphere();
+    root.add(instances);
+  }
   return root;
 }

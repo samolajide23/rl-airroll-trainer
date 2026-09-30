@@ -67,6 +67,11 @@ export function prepareCarVisual(visual, carId) {
   visual.userData.calibratedWheels = wheels;
 }
 
+const wheelLocal = new THREE.Vector3();
+const wheelVelocity = new THREE.Vector3();
+const wheelRotation = new THREE.Quaternion();
+const visualInverse = new THREE.Matrix4();
+
 /** Apply suspension, steering and rolling to the existing separate wheel meshes. */
 export function syncCarWheels(carMesh, car, dt = 0) {
   const visual = carMesh.userData.visual;
@@ -79,13 +84,15 @@ export function syncCarWheels(carMesh, car, dt = 0) {
     }));
   }
   const wheels = visual?.userData.calibratedWheels;
-  const forwardSpeed = car.vel.clone().applyQuaternion(car.q.clone().invert()).x;
+  const forwardSpeed = wheelVelocity.copy(car.vel).applyQuaternion(wheelRotation.copy(car.q).invert()).x;
   if (!wheels) {
     visual?.userData.spinWheels?.(forwardSpeed * dt * 0.01 / (carMesh.scale.x * Math.abs(visual.scale.z)));
     return;
   }
-  carMesh.updateWorldMatrix(true, true);
+  visual.updateMatrix();
+  visualInverse.copy(visual.matrix).invert();
   const scale = carMesh.scale.x;
+  const suspensionBlend = dt > 0 ? 1 - Math.exp(-20 * dt) : 0;
   for (const wheel of wheels) {
     const front = wheel.corner.startsWith("F");
     // Use geometric side rather than export labels (assets disagree on handedness).
@@ -97,12 +104,12 @@ export function syncCarWheels(carMesh, car, dt = 0) {
     wheel.visualSuspensionLength ??= targetLength;
     if (state.inContact) wheel.visualSuspensionLength = targetLength;
     else if (dt > 0) {
-      wheel.visualSuspensionLength += (targetLength - wheel.visualSuspensionLength) * (1 - Math.exp(-20 * dt));
+      wheel.visualSuspensionLength += (targetLength - wheel.visualSuspensionLength) * suspensionBlend;
     }
-    const local = new THREE.Vector3(-state.connection.y * 0.01 / scale,
+    wheelLocal.set(-state.connection.y * 0.01 / scale,
       (state.connection.z - wheel.visualSuspensionLength) * 0.01 / scale,
       state.connection.x * 0.01 / scale);
-    wheel.pivot.position.copy(visual.worldToLocal(carMesh.localToWorld(local)));
+    wheel.pivot.position.copy(wheelLocal.applyMatrix4(visualInverse));
     wheel.roll = (wheel.roll ?? 0) + forwardSpeed * dt / state.radius;
     wheel.pivot.rotation.set(wheel.roll, -state.steerAngle, 0, "YXZ");
   }

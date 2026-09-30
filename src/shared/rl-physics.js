@@ -617,15 +617,22 @@ export function physToThree(v, out = V()) {
  * @param {THREE.Object3D} group
  * @param {number} [scale=UU]
  */
+const renderFront = new THREE.Vector3();
+const renderUp = new THREE.Vector3();
+const renderLeft = new THREE.Vector3();
+const renderBasis = new THREE.Matrix4();
+const visualCenter = new THREE.Vector3();
+
 export function applyToCarModel(car, group, scale = UU) {
-  const { f, u } = axes(car.q);
-  const front = physToThree(f).normalize();
-  const up = physToThree(u).normalize();
+  const front = renderFront.set(1, 0, 0).applyQuaternion(car.q);
+  physToThree(front, front).normalize();
+  const up = renderUp.set(0, 0, 1).applyQuaternion(car.q);
+  physToThree(up, up).normalize();
   // up × front = physics left after the physToThree handedness flip.
-  const left = up.clone().cross(front).normalize();
-  group.position.copy(physToThree(car.pos)).multiplyScalar(scale);
+  const left = renderLeft.copy(up).cross(front).normalize();
+  physToThree(car.pos, group.position).multiplyScalar(scale);
   group.quaternion.setFromRotationMatrix(
-    new THREE.Matrix4().makeBasis(left, up, front),
+    renderBasis.makeBasis(left, up, front),
   );
   const visual = group.userData?.visual;
   if (visual) {
@@ -666,7 +673,7 @@ export function alignCarVisualToHitbox(carMesh, preset, uu = UU) {
   const [ox, oy, oz] = preset.offset;
   const bounds = carMesh.userData.visualBounds;
   if (bounds) {
-    const center = bounds.getCenter(V());
+    const center = bounds.getCenter(visualCenter);
     visual.position.set(-oy * k - center.x, -preset.restZ * k - bounds.min.y,
       calibration ? calibration.rearUU * k - calibration.rearCenter : ox * k - center.z);
   } else {

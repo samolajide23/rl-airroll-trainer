@@ -27,6 +27,105 @@
   },
   "scenarios": [
     {
+      "id": "flip_window_last_tick", "ticks": 30,
+      "initial": { "pos": [0, 0, 2000], "air_time_since_jump": 1.2333333333333334 },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 30, "controls": {} }
+      ]
+    },
+    {
+      "id": "flip_window_expired", "ticks": 30,
+      "initial": { "pos": [0, 0, 2000], "air_time_since_jump": 1.25 },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 30, "controls": {} }
+      ]
+    },
+    {
+      "id": "dominus_jump", "ticks": 120,
+      "initial": { "hitbox": "dominus", "pos": [-1000, 0, 17], "on_ground": true },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "plank_jump", "ticks": 120,
+      "initial": { "hitbox": "plank", "pos": [-1000, 0, 19], "on_ground": true },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "breakout_jump", "ticks": 120,
+      "initial": { "hitbox": "breakout", "pos": [-1000, 0, 19], "on_ground": true },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "hybrid_jump", "ticks": 120,
+      "initial": { "hitbox": "hybrid", "pos": [-1000, 0, 17], "on_ground": true },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "merc_jump", "ticks": 120,
+      "initial": { "hitbox": "merc", "pos": [-1000, 0, 19], "on_ground": true },
+      "controls": { "jump": true }
+    },
+    {
+      "id": "dominus_landing", "game_mode": "soccar", "ticks": 120,
+      "initial": { "hitbox": "dominus", "pos": [-1000, 0, 250], "vel": [600, 300, -300] },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "plank_landing", "game_mode": "soccar", "ticks": 120,
+      "initial": { "hitbox": "plank", "pos": [-1000, 0, 250], "vel": [600, 300, -300] },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "breakout_landing", "game_mode": "soccar", "ticks": 120,
+      "initial": { "hitbox": "breakout", "pos": [-1000, 0, 250], "vel": [600, 300, -300] },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "hybrid_landing", "game_mode": "soccar", "ticks": 120,
+      "initial": { "hitbox": "hybrid", "pos": [-1000, 0, 250], "vel": [600, 300, -300] },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "merc_landing", "game_mode": "soccar", "ticks": 120,
+      "initial": { "hitbox": "merc", "pos": [-1000, 0, 250], "vel": [600, 300, -300] },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "double_jump_early", "ticks": 240,
+      "initial": { "pos": [-1000, 0, 17], "on_ground": true },
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "jump": true } },
+        { "until_tick": 60, "controls": {} },
+        { "until_tick": 61, "controls": { "jump": true } },
+        { "until_tick": 240, "controls": {} }
+      ]
+    },
+    {
+      "id": "flip_window_before", "game_mode": "soccar", "ticks": 180,
+      "initial": { "pos": [0, 0, 17], "on_ground": true },
+      "control_schedule": [
+        { "until_tick": 24, "controls": { "jump": true } },
+        { "until_tick": 151, "controls": {} },
+        { "until_tick": 152, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 180, "controls": {} }
+      ]
+    },
+    {
+      "id": "roof_recovery", "game_mode": "soccar", "ticks": 180,
+      "initial": { "pos": [-1000, 0, 80], "roll": 3.141592653589793, "vel": [0, 0, -100] },
+      "control_schedule": [
+        { "until_tick": 60, "controls": {} },
+        { "until_tick": 61, "controls": { "jump": true } },
+        { "until_tick": 180, "controls": { "throttle": 1 } }
+      ]
+    },
+    {
+      "id": "ceiling_impact", "game_mode": "soccar", "ticks": 120,
+      "initial": { "pos": [-1000, 0, 1800], "vel": [600, 0, 800] }
+    },
+    {
       "id": "freefall_1s",
       "description": "No input mid-air for 1s — gravity only",
       "ticks": 120
@@ -404,6 +503,98 @@
         { "until_tick": 240, "controls": { "throttle": 1, "steer": 1, "handbrake": true } },
         { "until_tick": 360, "controls": { "throttle": 1, "steer": 1 } }
       ]
+    },
+    {
+      "id": "air_backflip",
+      "description": "Backward dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": 1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "air_backflip_forward_speed",
+      "description": "Backward dodge while moving forward at 1800 uu/s",
+      "ticks": 90,
+      "initial": { "vel": [1800, 0, 0] },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": 1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "air_forwardflip_reverse_speed",
+      "description": "Forward dodge while reversing at 1000 uu/s",
+      "ticks": 90,
+      "initial": { "vel": [-1000, 0, 0] },
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "air_linear_speed_cap",
+      "description": "Boost with nonaxial velocity above the linear speed cap",
+      "ticks": 60,
+      "initial": { "pos": [0, 0, 2500], "vel": [2300, 800, 500] },
+      "controls": { "boost": true }
+    },
+    {
+      "id": "air_angular_speed_cap",
+      "description": "Combined air controls from an over-cap angular velocity",
+      "ticks": 60,
+      "initial": { "ang_vel": [5, 4, 3] },
+      "controls": { "pitch": 1, "yaw": -1, "roll": 1 }
+    },
+    {
+      "id": "air_boost_one_tick",
+      "description": "One-tick boost press checks minimum boost duration",
+      "ticks": 60,
+      "control_schedule": [
+        { "until_tick": 1, "controls": { "boost": true } },
+        { "until_tick": 60, "controls": {} }
+      ]
+    },
+    {
+      "id": "ground_analog_steer",
+      "description": "Half throttle and quarter steering from a moving start",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": { "pos": [-1000, 0, 17], "vel": [1000, 0, 0], "on_ground": true },
+      "controls": { "throttle": 0.5, "steer": 0.25 }
+    },
+    {
+      "id": "ground_fast_steer",
+      "description": "Steering at near-supersonic speed",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": { "pos": [-2000, 0, 17], "vel": [2200, 0, 0], "on_ground": true },
+      "controls": { "throttle": 1, "steer": 0.5 }
+    },
+    {
+      "id": "landing_wheels",
+      "description": "Airborne downward and forward velocity landing on wheels",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": { "pos": [-1000, 0, 250], "vel": [600, 0, -300], "on_ground": false },
+      "controls": { "throttle": 1 }
+    },
+    {
+      "id": "landing_powerslide",
+      "description": "Sideways moving landing with powerslide held",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": { "pos": [-1000, 0, 250], "vel": [600, 300, -300], "on_ground": false },
+      "controls": { "throttle": 1, "handbrake": true }
+    },
+    {
+      "id": "ceiling_fall_airroll",
+      "description": "Inverted airborne car falls from near the ceiling while rolling",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": { "pos": [0, 0, 1950], "roll": 3.141592653589793, "vel": [0, 0, -1], "on_ground": false },
+      "controls": { "roll": 1 }
     },
     {
       "id": "ground_jump_into_wall",

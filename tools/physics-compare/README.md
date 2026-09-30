@@ -8,7 +8,7 @@ Reference is pinned to **RocketSim 2.2.1**. This is a regression suite, not proo
 of exact Rocket League parity. Live-game measurements are a separate requirement.
 
 - `npm test`: standalone physics and comparison-integrity tests (no Python).
-- `npm run physics:compare`: regenerate and enforce the 35 car scenarios.
+- `npm run physics:compare`: regenerate and enforce the 69 car scenarios.
 - `npm run physics:ball`: regenerate and enforce 10 isolated ball scenarios.
 - `npm run physics:parity`: scalar/config checks, including live RocketSim when available.
 - `npm run physics:contact`: strict coupled car/ball comparisons; currently fails
@@ -24,6 +24,21 @@ output are supported. Missing/different meshes fail explicitly.
 
 ### Current measured results
 
+- Movement audit: **62/69 scenarios pass** with unchanged tolerances. Coverage
+	includes speed/spin caps, analog/high-speed steering, reverse and diagonal
+	flips, early double jump, valid/expired dodge windows, minimum boost duration,
+	six hitbox jump configurations, and airborne wheel landings.
+- Fixed minimum boost duration using reference float32 timer accumulation;
+	initialized wheel friction coefficients to zero, matching the reference's
+	first-contact ordering. Both have focused unit tests.
+- Remaining failures: powerslide release, Dominus/Plank/Breakout/Hybrid landings,
+	roof recovery, and ceiling impact. Roof/ceiling errors begin at first chassis
+	contact; maximum position errors are **36.33/120.77 uu**, respectively.
+	Separate box-corner face constraints worsened recovery and were not retained.
+- Coupled contact: **2/5 pass overall**. All five ball trajectories meet their
+	budgets; three car orientation residuals remain around 0.06-0.11 degrees.
+- Verification: 33 unit tests, 13 orientation-sign checks, isolated ball suite,
+	arena vertex checks, scalar/config parity and production build pass.
 - Existing car trajectory accuracy is preserved: approximately 0.001 uu in air,
 	up to 0.17 uu ordinary ground motion, 1.56 uu floor scrape, 7.86 uu wall jump.
 - Nine ball scenarios (sleep, freefall, drag, caps, void, floor, spin, wall,
@@ -66,7 +81,8 @@ Zero linear **and** angular velocity explicitly sleeps RocketSim's ball even
 when positioned in mid-air. Drop fixtures use a 0.001 uu/s initial velocity so
 both engines are awake; a separate test covers kickoff sleep.
 
-Keep the browser JS sim; use RocketSim as ground truth; fix deltas iteratively.
+Keep the browser JS sim; use RocketSim as a versioned comparison reference,
+not ground truth for the current proprietary game. Fix deltas iteratively.
 
 ## What it does
 
@@ -118,6 +134,10 @@ See `scenarios.json`. Controls use RocketSim / RLBot signs:
 Frame: Z-up, identity car faces +X with right = +Y.
 
 Ground scenarios set `"game_mode": "soccar"` and `"on_ground": true`.
+Airborne SOCCAR scenarios use airborne preparation, not suspension settling.
+`initial.hitbox` selects one of the six standard configurations. Airborne
+fixtures can set `initial.air_time_since_jump` and `initial.has_jumped` to
+exercise dodge eligibility without an ambiguous launch or landing sequence.
 
 ## Current match quality (max position error vs RocketSim)
 

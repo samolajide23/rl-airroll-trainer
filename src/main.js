@@ -1001,6 +1001,10 @@ window.addEventListener("gamepaddisconnected", () => {
 onBindsChange(refreshHelpText);
 
 let last = performance.now();
+document.addEventListener("visibilitychange", () => {
+  last = performance.now();
+  if (document.hidden) keys.clear();
+});
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
@@ -1100,7 +1104,7 @@ refreshHelpText();
 showHub();
 requestAnimationFrame(frame);
 
-Promise.all([preloadCars(), preloadBall()]).then(() => {
+Promise.all([preloadCars([getSelectedCarId()]), preloadBall()]).then(() => {
   refreshEquippedLabel();
   // If the locker is already open, refresh the GLB body once assets land.
   if (!lockerEl.classList.contains("hidden")) {

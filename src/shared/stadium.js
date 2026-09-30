@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { RL } from "./rl-physics.js";
 import { UU } from "./rl-units.js";
 import { SOCCAR_TRIS } from "./soccarMeshData.js";
@@ -159,6 +160,40 @@ export function createStadium() {
   root.add(createNeonCity());
   root.add(new THREE.HemisphereLight(0xb8d8ff, 0x32424b, 1.8));
   const sun = new THREE.DirectionalLight(0xe1edff, 2.2); sun.position.set(-30, 65, -35); root.add(sun);
+
+  const batches = new Map();
+  for (const child of root.children) {
+    if (!child.isMesh || child.isInstancedMesh || child.name || Array.isArray(child.material) || child.material.transparent) continue;
+    const batch = batches.get(child.material) ?? [];
+    batch.push(child);
+    batches.set(child.material, batch);
+  }
+  for (const [material, meshes] of batches) {
+    if (meshes.length < 2) continue;
+    const parts = meshes.map(mesh => {
+      mesh.updateMatrix();
+      const transformed = mesh.geometry.clone().applyMatrix4(mesh.matrix);
+      if (!transformed.index) return transformed;
+      const part = transformed.toNonIndexed();
+      transformed.dispose();
+      return part;
+    });
+    const geometry = mergeGeometries(parts);
+    parts.forEach(part => part.dispose());
+    if (!geometry) continue;
+    geometry.computeBoundingSphere();
+    const batch = new THREE.Mesh(geometry, material);
+    batch.name = "static-stadium-batch";
+    root.add(batch);
+    for (const mesh of meshes) {
+      mesh.removeFromParent();
+      mesh.geometry.dispose();
+    }
+  }
+  root.traverse(obj => {
+    obj.updateMatrix();
+    obj.matrixAutoUpdate = false;
+  });
 
   root.userData.dispose = () => {
     const geometries = new Set(), materials = new Set(), textures = new Set();

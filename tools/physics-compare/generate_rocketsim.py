@@ -339,7 +339,10 @@ def run_scenario(
             "initial": initial, "frames": frames,
         }
 
-    car = arena.add_car(rs.Team.BLUE)
+    hitbox = str(initial.get("hitbox", "octane")).upper()
+    if hitbox not in {"OCTANE", "DOMINUS", "PLANK", "BREAKOUT", "HYBRID", "MERC"}:
+        raise ValueError(f"Unsupported hitbox: {hitbox}")
+    car = arena.add_car(rs.Team.BLUE, getattr(rs.CarConfig, hitbox))
     if mode == "soccar":
         # Park the default kickoff ball far away so it cannot collide with car tests.
         try:
@@ -351,9 +354,17 @@ def run_scenario(
             ball.set_state(bs)
         except Exception:
             pass
+    if initial.get("on_ground", False):
         prepare_ground(arena, car, initial, settle_ticks)
     else:
         prepare_airborne(arena, car, initial)
+
+    if "air_time_since_jump" in initial:
+        state = car.get_state()
+        state.has_jumped = bool(initial.get("has_jumped", True))
+        state.is_jumping = False
+        state.air_time_since_jump = float(initial["air_time_since_jump"])
+        car.set_state(state)
 
     ball_initial = scenario.get("ball")
     if ball_initial:

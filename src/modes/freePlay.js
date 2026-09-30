@@ -77,6 +77,9 @@ export class FreePlayMode {
     this.ballMesh.castShadow = true;
     this._stopped = false;
     this.ballVisual = new THREE.Group();
+    this.ballSpin = new THREE.Vector3();
+    this.ballSpinRotation = new THREE.Quaternion();
+    this.shadowForward = new THREE.Vector3();
     this.root.add(this.ballVisual);
     const upgradeBall = () => {
       if (this._stopped) return;
@@ -131,7 +134,7 @@ export class FreePlayMode {
     }
     // Starting immediately must not permanently retain the procedural fallback.
     const initialCarWasReady = isCarReady(this.carId);
-    preloadCars().then(() => {
+    preloadCars([this.carId]).then(() => {
       if (this._stopped || initialCarWasReady || !isCarReady(this.carId)) return;
       const old = this.carMesh;
       this.carMesh = makeCar(0xffffff, 1, { carId: this.carId, markers: false });
@@ -275,34 +278,41 @@ export class FreePlayMode {
     this.ctx.hud.status.textContent = `Reset — ${this.hitbox.label} hitbox · blue half`;
   }
 
-  syncMeshes() {
+  syncMeshes(syncWheels = true) {
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
     alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
-    syncCarWheels(this.carMesh, this.physCar);
-    syncCarExhaust(this.carMesh, this.trail);
+    if (syncWheels) syncCarWheels(this.carMesh, this.physCar);
+    if (this._exhaustCar !== this.carMesh || this._exhaustScale !== this.carMesh.scale.x) {
+      syncCarExhaust(this.carMesh, this.trail);
+      this._exhaustCar = this.carMesh;
+      this._exhaustScale = this.carMesh.scale.x;
+    }
     physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
     this.ballVisual.position.copy(this.ballMesh.position);
-    for (const [shadow, position, width, depth] of [
-      [this.carShadow, this.carMesh.position, this.physCar.hitbox.size[1] * ARENA_UU * 1.2, this.physCar.hitbox.size[0] * ARENA_UU * 1.2],
-      [this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1],
-    ]) {
-      const altitude = Math.max(0, position.y);
-      shadow.position.set(position.x, 0.025, position.z);
-      shadow.scale.set(width * (1 + altitude * 0.025), depth * (1 + altitude * 0.025), 1);
-      shadow.material.opacity = 0.6 / (1 + altitude * 0.18);
-    }
+    this.updateShadow(this.carShadow, this.carMesh.position, this.physCar.hitbox.size[1] * ARENA_UU * 1.2, this.physCar.hitbox.size[0] * ARENA_UU * 1.2);
+    this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1);
     // Project the car-forward vector onto the ground for a correctly oriented
     // footprint, without altering the chase camera or simulation orientation.
-    const projectedForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
+    const projectedForward = this.shadowForward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     this.carShadow.rotation.set(-Math.PI / 2, 0, Math.atan2(-projectedForward.x, projectedForward.z));
-    syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
+    if (this.hitboxHelper.visible) syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
+  }
+
+  updateShadow(shadow, position, width, depth) {
+    const altitude = Math.max(0, position.y);
+    shadow.position.set(position.x, 0.025, position.z);
+    shadow.scale.set(width * (1 + altitude * 0.025), depth * (1 + altitude * 0.025), 1);
+    shadow.material.opacity = 0.6 / (1 + altitude * 0.18);
   }
 
   updateBoostMeter() {
     const el = this.ctx.hud.boostValue;
     const fill = this.ctx.hud.boostFill;
     const amt = Math.max(0, Math.min(100, this.physCar?.boost ?? 0));
-    if (el) el.textContent = String(Math.round(amt));
+    if (this._displayedBoost === amt) return;
+    this._displayedBoost = amt;
+    const label = String(Math.round(amt));
+    if (el && el.textContent !== label) el.textContent = label;
     if (fill) {
       fill.style.setProperty("--boost-pct", String(amt));
       fill.classList.toggle("empty", amt < 0.5);
@@ -324,23 +334,18 @@ export class FreePlayMode {
   }
 
   /** @param {number} dt */
-  _stepOnce(dt) {
-    const input = readControls();
+  _stepOnce(dt, input = readControls()) {
     stepCarBall(this.physCar, this.physBall, withFreeAirRoll(input, this.physCar), this.tick, dt);
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);
-    const spin = physToThree(this.physBall.omega).negate();
-    if (spin.lengthSq() > 1e-10) this.ballVisual.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(spin.clone().normalize(), spin.length() * dt));
+    const spin = physToThree(this.physBall.omega, this.ballSpin).negate();
+    if (spin.lengthSq() > 1e-10) {
+      const angle = spin.length() * dt;
+      this.ballSpinRotation.setFromAxisAngle(spin.normalize(), angle);
+      this.ballVisual.quaternion.premultiply(this.ballSpinRotation);
+    }
     this.tick += 1;
 
-    const { hud } = this.ctx;
-    hud.padStatus.textContent = inputSourceLabel(input);
-    hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
-    hud.arl.classList.toggle("on", input.airLeft);
-    hud.arr.classList.toggle("on", input.airRight);
-
-    this.carMesh.userData.setBoost?.(this.boosting);
-    this.syncMeshes();
     syncCarWheels(this.carMesh, this.physCar, dt);
   }
 
@@ -373,8 +378,7 @@ export class FreePlayMode {
   }
 
   /** @param {number} dt */
-  updateCamera(dt) {
-    const input = readControls();
+  updateCamera(dt, input = readControls()) {
     const camCfg = getCamera();
     // Hold mode: effective ball cam is the live button state (avoid storage lag).
     const ballCam =
@@ -406,12 +410,21 @@ export class FreePlayMode {
    */
   update(dt, _now) {
     this.pollUtilityKeys();
+    const input = readControls();
     this.clock.advance(dt, (tickDt) => {
-      this._stepOnce(tickDt);
+      this._stepOnce(tickDt, input);
     });
+    const { hud } = this.ctx;
+    const source = inputSourceLabel(input);
+    if (hud.padStatus.textContent !== source) hud.padStatus.textContent = source;
+    hud.padStatus.classList.toggle("on", input.usingPad || !!input.usingTouch);
+    hud.arl.classList.toggle("on", input.airLeft);
+    hud.arr.classList.toggle("on", input.airRight);
+    this.carMesh.userData.setBoost?.(this.boosting);
+    this.syncMeshes(false);
     this.updateBoostMeter();
     this.trail.update(this.carMesh, this.boosting, dt);
-    this.updateCamera(dt);
+    this.updateCamera(dt, input);
 
     const speed = this.physCar.vel.length();
     const state = this.physCar.onGround
@@ -423,6 +436,7 @@ export class FreePlayMode {
           : "Air";
     const flip = canFlipOrJump(this.physCar) ? "flip✓" : "flip✗";
     const ss = this.physCar.isSupersonic ? " · SS" : "";
-    this.ctx.hud.status.textContent = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}${ss}`;
+    const status = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}${ss}`;
+    if (hud.status.textContent !== status) hud.status.textContent = status;
   }
 }

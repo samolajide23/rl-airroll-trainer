@@ -81,6 +81,32 @@ test("wheelbase calibration preserves geometry and matches independent tire radi
   }
 });
 
+test("wheel positioning handles transformed parents without world matrix traversal", () => {
+  const parent = new THREE.Group(), car = new THREE.Group(), visual = new THREE.Group();
+  parent.add(car);
+  car.add(visual);
+  parent.position.set(10, 20, 30);
+  parent.rotation.set(0.2, -0.5, 0.7);
+  car.scale.setScalar(0.5);
+  car.rotation.set(-0.4, 0.8, 0.2);
+  visual.position.set(0.1, -0.3, 0.2);
+  visual.rotation.set(0.2, 0.5, -0.1);
+  visual.scale.set(1.2, 0.8, -1.1);
+  const pivot = new THREE.Group();
+  visual.add(pivot);
+  const wheel = { corner: "FR", center: new THREE.Vector3(-1, 0, 1), radius: 0.2, pivot };
+  visual.userData.calibratedWheels = [wheel];
+  car.userData.visual = visual;
+  const physics = makeCar();
+  const state = physics.wheels.find(state => state.front && !state.left);
+  const expected = new THREE.Vector3(-state.connection.y * 0.02,
+    (state.connection.z - state.restLength) * 0.02, state.connection.x * 0.02);
+  visual.worldToLocal(car.localToWorld(expected));
+  car.updateWorldMatrix = () => { throw new Error("Unexpected world matrix traversal"); };
+  syncCarWheels(car, physics, 1 / 120);
+  assert(pivot.position.distanceTo(expected) < 1e-10);
+});
+
 test("procedural wheel animation converts physics travel into visual units", () => {
   const car = new THREE.Group(), visual = new THREE.Group();
   car.add(visual);

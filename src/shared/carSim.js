@@ -170,8 +170,8 @@ function makeWheels(hitbox) {
       steerAngle: 0,
       engineForce: 0,
       brake: 0,
-      latFriction: 1,
-      longFriction: 1,
+      latFriction: 0,
+      longFriction: 0,
       inContact: false,
       hardPoint: V(),
       /** Steered wheel right axis (world). */
@@ -862,7 +862,7 @@ function updateBoost(car, fr, c, dt, accel) {
     car.isBoosting = false;
   }
 
-  if (car.isBoosting) car.boostingTime += dt;
+  if (car.isBoosting) car.boostingTime = Math.fround(car.boostingTime + Math.fround(dt));
   else car.boostingTime = 0;
 
   if (car.isBoosting) {
@@ -904,9 +904,10 @@ function perpendicular(n) {
  * Bullet's split-impulse position correction. Velocities are updated in place.
  * @returns {{ push: THREE.Vector3, turn: THREE.Vector3 }} split-impulse pseudo velocities
  */
-function solveArenaContacts(car, fr, dt) {
+function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
   const push = V();
   const turn = V();
+  const transformTurn = V();
   const { size, offset } = car.hitbox;
   const contacts = [];
 
@@ -956,6 +957,14 @@ function solveArenaContacts(car, fr, dt) {
   }
   contacts.length = 0;
   for (const g of groups) {
+    if (g.n.z === -1) {
+      const rel = V()
+        .addScaledVector(fr.f, offset[0] + (fr.f.z >= 0 ? 1 : -1) * size[0] / 2)
+        .addScaledVector(fr.r, offset[1] + (fr.r.z >= 0 ? 1 : -1) * size[1] / 2)
+        .addScaledVector(fr.u, offset[2] + (fr.u.z >= 0 ? 1 : -1) * size[2] / 2);
+      contacts.push({ rel, dist: 2048 - car.pos.z - rel.z, n: g.n.clone(), face: true });
+      continue;
+    }
     const mid = V();
     for (const t of g.tied) mid.add(t.rel);
     mid.multiplyScalar(1 / g.tied.length);
@@ -1000,6 +1009,7 @@ function solveArenaContacts(car, fr, dt) {
     });
   }
 
+  if (contacts.length === 0) return { push, turn };
   // Inset impulse points so the lever arm matches Bullet's manifold, not the
   // geometric outer corner (which over-kicks linear bounce on edge scrapes).
   // Skip for face contacts and steep walls — those should bounce through the
@@ -1030,7 +1040,9 @@ function solveArenaContacts(car, fr, dt) {
   car.worldContact.normal.copy(deepest.n);
 
   for (const c of contacts) {
-    const vel = velocityAt(car, c.rel);
+    const vel = c.n.z === -1
+      ? impactOmega.clone().cross(c.rel).add(impactVelocity)
+      : velocityAt(car, c.rel);
     const vn = c.n.dot(vel);
     // Desired normal speed after the impulse (Bullet restitutionCurve).
     // Do NOT bias by positive clearance — that attracts the body into the surface.
@@ -1040,7 +1052,7 @@ function solveArenaContacts(car, fr, dt) {
         : RS.CARWORLD_RESTITUTION * -vn;
     c.target = restitution;
     c.k = impulseDenominator(car, fr, c.rel, c.n);
-    const tangentVel = vel.clone().addScaledVector(c.n, -vn);
+    const tangentVel = vel.clone().addScaledVector(c.n, -c.n.dot(vel));
     c.t = tangentVel.lengthSq() > 1e-12 ? tangentVel.normalize() : perpendicular(c.n);
     c.kt = impulseDenominator(car, fr, c.rel, c.t);
     c.normalImpulse = 0;
@@ -1077,10 +1089,12 @@ function solveArenaContacts(car, fr, dt) {
       if (delta === 0) continue;
       const impulse = c.n.clone().multiplyScalar(delta);
       push.addScaledVector(impulse, INV_MASS);
-      turn.add(invInertiaMul(car, fr, c.rel.clone().cross(impulse)));
+      const angularImpulse = invInertiaMul(car, fr, c.rel.clone().cross(impulse));
+      turn.add(angularImpulse);
+      transformTurn.addScaledVector(angularImpulse, c.n.z === -1 ? 0.1 : 1);
     }
   }
-  return { push, turn };
+  return { push, turn: transformTurn };
 }
 
 /** btTransformUtil::integrateTransform orientation part. */
@@ -1136,6 +1150,8 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   updateBoost(car, fr, c, dt, accel);
 
   // Bullet step: integrate forces, solve contacts, integrate transform.
+  const impactVelocity = car.vel.clone().add(car.velocityImpulseCache);
+  const impactOmega = car.omega.clone();
   car.vel.addScaledVector(accel, dt);
   car.vel.z -= RL.GRAVITY * dt;
   // RocketSim applies `_velocityImpulseCache` (bumps) before the world step.
@@ -1144,7 +1160,7 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
     car.velocityImpulseCache.set(0, 0, 0);
   }
   car.omega.addScaledVector(angAccel, dt);
-  const { push, turn } = car.arenaCollisions ? solveArenaContacts(car, fr, dt) : { push: V(), turn: V() };
+  const { push, turn } = car.arenaCollisions ? solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) : { push: V(), turn: V() };
   beforeTransform?.();
   if (car.contactTurn?.lengthSq() > 0) {
     integrateOrientation(car.q, car.contactTurn, 1);

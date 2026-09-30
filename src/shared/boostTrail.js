@@ -19,6 +19,10 @@ export class BoostTrail {
 
     /** @type {{ pos: THREE.Vector3, velocity: THREE.Vector3, life: number, maxLife: number, size: number }[]} */
     this.particles = [];
+    this._pool = Array.from({ length: this.max }, () => ({
+      pos: new THREE.Vector3(), velocity: new THREE.Vector3(),
+      life: 0, maxLife: 0, size: 0,
+    }));
 
     const positions = new Float32Array(this.max * 3);
     const colors = new Float32Array(this.max * 3);
@@ -28,6 +32,8 @@ export class BoostTrail {
     this.geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     this.geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     this.geo.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+    for (const attribute of Object.values(this.geo.attributes)) attribute.setUsage(THREE.DynamicDrawUsage);
+    this.geo.setDrawRange(0, 0);
 
     this.mat = new THREE.PointsMaterial({
       size: 0.35,
@@ -94,10 +100,6 @@ export class BoostTrail {
    * @param {number} dt
    */
   update(car, boosting, dt) {
-    car.getWorldPosition(this._world);
-    car.getWorldQuaternion(this._q);
-    this._fwd.set(0, 0, 1).applyQuaternion(this._q);
-
     for (const flame of this.flames.children) {
       flame.visible = boosting;
       if (boosting) {
@@ -109,61 +111,60 @@ export class BoostTrail {
       }
     }
 
+    if (!boosting && this.particles.length === 0) {
+      this._emitAccumulator = 0;
+      this.points.visible = false;
+      return;
+    }
+    this.points.visible = true;
     if (boosting) {
+      car.updateWorldMatrix(true, false);
+      car.matrixWorld.decompose(this._world, this._q, this._fwd);
+      this._fwd.set(0, 0, 1).applyQuaternion(this._q);
       this._emitAccumulator += Math.min(dt, 0.1) * 160;
       const emit = Math.floor(this._emitAccumulator);
       this._emitAccumulator -= emit;
       for (let i = 0; i < emit; i++) {
-        if (this.particles.length >= this.max) this.particles.shift();
-        const local = this.exhaustLocal
-          .clone()
-          .add(
-            new THREE.Vector3(
-              (Math.random() - 0.5) * 0.35,
-              (Math.random() - 0.5) * 0.2,
-              -Math.random() * 0.4,
-            ),
-          );
-        // Include the calibrated car scale, not only its orientation.
-        const pos = car.localToWorld(local);
-        // Drift slightly opposite to nose
-        pos.addScaledVector(this._fwd, -0.15 * Math.random());
-        this.particles.push({
-          pos,
-          velocity: this._fwd.clone().multiplyScalar(-6),
-          life: 0,
-          maxLife: 0.28 + Math.random() * 0.35,
-          size: 0.2 + Math.random() * 0.35,
-        });
+        const particle = this._pool.pop() ?? this.particles.shift();
+        particle.pos.set(
+          this.exhaustLocal.x + (Math.random() - 0.5) * 0.35,
+          this.exhaustLocal.y + (Math.random() - 0.5) * 0.2,
+          this.exhaustLocal.z - Math.random() * 0.4,
+        ).applyMatrix4(car.matrixWorld).addScaledVector(this._fwd, -0.15 * Math.random());
+        particle.velocity.copy(this._fwd).multiplyScalar(-6);
+        particle.life = 0;
+        particle.maxLife = 0.28 + Math.random() * 0.35;
+        particle.size = 0.2 + Math.random() * 0.35;
+        this.particles.push(particle);
       }
     } else this._emitAccumulator = 0;
 
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    let liveCount = 0;
+    for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       p.life += dt;
       p.pos.addScaledVector(p.velocity, dt);
       p.pos.y += 0.4 * dt;
-      if (p.life >= p.maxLife) this.particles.splice(i, 1);
+      if (p.life >= p.maxLife) {
+        this._pool.push(p);
+      } else {
+        this.particles[liveCount++] = p;
+      }
     }
+    this.particles.length = liveCount;
 
     const posAttr = this.geo.attributes.position;
     const colAttr = this.geo.attributes.color;
     const sizeAttr = this.geo.attributes.size;
-    for (let i = 0; i < this.max; i++) {
-      if (i < this.particles.length) {
-        const p = this.particles[i];
-        const t = p.life / p.maxLife;
-        posAttr.setXYZ(i, p.pos.x, p.pos.y, p.pos.z);
-        // orange → yellow → white fade
-        const r = 1;
-        const g = 0.45 + t * 0.5;
-        const b = 0.15 + t * 0.7;
-        colAttr.setXYZ(i, r, g, b);
-        sizeAttr.setX(i, p.size * (1 - t));
-      } else {
-        posAttr.setXYZ(i, 0, -999, 0);
-        sizeAttr.setX(i, 0);
-      }
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
+      const t = p.life / p.maxLife;
+      posAttr.setXYZ(i, p.pos.x, p.pos.y, p.pos.z);
+      const r = 1;
+      const g = 0.45 + t * 0.5;
+      const b = 0.15 + t * 0.7;
+      colAttr.setXYZ(i, r, g, b);
+      sizeAttr.setX(i, p.size * (1 - t));
     }
     posAttr.needsUpdate = true;
     colAttr.needsUpdate = true;

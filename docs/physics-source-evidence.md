@@ -93,9 +93,12 @@ current-game measurements; that limitation is not removed by matching RocketSim.
 
 ## Movement and visual verification
 
-The car reference suite now contains 42 scenarios, including reverse driving,
+The car reference suite now contains 69 scenarios, including reverse driving,
 reverse steering, boost depletion, reverse aerial throttle, forward flip cancel,
-diagonal flip, and powerslide release. With unchanged limits, 41 pass. The
+diagonal flip, powerslide release, all six hitbox jumps, airborne landings,
+speed/spin caps, minimum boost duration, double jump, and explicit eligible/
+expired dodge-window states. With unchanged limits, 62 pass. Roof recovery,
+ceiling impact, four non-Octane landings, and powerslide release fail. The
 powerslide-release case fails: maximum position error 1.024383 uu, velocity
 error 1.970244 uu/s, angular-velocity error 0.010899 rad/s, and forward-angle
 error 0.133632 degrees. Reference-pose single-tick replay also shows horizontal
@@ -103,13 +106,27 @@ velocity residuals during the slide; accumulation alone does not explain it.
 Float32 handbrake and curve-interpolation probes did not resolve it and were
 removed. Its cause remains unresolved.
 
+The version-matched `btVehicleRL.h` initializes lateral/longitudinal wheel
+friction coefficients to zero. JS previously initialized them to one, applying
+uninitialized friction on first airborne contact before `_UpdateWheels` updated
+the coefficients. Matching zero defaults removes the measured Octane landing
+error. Boost timer float32 accumulation removes an extra minimum-boost tick.
+Both corrections have passing focused unit tests.
+
+Roof/ceiling first-impact response remains substantially wrong: position errors
+reach 36.33/120.77 uu and orientation errors 13.37/22.89 degrees. The current
+corner-distance/centroid contact approximation is not Bullet triangle contact
+generation with persistent manifolds. Retaining separate box-corner face
+constraints worsened recovery and was removed. No tolerances were enlarged.
+
 [Bullet transform integration](https://github.com/mtheall/RocketSim/blob/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/LinearMath/btTransformUtil.h)
 and split-impulse ordering establish separate penetration and ordinary angular
 integration. Arena correction now rotates the car before its ordinary angular
 step. The movement and five coupled-contact gates retain the same failures;
 this change is not evidence that those discrepancies are resolved.
 
-Latest checks: 27 unit tests pass, all 10 ball scenarios pass, all 8,020 soccar
+Latest checks: 33 unit tests and 13 orientation-sign checks pass, all 10 ball
+scenarios pass, all 8,020 soccar
 triangles match the hash-verified reference vertices, dimension/parity assertions
 pass, and production build succeeds with existing dependency/CSS/chunk warnings.
 Browser inspection of the loaded Octane confirms four wheel pivots rotate with

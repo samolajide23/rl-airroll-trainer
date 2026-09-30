@@ -4,6 +4,7 @@
  */
 import * as THREE from "three";
 import { makeCar } from "./car.js";
+import { isCarReady, preloadCars } from "./carAssets.js";
 
 /** @type {THREE.Scene | null} */
 let scene = null;
@@ -49,6 +50,13 @@ export function setLockerPreviewCar(carId, opts = {}) {
   previewCar.rotation.set(0.08, Math.PI * 0.18, 0);
   scene.add(previewCar);
   shownCarId = carId;
+  if (!isCarReady(carId)) {
+    preloadCars([carId]).then(() => {
+      if (active && shownCarId === carId && isCarReady(carId)) {
+        setLockerPreviewCar(carId, { force: true });
+      }
+    });
+  }
 }
 
 /**

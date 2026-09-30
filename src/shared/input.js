@@ -23,9 +23,7 @@ window.addEventListener("mouseup", (e) => {
   keys.delete(`Mouse${e.button}`);
 });
 window.addEventListener("blur", () => {
-  for (const code of [...keys]) {
-    if (code.startsWith("Mouse")) keys.delete(code);
-  }
+  keys.clear();
 });
 
 /**

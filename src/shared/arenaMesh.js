@@ -429,10 +429,12 @@ export function arenaDistance(x, y, z, outNormal) {
 
   if (meshBest < Infinity) {
     // Outward normal (toward arena centre). Sign from query vs surface.
-    const signed =
+    const side =
       (x - _meshP.x) * _meshN.x +
       (y - _meshP.y) * _meshN.y +
       (z - _meshP.z) * _meshN.z;
+    const projectsOnFace = meshBest - side * side <= EPS;
+    const signed = (side < -EPS && projectsOnFace ? -1 : 1) * Math.sqrt(meshBest);
     if (signed < bestSigned) {
       bestSigned = signed;
       bestN.copy(_meshN);

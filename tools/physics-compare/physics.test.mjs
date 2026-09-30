@@ -12,6 +12,69 @@ import { compareScenario, failuresFor } from "./trajectory.mjs";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
 
+test("ceiling support response preserves the measured correction", () => {
+  const car = makeCar(new THREE.Vector3(-1000, 0, 1800), 0);
+  car.vel.set(600, 0, 800);
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  close(car.pos.x, -519.479890954719);
+  close(car.pos.z, 1849.108576602476);
+  close(car.vel.x, 425.56115130517884);
+  close(car.vel.z, -455.2531622738843);
+  assert(Number.isFinite(car.omega.length()));
+});
+
+test("one-tick boost press stops at the reference minimum duration", () => {
+  const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+  car.arenaCollisions = false;
+  car.boost = RL.BOOST_MAX;
+  let boostTicks = 0;
+  for (let tick = 0; tick < 60; tick++) {
+    stepCar(car, { boost: tick === 0 });
+    if (car.isBoosting) boostTicks++;
+  }
+  assert.equal(boostTicks, Math.round(RL.BOOST_MIN_TIME / RL.DT));
+  close(car.vel.x, RL.BOOST_ACCEL_AIR * RL.DT * boostTicks);
+  close(car.boost, RL.BOOST_MAX - RL.BOOST_USE * RL.DT * boostTicks);
+});
+
+test("first airborne wheel contact uses the initial zero friction coefficients", () => {
+  const car = makeCar(new THREE.Vector3(-1000, 0, 250), 0);
+  car.vel.set(600, 300, -300);
+  car.onGround = false;
+  car.wheelsContact = false;
+  let contacted = false;
+  for (let tick = 0; tick < 120; tick++) {
+    const previousSideSpeed = car.vel.y;
+    stepCar(car, { throttle: 1, handbrake: true });
+    if (car.numWheelsInContact > 0) {
+      close(car.vel.y, previousSideSpeed);
+      close(car.omega.z, 0);
+      contacted = true;
+      break;
+    }
+  }
+  assert(contacted);
+});
+
+test("stationary kickoff jumps do not collide with distant triangle planes", () => {
+  for (const preset of Object.values(HITBOX_PRESETS)) {
+    const spawn = RL.SOCCAR_SPAWNS[4];
+    const car = makeCar(new THREE.Vector3(spawn.x, spawn.y, preset.restZ), spawn.yaw, preset);
+    let peakHeight = 0;
+    for (let tick = 0; tick < 300; tick++) {
+      stepCar(car, { jump: tick < 12 });
+      peakHeight = Math.max(peakHeight, car.pos.z);
+      if (car.pos.z > 100) {
+        assert(car.omega.length() < 0.2, `${preset.id}: unexpected spin at tick ${tick}`);
+        assert(Math.hypot(car.vel.x, car.vel.y) < 10, `${preset.id}: unexpected sideways impulse at tick ${tick}`);
+        assert.equal(car.worldContact.hasContact, false);
+      }
+    }
+    assert(peakHeight > 100);
+    assert.equal(car.onGround, true);
+  }
+});
+
 test("aerial drills match Free Play orientation, not just spin magnitude", () => {
   for (const controls of [{ roll: 1 }, { roll: -1 }, { pitch: 1 }, { yaw: 1 }, { pitch: 0.5, yaw: -0.5, roll: 0.5 }]) {
     const car = makeCar(new THREE.Vector3(0, 0, 1000));

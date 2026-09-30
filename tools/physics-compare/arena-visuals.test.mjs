@@ -5,6 +5,32 @@ import { createSoccarBoostPads, createBoostPadMeshes, stepBoostPads, resetBoostP
 import { RL } from "../../src/shared/rl-physics.js";
 import { makeCar } from "../../src/shared/carSim.js";
 import { createStadium } from "../../src/shared/stadium.js";
+import { BoostTrail } from "../../src/shared/boostTrail.js";
+
+test("boost trail reuses bounded particles and stops work when empty", () => {
+  const previous = globalThis.document;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    createRadialGradient: () => ({ addColorStop() {} }), fillRect() {},
+  }) }) };
+  try {
+    const parent = new THREE.Group(), car = new THREE.Group();
+    parent.add(car);
+    const trail = new BoostTrail(parent, { max: 8 });
+    trail.attachFlames(car);
+    const identities = new Set(trail._pool);
+    for (let tick = 0; tick < 240; tick++) trail.update(car, true, 1 / 120);
+    assert.equal(trail.particles.length + trail._pool.length, 8);
+    assert([...trail.particles, ...trail._pool].every(particle => identities.has(particle)));
+    assert([...trail.geo.attributes.position.array].every(Number.isFinite));
+    for (let tick = 0; tick < 120; tick++) trail.update(car, false, 1 / 120);
+    assert.equal(trail.particles.length, 0);
+    assert.equal(trail.points.visible, false);
+    const version = trail.geo.attributes.position.version;
+    trail.update(car, false, 1 / 120);
+    assert.equal(trail.geo.attributes.position.version, version);
+    trail.dispose();
+  } finally { globalThis.document = previous; }
+});
 
 test("all 34 visible pads use standard coordinates, not pickup-volume sizing", () => {
   const pads = createSoccarBoostPads();
@@ -44,6 +70,13 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
   globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, strokeRect() {}, fillText() {} }) }) };
   try {
     const stadium = createStadium();
+    let meshes = 0;
+    stadium.traverse(object => {
+      assert.equal(object.matrixAutoUpdate, false);
+      if (object.isMesh) meshes++;
+    });
+    assert(meshes < 70);
+    assert.equal(stadium.getObjectByName("neon-city-backdrop").children.filter(object => object.name === "city-light-accents").length, 3);
     const floor = stadium.getObjectByName("standard-soccar-floor");
     assert.equal(floor.geometry.parameters.width, RL.HALF_W * 0.02);
     assert.equal(floor.geometry.parameters.height, RL.HALF_L * 0.02);
