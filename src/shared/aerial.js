@@ -73,7 +73,7 @@ export class AerialBody {
     omegaLocal.set(omega.dot(forward), omega.dot(left), omega.dot(up));
 
     tauLocal.set(
-      -RL.T_ROLL * r + RL.D_ROLL * omegaLocal.x,
+      RL.T_ROLL * r + RL.D_ROLL * omegaLocal.x,
       RL.T_PITCH * p + RL.D_PITCH * (1 - Math.abs(p)) * omegaLocal.y,
       -RL.T_YAW * y + RL.D_YAW * (1 - Math.abs(y)) * omegaLocal.z,
     );
@@ -85,8 +85,6 @@ export class AerialBody {
       .addScaledVector(up, tauLocal.z);
 
     omegaNext.copy(omega).addScaledVector(tauWorld, dt);
-    const speed = omegaNext.length();
-    if (speed > RL.MAX_ANG_VEL) omegaNext.multiplyScalar(RL.MAX_ANG_VEL / speed);
 
     // RocketSim: integrate orientation with post-torque ω (not the tick average).
     omega.copy(omegaNext);
@@ -96,6 +94,7 @@ export class AerialBody {
       object.quaternion.premultiply(tmpQ);
       object.quaternion.normalize();
     }
+    if (omega.length() > RL.MAX_ANG_VEL) omega.setLength(RL.MAX_ANG_VEL);
   }
 }
 

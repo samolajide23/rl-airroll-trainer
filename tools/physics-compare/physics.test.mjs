@@ -5,10 +5,31 @@ import { makeCar, stepCar } from "../../src/shared/carSim.js";
 import { RL, makeBall, stepBall, carHitbox, collideCarBall, alignCarVisualToHitbox } from "../../src/shared/rl-physics.js";
 import { HITBOX_PRESETS } from "../../src/shared/hitboxPresets.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
+import { AerialBody } from "../../src/shared/aerial.js";
+import { applyToCarModel } from "../../src/shared/rl-physics.js";
 import { sphereArenaContacts } from "../../src/shared/arenaMesh.js";
 import { compareScenario, failuresFor } from "./trajectory.mjs";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
+
+test("aerial drills match Free Play orientation, not just spin magnitude", () => {
+  for (const controls of [{ roll: 1 }, { roll: -1 }, { pitch: 1 }, { yaw: 1 }, { pitch: 0.5, yaw: -0.5, roll: 0.5 }]) {
+    const car = makeCar(new THREE.Vector3(0, 0, 1000));
+    car.arenaCollisions = false;
+    const rendered = new THREE.Object3D();
+    const drill = new THREE.Object3D();
+    const body = new AerialBody();
+    applyToCarModel(car, rendered);
+    drill.quaternion.copy(rendered.quaternion);
+    for (let tick = 0; tick < 90; tick++) {
+      stepCar(car, controls);
+      applyToCarModel(car, rendered);
+      body.step(drill, controls.roll ?? 0, controls.pitch ?? 0, controls.yaw ?? 0, RL.DT);
+      assert(rendered.quaternion.angleTo(drill.quaternion) < 0.001,
+        `${JSON.stringify(controls)} differs on tick ${tick}`);
+    }
+  }
+});
 
 test("visual calibration uses actual length, grounds wheels, and is idempotent", () => {
   for (const preset of Object.values(HITBOX_PRESETS)) {
@@ -177,4 +198,14 @@ test("coupled step preserves stationary ball sleep without contact", () => {
   for (let tick = 0; tick < 120; tick++) stepCarBall(car, ball, {}, tick);
   close(ball.pos.z, 93.15);
   close(ball.vel.length(), 0);
+});
+
+test("offset contact matches measured first-hit ball velocity and spin", () => {
+  const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+  car.arenaCollisions = false; car.vel.x = 1000;
+  const ball = makeBall(new THREE.Vector3(260, 60, 1035));
+  ball.vel.z = 0.001;
+  for (let tick = 0; tick < 13; tick++) stepCarBall(car, ball, {}, tick);
+  assert(ball.vel.distanceTo(new THREE.Vector3(1229.312744140625, 435.63958740234375, -7.157659530639648)) < 0.5);
+  assert(ball.omega.distanceTo(new THREE.Vector3(0.000060416, -0.00028465, 0.557679)) < 0.01);
 });

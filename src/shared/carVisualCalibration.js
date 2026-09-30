@@ -70,8 +70,20 @@ export function prepareCarVisual(visual, carId) {
 /** Apply suspension, steering and rolling to the existing separate wheel meshes. */
 export function syncCarWheels(carMesh, car, dt = 0) {
   const visual = carMesh.userData.visual;
+  if (visual?.userData.wheels && !visual.userData.calibratedWheels) {
+    visual.userData.calibratedWheels = visual.userData.wheels.map(pivot => ({
+      corner: `${pivot.position.z > 0 ? "F" : "B"}${pivot.position.x < 0 ? "R" : "L"}`,
+      pivot,
+      center: pivot.position.clone(),
+      radius: pivot.userData.radius * Math.abs(visual.scale.y),
+    }));
+  }
   const wheels = visual?.userData.calibratedWheels;
-  if (!wheels) return;
+  const forwardSpeed = car.vel.clone().applyQuaternion(car.q.clone().invert()).x;
+  if (!wheels) {
+    visual?.userData.spinWheels?.(forwardSpeed * dt * 0.01 / (carMesh.scale.x * Math.abs(visual.scale.z)));
+    return;
+  }
   carMesh.updateWorldMatrix(true, true);
   const scale = carMesh.scale.x;
   for (const wheel of wheels) {
@@ -81,11 +93,17 @@ export function syncCarWheels(carMesh, car, dt = 0) {
     const state = car.wheels.find(w => w.front === front && w.left === !physicsRight);
     if (!state) continue;
     wheel.pivot.scale.setScalar(state.radius * 0.01 / (scale * wheel.radius));
+    const targetLength = state.inContact ? state.suspensionLength : state.restLength;
+    wheel.visualSuspensionLength ??= targetLength;
+    if (state.inContact) wheel.visualSuspensionLength = targetLength;
+    else if (dt > 0) {
+      wheel.visualSuspensionLength += (targetLength - wheel.visualSuspensionLength) * (1 - Math.exp(-20 * dt));
+    }
     const local = new THREE.Vector3(-state.connection.y * 0.01 / scale,
-      (state.connection.z - state.suspensionLength) * 0.01 / scale,
+      (state.connection.z - wheel.visualSuspensionLength) * 0.01 / scale,
       state.connection.x * 0.01 / scale);
     wheel.pivot.position.copy(visual.worldToLocal(carMesh.localToWorld(local)));
-    wheel.roll = (wheel.roll ?? 0) + car.vel.clone().applyQuaternion(car.q.clone().invert()).x * dt / state.radius;
+    wheel.roll = (wheel.roll ?? 0) + forwardSpeed * dt / state.radius;
     wheel.pivot.rotation.set(wheel.roll, -state.steerAngle, 0, "YXZ");
   }
 }

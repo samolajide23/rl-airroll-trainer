@@ -1146,8 +1146,13 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   car.omega.addScaledVector(angAccel, dt);
   const { push, turn } = car.arenaCollisions ? solveArenaContacts(car, fr, dt) : { push: V(), turn: V() };
   beforeTransform?.();
+  if (car.contactTurn?.lengthSq() > 0) {
+    integrateOrientation(car.q, car.contactTurn, 1);
+    car.contactTurn.set(0, 0, 0);
+  }
   car.pos.addScaledVector(car.vel, dt).addScaledVector(push, dt);
-  integrateOrientation(car.q, car.omega.clone().add(turn), dt);
+  integrateOrientation(car.q, turn, dt);
+  integrateOrientation(car.q, car.omega, dt);
 
   updateSupersonic(car, dt);
   car.prevJump = c.jump;

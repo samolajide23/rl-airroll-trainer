@@ -343,6 +343,69 @@
       "controls": { "throttle": 1 }
     },
     {
+      "id": "ground_reverse_2s",
+      "description": "Reverse acceleration from rest on open floor",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": { "pos": [0, 0, 17], "on_ground": true },
+      "controls": { "throttle": -1 }
+    },
+    {
+      "id": "ground_reverse_steer",
+      "description": "Reverse acceleration then steer while reversing",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": { "pos": [0, 0, 17], "on_ground": true },
+      "control_schedule": [
+        { "until_tick": 120, "controls": { "throttle": -1 } },
+        { "until_tick": 240, "controls": { "throttle": -1, "steer": 1 } }
+      ]
+    },
+    {
+      "id": "air_boost_depletion",
+      "description": "Hold boost past depletion of a five-unit tank",
+      "ticks": 120,
+      "initial": { "boost": 5 },
+      "controls": { "boost": true }
+    },
+    {
+      "id": "air_reverse_throttle",
+      "description": "Reverse air throttle from rest",
+      "ticks": 120,
+      "controls": { "throttle": -1 }
+    },
+    {
+      "id": "flip_forward_cancel",
+      "description": "Forward dodge followed immediately by opposite pitch cancellation",
+      "ticks": 90,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1 } },
+        { "until_tick": 45, "controls": { "pitch": 1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "flip_diagonal_air",
+      "description": "Diagonal forward-right dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        { "until_tick": 3, "controls": { "jump": true, "pitch": -1, "yaw": 1 } },
+        { "until_tick": 90, "controls": {} }
+      ]
+    },
+    {
+      "id": "ground_powerslide_release",
+      "description": "Accelerate, powerslide, then release handbrake while steering",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": { "pos": [-1000, 0, 17], "on_ground": true },
+      "control_schedule": [
+        { "until_tick": 180, "controls": { "throttle": 1 } },
+        { "until_tick": 240, "controls": { "throttle": 1, "steer": 1, "handbrake": true } },
+        { "until_tick": 360, "controls": { "throttle": 1, "steer": 1 } }
+      ]
+    },
+    {
       "id": "ground_jump_into_wall",
       "description": "Jump + boost into +X wall curve and climb (wheels on wall)",
       "game_mode": "soccar",

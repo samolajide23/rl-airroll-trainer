@@ -68,6 +68,19 @@ Measured maximum ball errors before → after the first coupled-step correction:
 
 ## Next implementation boundary
 
+Second coupled-contact pass: rounded box collision uses Bullet's safe margin
+`min(2 uu, 0.1 * minimum half-extent)`, not a sharp box. Normal and one fixed
+pre-solve tangent are solved with ten accumulated sequential iterations.
+Split position correction uses angular inertia and continues while separating
+but overlapping. Extra impulse direction uses pre-correction relative position.
+
+All five ball trajectories now meet the original strict ball limits: maximum
+position error **0.1511 uu**, velocity error **0.2583 uu/s**, and angular-speed
+vector error below **0.01 rad/s**. Overall `physics:contact` still fails on car
+orientation residuals (approximately 0.06–0.11 degrees vs 0.05-degree target).
+No target tolerances were changed. Full manifold warm-starting and simultaneous
+ground/car/ball contact iteration remain incomplete.
+
 Refactor the world step into force updates, pre-transform contact generation,
 coupled impulse solve, transform integration, and deferred extra-hit finalization.
 Preserve existing car-only and ball-only accuracy while adding sphere-box margin,
@@ -77,3 +90,29 @@ research narrows the model; executable comparisons verify each implemented rule.
 Existing research cannot prove unchanged current-game wheel hits, pinches,
 camera behavior, or device latency. Those remain unverified without independent
 current-game measurements; that limitation is not removed by matching RocketSim.
+
+## Movement and visual verification
+
+The car reference suite now contains 42 scenarios, including reverse driving,
+reverse steering, boost depletion, reverse aerial throttle, forward flip cancel,
+diagonal flip, and powerslide release. With unchanged limits, 41 pass. The
+powerslide-release case fails: maximum position error 1.024383 uu, velocity
+error 1.970244 uu/s, angular-velocity error 0.010899 rad/s, and forward-angle
+error 0.133632 degrees. Reference-pose single-tick replay also shows horizontal
+velocity residuals during the slide; accumulation alone does not explain it.
+Float32 handbrake and curve-interpolation probes did not resolve it and were
+removed. Its cause remains unresolved.
+
+[Bullet transform integration](https://github.com/mtheall/RocketSim/blob/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/LinearMath/btTransformUtil.h)
+and split-impulse ordering establish separate penetration and ordinary angular
+integration. Arena correction now rotates the car before its ordinary angular
+step. The movement and five coupled-contact gates retain the same failures;
+this change is not evidence that those discrepancies are resolved.
+
+Latest checks: 27 unit tests pass, all 10 ball scenarios pass, all 8,020 soccar
+triangles match the hash-verified reference vertices, dimension/parity assertions
+pass, and production build succeeds with existing dependency/CSS/chunk warnings.
+Browser inspection of the loaded Octane confirms four wheel pivots rotate with
+forward travel and reverse with backward travel. Aerial drill roll direction
+and procedural wheel-distance scaling have dedicated unit coverage. Other
+loaded bodies, recoveries, wheel hits, and pinches still require broader checks.

@@ -1,12 +1,16 @@
 # Physics compare report
 
-Generated: 2026-09-30T11:43:51.013Z
+Generated: 2026-09-30T14:05:10.132Z
 
 Reference: **RocketSim 2.2.1**, SOCCAR or THE_VOID as declared per scenario.
 Candidate: **`carSim.js` / `rl-physics.js`**.
 
-Regression gate: **PASS** (enforced). Budgets are regression limits, not exact-parity certification.
+Regression gate: **FAIL** (enforced). Budgets are regression limits, not exact-parity certification.
 
+- ground_powerslide_release: pos_max 1.024383 > 0.2
+- ground_powerslide_release: vel_max 1.970244 > 0.5
+- ground_powerslide_release: omega_max 0.010899 > 0.01
+- ground_powerslide_release: fwd_max_deg 0.133632 > 0.05
 ## Constants (RocketSim vs rl-physics.js)
 
 | Quantity | RocketSim | JS | Δ |
@@ -72,9 +76,16 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `ground_powerslide_0_5s` | 0.008 / 0.113 | 0.046 / 0.474 | 0.000 / 0.001 | 0.002 / 0.018 | 0.000 / 0.000 |
 | `ground_jump_full_hold` | 0.003 / 0.007 | 0.007 / 0.007 | 0.000 / 0.000 | 0.002 / 0.003 | 0.002 / 0.003 |
 | `ground_jump_tap` | 0.002 / 0.003 | 0.006 / 0.074 | 0.000 / 0.001 | 0.002 / 0.003 | 0.002 / 0.003 |
-| `ground_flip_forward` | 0.658 / 1.557 | 2.061 / 8.951 | 0.073 / 0.691 | 0.449 / 1.145 | 0.547 / 1.145 |
+| `ground_flip_forward` | 0.657 / 1.555 | 2.059 / 8.942 | 0.072 / 0.691 | 0.445 / 1.131 | 0.541 / 1.131 |
 | `wall_drive_throttle_3s` | 0.034 / 0.100 | 0.045 / 0.198 | 0.000 / 0.004 | 0.001 / 0.012 | 0.001 / 0.012 |
-| `ground_jump_into_wall` | 1.567 / 7.854 | 6.073 / 26.604 | 0.051 / 1.108 | 0.354 / 0.857 | 0.115 / 1.135 |
+| `ground_reverse_2s` | 0.000 / 0.002 | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_reverse_steer` | 0.017 / 0.122 | 0.066 / 0.312 | 0.000 / 0.001 | 0.006 / 0.022 | 0.000 / 0.000 |
+| `air_boost_depletion` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `air_reverse_throttle` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `flip_forward_cancel` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `flip_diagonal_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_powerslide_release` | 0.193 / 1.024 | 0.487 / 1.970 | 0.001 / 0.011 | 0.031 / 0.134 | 0.000 / 0.001 |
+| `ground_jump_into_wall` | 1.574 / 7.884 | 6.092 / 26.621 | 0.051 / 1.108 | 0.355 / 0.860 | 0.115 / 1.134 |
 
 ## Per-scenario finals
 
@@ -337,10 +348,10 @@ Single-tick jump tap from settled ground
 ### `ground_flip_forward`
 Jump then forward flip from ground
 
-- Worst position error at tick **120** (1.557 uu)
-- Final pos RS 409.67, -12.95, 86.17 vs JS 409.36, -12.51, 87.63
-- Final ω RS -0.120, 2.923, 0.086 vs JS -0.066, 2.925, 0.074
-- Final forward RS [0.738, 0.010, 0.675] vs JS [0.734, -0.001, 0.680]
+- Worst position error at tick **120** (1.555 uu)
+- Final pos RS 409.67, -12.95, 86.17 vs JS 409.36, -12.51, 87.62
+- Final ω RS -0.120, 2.923, 0.086 vs JS -0.067, 2.925, 0.074
+- Final forward RS [0.738, 0.010, 0.675] vs JS [0.734, -0.000, 0.680]
 
 ### `wall_drive_throttle_3s`
 Drive into +X wall and climb with throttle only
@@ -350,11 +361,67 @@ Drive into +X wall and climb with throttle only
 - Final ω RS 0.000, -2.442, 0.000 vs JS -0.000, -2.441, -0.000
 - Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, 0.000, 0.970]
 
+### `ground_reverse_2s`
+Reverse acceleration from rest on open floor
+
+- Worst position error at tick **239** (0.002 uu)
+- Final pos RS -1798.32, 0.00, 17.03 vs JS -1798.32, 0.00, 17.03
+- Final ω RS 0.000, -0.000, 0.000 vs JS 0.000, -0.000, 0.000
+- Final forward RS [1.000, 0.000, -0.010] vs JS [1.000, 0.000, -0.010]
+
+### `ground_reverse_steer`
+Reverse acceleration then steer while reversing
+
+- Worst position error at tick **240** (0.122 uu)
+- Final pos RS -1227.47, 709.36, 17.03 vs JS -1227.53, 709.46, 17.03
+- Final ω RS -0.000, 0.000, -2.064 vs JS -0.000, 0.000, -2.063
+- Final forward RS [-0.419, -0.908, -0.010] vs JS [-0.419, -0.908, -0.010]
+
+### `air_boost_depletion`
+Hold boost past depletion of a five-unit tank
+
+- Worst position error at tick **120** (0.000 uu)
+- Final pos RS 155.00, 0.00, 472.29 vs JS 155.00, 0.00, 472.29
+- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
+- Final forward RS [1.000, 0.000, 0.000] vs JS [1.000, 0.000, 0.000]
+
+### `air_reverse_throttle`
+Reverse air throttle from rest
+
+- Worst position error at tick **52** (0.000 uu)
+- Final pos RS -33.61, 0.00, 472.29 vs JS -33.61, 0.00, 472.29
+- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
+- Final forward RS [1.000, 0.000, 0.000] vs JS [1.000, 0.000, 0.000]
+
+### `flip_forward_cancel`
+Forward dodge followed immediately by opposite pitch cancellation
+
+- Worst position error at tick **83** (0.001 uu)
+- Final pos RS 375.00, 0.00, 778.97 vs JS 375.00, 0.00, 778.97
+- Final ω RS 0.000, 4.212, 0.000 vs JS 0.000, 4.212, 0.000
+- Final forward RS [-0.978, 0.000, 0.206] vs JS [-0.978, 0.000, 0.206]
+
+### `flip_diagonal_air`
+Diagonal forward-right dodge from rest
+
+- Worst position error at tick **83** (0.001 uu)
+- Final pos RS 265.17, 265.17, 778.97 vs JS 265.17, 265.17, 778.97
+- Final ω RS -2.830, 2.551, 0.349 vs JS -2.830, 2.551, 0.349
+- Final forward RS [0.791, -0.242, 0.561] vs JS [0.791, -0.242, 0.561]
+
+### `ground_powerslide_release`
+Accelerate, powerslide, then release handbrake while steering
+
+- Worst position error at tick **360** (1.024 uu)
+- Final pos RS 662.66, 370.06, 17.03 vs JS 661.87, 369.41, 17.03
+- Final ω RS 0.000, -0.000, 2.513 vs JS 0.000, -0.000, 2.513
+- Final forward RS [-0.868, -0.496, -0.010] vs JS [-0.867, -0.498, -0.010]
+
 ### `ground_jump_into_wall`
 Jump + boost into +X wall curve and climb (wheels on wall)
 
-- Worst position error at tick **180** (7.854 uu)
-- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.83, 687.90
+- Worst position error at tick **180** (7.884 uu)
+- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.86, 687.90
 - Final ω RS -0.000, 0.001, 0.000 vs JS 0.000, 0.001, -0.000
 - Final forward RS [0.010, -0.000, 1.000] vs JS [0.010, 0.012, 1.000]
 

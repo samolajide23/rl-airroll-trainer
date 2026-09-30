@@ -430,15 +430,18 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
 /** Returns contact info or null. Applies engine-style inelastic impulse + Psyonix extra impulse. */
 export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
   const { f, l, u, center, half } = carHitbox(car);
-  const [sx, sy, sz] = half;
+  // Bullet's btBoxShape has a 0.04 BT (=2 uu) rounded collision margin.
+  // Keep the configured outer extents/inertia unchanged; clamp to inner box.
+  const margin = deferred ? Math.min(2, Math.min(...half) * 0.1) : 0;
+  const [sx, sy, sz] = half.map(value => value - margin);
   const rel = ball.pos.clone().sub(center);
   const loc = V(rel.dot(f), rel.dot(l), rel.dot(u));
   const near = V(clamp(loc.x, -sx, sx), clamp(loc.y, -sy, sy), clamp(loc.z, -sz, sz));
   const diff = loc.clone().sub(near);
   const dist = diff.length();
-  if (dist > RL.BALL_RADIUS) return null;
+  if (dist > RL.BALL_RADIUS + margin) return null;
 
-  let penetration = RL.BALL_RADIUS - dist;
+  let penetration = RL.BALL_RADIUS + margin - dist;
   const localNormal = diff.clone();
   if (dist > 1e-6) localNormal.multiplyScalar(1 / dist);
   else {
@@ -447,20 +450,15 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
     const depths = [sx - Math.abs(loc.x), sy - Math.abs(loc.y), sz - Math.abs(loc.z)];
     const axis = depths.indexOf(Math.min(...depths));
     const sign = loc.getComponent(axis) < 0 ? -1 : 1;
-    near.setComponent(axis, sign * half[axis]);
+    near.setComponent(axis, sign * (half[axis] - margin));
     localNormal.set(0, 0, 0).setComponent(axis, sign);
     penetration += depths[axis];
   }
+  near.addScaledVector(localNormal, margin);
   const nearW = center.clone().addScaledVector(f, near.x).addScaledVector(l, near.y).addScaledVector(u, near.z);
   const n = V().addScaledVector(f, localNormal.x).addScaledVector(l, localNormal.y).addScaledVector(u, localNormal.z);
+  const preContactRelPos = ball.pos.clone().sub(car.pos);
   if (!deferred) ball.pos.addScaledVector(n, penetration);
-  else {
-    // Split positional correction between dynamic bodies by inverse mass.
-    // Without this, lingering overlap produces spurious extra hits two ticks later.
-    const correction = Math.max(0, penetration) * 0.8;
-    car.pos.addScaledVector(n, -correction * RL.BALL_MASS / (RL.CAR_MASS + RL.BALL_MASS));
-    ball.pos.addScaledVector(n, correction * RL.CAR_MASS / (RL.CAR_MASS + RL.BALL_MASS));
-  }
 
   const dv0 = ball.vel.clone().sub(car.vel); // pre-impulse relative velocity
   const carPoint = nearW.clone().sub(car.pos);
@@ -469,7 +467,7 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
   const ballR = n.clone().multiplyScalar(-RL.BALL_RADIUS);
   const ballPointVel = ball.vel.clone().add(ball.omega.clone().cross(ballR));
   const vn = ballPointVel.clone().sub(carPointVel).dot(n);
-  if (vn < 0) {
+  if (vn < 0 || (deferred && penetration > 0)) {
     // RocketSim CARBALL_RESTITUTION = 0 → kill relative normal speed.
     // Friction uses Bullet-style Coulomb with ball spin (sphere inertia 2/5 mr²)
     // and car hitbox angular response about the contact (box inertia).
@@ -499,6 +497,42 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
         c.dot(invInertiaWorld(c))
       );
     };
+    if (deferred) {
+      // Split penetration uses the same angular Jacobian as the contact row,
+      // not just a linear mass ratio. Angular push is integrated separately.
+      const pushImpulse = Math.max(0, penetration) * 0.8 / impulseDenom(n);
+      car.pos.addScaledVector(n, -pushImpulse / RL.CAR_MASS);
+      ball.pos.addScaledVector(n, pushImpulse / RL.BALL_MASS);
+      car.contactTurn ??= V();
+      car.contactTurn.sub(invInertiaWorld(carPoint.clone().cross(n)).multiplyScalar(pushImpulse * 0.1));
+      // Bullet fixes one tangent from pre-solve relative contact velocity, then
+      // alternates normal/friction rows. A single normal-then-tangent pass
+      // cannot handle their angular coupling (especially offset/spinning hits).
+      const relativeVelocity = () => ball.vel.clone().add(ball.omega.clone().cross(ballR))
+        .sub(car.vel.clone().add(car.omega.clone().cross(carPoint)));
+      const initial = relativeVelocity();
+      const tangent = initial.clone().addScaledVector(n, -initial.dot(n));
+      if (tangent.lengthSq() > 1e-10) tangent.normalize();
+      else if (Math.abs(n.z) > Math.SQRT1_2) tangent.set(0, -n.z, n.y).normalize();
+      else tangent.set(-n.y, n.x, 0).normalize();
+      const apply = (direction, amount) => {
+        const impulse = direction.clone().multiplyScalar(amount);
+        ball.vel.addScaledVector(impulse, 1 / RL.BALL_MASS);
+        car.vel.addScaledVector(impulse, -1 / RL.CAR_MASS);
+        ball.omega.add(ballR.clone().cross(impulse).multiplyScalar(ballInvInertia()));
+        car.omega.sub(invInertiaWorld(carPoint.clone().cross(impulse)));
+      };
+      let normalImpulse = 0, frictionImpulse = 0;
+      for (let iteration = 0; iteration < 10; iteration++) {
+        const nextNormal = Math.max(0, normalImpulse - relativeVelocity().dot(n) / impulseDenom(n));
+        apply(n, nextNormal - normalImpulse);
+        normalImpulse = nextNormal;
+        const limit = RL.CARBALL_FRICTION * normalImpulse;
+        const nextFriction = clamp(frictionImpulse - relativeVelocity().dot(tangent) / impulseDenom(tangent), -limit, limit);
+        apply(tangent, nextFriction - frictionImpulse);
+        frictionImpulse = nextFriction;
+      }
+    } else {
     const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / impulseDenom(n);
     const jn = n.clone().multiplyScalar(J);
     ball.vel.addScaledVector(jn, 1 / RL.BALL_MASS);
@@ -520,12 +554,13 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
       ball.omega.add(ballR.clone().cross(jf).multiplyScalar(ballInvInertia()));
       car.omega.sub(invInertiaWorld(carPoint.clone().cross(jf)));
     }
+    }
   }
   // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).
   // Once applied, wait until tickCount > last + 1 before applying again.
   const lastExtraTick = deferred ? (car.lastExtraBallTick ?? -99) : ball.lastExtraTick;
   if (tick - lastExtraTick > RL.EXTRA_COOLDOWN_TICKS) {
-    const relPos = ball.pos.clone().sub(car.pos);
+    const relPos = preContactRelPos;
     // hitDir = normalize(relPos * (1,1,zScale))
     const hitDir = V(relPos.x, relPos.y, relPos.z * RL.EXTRA_IMPULSE_Z);
     if (hitDir.lengthSq() > 1e-12) hitDir.normalize();
