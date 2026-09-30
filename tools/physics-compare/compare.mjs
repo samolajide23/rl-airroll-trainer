@@ -5,6 +5,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { compareScenario, failuresFor } from "./trajectory.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RS = path.join(HERE, "out", "rocketsim");
@@ -12,100 +13,22 @@ const DEFAULT_JS = path.join(HERE, "out", "js");
 const DEFAULT_OUT = path.join(HERE, "out", "report.md");
 
 function parseArgs(argv) {
-  const args = { rs: DEFAULT_RS, js: DEFAULT_JS, out: DEFAULT_OUT };
+  const args = { rs: DEFAULT_RS, js: DEFAULT_JS, out: DEFAULT_OUT, budgets: path.join(HERE, "tolerances.json"), reportOnly: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--rs") args.rs = argv[++i];
     else if (a === "--js") args.js = argv[++i];
     else if (a === "--out") args.out = argv[++i];
+    else if (a === "--budgets") args.budgets = argv[++i];
+    else if (a === "--report-only") args.reportOnly = true;
+    else throw new Error(`Unknown argument: ${a}`);
   }
   return args;
-}
-
-function sub(a, b) {
-  return a.map((v, i) => v - b[i]);
-}
-
-function len(v) {
-  return Math.hypot(...v);
-}
-
-function dot(a, b) {
-  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-function angErrDeg(a, b) {
-  const c = Math.max(-1, Math.min(1, dot(a, b) / (len(a) * len(b) || 1)));
-  return (Math.acos(c) * 180) / Math.PI;
-}
-
-function mean(xs) {
-  return xs.reduce((s, x) => s + x, 0) / (xs.length || 1);
-}
-
-function max(xs) {
-  return xs.reduce((m, x) => (x > m ? x : m), 0);
 }
 
 function fmt(n, digits = 3) {
   if (!Number.isFinite(n)) return "n/a";
   return n.toFixed(digits);
-}
-
-function compareScenario(rs, js) {
-  const n = Math.min(rs.frames.length, js.frames.length);
-  const posErr = [];
-  const velErr = [];
-  const omegaErr = [];
-  const fwdErr = [];
-  const upErr = [];
-  let worst = { tick: 0, pos: 0 };
-
-  for (let i = 0; i < n; i++) {
-    const a = rs.frames[i];
-    const b = js.frames[i];
-    const pe = len(sub(a.pos, b.pos));
-    const ve = len(sub(a.vel, b.vel));
-    const oe = len(sub(a.ang_vel, b.ang_vel));
-    const fe = angErrDeg(a.rot.forward, b.rot.forward);
-    const ue = angErrDeg(a.rot.up, b.rot.up);
-    posErr.push(pe);
-    velErr.push(ve);
-    omegaErr.push(oe);
-    fwdErr.push(fe);
-    upErr.push(ue);
-    if (pe >= worst.pos) worst = { tick: a.tick, pos: pe };
-  }
-
-  const finalRs = rs.frames[n - 1];
-  const finalJs = js.frames[n - 1];
-
-  return {
-    id: rs.id,
-    description: rs.description,
-    frames: n,
-    pos_mean: mean(posErr),
-    pos_max: max(posErr),
-    vel_mean: mean(velErr),
-    vel_max: max(velErr),
-    omega_mean: mean(omegaErr),
-    omega_max: max(omegaErr),
-    fwd_mean_deg: mean(fwdErr),
-    fwd_max_deg: max(fwdErr),
-    up_mean_deg: mean(upErr),
-    up_max_deg: max(upErr),
-    worst_tick: worst.tick,
-    final: {
-      rs_pos: finalRs.pos,
-      js_pos: finalJs.pos,
-      rs_ang_vel: finalRs.ang_vel,
-      js_ang_vel: finalJs.ang_vel,
-      rs_forward: finalRs.rot.forward,
-      js_forward: finalJs.rot.forward,
-      rs_up: finalRs.rot.up,
-      js_up: finalJs.rot.up,
-    },
-  };
 }
 
 function constantsSection(rsConst, jsConst) {
@@ -150,6 +73,12 @@ function constantsSection(rsConst, jsConst) {
 
 const args = parseArgs(process.argv.slice(2));
 const rsIndex = JSON.parse(await readFile(path.join(args.rs, "index.json"), "utf8"));
+const jsIndex = JSON.parse(await readFile(path.join(args.js, "index.json"), "utf8"));
+const ids = (index) => index.scenarios.map((s) => s.id).sort();
+if (!rsIndex.scenarios.length || JSON.stringify(ids(rsIndex)) !== JSON.stringify(ids(jsIndex)) || new Set(ids(rsIndex)).size !== rsIndex.scenarios.length) {
+  throw new Error("Scenario indexes must be nonempty, unique, and identical");
+}
+const budgets = JSON.parse(await readFile(args.budgets, "utf8"));
 const results = [];
 
 for (const entry of rsIndex.scenarios) {
@@ -172,8 +101,11 @@ try {
 const now = new Date().toISOString();
 let md = `# Physics compare report\n\n`;
 md += `Generated: ${now}\n\n`;
-md += `Ground truth: **RocketSim** (\`GameMode.THE_VOID\`) via Python bindings.\n`;
-md += `Candidate: **\`src/shared/rl-physics.js\`**.\n\n`;
+md += `Reference: **RocketSim 2.2.1**, SOCCAR or THE_VOID as declared per scenario.\n`;
+md += `Candidate: **\`carSim.js\` / \`rl-physics.js\`**.\n\n`;
+const failures = results.flatMap((r) => failuresFor(r, budgets));
+md += `Regression gate: **${failures.length ? "FAIL" : "PASS"}** (${args.reportOnly ? "report-only" : "enforced"}). Budgets are regression limits, not exact-parity certification.\n\n`;
+for (const failure of failures) md += `- ${failure}\n`;
 
 if (rsConst && jsConst) md += constantsSection(rsConst, jsConst) + "\n";
 
@@ -184,6 +116,11 @@ for (const r of results) {
   md += `| \`${r.id}\` | ${fmt(r.pos_mean)} / ${fmt(r.pos_max)} | ${fmt(r.vel_mean)} / ${fmt(r.vel_max)} | ${fmt(r.omega_mean)} / ${fmt(r.omega_max)} | ${fmt(r.fwd_mean_deg)} / ${fmt(r.fwd_max_deg)} | ${fmt(r.up_mean_deg)} / ${fmt(r.up_max_deg)} |\n`;
 }
 
+if (results.some(r => r.ball_pos_max !== undefined)) {
+  md += `\n## Coupled ball errors\n\n| Scenario | Ball pos max (uu) | Ball vel max (uu/s) | Ball omega max (rad/s) |\n|---|---:|---:|---:|\n`;
+  for (const r of results) md += `| ${r.id} | ${fmt(r.ball_pos_max)} | ${fmt(r.ball_vel_max)} | ${fmt(r.ball_omega_max)} |\n`;
+}
+
 md += `\n## Per-scenario finals\n\n`;
 for (const r of results) {
   md += `### \`${r.id}\`\n`;
@@ -191,7 +128,7 @@ for (const r of results) {
   md += `- Worst position error at tick **${r.worst_tick}** (${fmt(r.pos_max)} uu)\n`;
   md += `- Final pos RS ${r.final.rs_pos.map((x) => fmt(x, 2)).join(", ")} vs JS ${r.final.js_pos.map((x) => fmt(x, 2)).join(", ")}\n`;
   md += `- Final ω RS ${r.final.rs_ang_vel.map((x) => fmt(x, 3)).join(", ")} vs JS ${r.final.js_ang_vel.map((x) => fmt(x, 3)).join(", ")}\n`;
-  md += `- Final forward RS [${r.final.rs_forward.map((x) => fmt(x, 3)).join(", ")}] vs JS [${r.final.js_forward.map((x) => fmt(x, 3)).join(", ")}]\n\n`;
+  if (r.final.rs_forward) md += `- Final forward RS [${r.final.rs_forward.map((x) => fmt(x, 3)).join(", ")}] vs JS [${r.final.js_forward.map((x) => fmt(x, 3)).join(", ")}]\n\n`;
 }
 
 md += `## How to re-run\n\n`;
@@ -204,3 +141,4 @@ await writeFile(summaryPath, `${JSON.stringify({ generated: now, results }, null
 console.log(md);
 console.log(`wrote ${args.out}`);
 console.log(`wrote ${summaryPath}`);
+if (failures.length && !args.reportOnly) process.exitCode = 1;

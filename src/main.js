@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PHASES, GHOST_ALIGN_DIFFICULTIES } from "./modes/catalog.js";
 import { preloadBall } from "./shared/ball.js";
 import { preloadCars } from "./shared/carAssets.js";
@@ -110,8 +111,17 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
+const environmentGenerator = new THREE.PMREMGenerator(renderer);
+const environmentRoom = new RoomEnvironment();
+const environmentTarget = environmentGenerator.fromScene(environmentRoom, 0.04);
+scene.environment = environmentTarget.texture;
+scene.environmentIntensity = 0.65;
+environmentRoom.dispose();
+environmentGenerator.dispose();
 scene.background = new THREE.Color(0x0b1220);
 scene.fog = new THREE.Fog(0x0b1220, 40, 120);
 

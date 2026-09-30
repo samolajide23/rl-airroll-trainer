@@ -15,6 +15,8 @@ Copy from rlgym or dump via RLArenaCollisionDumper, then:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.metadata
 import json
 import math
 import sys
@@ -312,6 +314,31 @@ def run_scenario(
     else:
         arena = rs.Arena(rs.GameMode.THE_VOID)
 
+    if scenario.get("entity") == "ball":
+        ball = arena.ball
+        state = rs.BallState()
+        state.pos = rs.Vec(*initial["pos"])
+        state.vel = rs.Vec(*initial["vel"])
+        state.ang_vel = rs.Vec(*initial["ang_vel"])
+        ball.set_state(state)
+
+        def ball_snapshot(tick: int) -> dict[str, Any]:
+            state = ball.get_state()
+            return {"tick": tick, "pos": vec_list(state.pos), "vel": vec_list(state.vel), "ang_vel": vec_list(state.ang_vel)}
+
+        frames = [ball_snapshot(0)]
+        for tick in range(ticks):
+            arena.step(1)
+            frames.append(ball_snapshot(tick + 1))
+        return {
+            "id": scenario["id"], "description": scenario.get("description", ""),
+            "entity": "ball", "engine": "rocketsim",
+            "rocketsim_version": importlib.metadata.version("RocketSim"),
+            "game_mode": mode, "tick_rate": float(arena.tick_rate),
+            "tick_time": float(arena.tick_time), "ticks": ticks,
+            "initial": initial, "frames": frames,
+        }
+
     car = arena.add_car(rs.Team.BLUE)
     if mode == "soccar":
         # Park the default kickoff ball far away so it cannot collide with car tests.
@@ -328,26 +355,42 @@ def run_scenario(
     else:
         prepare_airborne(arena, car, initial)
 
+    ball_initial = scenario.get("ball")
+    if ball_initial:
+        state = rs.BallState()
+        state.pos = rs.Vec(*ball_initial["pos"])
+        state.vel = rs.Vec(*ball_initial.get("vel", [0, 0, 0]))
+        state.ang_vel = rs.Vec(*ball_initial.get("ang_vel", [0, 0, 0]))
+        arena.ball.set_state(state)
+
+    def capture(tick: int, controls: dict[str, Any]) -> dict[str, Any]:
+        frame = snapshot(car, tick, controls)
+        if ball_initial:
+            state = arena.ball.get_state()
+            frame["ball"] = {"pos": vec_list(state.pos), "vel": vec_list(state.vel), "ang_vel": vec_list(state.ang_vel)}
+        return frame
+
     frames: list[dict[str, Any]] = []
     ctrl0 = controls_at_tick(0, defaults, scenario)
-    frames.append(snapshot(car, 0, ctrl0))
+    frames.append(capture(0, ctrl0))
 
     for tick in range(ticks):
         ctrl = controls_at_tick(tick, defaults, scenario)
         car.set_controls(make_controls(ctrl))
         arena.step(1)
-        frames.append(snapshot(car, tick + 1, ctrl))
+        frames.append(capture(tick + 1, ctrl))
 
     return {
         "id": scenario["id"],
         "description": scenario.get("description", ""),
         "engine": "rocketsim",
-        "rocketsim_version": getattr(rs, "__version__", "unknown"),
+        "rocketsim_version": importlib.metadata.version("RocketSim"),
         "game_mode": mode,
         "tick_rate": float(arena.tick_rate),
         "tick_time": float(arena.tick_time),
         "ticks": ticks,
         "initial": initial,
+        "ball_initial": ball_initial,
         "frames": frames,
     }
 
@@ -387,6 +430,12 @@ def main() -> None:
     index: list[dict[str, str]] = []
     for scenario in scenarios:
         result = run_scenario(scenario, defaults, args.meshes)
+        result["scenario_sha256"] = hashlib.sha256(args.scenarios.read_bytes()).hexdigest()
+        result["reference_provenance"] = {
+            "distribution": "RocketSim", "version": importlib.metadata.version("RocketSim"),
+            "binding_source_commit": "2da51b1dac7b8127127613a5ff30e490bdd70dd8",
+            "module_sha256": hashlib.sha256(Path(rs.__file__).read_bytes()).hexdigest(),
+        }
         path = args.out / f"{scenario['id']}.json"
         path.write_text(json.dumps(result, indent=2) + "\n")
         index.append({"id": scenario["id"], "path": path.name})

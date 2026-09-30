@@ -335,6 +335,47 @@ const _meshP = new THREE.Vector3();
 const _meshN = new THREE.Vector3();
 
 /**
+ * Sphere contacts against finite triangle features and arena planes.
+ * Unlike the car's signed-distance approximation, a distant goal roof's
+ * infinite plane must not collide with a ball passing through the goal mouth.
+ * Triangle normals point from the closest feature toward the sphere, so goal
+ * interiors do not depend on a global "toward arena centre" heuristic.
+ */
+export function sphereArenaContacts(position, radius, margin = 1) {
+  const contacts = [];
+  const { x, y, z } = position;
+  for (const plane of PLANES) {
+    const distance = position.clone().sub(plane.point).dot(plane.normal) - radius;
+    if (distance < margin) contacts.push({ normal: plane.normal.clone(), distance });
+  }
+  const rangeSq = (radius + margin) ** 2;
+  let sp = 0;
+  _stack[sp++] = BVH_ROOT;
+  while (sp > 0) {
+    const node = BVH[_stack[--sp]];
+    if (pointAabbDistSq(x, y, z, node.min, node.max) > rangeSq) continue;
+    if (node.tri < 0) {
+      _stack[sp++] = node.right;
+      _stack[sp++] = node.left;
+      continue;
+    }
+    const d2 = closestOnTri(x, y, z, node.tri, _cp, _cn);
+    if (d2 >= rangeSq) continue;
+    const normal = position.clone().sub(_cp);
+    if (d2 > EPS) normal.multiplyScalar(1 / Math.sqrt(d2));
+    else normal.copy(_cn);
+    const distance = Math.sqrt(d2) - radius;
+    // Adjacent coplanar triangles describe one constraint, not repeated hits.
+    const same = contacts.find((c) => c.normal.dot(normal) > 0.9999);
+    if (same) same.distance = Math.min(same.distance, distance);
+    else contacts.push({ normal, distance });
+  }
+  // Resolve the deepest constraint first; edge contacts must not deflect the
+  // sphere before the underlying face at a triangulated ramp seam.
+  return contacts.sort((a, b) => a.distance - b.distance);
+}
+
+/**
  * Signed distance to the arena (planes + meshes). Positive = playable side,
  * negative = penetrating / outside. `outNormal` receives the contact normal
  * pointing into the playable space.

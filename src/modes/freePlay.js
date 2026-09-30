@@ -1,5 +1,9 @@
 import * as THREE from "three";
 import { BoostTrail } from "../shared/boostTrail.js";
+import { cloneBallMesh, preloadBall } from "../shared/ball.js";
+import { preloadCars, isCarReady } from "../shared/carAssets.js";
+import { syncCarWheels, syncCarExhaust } from "../shared/carVisualCalibration.js";
+import { stepCarBall } from "../shared/carSim.js";
 import { makeCar } from "../shared/car.js";
 import {
   FixedStepClock,
@@ -7,7 +11,6 @@ import {
   alignCarVisualToHitbox,
   applyToCarModel,
   canFlipOrJump,
-  collideCarBall,
   createBoostPadMeshes,
   createHitboxHelper,
   createSoccarBoostPads,
@@ -16,9 +19,7 @@ import {
   makePhysCar,
   physToThree,
   resetBoostPads,
-  stepBall,
   stepBoostPads,
-  stepCar,
   syncHitboxHelper,
   withFreeAirRoll,
 } from "../shared/carPhysics.js";
@@ -60,7 +61,7 @@ export class FreePlayMode {
 
     this.carId = getSelectedCarId();
     this.hitbox = getHitboxForCarId(this.carId);
-    this.carMesh = makeCar(0xffffff, 1, { carId: this.carId });
+    this.carMesh = makeCar(0xffffff, 1, { carId: this.carId, markers: false });
     this.carMesh.userData.physicsOrigin = "root";
     this.root.add(this.carMesh);
 
@@ -73,8 +74,39 @@ export class FreePlayMode {
       }),
     );
     this.root.add(this.ballMesh);
+    this.ballMesh.castShadow = true;
+    this._stopped = false;
+    this.ballVisual = new THREE.Group();
+    this.root.add(this.ballVisual);
+    const upgradeBall = () => {
+      if (this._stopped) return;
+      const model = cloneBallMesh();
+      if (!model) return;
+      model.scale.setScalar(BALL_VIS_R);
+      this.ballVisual.add(model);
+      this.ballMesh.visible = false;
+    };
+    preloadBall().then(upgradeBall);
+
+    // Contact shadows are inexpensive, stable, and do not require a huge
+    // stadium-wide realtime shadow map. They also help read aerial altitude.
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = shadowCanvas.height = 64;
+    const shadowCtx = shadowCanvas.getContext("2d");
+    const gradient = shadowCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, "rgba(0,0,0,.55)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+    shadowCtx.fillStyle = gradient; shadowCtx.fillRect(0, 0, 64, 64);
+    this._shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    const createShadow = () => {
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this._shadowTexture, transparent: true, depthWrite: false, opacity: 0.65 }));
+      mesh.rotation.x = -Math.PI / 2; this.root.add(mesh); return mesh;
+    };
+    this.carShadow = createShadow();
+    this.ballShadow = createShadow();
 
     this.hitboxHelper = createHitboxHelper();
+    this.hitboxHelper.visible = false;
     this.root.add(this.hitboxHelper);
 
     const spawn0 = RL.SOCCAR_SPAWNS[4];
@@ -91,8 +123,24 @@ export class FreePlayMode {
 
     this.clock = new FixedStepClock();
     this.chase = new ChaseCamera();
-    this.trail = new BoostTrail(this.root);
+    this.trail = new BoostTrail(this.root, { exhaustLocal: new THREE.Vector3(0, 0.08, -0.65) });
     this.trail.attachFlames(this.carMesh);
+    for (const flame of this.trail.flames.children) {
+      flame.position.set(flame.position.x * 0.7, 0.08, -0.65);
+      flame.scale.setScalar(0.55);
+    }
+    // Starting immediately must not permanently retain the procedural fallback.
+    const initialCarWasReady = isCarReady(this.carId);
+    preloadCars().then(() => {
+      if (this._stopped || initialCarWasReady || !isCarReady(this.carId)) return;
+      const old = this.carMesh;
+      this.carMesh = makeCar(0xffffff, 1, { carId: this.carId, markers: false });
+      this.carMesh.userData.physicsOrigin = "root";
+      this.root.add(this.carMesh);
+      this.trail.attachFlames(this.carMesh);
+      old.removeFromParent();
+      this.syncMeshes();
+    });
 
     this.forward = new THREE.Vector3();
     this.velThree = new THREE.Vector3();
@@ -115,13 +163,14 @@ export class FreePlayMode {
       this.root.remove(this.carMesh);
       this.carId = carId;
       this.hitbox = getHitboxForCarId(carId);
-      this.carMesh = makeCar(0xffffff, 1, { carId });
+      this.carMesh = makeCar(0xffffff, 1, { carId, markers: false });
       this.carMesh.userData.physicsOrigin = "root";
       this.root.add(this.carMesh);
       this.trail.attachFlames(this.carMesh);
     }
 
     hud.modeTitle.textContent = this.title;
+    hud.root.classList.add("freeplay-hud");
     hud.root.classList.remove("hidden");
     if (hud.alignMeter) hud.alignMeter.classList.add("hidden");
     if (hud.boostMeter) hud.boostMeter.classList.remove("hidden");
@@ -138,11 +187,11 @@ export class FreePlayMode {
       fogFar: scene.fog?.far ?? 120,
       far: camera.far,
     };
-    scene.background = new THREE.Color(0x87b5d9);
+    scene.background = new THREE.Color(0x243047);
     if (scene.fog) {
-      scene.fog.color.set(0x87b5d9);
-      scene.fog.near = 80;
-      scene.fog.far = 220;
+      scene.fog.color.set(0x243047);
+      scene.fog.near = 100;
+      scene.fog.far = 280;
     }
     camera.far = 400;
     camera.updateProjectionMatrix();
@@ -159,6 +208,8 @@ export class FreePlayMode {
 
   stop() {
     const { hud, scene, arena, camera } = this.ctx;
+    this._stopped = true;
+    hud.root.classList.remove("freeplay-hud");
     hud.root.classList.add("hidden");
     if (hud.alignMeter) hud.alignMeter.classList.add("hidden");
     if (hud.boostMeter) hud.boostMeter.classList.add("hidden");
@@ -180,6 +231,20 @@ export class FreePlayMode {
     }
     if (arena) arena.visible = true;
     this.chase.invalidate();
+    this.arenaMesh.userData.dispose?.();
+    this.trail.dispose();
+    this._shadowTexture.dispose();
+    for (const mesh of [this.carShadow, this.ballShadow, this.ballMesh, this.hitboxHelper]) {
+      mesh.geometry.dispose(); mesh.material.dispose();
+    }
+    // Loaded GLB geometry belongs to the shared asset cache; only cloned
+    // instance materials are owned by this mode.
+    this.ballVisual.traverse(obj => {
+      if (obj.isMesh) for (const mat of Array.isArray(obj.material) ? obj.material : [obj.material]) mat.dispose();
+    });
+    this.padMeshes.traverse(obj => {
+      if (obj.isMesh) { obj.geometry.dispose(); obj.material.dispose(); }
+    });
   }
 
   resetState() {
@@ -196,6 +261,7 @@ export class FreePlayMode {
     this.physCar.boost = RL.BOOST_SPAWN;
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.physBall.vel.set(0, 0, 0);
+    this.ballVisual.quaternion.identity();
     this.tick = 0;
     this.boosting = false;
     resetBoostPads(this.pads);
@@ -212,7 +278,23 @@ export class FreePlayMode {
   syncMeshes() {
     applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
     alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
+    syncCarWheels(this.carMesh, this.physCar);
+    syncCarExhaust(this.carMesh, this.trail);
     physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
+    this.ballVisual.position.copy(this.ballMesh.position);
+    for (const [shadow, position, width, depth] of [
+      [this.carShadow, this.carMesh.position, this.physCar.hitbox.size[1] * ARENA_UU * 1.2, this.physCar.hitbox.size[0] * ARENA_UU * 1.2],
+      [this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1],
+    ]) {
+      const altitude = Math.max(0, position.y);
+      shadow.position.set(position.x, 0.025, position.z);
+      shadow.scale.set(width * (1 + altitude * 0.025), depth * (1 + altitude * 0.025), 1);
+      shadow.material.opacity = 0.6 / (1 + altitude * 0.18);
+    }
+    // Project the car-forward vector onto the ground for a correctly oriented
+    // footprint, without altering the chase camera or simulation orientation.
+    const projectedForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
+    this.carShadow.rotation.set(-Math.PI / 2, 0, Math.atan2(-projectedForward.x, projectedForward.z));
     syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
   }
 
@@ -244,11 +326,11 @@ export class FreePlayMode {
   /** @param {number} dt */
   _stepOnce(dt) {
     const input = readControls();
-    stepCar(this.physCar, withFreeAirRoll(input, this.physCar), dt);
+    stepCarBall(this.physCar, this.physBall, withFreeAirRoll(input, this.physCar), this.tick, dt);
     stepBoostPads(this.pads, this.physCar, dt);
     this.boosting = Boolean(this.physCar.isBoosting);
-    stepBall(this.physBall, dt);
-    collideCarBall(this.physCar, this.physBall, this.tick);
+    const spin = physToThree(this.physBall.omega).negate();
+    if (spin.lengthSq() > 1e-10) this.ballVisual.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(spin.clone().normalize(), spin.length() * dt));
     this.tick += 1;
 
     const { hud } = this.ctx;
@@ -259,6 +341,7 @@ export class FreePlayMode {
 
     this.carMesh.userData.setBoost?.(this.boosting);
     this.syncMeshes();
+    syncCarWheels(this.carMesh, this.physCar, dt);
   }
 
   pollUtilityKeys() {

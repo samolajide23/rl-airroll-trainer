@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "defaults": { "initial": { "pos": [0, 0, 1000], "vel": [0, 0, 0.001], "ang_vel": [0, 0, 0] } },
+  "scenarios": [
+    { "id": "ball_sleep", "entity": "ball", "game_mode": "soccar", "ticks": 120, "initial": { "pos": [0, 0, 93.15], "vel": [0, 0, 0] } },
+    { "id": "ball_freefall", "entity": "ball", "game_mode": "void", "ticks": 120 },
+    { "id": "ball_drag", "entity": "ball", "game_mode": "void", "ticks": 120, "initial": { "vel": [1000, -500, 200], "ang_vel": [1, 2, 3] } },
+    { "id": "ball_speed_cap", "entity": "ball", "game_mode": "void", "ticks": 30, "initial": { "vel": [7000, 0, 0], "ang_vel": [10, 0, 0] } },
+    { "id": "ball_void_below_floor", "entity": "ball", "game_mode": "void", "ticks": 240 },
+    { "id": "ball_floor_drop", "entity": "ball", "game_mode": "soccar", "ticks": 240 },
+    { "id": "ball_floor_spin", "entity": "ball", "game_mode": "soccar", "ticks": 120, "initial": { "pos": [0, 0, 100], "vel": [1000, 400, -1000], "ang_vel": [1, 2, 3] } },
+    { "id": "ball_wall", "entity": "ball", "game_mode": "soccar", "ticks": 120, "initial": { "pos": [3900, 0, 1000], "vel": [1500, 200, 0] } },
+    { "id": "ball_ceiling", "entity": "ball", "game_mode": "soccar", "ticks": 90, "initial": { "pos": [0, 0, 1850], "vel": [0, 0, 1500] } },
+    { "id": "ball_goal", "entity": "ball", "game_mode": "soccar", "ticks": 90, "initial": { "pos": [0, 4800, 300], "vel": [0, 1500, 0] } }
+  ]
+}

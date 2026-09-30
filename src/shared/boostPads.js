@@ -1,10 +1,17 @@
 import * as THREE from "three";
 import { RL_CONST as C } from "./rlConst.js";
-import { RL } from "./rl-physics.js";
+import { RL, carHitbox, hitboxExtentOnAxis } from "./rl-physics.js";
 import { UU } from "./rl-units.js";
 
 /** Thin disc height for pad meshes (uu) — pickup uses {@link BOOST_PAD.CYL_HEIGHT}. */
-const PAD_VIS_H_UU = 12;
+export const BOOST_PAD_VISUAL = Object.freeze({
+  // Distinct from the 144/208 uu pickup cylinders. Approximate standard-map
+  // render footprints, informed by local export bounds, not collision sizes.
+  SMALL_RADIUS: 48,
+  BIG_RADIUS: 84,
+  SMALL_HEIGHT: 6,
+  BIG_HEIGHT: 12,
+});
 
 /**
  * Soccar boost pad layout from RocketSim RLConst::BoostPads (uu, Z-up).
@@ -144,8 +151,8 @@ export function createBoostPadMeshes(parent, pads) {
   bigMat.emissiveIntensity = 0.65;
 
   for (const pad of pads) {
-    const r = pad.radius * UU;
-    const h = PAD_VIS_H_UU * UU;
+    const r = (pad.big ? BOOST_PAD_VISUAL.BIG_RADIUS : BOOST_PAD_VISUAL.SMALL_RADIUS) * UU;
+    const h = (pad.big ? BOOST_PAD_VISUAL.BIG_HEIGHT : BOOST_PAD_VISUAL.SMALL_HEIGHT) * UU;
     const mat = (pad.big ? bigMat : smallMat).clone();
     const mesh = new THREE.Mesh(
       new THREE.CylinderGeometry(r, r, h, pad.big ? 28 : 20),
@@ -154,11 +161,43 @@ export function createBoostPadMeshes(parent, pads) {
     // Same mapping as physToThree: physics (x, y, z) → Three (x, z, y)
     mesh.position.set(pad.x * UU, h * 0.5, pad.y * UU);
     mesh.userData.pad = pad;
+    const halo = new THREE.Mesh(
+      new THREE.RingGeometry(r * 0.7, r * 0.86, 32),
+      new THREE.MeshBasicMaterial({ color: pad.big ? 0xffc45b : 0xffdc88, transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false }),
+    );
+    halo.rotation.x = -Math.PI / 2;
+    halo.position.y = h * 0.52;
+    halo.name = "boost-active-halo";
+    mesh.add(halo);
+    if (pad.big) {
+      const pickup = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.22, 0),
+        new THREE.MeshBasicMaterial({ color: 0xffce62, toneMapped: false }),
+      );
+      pickup.position.y = 0.48;
+      pickup.name = "boost-active-pickup";
+      mesh.add(pickup);
+    }
     pad.mesh = mesh;
     group.add(mesh);
   }
+  // Templates are not used directly by a mesh; dispose the unused originals.
+  smallMat.dispose();
+  bigMat.dispose();
   parent.add(group);
   return group;
+}
+
+/** Keep the permanent base visible while every luminous element goes dark. */
+function syncPadVisual(pad) {
+  if (!pad.mesh) return;
+  pad.mesh.visible = true;
+  const material = pad.mesh.material;
+  material.transparent = false;
+  material.opacity = 1;
+  material.color.setHex(pad.active ? (pad.big ? 0xffc94a : 0xd4a017) : 0x313947);
+  material.emissiveIntensity = pad.active ? (pad.big ? 0.65 : 0.4) : 0;
+  for (const child of pad.mesh.children) child.visible = pad.active;
 }
 
 /**
@@ -170,23 +209,17 @@ export function createBoostPadMeshes(parent, pads) {
  */
 export function stepBoostPads(pads, car, dt) {
   let gained = 0;
+  // Version-matched BoostPadGrid::CheckCollision skips full/demoed/high cars.
+  // Eligibility is sampled once, before any pad's post-tick boost addition.
+  const eligible = !car.isDemoed && car.boost < RL.BOOST_MAX && car.pos.z <= BOOST_PAD.CYL_HEIGHT + 250;
   for (const pad of pads) {
-    if (!pad.active) {
-      pad.timer -= dt;
-      if (pad.timer <= 0) {
-        pad.active = true;
-        pad.timer = 0;
-        if (pad.mesh) {
-          pad.mesh.visible = true;
-          pad.mesh.material.opacity = 1;
-        }
-      } else if (pad.mesh) {
-        pad.mesh.visible = pad.timer < 0.15;
-        if (pad.mesh.material) {
-          pad.mesh.material.transparent = true;
-          pad.mesh.material.opacity = 0.25;
-        }
-      }
+    // RocketSim stores cooldown and tickTime as float32 and updates cooldown
+    // before contact checks. An expiring pad can be collected on that same tick.
+    if (pad.timer > 0) pad.timer = Math.max(0, Math.fround(Math.fround(pad.timer) - Math.fround(dt)));
+    pad.active = pad.timer === 0;
+    if (!eligible) {
+      pad._lockedCarId = null;
+      syncPadVisual(pad);
       continue;
     }
 
@@ -200,32 +233,42 @@ export function stepBoostPads(pads, car, dt) {
     let hit = false;
     if (locked) {
       const boxRad = pad.big ? BOOST_PAD.BOX_RAD_BIG : BOOST_PAD.BOX_RAD_SMALL;
-      hit =
-        Math.abs(dx) <= boxRad &&
-        Math.abs(dy) <= boxRad &&
-        dz >= 0 &&
-        dz <= BOOST_PAD.BOX_HEIGHT;
+      if (car.q) {
+        const hb = carHitbox(car);
+        const extent = new THREE.Vector3(
+          hitboxExtentOnAxis(hb, new THREE.Vector3(1, 0, 0)),
+          hitboxExtentOnAxis(hb, new THREE.Vector3(0, 1, 0)),
+          hitboxExtentOnAxis(hb, new THREE.Vector3(0, 0, 1)),
+        );
+        hit = hb.center.x - extent.x < pad.x + boxRad && hb.center.x + extent.x > pad.x - boxRad &&
+          hb.center.y - extent.y < pad.y + boxRad && hb.center.y + extent.y > pad.y - boxRad &&
+          hb.center.z - extent.z < pad.z + BOOST_PAD.BOX_HEIGHT && hb.center.z + extent.z > pad.z;
+      } else {
+        hit = Math.abs(dx) < boxRad && Math.abs(dy) < boxRad && dz > 0 && dz < BOOST_PAD.BOX_HEIGHT;
+      }
     } else {
       // Cylinder: horizontal radius + |dz| < CYL_HEIGHT (RocketSim, not half-height).
       hit =
-        dx * dx + dy * dy <= pad.radius * pad.radius &&
+        dx * dx + dy * dy < pad.radius * pad.radius &&
         Math.abs(dz) < BOOST_PAD.CYL_HEIGHT;
     }
     if (!hit) {
       if (pad._lockedCarId === (car.id ?? 0)) pad._lockedCarId = null;
+      syncPadVisual(pad);
       continue;
     }
     pad._lockedCarId = car.id ?? 0;
+    if (!pad.active) {
+      syncPadVisual(pad);
+      continue;
+    }
 
     const before = car.boost;
     car.boost = Math.min(RL.BOOST_MAX, car.boost + pad.amount);
     gained += car.boost - before;
     pad.active = false;
     pad.timer = pad.cooldown;
-    if (pad.mesh) {
-      pad.mesh.material.transparent = true;
-      pad.mesh.material.opacity = 0.2;
-    }
+    syncPadVisual(pad);
   }
   return gained;
 }
@@ -238,12 +281,6 @@ export function resetBoostPads(pads) {
     pad.active = true;
     pad.timer = 0;
     pad._lockedCarId = null;
-    if (pad.mesh) {
-      pad.mesh.visible = true;
-      if (pad.mesh.material) {
-        pad.mesh.material.transparent = false;
-        pad.mesh.material.opacity = 1;
-      }
-    }
+    syncPadVisual(pad);
   }
 }

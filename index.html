@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,21 +16,22 @@
   <body>
     <div id="hub" class="screen">
       <div class="menu-panel hub-panel">
-        <p class="menu-kicker">Rocket League aerial practice</p>
-        <h1 class="menu-title">Air Roll Trainer</h1>
-        <p class="menu-sub">Train directional air roll — pick a mode, tweak binds, swap cars.</p>
+        <p class="menu-kicker">The aerial training ground</p>
+        <h1 class="menu-title">Own the <span class="title-accent">air.</span></h1>
+        <p class="menu-sub">Your car. Your rhythm. An open field to sharpen every touch, recovery, and rotation.</p>
+        <div class="hub-meta" aria-label="Training features"><span>120 Hz simulation</span><span>Controller ready</span><span>Free Play + drills</span></div>
 
         <div class="hub-grid" role="list">
           <button type="button" id="btn-play" class="hub-card" role="listitem">
-            <span class="hub-card-label">Play</span>
-            <span class="hub-card-desc">Air Roll, ball contact, and air dribble drills.</span>
+            <span class="hub-card-label">Enter the field <span aria-hidden="true">↗</span></span>
+            <span class="hub-card-desc">Free Play, aerial control, and focused training.</span>
           </button>
           <button type="button" id="btn-locker" class="hub-card" role="listitem">
-            <span class="hub-card-label">Locker</span>
+            <span class="hub-card-label">Locker <span aria-hidden="true">↗</span></span>
             <span class="hub-card-desc">Choose your car body for training.</span>
           </button>
           <button type="button" id="btn-settings" class="hub-card" role="listitem">
-            <span class="hub-card-label">Settings</span>
+            <span class="hub-card-label">Settings <span aria-hidden="true">↗</span></span>
             <span class="hub-card-desc">Keyboard and controller remaps.</span>
           </button>
         </div>

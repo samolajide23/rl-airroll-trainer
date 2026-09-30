@@ -208,6 +208,8 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     boost: RL.BOOST_SPAWN,
     /** When true, boost never depletes (orientation drills). */
     infiniteBoost: false,
+    /** Disable only arena contacts for RocketSim THE_VOID reference scenarios. */
+    arenaCollisions: true,
     /** RocketSim `isOnGround`: ≥ 3 wheels touching. */
     onGround: true,
     /** Any wheel touching. */
@@ -340,7 +342,7 @@ function rayCastWheel(car, fr, wheel, numWheels, dt) {
   const rayLength =
     wheel.restLength + travel + wheel.radius - RS.SUSPENSION_SUBTRACTION;
   const down = fr.u.clone().negate();
-  const hit = raycastArena(wheel.hardPoint, down, rayLength);
+  const hit = car.arenaCollisions ? raycastArena(wheel.hardPoint, down, rayLength) : null;
 
   if (!hit) {
     wheel.inContact = false;
@@ -1099,7 +1101,7 @@ function integrateOrientation(q, omega, dt) {
  * @param {object} controls
  * @param {number} [dt]
  */
-export function stepCar(car, controls, dt = RL.DT) {
+export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   const c = sanitizeControls(controls);
   const fr = carFrame(car);
   const accel = V();
@@ -1142,7 +1144,8 @@ export function stepCar(car, controls, dt = RL.DT) {
     car.velocityImpulseCache.set(0, 0, 0);
   }
   car.omega.addScaledVector(angAccel, dt);
-  const { push, turn } = solveArenaContacts(car, fr, dt);
+  const { push, turn } = car.arenaCollisions ? solveArenaContacts(car, fr, dt) : { push: V(), turn: V() };
+  beforeTransform?.();
   car.pos.addScaledVector(car.vel, dt).addScaledVector(push, dt);
   integrateOrientation(car.q, car.omega.clone().add(turn), dt);
 
@@ -1157,6 +1160,19 @@ export function stepCar(car, controls, dt = RL.DT) {
 
   if (car.vel.length() > RL.MAX_SPEED) car.vel.setLength(RL.MAX_SPEED);
   if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
+}
+
+/** Coupled Free Play tick: solve contact at the old transforms, integrate with
+ * engine impulses, then apply the separate ball-only extra velocity cache. */
+export function stepCarBall(car, ball, controls, tick, dt = RL.DT) {
+  let finishBall;
+  let contact;
+  stepCar(car, controls, dt, () => {
+    finishBall = stepBall(ball, dt, { arena: car.arenaCollisions, deferTransform: true });
+    contact = collideCarBall(car, ball, tick, { deferred: true });
+  });
+  finishBall();
+  return contact;
 }
 
 /**

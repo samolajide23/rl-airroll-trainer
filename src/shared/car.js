@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { cloneGlbCar, isCarReady } from "./carAssets.js";
 import { getHitboxForCarId } from "./hitboxPresets.js";
-import { CARS, getSelectedCar, getSelectedCarId } from "./loadout.js";
+import { getSelectedCarId } from "./loadout.js";
+import { prepareCarVisual } from "./carVisualCalibration.js";
 
 /* ------------------------------------------------------------------ */
 /*  Shared helpers                                                     */
@@ -867,6 +868,7 @@ function buildVisual(opts = {}) {
   if (carId !== "classic" && isCarReady(carId)) {
     const glb = cloneGlbCar(carId);
     if (glb) {
+      prepareCarVisual(glb, carId);
       if (isGhost) applyGhostLook(glb, opts.opacity ?? 0.32);
       glb.userData.spinWheels = () => {};
       glb.userData.setBoost = () => {};
@@ -951,10 +953,16 @@ export function makeCar(color = 0xffffff, opacity = 1, opts = {}) {
     root.add(makeAxis(new THREE.Vector3(1, 0, 0), 0xff6b7a));
   }
 
-  const def = CARS.find((c) => c.id === carId) ?? getSelectedCar();
   root.userData.visual = visual;
   root.userData.carId = carId;
-  root.userData.refLength = def?.targetLength ?? 3.2;
+  // Measure the geometry actually returned (including the procedural fallback),
+  // not the requested GLB's nominal length. Store bounds before later transforms.
+  visual.updateWorldMatrix(true, true);
+  const visualBounds = new THREE.Box3().setFromObject(visual);
+  visualBounds.min.sub(visual.position);
+  visualBounds.max.sub(visual.position);
+  root.userData.visualBounds = visualBounds;
+  root.userData.refLength = visualBounds.max.z - visualBounds.min.z;
   root.userData.hitboxPreset = getHitboxForCarId(carId);
   root.userData.spinWheels = visual.userData.spinWheels ?? (() => {});
   root.userData.setBoost = visual.userData.setBoost ?? (() => {});

@@ -15,8 +15,9 @@ export class BoostTrail {
     this._world = new THREE.Vector3();
     this._fwd = new THREE.Vector3();
     this._q = new THREE.Quaternion();
+    this._emitAccumulator = 0;
 
-    /** @type {{ pos: THREE.Vector3, life: number, maxLife: number, size: number }[]} */
+    /** @type {{ pos: THREE.Vector3, velocity: THREE.Vector3, life: number, maxLife: number, size: number }[]} */
     this.particles = [];
 
     const positions = new Float32Array(this.max * 3);
@@ -37,6 +38,22 @@ export class BoostTrail {
       blending: THREE.AdditiveBlending,
       sizeAttenuation: true,
     });
+    const sprite = document.createElement("canvas");
+    sprite.width = sprite.height = 32;
+    const ctx = sprite.getContext("2d");
+    const glow = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    glow.addColorStop(0, "rgba(255,255,255,1)");
+    glow.addColorStop(0.2, "rgba(255,255,255,.85)");
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, 32, 32);
+    this.mat.map = new THREE.CanvasTexture(sprite);
+    this.mat.toneMapped = false;
+    // PointsMaterial otherwise ignores the per-particle size attribute.
+    this.mat.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace("uniform float size;", "attribute float size;")
+        .replace("gl_PointSize = size;", "gl_PointSize = size * 0.8;");
+    };
 
     this.points = new THREE.Points(this.geo, this.mat);
     this.points.frustumCulled = false;
@@ -55,7 +72,7 @@ export class BoostTrail {
     for (const x of [-0.22, 0.22]) {
       const geo = new THREE.ConeGeometry(0.12, 0.85, 8, 1, true);
       geo.translate(0, 0.42, 0);
-      geo.rotateX(Math.PI / 2);
+      geo.rotateX(-Math.PI / 2);
       const mesh = new THREE.Mesh(geo, flameMat.clone());
       mesh.position.set(x, 0.2, -1.35);
       mesh.visible = false;
@@ -93,7 +110,9 @@ export class BoostTrail {
     }
 
     if (boosting) {
-      const emit = 4;
+      this._emitAccumulator += Math.min(dt, 0.1) * 160;
+      const emit = Math.floor(this._emitAccumulator);
+      this._emitAccumulator -= emit;
       for (let i = 0; i < emit; i++) {
         if (this.particles.length >= this.max) this.particles.shift();
         const local = this.exhaustLocal
@@ -105,22 +124,24 @@ export class BoostTrail {
               -Math.random() * 0.4,
             ),
           );
-        const pos = local.applyQuaternion(this._q).add(this._world);
+        // Include the calibrated car scale, not only its orientation.
+        const pos = car.localToWorld(local);
         // Drift slightly opposite to nose
         pos.addScaledVector(this._fwd, -0.15 * Math.random());
         this.particles.push({
           pos,
+          velocity: this._fwd.clone().multiplyScalar(-6),
           life: 0,
           maxLife: 0.28 + Math.random() * 0.35,
           size: 0.2 + Math.random() * 0.35,
         });
       }
-    }
+    } else this._emitAccumulator = 0;
 
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life += dt;
-      p.pos.addScaledVector(this._fwd, -6 * dt);
+      p.pos.addScaledVector(p.velocity, dt);
       p.pos.y += 0.4 * dt;
       if (p.life >= p.maxLife) this.particles.splice(i, 1);
     }
@@ -147,6 +168,7 @@ export class BoostTrail {
     posAttr.needsUpdate = true;
     colAttr.needsUpdate = true;
     sizeAttr.needsUpdate = true;
+    this.geo.setDrawRange(0, this.particles.length);
     this.mat.opacity = boosting || this.particles.length ? 0.95 : 0;
   }
 
@@ -154,6 +176,7 @@ export class BoostTrail {
     this.parent.remove(this.points);
     this.flames.removeFromParent();
     this.geo.dispose();
+    this.mat.map?.dispose();
     this.mat.dispose();
     for (const f of this.flames.children) {
       /** @type {THREE.Mesh} */ (f).geometry.dispose();

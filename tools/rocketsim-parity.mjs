@@ -3,9 +3,9 @@
  * RLConst and CarConfig across the whole site. Run: `npm run physics:parity`
  *
  * Optionally cross-checks live MutatorConfig + CarConfig via Python when
- * RocketSim is installed (`python3 -c "import RocketSim"`).
+ * RocketSim is installed in the interpreter selected by python-runner.mjs.
  */
-import { spawnSync } from "node:child_process";
+import { spawnPythonSync } from "./python-runner.mjs";
 import { RL, extraImpulseScale } from "../src/shared/rl-physics.js";
 import { RS, RS_CURVES } from "../src/shared/carSim.js";
 import { f32, RL_CONST as C, RL_CURVES } from "../src/shared/rlConst.js";
@@ -468,8 +468,9 @@ check("ball visual radius metres", near(RL.BALL_RADIUS * UU, 0.9125, 1e-6));
 check("octane length metres", near(HITBOX_PRESETS.octane.size[0] * UU, 1.20507, 1e-5));
 
 console.log("\n=== Live RocketSim MutatorConfig + CarConfig (optional) ===");
-const py = spawnSync(
-  "python3",
+let py;
+try {
+  py = spawnPythonSync(
   [
     "-c",
     `import RocketSim as rs, json
@@ -511,9 +512,18 @@ print(json.dumps({
 }))`,
   ],
   { encoding: "utf8" },
-);
+  );
+} catch (error) {
+  if (error.code === "PYTHON_INVALID_OVERRIDE") {
+    check("Python interpreter override", false, error.message);
+  } else if (error.code === "PYTHON_NOT_FOUND") {
+    console.log(`(skip live MutatorConfig — ${error.message})`);
+  } else {
+    throw error;
+  }
+}
 
-if (py.status === 0) {
+if (py?.status === 0) {
   const live = JSON.parse(py.stdout);
   const pairs = [
     ["ball_drag", RL.BALL_DRAG, live.ball_drag],
@@ -561,8 +571,9 @@ if (py.status === 0) {
         nearArr(js.wheels.back.offset, rs.back.slice(2), 1e-3),
     );
   }
-} else {
+} else if (py) {
   console.log("(skip live MutatorConfig — RocketSim python not importable)");
+  if (py.error) console.log(py.error.message);
   if (py.stderr) console.log(py.stderr.slice(0, 400));
 }
 

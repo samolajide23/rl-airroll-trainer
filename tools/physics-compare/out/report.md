@@ -1,9 +1,11 @@
 # Physics compare report
 
-Generated: 2026-09-29T14:58:06.070Z
+Generated: 2026-09-30T11:43:51.013Z
 
-Ground truth: **RocketSim** (`GameMode.THE_VOID`) via Python bindings.
-Candidate: **`src/shared/rl-physics.js`**.
+Reference: **RocketSim 2.2.1**, SOCCAR or THE_VOID as declared per scenario.
+Candidate: **`carSim.js` / `rl-physics.js`**.
+
+Regression gate: **PASS** (enforced). Budgets are regression limits, not exact-parity certification.
 
 ## Constants (RocketSim vs rl-physics.js)
 

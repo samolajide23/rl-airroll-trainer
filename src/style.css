@@ -1,9 +1,9 @@
 :root {
-  --bg: #0b1220;
-  --panel: rgba(8, 14, 28, 0.78);
+  --bg: #080f1c;
+  --panel: rgba(12, 23, 39, 0.82);
   --text: #e8eefc;
   --muted: #9aabc8;
-  --accent: #3dd6c6;
+  --accent: #79e5cd;
   --accent-dim: rgba(61, 214, 198, 0.14);
   --warn: #ff8a4c;
   --good: #6dff9a;
@@ -21,7 +21,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --ui-pad: 12px;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: "Bahnschrift", "Segoe UI", system-ui, sans-serif;
 }
 
 * {
@@ -45,6 +45,59 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+/* Stadium-inspired interface: restrained glass, crisp type, team-color accents. */
+.title-accent { color: var(--accent); }
+.hub-meta {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px;
+  color: #bed0df; font-size: 0.7rem; letter-spacing: 0.04em;
+}
+.hub-meta span {
+  border: 1px solid rgba(163, 197, 217, 0.18); border-radius: 5px;
+  padding: 6px 9px; background: rgba(120, 160, 196, 0.05);
+}
+#hub .menu-title { font-size: clamp(3.6rem, 9vw, 6.5rem); letter-spacing: -0.065em; margin-bottom: 20px; }
+#hub .hub-panel { width: min(680px, 100%); }
+#hub .menu-sub { max-width: 460px; line-height: 1.65; }
+#hub .hub-card-label { display: flex; justify-content: space-between; align-items: center; }
+#hub .hub-card-label > span { color: var(--accent); font-size: 1.4rem; }
+#hub #btn-play {
+  border-color: rgba(121, 229, 205, 0.4);
+  background: linear-gradient(110deg, rgba(37, 117, 112, 0.32), rgba(18, 38, 61, 0.8));
+}
+#hub .hub-card { padding: 20px 22px; border-radius: 8px; }
+#hub .hub-card:hover { transform: translateX(4px); }
+.screen:not(.locker-screen) {
+  background:
+    linear-gradient(135deg, rgba(121, 229, 205, 0.045) 0%, transparent 35%),
+    radial-gradient(ellipse at 90% 80%, rgba(46, 101, 165, 0.17), transparent 55%),
+    linear-gradient(110deg, rgba(7, 14, 26, 0.97), rgba(10, 20, 37, 0.9));
+}
+.menu-kicker { letter-spacing: 0.17em; font-weight: 650; }
+.mode-card, .settings-tab, .btn-primary, .btn-secondary { border-radius: 8px; }
+.mode-card { background: linear-gradient(110deg, rgba(28, 44, 65, 0.7), rgba(11, 22, 38, 0.85)); }
+#hud.freeplay-hud {
+  width: min(350px, calc(100% - 32px)); padding: 13px 16px;
+  border-radius: 8px; border-top: 2px solid #68beff;
+  background: linear-gradient(120deg, rgba(8, 19, 32, 0.9), rgba(8, 19, 32, 0.62));
+}
+#hud.freeplay-hud #score-row { display: none; }
+#hud.freeplay-hud .brand { text-transform: uppercase; letter-spacing: 0.13em; font-size: 0.82rem; }
+#hud.freeplay-hud #status { font-size: 0.8rem; color: #d1e4ee; font-variant-numeric: tabular-nums; }
+#hud.freeplay-hud #help { font-size: 0.67rem; opacity: 0.8; line-height: 1.6; }
+.boost-center { box-shadow: 0 6px 25px rgba(0, 0, 0, 0.32); }
+.boost-ring { filter: drop-shadow(0 0 6px rgba(255, 173, 70, 0.25)); }
+@media (max-width: 520px) {
+  #hub .menu-title { font-size: 3.5rem; }
+  #hub .hub-card { padding: 15px 16px; }
+  .hub-meta { margin-bottom: 18px; }
+  #settings .bind-columns-header { display: none; }
+  #settings .bind-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #settings .bind-row > :first-child { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-card, .mode-card, .seq-piece { transition: none !important; transform: none !important; }
 }
 
 #stage {

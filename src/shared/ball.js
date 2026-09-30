@@ -28,9 +28,9 @@ function normalizeBallModel(root) {
   const size = new THREE.Vector3();
   box.getSize(size);
 
-  const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-  const scale = 2 / maxDim;
-  root.scale.setScalar(scale);
+  // The imported sphere is slightly squashed. Normalize all three diameters,
+  // not only the longest, so its silhouette agrees with the collision sphere.
+  root.scale.set(2 / Math.max(size.x, 0.001), 2 / Math.max(size.y, 0.001), 2 / Math.max(size.z, 0.001));
   root.updateWorldMatrix(true, true);
   box = new THREE.Box3().setFromObject(root);
   const center = new THREE.Vector3();
@@ -88,7 +88,7 @@ export function isBallReady() {
  * Clone the prepared GLB template (deep clone with materials).
  * @returns {THREE.Group | null}
  */
-function cloneBallMesh() {
+export function cloneBallMesh() {
   if (!ballTemplate) return null;
   const clone = ballTemplate.clone(true);
   clone.traverse((obj) => {

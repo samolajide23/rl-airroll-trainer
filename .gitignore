@@ -2,10 +2,15 @@ node_modules
 dist
 .DS_Store
 *.local
+.venv/
+__pycache__/
 
 # Physics-compare trajectories (regenerate with npm run physics:compare)
 tools/physics-compare/out/rocketsim/
 tools/physics-compare/out/js/
 tools/physics-compare/out/summary.json
+tools/physics-compare/out/current/
+tools/physics-compare/out/ball/
+tools/physics-compare/out/contact/
 tools/physics-compare/collision_meshes/
 collision_meshes/

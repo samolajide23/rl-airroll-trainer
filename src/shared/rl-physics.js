@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { arenaDistance, arenaNormal } from "./arenaMesh.js";
+import { arenaDistance, arenaNormal, sphereArenaContacts } from "./arenaMesh.js";
 import { getHitboxPreset, HITBOX_PRESETS } from "./hitboxPresets.js";
 import { CAR_TORQUE_SCALE, RL_CONST as C, RL_CURVES } from "./rlConst.js";
 import { UU } from "./rl-units.js";
@@ -370,24 +370,27 @@ function ballInvInertia(radius = RL.BALL_RADIUS) {
   return 1 / (0.4 * RL.BALL_MASS * radius * radius);
 }
 
-export function stepBall(ball, dt = RL.DT) {
+export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = false } = {}) {
   const R = RL.BALL_RADIUS;
-  ball.vel.z -= RL.GRAVITY * dt;
-  ball.vel.addScaledVector(ball.vel, -RL.BALL_DRAG * dt);
-  if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
-  ball.pos.addScaledVector(ball.vel, dt);
+  // RocketSim Arena::Step explicitly sleeps a ball with exactly zero linear
+  // and angular velocity (including the kickoff ball). Contact impulses wake it.
+  const sleeping = ball.vel.lengthSq() === 0 && ball.omega.lengthSq() === 0;
+  if (sleeping && !deferTransform) return;
+  // Bullet applies exponential damping before gravity, not Euler drag after it.
+  if (!sleeping) ball.vel.multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt));
+  const preGravity = ball.vel.clone();
+  if (!sleeping) ball.vel.z -= RL.GRAVITY * dt;
   const e = RL.BALL_RESTITUTION;
-  // Arena planes + soccar meshes. Coulomb friction with spin coupling
-  // (Bullet sphere vs static: denom_t = 1/m + R²/I).
-  const n = V();
-  const clearance = arenaDistance(ball.pos.x, ball.pos.y, ball.pos.z, n);
-  const pen = R - clearance;
-  if (pen > 0) {
-    ball.pos.addScaledVector(n, pen);
+  const push = V();
+  // Contacts are generated at the pre-integration transform, as in Bullet.
+  // This is still a sequential sphere solver, not Bullet's persistent manifold.
+  for (const { normal: n, distance } of arena ? sphereArenaContacts(ball.pos, R) : []) {
+    if (distance < 0) push.addScaledVector(n, Math.max(0, -distance * 0.8 - push.dot(n)));
     const vn = ball.vel.dot(n);
     if (vn < 0) {
-      // Normal restitution (sphere: no angular contribution on n).
-      const dvn = -(1 + e) * vn;
+      const incoming = preGravity.dot(n);
+      const bounce = incoming < -10 ? -e * incoming : 0;
+      const dvn = bounce - vn;
       ball.vel.addScaledVector(n, dvn);
       // Contact-point velocity including spin: v + ω × (−R n).
       const r = n.clone().multiplyScalar(-R);
@@ -406,25 +409,26 @@ export function stepBall(ball, dt = RL.DT) {
         // τ = r × Jf → Δω = (r × Jf) / I
         ball.omega.add(r.clone().cross(jf).multiplyScalar(invI));
       }
-      if (Math.abs(ball.vel.dot(n)) < 25 && n.z > 0.9) {
-        ball.vel.z = 0;
-      }
     }
   }
-  // Soft goal backstops (meshes cover the mouth; keep a deep back plane).
-  const back = RL.HALF_L + RL.GOAL_DEPTH;
-  if (Math.abs(ball.pos.y) > back - R) {
-    const sign = Math.sign(ball.pos.y);
-    ball.pos.y = sign * (back - R);
-    if (ball.vel.y * sign > 0) ball.vel.y *= -e;
-  }
-  if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
+  const finish = () => {
+    ball.pos.addScaledVector(ball.vel, dt).add(push);
+    if (ball.extraVelocityCache) {
+      ball.vel.add(ball.extraVelocityCache);
+      ball.extraVelocityCache.set(0, 0, 0);
+    }
+    // RocketSim clamps after integrating, not before (important for hard hits).
+    if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
+    if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
+  };
+  if (deferTransform) return finish;
+  finish();
 }
 
 /* --------------------------- car <-> ball hit --------------------------- */
 
 /** Returns contact info or null. Applies engine-style inelastic impulse + Psyonix extra impulse. */
-export function collideCarBall(car, ball, tick) {
+export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
   const { f, l, u, center, half } = carHitbox(car);
   const [sx, sy, sz] = half;
   const rel = ball.pos.clone().sub(center);
@@ -434,9 +438,29 @@ export function collideCarBall(car, ball, tick) {
   const dist = diff.length();
   if (dist > RL.BALL_RADIUS) return null;
 
+  let penetration = RL.BALL_RADIUS - dist;
+  const localNormal = diff.clone();
+  if (dist > 1e-6) localNormal.multiplyScalar(1 / dist);
+  else {
+    // Sphere centre inside the box: choose the nearest exit face, including
+    // its depth. Centre-to-centre normalization is zero at exact coincidence.
+    const depths = [sx - Math.abs(loc.x), sy - Math.abs(loc.y), sz - Math.abs(loc.z)];
+    const axis = depths.indexOf(Math.min(...depths));
+    const sign = loc.getComponent(axis) < 0 ? -1 : 1;
+    near.setComponent(axis, sign * half[axis]);
+    localNormal.set(0, 0, 0).setComponent(axis, sign);
+    penetration += depths[axis];
+  }
   const nearW = center.clone().addScaledVector(f, near.x).addScaledVector(l, near.y).addScaledVector(u, near.z);
-  const n = dist > 1e-6 ? ball.pos.clone().sub(nearW).normalize() : rel.clone().normalize();
-  ball.pos.addScaledVector(n, RL.BALL_RADIUS - dist); // resolve penetration
+  const n = V().addScaledVector(f, localNormal.x).addScaledVector(l, localNormal.y).addScaledVector(u, localNormal.z);
+  if (!deferred) ball.pos.addScaledVector(n, penetration);
+  else {
+    // Split positional correction between dynamic bodies by inverse mass.
+    // Without this, lingering overlap produces spurious extra hits two ticks later.
+    const correction = Math.max(0, penetration) * 0.8;
+    car.pos.addScaledVector(n, -correction * RL.BALL_MASS / (RL.CAR_MASS + RL.BALL_MASS));
+    ball.pos.addScaledVector(n, correction * RL.CAR_MASS / (RL.CAR_MASS + RL.BALL_MASS));
+  }
 
   const dv0 = ball.vel.clone().sub(car.vel); // pre-impulse relative velocity
   const carPoint = nearW.clone().sub(car.pos);
@@ -499,7 +523,8 @@ export function collideCarBall(car, ball, tick) {
   }
   // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).
   // Once applied, wait until tickCount > last + 1 before applying again.
-  if (tick - ball.lastExtraTick > RL.EXTRA_COOLDOWN_TICKS) {
+  const lastExtraTick = deferred ? (car.lastExtraBallTick ?? -99) : ball.lastExtraTick;
+  if (tick - lastExtraTick > RL.EXTRA_COOLDOWN_TICKS) {
     const relPos = ball.pos.clone().sub(car.pos);
     // hitDir = normalize(relPos * (1,1,zScale))
     const hitDir = V(relPos.x, relPos.y, relPos.z * RL.EXTRA_IMPULSE_Z);
@@ -513,9 +538,21 @@ export function collideCarBall(car, ball, tick) {
     if (relSpeed > 0) {
       const impulse =
         relSpeed * extraImpulseScale(relSpeed) * RL.EXTRA_FORCE_SCALE;
-      ball.vel.addScaledVector(hitDir, impulse);
+      if (deferred) {
+        ball.extraVelocityCache ??= V();
+        ball.extraVelocityCache.addScaledVector(hitDir, impulse);
+      } else ball.vel.addScaledVector(hitDir, impulse);
       ball.lastExtraTick = tick;
+      if (deferred) car.lastExtraBallTick = tick;
     }
+  }
+  // Contact impulses occur after the standalone body steps in Free Play.
+  // Finalize their limits here too; no completed tick may expose over-cap state.
+  if (!deferred) {
+    if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
+    if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
+    if (car.vel.length() > RL.MAX_SPEED) car.vel.setLength(RL.MAX_SPEED);
+    if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
   }
   return { normal: n, point: nearW, speed: dv0.length() };
 }
@@ -563,8 +600,9 @@ export function applyToCarModel(car, group, scale = UU) {
 }
 
 /**
- * Scale + offset a visual car so its length matches the hitbox and its bbox
- * centre sits on the hitbox centre (RocketSim root→offset placement).
+ * Uniformly scale the measured body length and align its lowest geometry with
+ * the nominal wheel plane. Body proportions are retained, not stretched to the
+ * hitbox; this is visual calibration, not verified asset-to-game body parity.
  *
  * When used with {@link applyToCarModel}, parent +X = physics left and the
  * painted `visual` child is X-mirrored there. Y-up aerial drills call this
@@ -577,7 +615,8 @@ export function applyToCarModel(car, group, scale = UU) {
  */
 export function alignCarVisualToHitbox(carMesh, preset, uu = UU) {
   const refLen = carMesh.userData.refLength ?? 3.2;
-  const visualScale = (preset.size[0] * uu) / Math.max(refLen, 1e-6);
+  const calibration = carMesh.userData.visual?.userData.calibration;
+  const visualScale = calibration ? calibration.metersPerUnit * uu / UU : (preset.size[0] * uu) / Math.max(refLen, 1e-6);
   carMesh.scale.setScalar(visualScale);
 
   const visual = carMesh.userData.visual;
@@ -590,6 +629,13 @@ export function alignCarVisualToHitbox(carMesh, preset, uu = UU) {
   // lateral offset is tiny relative to the body.
   const k = uu / visualScale;
   const [ox, oy, oz] = preset.offset;
-  visual.position.set(-oy * k, oz * k, ox * k);
+  const bounds = carMesh.userData.visualBounds;
+  if (bounds) {
+    const center = bounds.getCenter(V());
+    visual.position.set(-oy * k - center.x, -preset.restZ * k - bounds.min.y,
+      calibration ? calibration.rearUU * k - calibration.rearCenter : ox * k - center.z);
+  } else {
+    visual.position.set(-oy * k, oz * k, ox * k);
+  }
   return visualScale;
 }

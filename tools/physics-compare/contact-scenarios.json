@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "defaults": {
+    "initial": { "pos": [0, 0, 1000], "vel": [1000, 0, 0], "ang_vel": [0, 0, 0], "yaw": 0, "pitch": 0, "roll": 0, "boost": 100, "on_ground": false },
+    "controls": { "throttle": 0, "steer": 0, "pitch": 0, "yaw": 0, "roll": 0, "boost": false, "jump": false, "handbrake": false }
+  },
+  "scenarios": [
+    { "id": "contact_nose", "game_mode": "void", "ticks": 60, "ball": { "pos": [260, 0, 1020.755], "vel": [0, 0, 0.001] } },
+    { "id": "contact_side_offset", "game_mode": "void", "ticks": 60, "ball": { "pos": [260, 60, 1035], "vel": [0, 0, 0.001] } },
+    { "id": "contact_roof", "game_mode": "void", "ticks": 60, "initial": { "vel": [0, 0, 800] }, "ball": { "pos": [13.8757, 0, 1200], "vel": [0, 0, 0.001] } },
+    { "id": "contact_ball_spin", "game_mode": "void", "ticks": 60, "ball": { "pos": [260, 0, 1020.755], "vel": [0, 0, 0.001], "ang_vel": [0, 4, 2] } },
+    { "id": "contact_ground_approach", "game_mode": "soccar", "ticks": 90, "initial": { "pos": [-600, 0, 17], "vel": [1400, 0, 0], "on_ground": true }, "ball": { "pos": [0, 0, 93.15] }, "controls": { "throttle": 1 } }
+  ]
+}

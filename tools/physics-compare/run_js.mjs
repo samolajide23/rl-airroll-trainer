@@ -5,10 +5,14 @@
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import * as THREE from "three";
 import { RL, axes, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
+import { makeBall, stepBall } from "../../src/shared/rl-physics.js";
 import { RS } from "../../src/shared/carSim.js";
+import { stepCarBall } from "../../src/shared/carSim.js";
+import { createSoccarBoostPads, stepBoostPads } from "../../src/shared/boostPads.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCENARIOS = path.join(HERE, "scenarios.json");
@@ -110,14 +114,17 @@ function initCar(initial) {
 }
 
 /** Match generate_rocketsim.prepare_ground — settle suspension, then restore vel. */
-function prepareGround(car, initial, settleTicks) {
+function prepareGround(car, initial, settleTicks, pads) {
   car.pos.set(initial.pos[0], initial.pos[1], initial.pos[2]);
   car.vel.set(0, 0, 0);
   car.omega.set(0, 0, 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   const idle = idleControls();
-  for (let i = 0; i < settleTicks; i++) stepCar(car, idle, RL.DT);
+  for (let i = 0; i < settleTicks; i++) {
+    stepCar(car, idle, RL.DT);
+    stepBoostPads(pads, car, RL.DT);
+  }
 
   const settledZ = car.pos.z;
   car.pos.set(initial.pos[0], initial.pos[1], settledZ);
@@ -126,6 +133,7 @@ function prepareGround(car, initial, settleTicks) {
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
   stepCar(car, idle, RL.DT);
+  stepBoostPads(pads, car, RL.DT);
   car.pos.set(car.pos.x, car.pos.y, car.pos.z);
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
@@ -149,6 +157,9 @@ function prepareAirborne(car, initial) {
   car.onGround = false;
   car.wheelsContact = false;
   car.numWheelsInContact = 0;
+  // Reference set_state replaces gameplay state after its warmup tick.
+  car.airTime = 0;
+  car.airTimeSinceJump = 0;
 }
 
 function rotPayload(car) {
@@ -252,18 +263,45 @@ function runScenario(scenario, defaults) {
   const ticks = scenario.ticks;
   const mode = scenarioMode(scenario, initial);
   const settleTicks = scenario.settle_ticks ?? defaults.settle_ticks ?? 240;
+  if (scenario.entity === "ball") {
+    const ball = makeBall(new THREE.Vector3(...initial.pos));
+    ball.vel.set(...initial.vel);
+    ball.omega.set(...initial.ang_vel);
+    const snapshotBall = (tick) => ({ tick, pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega) });
+    const frames = [snapshotBall(0)];
+    for (let tick = 0; tick < ticks; tick++) {
+      stepBall(ball, RL.DT, { arena: mode !== "void" });
+      frames.push(snapshotBall(tick + 1));
+    }
+    return { id: scenario.id, description: scenario.description ?? "", entity: "ball", engine: "rl-physics.js", game_mode: mode, tick_rate: 1 / RL.DT, tick_time: RL.DT, ticks, initial, frames };
+  }
   const car = initCar(initial);
-  if (mode === "soccar") prepareGround(car, initial, settleTicks);
+  car.arenaCollisions = mode !== "void";
+  const pads = mode === "soccar" ? createSoccarBoostPads() : [];
+  if (mode === "soccar") prepareGround(car, initial, settleTicks, pads);
   else prepareAirborne(car, initial);
 
+  const ballInitial = scenario.ball ?? null;
+  const ball = ballInitial ? makeBall(new THREE.Vector3(...ballInitial.pos)) : null;
+  if (ball) {
+    ball.vel.set(...(ballInitial.vel ?? [0, 0, 0]));
+    ball.omega.set(...(ballInitial.ang_vel ?? [0, 0, 0]));
+  }
+  const capture = (tick, controls) => {
+    const frame = snapshot(car, tick, controls);
+    if (ball) frame.ball = { pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega) };
+    return frame;
+  };
   const frames = [];
   const ctrl0 = controlsAtTick(0, defaults, scenario);
-  frames.push(snapshot(car, 0, ctrl0));
+  frames.push(capture(0, ctrl0));
 
   for (let tick = 0; tick < ticks; tick++) {
     const ctrl = controlsAtTick(tick, defaults, scenario);
-    stepCar(car, ctrl, RL.DT);
-    frames.push(snapshot(car, tick + 1, ctrl));
+    if (ball) stepCarBall(car, ball, ctrl, tick, RL.DT);
+    else stepCar(car, ctrl, RL.DT);
+    stepBoostPads(pads, car, RL.DT);
+    frames.push(capture(tick + 1, ctrl));
   }
 
   return {
@@ -275,6 +313,7 @@ function runScenario(scenario, defaults) {
     tick_time: RL.DT,
     ticks,
     initial,
+    ball_initial: ballInitial,
     frames,
   };
 }
@@ -292,6 +331,7 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2));
 const data = JSON.parse(await readFile(args.scenarios, "utf8"));
+const scenarioHash = createHash("sha256").update(await readFile(args.scenarios)).digest("hex");
 const defaults = data.defaults ?? {};
 let scenarios = data.scenarios;
 if (args.only.length) {
@@ -313,6 +353,7 @@ await writeFile(
 const index = [];
 for (const scenario of scenarios) {
   const result = runScenario(scenario, defaults);
+  result.scenario_sha256 = scenarioHash;
   const fileName = `${scenario.id}.json`;
   await writeFile(
     path.join(args.out, fileName),
