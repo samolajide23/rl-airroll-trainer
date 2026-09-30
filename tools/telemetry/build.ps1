@@ -17,6 +17,7 @@ try {
     & cl.exe /nologo /LD /EHsc /std:c++17 /MD /O2 "/I$Sdk\include" "/I$imgui" "$PSScriptRoot\Recorder.cpp" "$imgui\imgui.cpp" "$imgui\imgui_draw.cpp" "$imgui\imgui_widgets.cpp" "$Sdk\lib\pluginsdk.lib" /link /OUT:airroll_recorder.dll
     if ($LASTEXITCODE -ne 0) { throw "Compilation failed: $LASTEXITCODE" }
     Write-Output "Built $output\airroll_recorder.dll. Not installed or loaded automatically."
-} finally {
+}
+finally {
     Pop-Location
 }

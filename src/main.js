@@ -1152,7 +1152,7 @@ window.addEventListener(
     const code =
       e.code === "Backspace" || e.code === "Delete" ? "" : e.code;
     setBind(
-      /** @type {import("./shared/settings.js").BindAction} */ (
+      /** @type {import("./shared/settings.js").BindAction} */(
         listeningKeyAction
       ),
       code,
@@ -1171,7 +1171,7 @@ window.addEventListener(
     e.preventDefault();
     e.stopPropagation();
     setBind(
-      /** @type {import("./shared/settings.js").BindAction} */ (
+      /** @type {import("./shared/settings.js").BindAction} */(
         listeningKeyAction
       ),
       `Mouse${e.button}`,

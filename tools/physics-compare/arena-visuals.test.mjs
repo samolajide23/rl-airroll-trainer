@@ -76,9 +76,13 @@ test("car cleanup disposes instance materials once without releasing cached asse
 
 test("boost trail reuses bounded particles and stops work when empty", () => {
   const previous = globalThis.document;
-  globalThis.document = { createElement: () => ({ getContext: () => ({
-    createRadialGradient: () => ({ addColorStop() {} }), fillRect() {},
-  }) }) };
+  globalThis.document = {
+    createElement: () => ({
+      getContext: () => ({
+        createRadialGradient: () => ({ addColorStop() { } }), fillRect() { },
+      })
+    })
+  };
   try {
     const parent = new THREE.Group(), car = new THREE.Group();
     parent.add(car);
@@ -134,7 +138,7 @@ test("collected pad keeps its base and extinguishes all pickup graphics", () => 
 test("neon-city scenery stays outside play and the floor retains soccar dimensions", () => {
   // Geometry checks don't require an actual browser canvas or WebGL context.
   const previous = globalThis.document;
-  globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, strokeRect() {}, fillText() {} }) }) };
+  globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() { }, strokeRect() { }, fillText() { } }) }) };
   try {
     const stadium = createStadium();
     let meshes = 0;

@@ -9,7 +9,7 @@ test("malformed stored metrics are discarded while valid bounded history survive
       mixed: [null, [], { success: "yes" }, { success: true, touches: "2" }, { success: false, duration: -1 }, { success: true, label: 2 }, { success: false }],
       valid: Array.from({ length: 60 }, () => ({ success: true, touches: 2 })),
     }),
-    setItem() {},
+    setItem() { },
   };
   try {
     const metrics = await import("../../src/shared/metrics.js?malformed");

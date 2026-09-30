@@ -7,11 +7,11 @@ test("physics input preserves short taps and separates swivel deadzone", async (
     innerWidth: 1024, innerHeight: 768,
     addEventListener(name, listener) { listeners.set(name, listener); },
   };
-  globalThis.localStorage = { getItem: () => null, setItem() {} };
+  globalThis.localStorage = { getItem: () => null, setItem() { } };
   globalThis.navigator = { getGamepads: () => [] };
   const settings = await import("../../src/shared/settings.js");
   const input = await import("../../src/shared/input.js");
-  const send = (name, values = {}) => listeners.get(name)({ preventDefault() {}, ...values });
+  const send = (name, values = {}) => listeners.get(name)({ preventDefault() { }, ...values });
   try {
     for (let tap = 0; tap < 2; tap++) {
       send("keydown", { code: "Space" });

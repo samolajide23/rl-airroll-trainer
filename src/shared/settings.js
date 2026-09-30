@@ -309,7 +309,7 @@ function persist() {
       STORAGE_KEY,
       JSON.stringify({ binds, pad, camera }),
     );
-  } catch {}
+  } catch { }
   notify();
 }
 

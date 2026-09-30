@@ -39,7 +39,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-  } catch {}
+  } catch { }
 }
 
 load();
