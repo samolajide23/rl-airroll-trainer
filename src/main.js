@@ -1460,13 +1460,18 @@ globalThis.__trainerMenu = {
   },
 };
 showHub();
-import('./menus/volt.js').then(() => {
+import('./menus/volt.js').then(async () => {
   if (new URLSearchParams(location.search).get("replay") !== "rocketsim") return;
+  const replayModule = await import("./modes/referenceReplay.js");
+  if (!replayModule.hasReferenceRecording) {
+    console.warn("RocketSim replay is unavailable: generate the reference recording before starting or building Vite.");
+    return;
+  }
   globalThis.__trainerMenu.ui?.hide();
   startMode({
     id: "rocketsim-replay",
     available: true,
-    load: () => import("./modes/referenceReplay.js"),
+    load: () => Promise.resolve(replayModule),
     create: (ctx, options, module) => new module.ReferenceReplayMode(ctx),
   }).then(() => setTouchControlsVisible(false));
 });

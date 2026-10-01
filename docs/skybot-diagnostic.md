@@ -39,6 +39,10 @@ node tools/physics-compare/compare.mjs --rs tools/physics-compare/out/skybot/roc
 
 For a browser export, use its downloaded path as `--scenarios` in both runners.
 RocketSim requires the project's Python environment and collision meshes.
+The browser reference replay (`?replay=rocketsim`) is available only when
+`tools/physics-compare/out/skybot/rocketsim/skybot-recording.json` exists before
+starting or building Vite. Production builds do not require this generated
+diagnostic file; without it, the replay URL keeps the normal menu visible.
 The same recorded inputs are replayed open-loop in both engines, not recomputed
 by each bot. The report compares car and ball trajectories. Divergence after a
 touch can compound rapidly. Initial suspension warmup in the reference runner

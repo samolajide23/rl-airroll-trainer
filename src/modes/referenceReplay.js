@@ -1,11 +1,15 @@
 import * as THREE from "three";
 import { createIcons, icons } from "lucide";
 import { FreePlayMode } from "./freePlay.js";
-import recording from "../../tools/physics-compare/out/skybot/rocketsim/skybot-recording.json";
 import "./referenceReplay.css";
+
+const recordings = import.meta.glob("../../tools/physics-compare/out/skybot/rocketsim/skybot-recording.json", { eager: true, import: "default" });
+const recording = Object.values(recordings)[0];
+export const hasReferenceRecording = Boolean(recording);
 
 export class ReferenceReplayMode extends FreePlayMode {
   constructor(ctx) {
+    if (!hasReferenceRecording) throw new Error("RocketSim reference recording is unavailable.");
     super(ctx, { diagnostics: false });
     this.title = "RocketSim Reference";
     this.modeId = "rocketsim-replay";
