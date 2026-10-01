@@ -95,7 +95,7 @@ export function createMenuGamepad(hooks) {
     const out = [];
     for (const node of nodes) {
       if (!(node instanceof HTMLElement)) continue;
-      if (node.closest(".hidden")) continue;
+      if (node.closest(".hidden, [hidden]")) continue;
       out.push(node);
     }
     return out;

@@ -1,6 +1,14 @@
 # RL Air Roll Trainer
 
-Browser trainer for Rocket League **directional air roll**, organized in three phases.
+Browser trainer for Rocket League mechanics, including **directional air roll**, organized into eleven training categories.
+
+The final Volt menu uses vibrant neon green (`#39ff14`): the selected Home layout,
+Esports training categories on the left with drill cards on the right, Trading
+Cards drill details, and Master Detail settings (option 6). These pages use the real drill
+catalogue, saved last drill, equipped car, camera settings and control bindings.
+Unavailable mechanic cards are disabled, with an unavailable stamp and red hover glow.
+Temporary design-study pages have been removed; the approved presentation lives
+in `src/menus/` and its styles are isolated from gameplay.
 
 ## Run
 
@@ -25,6 +33,20 @@ values are discarded or fall back to defaults. Unavailable storage cannot persis
 changes across reloads.
 
 ## Curriculum
+
+Training categories cover Foundations, Movement & Recoveries, Ground Control &
+Flicks, Shooting & Finishing, Aerial Control, Air Dribbles, Wall & Ceiling Play,
+Defense & Challenges, Kickoffs & 50/50s, Flip Resets and Pinches. The library
+contains 89 mechanics, including 12 playable training drills plus Free Play.
+Existing playable names and IDs are preserved; the implementations below are
+grouped by their original training progression.
+
+Each mechanic has ordered learning goals and multiple tags. Training supports
+combined availability and tag filters within the selected category. Specialist
+variations and team scenarios live in expandable sections. Flip cancels are
+taught as a foundation for half flips and speed flips; minor variations such as
+shot placement targets stay within the mechanic's progression. Catalog goals
+describe the curriculum, not additional implemented gameplay stages.
 
 ### Free Play
 | Mode | What it trains |

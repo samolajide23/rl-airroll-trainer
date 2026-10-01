@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { frameElapsed } from "./shared/aerial.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { PHASES, GHOST_ALIGN_DIFFICULTIES } from "./modes/catalog.js";
+import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES } from "./modes/catalog.js";
+import { recentAttempts } from "./shared/metrics.js";
 import { preloadBall } from "./shared/ball.js";
 import { preloadCars } from "./shared/carAssets.js";
 import {
@@ -195,8 +196,9 @@ let modeStartId = 0;
 /** @type {import("./modes/catalog.js").GameModeDef | null} */
 let pendingMode = null;
 let activePhaseIndex = 0;
-/** @type {"categories" | "drills"} */
+/** @type {"categories" | "drills" | "mechanic"} */
 let playView = "categories";
+let trainingFilter = "all";
 let escLatch = false;
 /** Standard Gamepad Start / Options (not Select/Share = 8). */
 const PAD_BTN_START = 9;
@@ -212,6 +214,7 @@ let padCaptureTimer = null;
 let padListenIgnore = new Set();
 
 function hideAllScreens() {
+  globalThis.__trainerMenu?.ui?.hide();
   hideLockerPreview();
   hubEl.classList.add("hidden");
   menuEl.classList.add("hidden");
@@ -222,6 +225,8 @@ function hideAllScreens() {
 
 /** @returns {HTMLElement | null} */
 function getActiveMenuScreen() {
+  const liveScreen = globalThis.__trainerMenu?.ui?.active();
+  if (liveScreen) return liveScreen;
   if (!hubEl.classList.contains("hidden")) return hubEl;
   if (!menuEl.classList.contains("hidden")) return menuEl;
   if (!lockerEl.classList.contains("hidden")) return lockerEl;
@@ -240,11 +245,21 @@ function handleMenuBack() {
     showHub();
     return;
   }
+  if (globalThis.__trainerMenu?.ui?.active()) {
+    if (editingBindings && panelControls.closest('#live-menu')) { setBindingsView(false); return; }
+    globalThis.__trainerMenu.ui.back();
+    return;
+  }
   if (!difficultyEl.classList.contains("hidden")) {
-    showDrills(activePhaseIndex);
+    if (globalThis.__trainerMenu?.ui) globalThis.__trainerMenu.ui.drill();
+    else showDrills(activePhaseIndex);
     return;
   }
   if (!menuEl.classList.contains("hidden")) {
+    if (playView === "mechanic") {
+      showDrills(activePhaseIndex);
+      return;
+    }
     if (playView === "drills") {
       showPlay();
       return;
@@ -285,8 +300,30 @@ function refreshEquippedLabel() {
   hubEquippedEl.textContent = `Equipped: ${car.name}`;
 }
 
+let practiceStartedAt = null;
+let practiceSessionActive = false;
+function practiceTotals() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('rl-training-practice-totals') || '{}');
+    return {
+      seconds: Number.isFinite(saved.seconds) && saved.seconds >= 0 ? saved.seconds : 0,
+      sessions: Number.isInteger(saved.sessions) && saved.sessions >= 0 ? saved.sessions : 0,
+    };
+  } catch { return { seconds: 0, sessions: 0 }; }
+}
+function savePractice(endSession = false) {
+  if (!practiceSessionActive) return;
+  const totals = practiceTotals();
+  if (practiceStartedAt !== null) totals.seconds += Math.max(0, performance.now() - practiceStartedAt) / 1000;
+  if (endSession) totals.sessions++;
+  try { localStorage.setItem('rl-training-practice-totals', JSON.stringify(totals)); } catch { }
+  practiceStartedAt = document.hidden || endSession ? null : performance.now();
+  if (endSession) practiceSessionActive = false;
+}
+
 function stopActiveMode() {
   modeStartId++;
+  savePractice(true);
   if (activeMode) {
     activeMode.stop();
     activeMode = null;
@@ -302,6 +339,11 @@ function showHub() {
   cancelListening();
   stopActiveMode();
   hideAllScreens();
+  if (globalThis.__trainerMenu?.ui) {
+    globalThis.__trainerMenu.ui.home();
+    menuGamepad.onScreenChange();
+    return;
+  }
   refreshEquippedLabel();
   hubEl.classList.remove("hidden");
   camera.position.set(0, 4, -10);
@@ -377,6 +419,9 @@ async function startMode(def, options = {}) {
     hideAllScreens();
     menuGamepad.onScreenChange();
     activeMode.start();
+    practiceSessionActive = true;
+    practiceStartedAt = document.hidden ? null : performance.now();
+    try { localStorage.setItem("rl-training-last-drill", def.id); } catch { }
     setTouchControlsVisible(true);
     if (import.meta.env.DEV) {
       globalThis.__activeMode = activeMode;
@@ -400,85 +445,159 @@ function onModeCardClick(def) {
 }
 
 function buildPlayCategories() {
-  playKickerEl.textContent = "Play";
-  playTitleEl.textContent = "Select a mode";
-  playSubEl.textContent = "Free Play, Air Roll, ball contact, or air dribble.";
+  playKickerEl.textContent = "Rocket League / Training";
+  playTitleEl.textContent = "Training Garage";
+  playSubEl.textContent = "Car control. Better touches. Advanced mechanics.";
   phaseBlurbEl.textContent = "";
   modeListEl.replaceChildren();
+  modeListEl.className = "mode-list training-categories";
+  let lastDrill;
+  try { lastDrill = GAME_MODES.find(mode => mode.id === localStorage.getItem("rl-training-last-drill") && mode.available); } catch { }
+  const quickActions = document.createElement("div");
+  quickActions.className = "training-actions";
+  for (const [label, drill] of [["Continue Training", lastDrill], ["Free Play", FREE_PLAY]]) {
+    if (!drill) continue;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn-secondary training-quick-action";
+    const name = document.createElement("strong");
+    name.textContent = label;
+    const detail = document.createElement("span");
+    detail.textContent = drill.title;
+    button.append(name, detail);
+    button.addEventListener("click", () => {
+      const index = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === drill.id));
+      if (index >= 0) showDrills(index);
+      onModeCardClick(drill);
+    });
+    quickActions.append(button);
+  }
+  modeListEl.append(quickActions);
+  const toolbar = document.createElement("div");
+  toolbar.className = "training-toolbar";
+  const heading = document.createElement("h2");
+  heading.textContent = "Mechanic library";
+  const filterLabel = document.createElement("label");
+  filterLabel.textContent = "Show";
+  const filter = document.createElement("select");
+  filter.setAttribute("aria-label", "Training availability");
+  for (const [value, label] of [["all", "All categories"], ["playable", "Playable now"], ["planned", "Planned categories"]]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    filter.append(option);
+  }
+  filter.value = trainingFilter;
+  filter.addEventListener("change", () => {
+    trainingFilter = filter.value;
+    buildPlayCategories();
+    menuGamepad.onScreenChange();
+    modeListEl.querySelector("select").focus();
+  });
+  filterLabel.append(filter);
+  toolbar.append(heading, filterLabel);
+  modeListEl.append(toolbar);
 
   PHASES.forEach((phase, index) => {
-    const ready = phase.modes.some((m) => m.available);
+    const playable = phase.modes.filter(mode => mode.available).length;
+    if (trainingFilter === "playable" && !playable) return;
+    if (trainingFilter === "planned" && playable) return;
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "mode-card";
-    btn.disabled = !ready;
+    btn.className = `mode-card training-category${playable ? "" : " is-planned"}`;
+    btn.dataset.category = phase.id;
     btn.setAttribute("role", "listitem");
+    const number = document.createElement("span");
+    number.className = "training-number";
+    number.textContent = String(index + 1).padStart(2, "0");
+    number.setAttribute("aria-hidden", "true");
 
     const title = document.createElement("div");
     title.className = "mode-card-title";
     title.textContent = phase.title;
 
     const badge = document.createElement("span");
-    badge.className = `mode-badge ${ready ? "ready" : "soon"}`;
-    badge.textContent = ready ? "Open" : "Soon";
+    badge.className = `mode-badge ${playable ? "ready" : "soon"}`;
+    badge.textContent = playable ? "Playable now" : "Coming later";
 
     const desc = document.createElement("p");
     desc.className = "mode-card-desc";
     desc.textContent = phase.blurb;
+    const footer = document.createElement("span");
+    footer.className = "training-card-footer";
+    footer.textContent = `${phase.modes.length} mechanics${playable ? ` · ${playable} playable` : " · Curriculum only"}`;
 
-    btn.append(title, badge, desc);
-    if (ready) {
-      btn.addEventListener("click", () => {
-        const playable = phase.modes.filter((m) => m.available);
-        // Single drill categories (e.g. Free Play) jump straight in.
-        if (
-          playable.length === 1 &&
-          !playable[0].needsDifficulty &&
-          playable[0].create
-        ) {
-          onModeCardClick(playable[0]);
-        } else {
-          showDrills(index);
-        }
-      });
-    }
+    btn.append(number, title, badge, desc, footer);
+    btn.addEventListener("click", () => showDrills(index));
     modeListEl.append(btn);
   });
 }
 
 function buildDrillList() {
   const phase = PHASES[activePhaseIndex];
-  playKickerEl.textContent = "Play";
+  playKickerEl.textContent = "Training Garage";
   playTitleEl.textContent = phase.title;
-  playSubEl.textContent = "Choose a drill.";
-  phaseBlurbEl.textContent = phase.blurb;
+  playSubEl.textContent = phase.blurb;
+  phaseBlurbEl.textContent = `${phase.modes.length} mechanics · ${phase.modes.filter(mode => mode.available).length} playable drills`;
   modeListEl.replaceChildren();
+  modeListEl.className = "mode-list training-drills";
 
-  for (const mode of phase.modes) {
+  for (const [index, mode] of phase.modes.entries()) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "mode-card";
-    btn.disabled = !mode.available;
+    btn.className = "mode-card training-mechanic";
     btn.setAttribute("role", "listitem");
 
     const title = document.createElement("div");
     title.className = "mode-card-title";
-    title.textContent = mode.title;
+    title.textContent = `${index + 1}. ${mode.title}`;
 
     const badge = document.createElement("span");
     badge.className = `mode-badge ${mode.available ? "ready" : "soon"}`;
-    badge.textContent = mode.available ? "Play" : "Soon";
+    badge.textContent = mode.available ? "Playable now" : "Coming later";
 
     const desc = document.createElement("p");
     desc.className = "mode-card-desc";
+    const attempts = recentAttempts(mode.id);
+    const successes = attempts.filter(attempt => attempt.success).length;
     desc.textContent = mode.description;
+    const footer = document.createElement("span");
+    footer.className = "training-card-footer";
+    footer.textContent = `${mode.level} · ${mode.steps.length} training goals${attempts.length ? ` · ${successes} of ${attempts.length} recent attempts successful` : ""}`;
 
-    btn.append(title, badge, desc);
-    if (mode.available) {
-      btn.addEventListener("click", () => onModeCardClick(mode));
-    }
+    btn.append(title, badge, desc, footer);
+    btn.addEventListener("click", () => showMechanic(mode));
     modeListEl.append(btn);
   }
+}
+
+function showMechanic(mode) {
+  playView = "mechanic";
+  playKickerEl.textContent = PHASES[activePhaseIndex].title;
+  playTitleEl.textContent = mode.title;
+  playSubEl.textContent = `${mode.level} · ${mode.steps.length} training goals`;
+  phaseBlurbEl.textContent = mode.available ? "Playable practice drill" : "Curriculum preview · Dedicated drill not yet available";
+  modeListEl.className = "mode-list training-detail";
+  modeListEl.replaceChildren();
+  const heading = document.createElement("h2");
+  heading.className = "training-goals-title";
+  heading.textContent = "Training goals";
+  modeListEl.append(heading);
+  const steps = document.createElement("ol");
+  steps.className = "training-steps";
+  for (const step of mode.steps) {
+    const item = document.createElement("li");
+    item.textContent = step;
+    steps.append(item);
+  }
+  modeListEl.append(steps);
+  const action = document.createElement("button");
+  action.type = "button";
+  action.className = "btn-primary";
+  action.textContent = mode.available ? "Start Practice" : "Open Free Play";
+  action.addEventListener("click", () => onModeCardClick(mode.available ? mode : FREE_PLAY));
+  modeListEl.append(action);
+  menuGamepad.onScreenChange();
 }
 
 function buildLocker() {
@@ -605,13 +724,17 @@ function cancelListening() {
   listeningKeyAction = null;
   listeningPadAction = null;
   padListenIgnore = new Set();
-  if (!settingsEl.classList.contains("hidden")) {
+  if (settingsVisible()) {
     if (settingsTab === "controls") {
       rebuildControls();
     } else {
       buildCameraList();
     }
   }
+}
+
+function settingsVisible() {
+  return !settingsEl.classList.contains("hidden") || Boolean(globalThis.__trainerMenu?.ui?.active() && document.querySelector('#live-menu .settings-fields'));
 }
 
 function stopPadCapture() {
@@ -1118,7 +1241,7 @@ document.getElementById("control-preset").addEventListener("change", event => {
 btnPlayBack.addEventListener("click", handleMenuBack);
 btnLockerBack.addEventListener("click", showHub);
 btnSettingsBack.addEventListener("click", handleMenuBack);
-btnDifficultyBack.addEventListener("click", () => showDrills(activePhaseIndex));
+btnDifficultyBack.addEventListener("click", () => globalThis.__trainerMenu?.ui ? globalThis.__trainerMenu.ui.drill() : showDrills(activePhaseIndex));
 btnResetBinds.addEventListener("click", () => {
   if (editingBindings) resetControlBindings();
   else if (settingsTab === "camera") resetCamera();
@@ -1192,12 +1315,12 @@ window.addEventListener(
 );
 
 window.addEventListener("gamepadconnected", () => {
-  if (!settingsEl.classList.contains("hidden") && settingsTab === "controls") {
+  if (settingsVisible() && settingsTab === "controls") {
     rebuildControls();
   }
 });
 window.addEventListener("gamepaddisconnected", () => {
-  if (!settingsEl.classList.contains("hidden") && settingsTab === "controls") {
+  if (settingsVisible() && settingsTab === "controls") {
     rebuildControls();
   }
 });
@@ -1206,9 +1329,11 @@ onBindsChange(refreshHelpText);
 
 let last = performance.now();
 document.addEventListener("visibilitychange", () => {
+  savePractice();
   last = performance.now();
   if (document.hidden) keys.clear();
 });
+window.addEventListener('pagehide', () => savePractice(true));
 function frame(now) {
   const dt = frameElapsed(now, last);
   last = now;
@@ -1238,7 +1363,7 @@ function frame(now) {
   capturePadBinding();
 
   if (
-    !settingsEl.classList.contains("hidden") &&
+    settingsVisible() &&
     settingsTab === "controls" &&
     !listeningPadAction
   ) {
@@ -1287,7 +1412,54 @@ if (touchRoot && touchStick && touchStickKnob) {
 syncRendererSize();
 
 refreshHelpText();
+globalThis.__trainerMenu = {
+  ui: null,
+  car: getSelectedCar,
+  practiceTotals,
+  equipCar: id => {
+    if (!CARS.some(car => car.id === id)) return;
+    setSelectedCarId(id);
+    buildLocker();
+    refreshEquippedLabel();
+  },
+  freeplay: FREE_PLAY,
+  playableCount: () => GAME_MODES.filter(mode => mode.available).length,
+  lastDrill: () => {
+    try { return GAME_MODES.find(mode => mode.id === localStorage.getItem('rl-training-last-drill') && mode.available); } catch { return null; }
+  },
+  prepare: () => { cancelListening(); stopActiveMode(); hideAllScreens(); },
+  launch: def => {
+    const index = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === def.id));
+    if (index >= 0) activePhaseIndex = index;
+    globalThis.__trainerMenu.ui.hide();
+    onModeCardClick(def);
+  },
+  settings: (container, tab) => {
+    container.replaceChildren();
+    if (tab === 'loadout') {
+      buildLocker();
+      container.append(lockerListEl, lockerCreditEl);
+    } else {
+      setSettingsTab(tab === 'bindings' ? 'controls' : tab);
+      if (tab === 'bindings') setBindingsView(true);
+      container.append(tab === 'camera' ? panelCamera : panelControls);
+      const reset = document.createElement('button');
+      reset.type = 'button';
+      reset.className = 'secondary settings-default';
+      reset.textContent = `Reset ${tab === 'bindings' ? 'bindings' : tab === 'camera' ? 'camera' : 'controls'} to defaults`;
+      reset.addEventListener('click', () => btnResetBinds.click());
+      container.append(reset);
+    }
+    menuGamepad.onScreenChange();
+  },
+  connect: ui => { globalThis.__trainerMenu.ui = ui; hideAllScreens(); ui.home(); menuGamepad.onScreenChange(); },
+  parkSettings: () => {
+    settingsEl.querySelector('.settings-panel').append(panelControls, panelCamera);
+    lockerEl.querySelector('.menu-panel').append(lockerListEl, lockerCreditEl);
+  },
+};
 showHub();
+import('./menus/volt.js');
 requestAnimationFrame(frame);
 
 Promise.all([preloadCars([getSelectedCarId()]), preloadBall()]).then(() => {

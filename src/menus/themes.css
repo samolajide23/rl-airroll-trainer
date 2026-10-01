@@ -1,0 +1,102 @@
+body.live-menu-open [data-layout=garage] { background-image: linear-gradient(115deg,#051015,transparent), repeating-linear-gradient(90deg,transparent,transparent 149px,#28d9ff0b 150px); }
+body.live-menu-open [data-layout=garage] .primary, body.live-menu-open [data-layout=garage] .category { border-radius: 0; border-left: 4px solid var(--accent); }
+body.live-menu-open [data-layout=map] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px; background: repeating-linear-gradient(90deg, transparent, transparent 49px,#b9f25215 50px); padding: 20px; }
+body.live-menu-open [data-layout=map] .category { border-radius: 8px; border: 2px solid var(--accent); }
+body.live-menu-open [data-layout=map] .category:nth-child(even) { margin-top: 35px; }
+body.live-menu-open [data-layout=map] .home-intro h1 { font-family: 'Space Grotesk', sans-serif; font-size: 68px; }
+body.live-menu-open [data-layout=map] .category-art { height: 60px; background: none; }
+body.live-menu-open [data-layout=cards] { background-image: radial-gradient(#29312918 1px,transparent 1px); background-size: 12px 12px; }
+body.live-menu-open [data-layout=cards] .category { border: 3px solid #242924; box-shadow: 5px 5px 0 #242924; border-radius: 7px; }
+body.live-menu-open [data-layout=cards] .category:nth-child(3n+2) { transform: rotate(2deg); }
+body.live-menu-open [data-layout=cards] .category-art { height: 145px; background-color: #f245531c; }
+body.live-menu-open [data-layout=cards] .category-no { background: #242924; color: white; padding: 5px; }
+body.live-menu-open [data-layout=cards] .primary { box-shadow: 4px 4px 0 #242924; border: 2px solid #242924; }
+body.live-menu-open [data-layout=esports] h1 { font-style: italic; }
+body.live-menu-open [data-layout=esports] .site-header { border-bottom: 4px solid var(--accent); }
+body.live-menu-open [data-layout=esports] .category { border-radius: 0; border: 0; border-bottom: 4px solid var(--accent); }
+body.live-menu-open [data-layout=esports] .category-art { background-color: #d0ff3512; }
+body.live-menu-open [data-layout=esports] .primary { clip-path: polygon(0 0,100% 0,100% 75%,93% 100%,0 100%); border-radius: 0; }
+body.live-menu-open [data-layout=concourse] .brand { background: var(--accent); color: #14288c; padding: 12px; }
+body.live-menu-open [data-layout=concourse] .brand>span { color: #14288c; }
+body.live-menu-open [data-layout=concourse] h1 { font-size: 100px; }
+body.live-menu-open [data-layout=concourse] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+body.live-menu-open [data-layout=concourse] .category { border: 0; border-radius: 0; background: #153386; border-top: 12px solid var(--accent); }
+body.live-menu-open [data-layout=concourse] .category-no { font-size: 36px; }
+body.live-menu-open [data-layout=concourse] .category-art { height: 90px; background: none; }
+body.live-menu-open [data-layout=orbit] .home-intro { width: 46%; }
+body.live-menu-open [data-layout=orbit] h1 { font-family: 'Space Grotesk',sans-serif; font-size: 70px; font-weight: 500; }
+body.live-menu-open [data-layout=orbit] #scene { height: 620px; }
+body.live-menu-open [data-layout=orbit] .category { border-radius: 8px; background: #ffffff08; }
+body.live-menu-open [data-layout=orbit] .category-art { background: none; }
+body.live-menu-open [data-layout=orbit] .category-art i { border-radius: 50%; width: 100px; height: 100px; }
+body.live-menu-open [data-layout=race] .site-header { border-bottom: 6px solid var(--accent); }
+body.live-menu-open [data-layout=race] h1 { font-style: italic; }
+body.live-menu-open [data-layout=race] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+body.live-menu-open [data-layout=race] .category { border-radius: 0; border: 0; background: #fff; border-bottom: 5px solid var(--accent); }
+body.live-menu-open [data-layout=race] .category-art { background: repeating-linear-gradient(135deg,#20272008,#20272008 20px,transparent 20px,transparent 40px); }
+body.live-menu-open [data-layout=race] .home-bottom { border-top: 8px solid #202720; }
+body.live-menu-open [data-layout=tree] .category-grid { grid-template-columns: repeat(3,minmax(0,1fr)); background: linear-gradient(90deg,transparent 49.8%,#f9d66e60 50%,transparent 50.2%); gap: 28px; }
+body.live-menu-open [data-layout=tree] .category { border-radius: 8px; border: 2px solid var(--accent); }
+body.live-menu-open [data-layout=tree] .category:nth-child(2), body.live-menu-open [data-layout=tree] .category:nth-child(5) { transform: translateY(26px); }
+body.live-menu-open [data-layout=tree] .category-art { height: 70px; background: none; }
+body.live-menu-open [data-layout=tree] h1 { font-family: 'Chakra Petch',sans-serif; font-size: 68px; }
+body.live-menu-open [data-layout=arcade] { background-image: repeating-linear-gradient(0deg,transparent,transparent 3px,#ffffff05 4px); }
+body.live-menu-open [data-layout=arcade] h1 { text-shadow: 5px 5px 0 #ff65a6; }
+body.live-menu-open [data-layout=arcade] .category { border: 3px solid #fff06b; box-shadow: 5px 5px 0 #ff65a6; border-radius: 0; }
+body.live-menu-open [data-layout=arcade] .category-art { background-color: #ff65a620; }
+body.live-menu-open [data-layout=arcade] .primary { box-shadow: 5px 5px 0 #ff65a6; border: 2px solid #fff; border-radius: 0; }
+body.live-menu-open [data-layout=playbook] { background-image: repeating-linear-gradient(0deg,transparent,transparent 39px,#14774a12 40px); }
+body.live-menu-open [data-layout=playbook] h1 { font-family: 'Space Grotesk',sans-serif; font-size: 68px; font-weight: 500; }
+body.live-menu-open [data-layout=playbook] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+body.live-menu-open [data-layout=playbook] .category { border: 0; border-bottom: 2px solid #14774a; border-radius: 0; background: transparent; }
+body.live-menu-open [data-layout=playbook] .category-art { background: #14774a; }
+body.live-menu-open [data-layout=playbook] .category-art b { color: #fff; }
+body.live-menu-open [data-layout=playbook] .category-no { color: #fff; }
+body.live-menu-open [data-layout=workshop] { font-family: 'Chakra Petch',sans-serif; background-image: repeating-linear-gradient(90deg,transparent,transparent 79px,#ffffff08 80px); }
+body.live-menu-open [data-layout=workshop] h1 { font-family: 'Chakra Petch',sans-serif; font-size: 64px; }
+body.live-menu-open [data-layout=workshop] .site-header { border-bottom: 6px dashed var(--accent); }
+body.live-menu-open [data-layout=workshop] .category { border-radius: 0; border: 1px solid #a1c5cd; }
+body.live-menu-open [data-layout=workshop] .category-art { height: 85px; }
+body.live-menu-open [data-layout=workshop] .primary { border-radius: 0; }
+body.live-menu-open [data-layout=championship] .site-header { border-bottom: 2px solid #b89138; }
+body.live-menu-open [data-layout=championship] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+body.live-menu-open [data-layout=championship] .category { border: 1px solid #b89138; border-radius: 0; background: #fff9; }
+body.live-menu-open [data-layout=championship] .category-art { background: linear-gradient(135deg,#b8913820,transparent); height: 95px; }
+body.live-menu-open [data-layout=championship] .category-art i { clip-path: polygon(0 0,100% 0,100% 70%,50% 100%,0 70%); background: #b8913830; height: 80px; transform: none; }
+body.live-menu-open [data-layout=championship] h1 { font-size: 80px; }
+body.live-menu-open [data-layout=gallery] h1 { font-family: 'Space Grotesk',sans-serif; font-size: 66px; font-weight: 500; }
+body.live-menu-open [data-layout=gallery] .branch-nav { display: none; }
+body.live-menu-open [data-layout=gallery] .training-layout { grid-template-columns: 1fr; }
+body.live-menu-open [data-layout=gallery] .category { border: 0; background: #1d2320; border-radius: 4px; }
+body.live-menu-open [data-layout=gallery] .category-art { height: 160px; background: linear-gradient(135deg,#48e1ac30,#fd826b15); }
+body.live-menu-open [data-layout=gallery] .category-art i { animation: trajectory 4s ease-in-out infinite; }
+@keyframes trajectory { 50% { transform: translateX(30px) rotate(25deg); } }
+body.live-menu-open [data-layout=mission] { font-family: 'Chakra Petch',sans-serif; }
+body.live-menu-open [data-layout=mission] h1 { font-family: 'Chakra Petch',sans-serif; font-size: 65px; }
+body.live-menu-open [data-layout=mission] .category-grid { grid-template-columns: 1fr; }
+body.live-menu-open [data-layout=mission] .category { display: grid; grid-template-columns: 130px 1fr 130px; align-items: center; border-radius: 0; border-left: 5px solid var(--accent); }
+body.live-menu-open [data-layout=mission] .category-art { height: 105px; }
+body.live-menu-open [data-layout=mission] .category-end { border: 0; }
+body.live-menu-open [data-layout=mission] .category-no { display: none; }
+body.live-menu-open [data-layout=mission] .primary { border-radius: 0; }
+body.live-menu-open [data-layout=festival] .brand { transform: rotate(-3deg); }
+body.live-menu-open [data-layout=festival] h1 { font-style: italic; color: #ff554f; text-shadow: 4px 4px 0 #188872; font-size: 96px; }
+body.live-menu-open [data-layout=festival] .category { border: 2px solid #202720; border-radius: 0; background: #fffa; }
+body.live-menu-open [data-layout=festival] .category:nth-child(even) { transform: rotate(2deg); }
+body.live-menu-open [data-layout=festival] .category-art { background: #ff554f; }
+body.live-menu-open [data-layout=festival] .category:nth-child(even) .category-art { background: #188872; }
+body.live-menu-open [data-layout=festival] .category-art b, body.live-menu-open [data-layout=festival] .category-no { color: #f8ef6e; }
+body.live-menu-open [data-layout=festival] .primary { border: 2px solid #202720; box-shadow: 4px 4px 0 #188872; }
+@media(max-width:600px) {
+  body.live-menu-open [data-layout] .home-intro { width: 100%; }
+  body.live-menu-open [data-layout] h1, body.live-menu-open [data-layout] .home-intro h1 { font-size: 54px; }
+  body.live-menu-open [data-layout] .page-heading h1 { font-size: 38px; }
+  body.live-menu-open [data-layout=orbit] #scene { height: 260px; }
+  body.live-menu-open [data-layout] .category-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; padding: 0; }
+  body.live-menu-open [data-layout=map] .category:nth-child(even), body.live-menu-open [data-layout=tree] .category { margin-top: 0; transform: none; }
+  body.live-menu-open [data-layout=mission] .category-grid { grid-template-columns: 1fr; }
+  body.live-menu-open [data-layout=mission] .category { grid-template-columns: 90px minmax(0,1fr); }
+  body.live-menu-open [data-layout=mission] .category-end { grid-column: 2; padding-top: 0; }
+  body.live-menu-open [data-layout=mission] .category-art b { font-size: 26px; }
+}
+@media(prefers-reduced-motion:reduce) { body.live-menu-open [data-layout=gallery] .category-art i { animation: none; } }

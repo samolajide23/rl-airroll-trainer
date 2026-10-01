@@ -1,0 +1,52 @@
+body.live-menu-open[data-selected][data-style] { color: var(--ink); background: var(--bg); --line: color-mix(in srgb, var(--ink), transparent 80%); }
+body.live-menu-open[data-style] .shell { max-width: 1480px; }
+body.live-menu-open[data-style] .preview-bar { background: var(--surface); color: var(--ink); border-color: var(--line); }
+body.live-menu-open[data-style] :is(h1,h2,.brand,.category-art b,.session-art strong) { font-family: var(--display-font); font-style: normal; }
+body.live-menu-open[data-style] .page-heading h1 { font-size: 48px; line-height: 1.05; }
+body.live-menu-open[data-style] .selected-drills>header h2 { font-family: var(--display-font); font-size: 30px; }
+body.live-menu-open[data-selected][data-style][data-view=home] .home-intro h1 { font-size: 76px; line-height: 1.02; }
+body.live-menu-open[data-style] .home-intro { padding-top: 54px; }
+body.live-menu-open[data-style] :is(.primary,.secondary,select,.avatar) { border-radius: var(--radius); }
+body.live-menu-open[data-style] .primary { background: var(--accent); color: var(--button-ink); border: var(--edge) solid var(--accent); box-shadow: none; }
+body.live-menu-open[data-style] .secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+body.live-menu-open[data-style] nav button.active { color: var(--accent); border-color: var(--accent); background: transparent; }
+body.live-menu-open[data-style] .selected-categories button.active { background: color-mix(in srgb, var(--accent), transparent 90%); color: var(--accent); border-color: var(--accent); }
+body.live-menu-open[data-style] .selected-training { gap: 28px; grid-template-columns: 220px minmax(0,1fr); }
+body.live-menu-open[data-style] .drill-card-grid { gap: 18px; }
+body.live-menu-open[data-style] .drill-card { background: var(--surface); border: var(--edge) solid var(--line); border-radius: var(--radius); box-shadow: none; transform: none; }
+body.live-menu-open[data-style] .drill-card:hover { border-color: var(--accent); background: color-mix(in srgb, var(--surface), var(--accent) 5%); }
+body.live-menu-open[data-style] .drill-card .category-art { height: 132px; background: repeating-linear-gradient(0deg, transparent 0 27px, var(--line) 28px), linear-gradient(135deg, color-mix(in srgb,var(--accent),transparent 92%), transparent); }
+body.live-menu-open[data-style] .category-art b { color: var(--accent); font-size: 44px; }
+body.live-menu-open[data-style] .category-art i { border-color: var(--secondary); }
+body.live-menu-open[data-style] .drill-card .category-copy { min-height: 144px; padding: 18px; }
+body.live-menu-open[data-style] .category-copy strong { font-size: 20px; line-height: 1.2; }
+body.live-menu-open[data-style] .drill-layout { grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); gap: 48px; }
+body.live-menu-open[data-style] .drill-copy { order: 2; min-width: 0; }
+body.live-menu-open[data-style] .drill-copy h1 { font-size: 52px; line-height: 1.05; }
+body.live-menu-open[data-selected][data-style][data-view=drill] .session-panel { order: 1; background: var(--surface); border: var(--edge) solid var(--line); border-radius: var(--radius); box-shadow: 5px 5px 0 color-mix(in srgb,var(--secondary),transparent 72%); padding: 24px; margin-top: 36px; }
+body.live-menu-open[data-selected][data-style][data-view=drill] .session-art { background: repeating-linear-gradient(0deg,transparent 0 29px,var(--line) 30px), color-mix(in srgb,var(--surface),var(--accent) 7%); }
+body.live-menu-open[data-style] .settings-fields { background: transparent; border: 0; padding: 0; box-shadow: none; }
+body.live-menu-open[data-style] .setting { padding: 22px 0; }
+body.live-menu-open[data-style] .settings-nav button.active { background: color-mix(in srgb,var(--accent),transparent 90%); }
+body.live-menu-open[data-style="3"] .drill-card .category-art,body.live-menu-open[data-style="1"] .drill-card .category-art { height: 112px; }
+body.live-menu-open[data-style="5"] .drill-card-grid,body.live-menu-open[data-style="4"] .drill-card-grid { gap: 24px; }
+body.live-menu-open[data-style="6"] { background-image: repeating-linear-gradient(90deg,transparent 0 79px,var(--line) 80px); }
+body.live-menu-open[data-style="7"] .drill-card { box-shadow: 3px 3px 0 var(--secondary); }
+body.live-menu-open[data-style="10"] .category-no { background: var(--secondary); color: var(--ink); padding: 4px 7px; }
+body.live-menu-open[data-style] button:focus-visible { outline: 3px solid var(--secondary); outline-offset: 3px; }
+@media(max-width:1000px) { body.live-menu-open[data-style] .drill-card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) {
+  body.live-menu-open[data-selected][data-style][data-view=home] .home-intro h1 { font-size: 46px; max-width: 100%; }
+  body.live-menu-open[data-style] .home-intro { padding-top: 28px; }
+  body.live-menu-open[data-style] .preview-bar { flex-wrap: wrap; font-size: 10px; }
+  body.live-menu-open[data-style] .selected-training { grid-template-columns: 100px minmax(0,1fr); gap: 12px; }
+  body.live-menu-open[data-style] .drill-card-grid { grid-template-columns: 1fr; gap: 16px; }
+  body.live-menu-open[data-style] .drill-card .category-art { height: 100px; }
+  body.live-menu-open[data-style] .drill-card .category-copy { min-height: 0; padding: 12px; }
+  body.live-menu-open[data-style] .category-copy strong { font-size: 17px; overflow-wrap: anywhere; }
+  body.live-menu-open[data-style] .selected-drills>header h2 { font-size: 24px; }
+  body.live-menu-open[data-style] .page-heading h1 { font-size: 36px; }
+  body.live-menu-open[data-style] .drill-layout { grid-template-columns: 1fr; gap: 24px; }
+  body.live-menu-open[data-style] .drill-copy h1 { font-size: 40px; }
+  body.live-menu-open[data-selected][data-style][data-view=drill] .session-panel { margin-top: 0; }
+}

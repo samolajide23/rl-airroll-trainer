@@ -1,0 +1,34 @@
+body.live-menu-open[data-selected] .shell { margin: auto; padding: 0 5%; }
+body.live-menu-open[data-selected] .preview-bar>div[hidden] { display: none; }
+body.live-menu-open[data-selected] .site-header { position: static; width: auto; min-height: 110px; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; border-right: 0; border-bottom: 1px solid var(--line); padding: 0; }
+body.live-menu-open[data-selected] nav { flex-direction: row; }
+body.live-menu-open[data-selected] nav button { padding: 16px; text-align: center; }
+body.live-menu-open[data-selected][data-view=home]>#scene { display: block; }
+body.live-menu-open[data-selected][data-view=home] .home-intro h1 { font-size: 88px; }
+body.live-menu-open[data-selected][data-view=home] .home-intro { width: 52%; }
+body.live-menu-open .selected-training { display: grid; grid-template-columns: 245px minmax(0,1fr); gap: 35px; padding-bottom: 45px; }
+body.live-menu-open .selected-categories { border-right: 1px solid var(--line); padding-right: 20px; }
+body.live-menu-open .selected-categories h2 { color: var(--accent); font-size: 12px; margin: 0 0 20px; }
+body.live-menu-open .selected-categories button { display: grid; grid-template-columns: 24px minmax(0,1fr) 18px; align-items: center; gap: 10px; text-align: left; width: 100%; border: 0; border-left: 3px solid transparent; background: transparent; padding: 16px 10px; margin-bottom: 5px; }
+body.live-menu-open .selected-categories button>span,body.live-menu-open .selected-categories small { font-size: 10px; color: var(--muted); }
+body.live-menu-open .selected-categories button strong { font-size: 13px; }
+body.live-menu-open .selected-categories button.active { border-left-color: var(--accent); background: #d0ff3510; color: var(--accent); }
+body.live-menu-open .selected-drills>header { border-bottom: 1px solid var(--line); margin-bottom: 25px; padding-bottom: 20px; }
+body.live-menu-open .selected-drills>header h2 { font-family: 'Barlow Condensed',sans-serif; font-size: 36px; margin: 0 0 12px; text-transform: uppercase; }
+body.live-menu-open .selected-drills>header p:last-child { color: var(--muted); font-size: 14px; }
+body.live-menu-open .drill-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+body.live-menu-open .drill-card .category-art { height: 160px; }body.live-menu-open .drill-card .category-copy { min-height: 155px; }
+body.live-menu-open[data-selected][data-view=drill] .session-panel { border: 3px solid var(--ink); box-shadow: 7px 7px 0 var(--ink); background: #fff; padding: 22px; align-self: start; margin: 35px 10px 10px 0; }
+body.live-menu-open[data-selected][data-view=drill] .session-art { background-color: #f245531c; }
+body.live-menu-open[data-selected][data-view=settings] .settings-layout { grid-template-columns: 190px minmax(0,700px); }
+body.live-menu-open[data-selected][data-view=settings] .settings-nav { border-right: 1px solid var(--line); padding-right: 25px; }
+@media(max-width:1000px) { body.live-menu-open .drill-card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) {
+  body.live-menu-open[data-selected] .site-header { flex-wrap: wrap; padding: 18px 0 10px; gap: 15px; }
+  body.live-menu-open[data-selected] nav { width: 100%; justify-content: space-between; }body.live-menu-open[data-selected] nav button { padding: 12px 8px; font-size: 11px; }
+  body.live-menu-open[data-selected][data-view=home] .home-intro { width: 100%; }body.live-menu-open[data-selected][data-view=home] .home-intro h1 { font-size: 54px; }
+  body.live-menu-open[data-selected][data-view=home] .home-stats { margin-top: 285px; }body.live-menu-open[data-selected][data-view=home]>#scene { width: 100%; height: 260px; }
+  body.live-menu-open .selected-training { grid-template-columns: 110px minmax(0,1fr); gap: 15px; }body.live-menu-open .selected-categories { padding-right: 10px; }body.live-menu-open .selected-categories button { display: block; padding: 12px 6px; }body.live-menu-open .selected-categories button strong { display: block; font-size: 11px; line-height: 1.4; margin: 6px 0; }body.live-menu-open .selected-categories small { display: none; }
+  body.live-menu-open .selected-drills>header h2 { font-size: 26px; }body.live-menu-open .drill-card-grid { grid-template-columns: 1fr; gap: 15px; }body.live-menu-open .drill-card .category-copy { min-height: 0; }body.live-menu-open .drill-card .category-art { height: 110px; }
+  body.live-menu-open[data-selected][data-view=settings] .settings-layout { display: block; }body.live-menu-open[data-selected][data-view=settings] .settings-nav { border-right: 0; padding-right: 0; }
+}

@@ -280,6 +280,219 @@ body.virtual-landscape #stage {
   margin-bottom: 10px;
 }
 
+#menu {
+  place-items: start center;
+  --text: #f2f3ef;
+  --muted: #b7bcb6;
+  --accent: #b2ee75;
+  --line: #ffffff24;
+  background: linear-gradient(135deg, #262b26f5, #141715f7);
+}
+
+.training-panel {
+  width: min(1120px, 100%);
+  padding-block: 24px;
+}
+
+#menu .menu-title {
+  font-size: 2.25rem;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+#menu .mode-card {
+  border-radius: 6px;
+  min-width: 0;
+  background: #ffffff06;
+  padding: 22px;
+  transform: none;
+}
+
+#menu .mode-card:hover {
+  background: #ffffff0e;
+  border-color: var(--accent);
+}
+
+#menu .mode-badge {
+  border: 0;
+  padding: 0;
+  color: #b2ee75;
+  font-size: 0.75rem;
+}
+
+#menu .mode-badge.soon {
+  color: #c3bbb0;
+}
+
+#menu .menu-kicker {
+  letter-spacing: 0;
+}
+
+#menu .menu-sub {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+#menu .mode-card-title {
+  overflow-wrap: anywhere;
+}
+
+.training-categories {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.training-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.training-actions button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 5px;
+  padding: 16px 24px;
+  border-color: #b2ee7550;
+  background: #b2ee7510;
+  color: var(--text);
+}
+
+.training-actions button span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.training-toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-block: 12px;
+}
+
+.training-toolbar h2, .training-goals-title {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.training-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.training-toolbar select {
+  padding: 10px 12px;
+  background: #242924;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+}
+
+#menu .training-category {
+  position: relative;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 10px;
+  min-height: 205px;
+  border-top: 3px solid var(--category-color, #b2ee75);
+  padding-right: 70px;
+}
+
+.training-number {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  color: var(--category-color, #b2ee75);
+  font-size: 1.8rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+#menu .training-category .mode-card-title {
+  font-size: 1.2rem;
+}
+
+#menu .training-category .mode-badge {
+  grid-row: 3;
+}
+
+.training-card-footer {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+[data-category="recoveries"], [data-category="pinches"] {
+  --category-color: #f1c768;
+}
+
+[data-category="ball-contact"], [data-category="resets"] {
+  --category-color: #f19898;
+}
+
+[data-category="air-roll"], [data-category="wall"] {
+  --category-color: #9fcdea;
+}
+
+[data-category="ground-control"], [data-category="match"] {
+  --category-color: #cfb7ed;
+}
+
+#menu .training-detail .btn-primary {
+  background: #b2ee75;
+  color: #17210f;
+  border-color: #b2ee75;
+  align-self: start;
+  padding: 14px 28px;
+}
+
+.training-drills, .training-detail {
+  max-width: 720px;
+}
+
+.training-steps {
+  margin: 0;
+  padding: 0 0 0 2.25rem;
+  list-style: decimal-leading-zero;
+}
+
+.training-steps li {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.5;
+}
+
+.training-steps li::marker {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 650px) {
+  .training-categories {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #menu .mode-card {
+    gap: 8px;
+  }
+}
+
 .mode-list {
   display: flex;
   flex-direction: column;
