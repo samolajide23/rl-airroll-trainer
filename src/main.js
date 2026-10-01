@@ -1428,11 +1428,12 @@ globalThis.__trainerMenu = {
     try { return GAME_MODES.find(mode => mode.id === localStorage.getItem('rl-training-last-drill') && mode.available); } catch { return null; }
   },
   prepare: () => { cancelListening(); stopActiveMode(); hideAllScreens(); },
-  launch: def => {
+  launch: (def, options) => {
     const index = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === def.id));
     if (index >= 0) activePhaseIndex = index;
     globalThis.__trainerMenu.ui.hide();
-    onModeCardClick(def);
+    if (options) startMode(def, options);
+    else onModeCardClick(def);
   },
   settings: (container, tab) => {
     container.replaceChildren();
@@ -1459,7 +1460,16 @@ globalThis.__trainerMenu = {
   },
 };
 showHub();
-import('./menus/volt.js');
+import('./menus/volt.js').then(() => {
+  if (new URLSearchParams(location.search).get("replay") !== "rocketsim") return;
+  globalThis.__trainerMenu.ui?.hide();
+  startMode({
+    id: "rocketsim-replay",
+    available: true,
+    load: () => import("./modes/referenceReplay.js"),
+    create: (ctx, options, module) => new module.ReferenceReplayMode(ctx),
+  }).then(() => setTouchControlsVisible(false));
+});
 requestAnimationFrame(frame);
 
 Promise.all([preloadCars([getSelectedCarId()]), preloadBall()]).then(() => {

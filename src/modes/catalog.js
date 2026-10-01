@@ -1,4 +1,7 @@
 import { GHOST_ALIGN_DIFFICULTIES } from "./ghostDifficulties.js";
+import { ROLL_TOUCH_MASTERY } from "../shared/rollTouchTraining.js";
+import { RECOVERY_MASTERY } from "../shared/recoveryTraining.js";
+import { MOVEMENT_TRAINING } from "../shared/movementTraining.js";
 
 /**
  * @typedef {{
@@ -81,11 +84,11 @@ const ORIGINAL_PHASES = [
     modes: [
       {
         id: "ball-static",
-        title: "Static Ball Contact",
-        description: "Hit a still mid-air ball with nose, roof, or side.",
+        title: "First Touch · Stationary Ball",
+        description: "Learn deliberate ground touches: find contact, square the nose, place the ball, add pace and follow the play.",
         available: true,
         load: () => import("./ballContact.js"),
-        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "static" }),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { ...options, variant: "static" }),
       },
       {
         id: "ball-roll-touch",
@@ -93,15 +96,15 @@ const ORIGINAL_PHASES = [
         description: "Roll during the approach to present the right contact.",
         available: true,
         load: () => import("./ballContact.js"),
-        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "rollTouch" }),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { ...options, variant: "rollTouch" }),
       },
       {
         id: "ball-soft",
         title: "Soft Touches",
-        description: "Nudge the ball a few car-lengths — strength matters.",
+        description: "Cushion an incoming ground ball and keep the next touch available.",
         available: true,
         load: () => import("./ballContact.js"),
-        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "soft" }),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { ...options, variant: "soft" }),
       },
       {
         id: "ball-recovery",
@@ -109,7 +112,7 @@ const ORIGINAL_PHASES = [
         description: "After the touch, get back wheels-down quickly.",
         available: true,
         load: () => import("./ballContact.js"),
-        create: (ctx, options, module) => new module.BallContactMode(ctx, { variant: "recovery" }),
+        create: (ctx, options, module) => new module.BallContactMode(ctx, { ...options, variant: "recovery" }),
       },
     ],
   },
@@ -137,7 +140,7 @@ const ORIGINAL_PHASES = [
       {
         id: "dribble-hover",
         title: "Hover & Hold",
-        description: "Keep the ball near your nose while barely moving.",
+        description: "Match the ball's aerial speed and stay close for three seconds after a touch.",
         available: true,
         load: () => import("./dribbleBridge.js"),
         create: (ctx, options, module) => new module.DribbleBridgeMode(ctx, { variant: "hover" }),
@@ -163,6 +166,11 @@ const ORIGINAL_PHASES = [
 ];
 
 const existing = new Map(ORIGINAL_PHASES.flatMap(phase => phase.modes).map(mode => [mode.id, mode]));
+for (const id of Object.keys(MOVEMENT_TRAINING)) existing.set(id, {
+  id, available: true,
+  load: () => import("./movement.js"),
+  create: (ctx, options, module) => new module.MovementMode(ctx, { ...options, variant: id }),
+});
 
 function mechanic(id, title, level, steps, drillId, options = {}) {
   const drill = existing.get(drillId);
@@ -172,13 +180,37 @@ function mechanic(id, title, level, steps, drillId, options = {}) {
   };
 }
 
+export const STATIC_BALL_MASTERY = [
+  { title: "Find Contact", goal: "Approach the stationary ground ball and make contact.", success: "Any car contact before the 15-second round ends.", benefit: "Learn spacing and steering into the ball.", cue: "Line up before accelerating; watch where your nose will meet the ball.", playable: true },
+  { title: "Square the Nose", goal: "Make deliberate front contact rather than clipping the ball with the side.", success: "First contact with the front of the car; outgoing direction is not scored.", benefit: "Build predictable, repeatable touches.", cue: "Finish steering before the touch so your nose meets the ball squarely." },
+  { title: "Place the Touch", goal: "Send the ball through a wide target gate, including targets left and right.", success: "A front touch sends the ball through the requested gate.", benefit: "Learn contact angles for passes and shots.", cue: "Choose your approach angle before committing to contact." },
+  { title: "Add Pace", goal: "Reach the target within a requested ball-speed range.", success: "Front contact, then cross the gate at the requested ground pace: 800-1,200 uu/s initially.", benefit: "Add purposeful power without losing accuracy.", cue: "Adjust approach speed while keeping the same contact line." },
+  { title: "Stay in the Play", goal: "Place the touch, then stay in control and follow its path.", success: "Front contact and a target hit, then follow within 600 uu for 0.5 seconds, wheels-down and facing the ball. No speed-band requirement.", benefit: "Stay available for the next touch instead of overcommitting.", cue: "Plan your exit and follow-through before striking the ball." },
+].map(step => ({ ...step, playable: true }));
+
+export const SOFT_TOUCH_MASTERY = [
+  { title: "Take the Sting Out", goal: "Meet a slowly approaching ground ball and cushion its arrival.", success: "Reduce the ball's incoming speed with a deliberate first touch.", benefit: "Receive a pass without sending it straight back away.", cue: "Match the arrival and give the ball room to settle." },
+  { title: "Keep It Close", goal: "Cushion the incoming ball into a position you can reach again.", success: "Reduce its pace and keep the ball within playable reach after the touch.", benefit: "Turn a reception into a controlled next action.", cue: "Watch the space between your car and the ball, not just its speed." },
+  { title: "Choose the Exit", goal: "Guide the cushioned ball toward a nearby left or right target.", success: "Keep the reception close while directing it into the requested exit area.", benefit: "Receive into useful space instead of stopping without a plan.", cue: "Choose your exit before the ball arrives; use a small contact angle." },
+  { title: "Match the Approach", goal: "Adapt the same controlled reception to different incoming speeds and angles.", success: "Cushion the ball into reachable space across varied ground-ball approaches.", benefit: "Handle imperfect passes without relying on one rehearsed setup.", cue: "Read the incoming line early and adjust your movement before contact." },
+  { title: "Make the Next Touch", goal: "Cushion the ball, follow it and make a deliberate second contact.", success: "Complete a controlled reception, then reach the ball for a separate second touch.", benefit: "Connect the first touch to a pass, carry or next play.", cue: "Leave yourself a route to the ball rather than chasing a loose first touch." },
+];
+
+export const STATIC_BALL_PLAN = [
+  { setup: "Start 700-1,100 uu from the ball, with up to 150 uu lateral offset and 10 degrees of heading variation.", feedback: "Contact or no contact, plus time to first touch." },
+  { setup: "Start 800-1,200 uu away, with up to 200 uu lateral offset and 15 degrees of heading variation.", feedback: "Front, side, rear or roof contact; no contact on timeout." },
+  { setup: "Start 900-1,300 uu away, with up to 250 uu lateral offset and 20 degrees of heading variation. A 600 uu-wide gate sits 1,400 uu beyond the ball, at 0 or 20 degrees left or right.", feedback: "Target hit, missed left, missed right, too high, wrong contact or no contact." },
+  { setup: "Use the Place the Touch bounds and target an 800-1,200 uu/s ground-speed band at the gate.", feedback: "Target accuracy and gate speed; too soft or too hard only when the target is hit." },
+  { setup: "Use the Place the Touch bounds. After a target hit, follow within 600 uu for 0.5 seconds, grounded and facing within 30 degrees of the ball, within 3 seconds of crossing.", feedback: "Target accuracy, then controlled follow-through, too far away, facing away or not wheels-down." },
+];
+
 export const PHASES = [
   { id: "fundamentals", title: "Foundations", blurb: "Build car control and deliberate first touches.", tags: ["Foundation"], modes: [
-    mechanic("driving", "Driving & Boost", "Beginner", ["Steer and brake toward a target", "Turn with powerslide", "Build speed with boost", "Repeat from both directions"]),
-    mechanic("dodges", "Jumps & Dodges", "Beginner", ["Time a single jump", "Control jump height", "Double jump without dodging", "Dodge forward, backward and sideways"]),
+    mechanic("driving", "Driving & Boost", "Beginner", MOVEMENT_TRAINING.driving.steps.map(step => step.title), "driving"),
+    mechanic("dodges", "Jumps & Dodges", "Beginner", MOVEMENT_TRAINING.dodges.steps.map(step => step.title), "dodges"),
     ...["ball-static", "ball-roll-touch", "ball-soft", "ball-recovery"].map(id => {
       const drill = existing.get(id);
-      return mechanic(id, drill.title, "Beginner", [drill.description, "Align the requested contact point", "Control the strength of the touch", "Recover wheels-down after contact"], id,
+      return mechanic(id, drill.title, "Beginner", id === "ball-static" ? STATIC_BALL_MASTERY.map(step => step.title) : id === "ball-soft" ? SOFT_TOUCH_MASTERY.map(step => step.title) : id === "ball-roll-touch" ? ROLL_TOUCH_MASTERY.map(step => step.title) : RECOVERY_MASTERY.map(step => step.title), id,
         { tags: id === "ball-recovery" ? ["Ball", "Recovery"] : ["Ball"] });
     }),
   ] },

@@ -1,35 +1,12 @@
 # Physics compare report
 
-Generated: 2026-09-30T22:00:46.506Z
+Generated: 2026-10-01T13:35:10.132Z
 
 Reference: **RocketSim 2.2.1**, SOCCAR or THE_VOID as declared per scenario.
 Candidate: **`carSim.js` / `rl-physics.js`**.
 
-Regression gate: **FAIL** (enforced). Budgets are regression limits, not exact-parity certification.
+Regression gate: **PASS** (enforced). Budgets are regression limits, not exact-parity certification.
 
-- dominus_landing: pos_max 0.286772 > 0.2
-- dominus_landing: vel_max 1.213588 > 0.5
-- dominus_landing: omega_max 0.014701 > 0.01
-- plank_landing: pos_max 0.391165 > 0.2
-- plank_landing: vel_max 1.486208 > 0.5
-- breakout_landing: pos_max 0.354497 > 0.2
-- breakout_landing: vel_max 1.323503 > 0.5
-- hybrid_landing: vel_max 0.583926 > 0.5
-- roof_recovery: pos_max 36.332240 > 0.2
-- roof_recovery: vel_max 277.917403 > 0.5
-- roof_recovery: omega_max 4.070345 > 0.01
-- roof_recovery: fwd_max_deg 9.888889 > 0.05
-- roof_recovery: up_max_deg 13.374739 > 0.05
-- roof_recovery: air_time_max 1.233333 > 0.03
-- roof_recovery: ground_mismatch_ticks 12.000000 > 1
-- ceiling_impact: pos_max 0.349082 > 0.2
-- ceiling_impact: vel_max 0.520052 > 0.5
-- ceiling_impact: omega_max 0.026045 > 0.01
-- ceiling_impact: fwd_max_deg 0.512466 > 0.05
-- ground_powerslide_release: pos_max 1.024383 > 0.2
-- ground_powerslide_release: vel_max 1.970244 > 0.5
-- ground_powerslide_release: omega_max 0.010899 > 0.01
-- ground_powerslide_release: fwd_max_deg 0.133632 > 0.05
 ## Constants (RocketSim vs rl-physics.js)
 
 | Quantity | RocketSim | JS | Δ |
@@ -69,20 +46,20 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `flip_reset_jump` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_window_last_tick` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_window_expired` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `dominus_jump` | 0.021 / 0.045 | 0.046 / 0.050 | 0.000 / 0.001 | 0.014 / 0.020 | 0.014 / 0.020 |
-| `plank_jump` | 0.011 / 0.022 | 0.026 / 0.028 | 0.000 / 0.001 | 0.008 / 0.011 | 0.008 / 0.011 |
-| `breakout_jump` | 0.028 / 0.059 | 0.054 / 0.059 | 0.000 / 0.001 | 0.016 / 0.023 | 0.016 / 0.023 |
-| `hybrid_jump` | 0.005 / 0.010 | 0.014 / 0.015 | 0.000 / 0.000 | 0.004 / 0.006 | 0.004 / 0.006 |
+| `dominus_jump` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `plank_jump` | 0.002 / 0.004 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `breakout_jump` | 0.002 / 0.005 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `hybrid_jump` | 0.002 / 0.004 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `merc_jump` | 0.001 / 0.003 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `dominus_landing` | 0.056 / 0.287 | 0.321 / 1.214 | 0.001 / 0.015 | 0.002 / 0.013 | 0.001 / 0.013 |
-| `plank_landing` | 0.076 / 0.391 | 0.423 / 1.486 | 0.000 / 0.005 | 0.002 / 0.008 | 0.001 / 0.008 |
-| `breakout_landing` | 0.069 / 0.354 | 0.389 / 1.324 | 0.000 / 0.003 | 0.002 / 0.006 | 0.001 / 0.004 |
-| `hybrid_landing` | 0.031 / 0.163 | 0.176 / 0.584 | 0.000 / 0.003 | 0.002 / 0.008 | 0.000 / 0.002 |
+| `dominus_landing` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `plank_landing` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `breakout_landing` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `hybrid_landing` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `merc_landing` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `double_jump_early` | 0.011 / 0.019 | 0.012 / 0.124 | 0.000 / 0.001 | 0.002 / 0.003 | 0.002 / 0.003 |
-| `flip_window_before` | 0.005 / 0.010 | 0.007 / 0.007 | 0.000 / 0.000 | 0.002 / 0.003 | 0.002 / 0.003 |
-| `roof_recovery` | 14.793 / 36.332 | 66.479 / 277.917 | 0.774 / 4.070 | 7.058 / 9.889 | 5.808 / 13.375 |
-| `ceiling_impact` | 0.127 / 0.349 | 0.346 / 0.520 | 0.009 / 0.026 | 0.216 / 0.512 | 0.014 / 0.031 |
+| `double_jump_early` | 0.001 / 0.002 | 0.000 / 0.006 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `flip_window_before` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `roof_recovery` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ceiling_impact` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `freefall_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_throttle_1s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_boost_1s` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
@@ -104,38 +81,38 @@ RocketSim air torques are `CAR_AIR_CONTROL_* * CAR_TORQUE_SCALE` (pitch, yaw, ro
 | `flip_forward_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_side_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `coast_from_spin` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_rest_0_5s` | 0.000 / 0.000 | 0.001 / 0.003 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_rest_0_5s` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ground_throttle_2s` | 0.002 / 0.004 | 0.001 / 0.003 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ground_throttle_4s` | 0.004 / 0.008 | 0.002 / 0.003 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ground_boost_2s` | 0.002 / 0.007 | 0.004 / 0.008 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_steer_right_1s` | 0.032 / 0.170 | 0.089 / 0.311 | 0.000 / 0.001 | 0.003 / 0.006 | 0.000 / 0.000 |
-| `ground_steer_left_1s` | 0.032 / 0.170 | 0.089 / 0.311 | 0.000 / 0.001 | 0.003 / 0.006 | 0.000 / 0.000 |
+| `ground_steer_right_1s` | 0.000 / 0.001 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_steer_left_1s` | 0.000 / 0.001 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ground_coast_1s` | 0.006 / 0.016 | 0.003 / 0.010 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ground_brake_0_25s` | 0.005 / 0.011 | 0.002 / 0.004 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_powerslide_0_5s` | 0.008 / 0.113 | 0.046 / 0.474 | 0.000 / 0.001 | 0.002 / 0.018 | 0.000 / 0.000 |
-| `ground_jump_full_hold` | 0.003 / 0.007 | 0.007 / 0.007 | 0.000 / 0.000 | 0.002 / 0.003 | 0.002 / 0.003 |
-| `ground_jump_tap` | 0.002 / 0.003 | 0.006 / 0.074 | 0.000 / 0.001 | 0.002 / 0.003 | 0.002 / 0.003 |
-| `ground_flip_forward` | 0.657 / 1.555 | 2.059 / 8.942 | 0.072 / 0.691 | 0.445 / 1.131 | 0.541 / 1.131 |
-| `wall_drive_throttle_3s` | 0.034 / 0.100 | 0.045 / 0.198 | 0.000 / 0.004 | 0.001 / 0.012 | 0.001 / 0.012 |
+| `ground_powerslide_0_5s` | 0.001 / 0.002 | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_jump_full_hold` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_jump_tap` | 0.000 / 0.000 | 0.000 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_flip_forward` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `wall_drive_throttle_3s` | 0.004 / 0.011 | 0.008 / 0.020 | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.001 |
 | `ground_reverse_2s` | 0.000 / 0.002 | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_reverse_steer` | 0.017 / 0.122 | 0.066 / 0.312 | 0.000 / 0.001 | 0.006 / 0.022 | 0.000 / 0.000 |
+| `ground_reverse_steer` | 0.000 / 0.001 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_boost_depletion` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_reverse_throttle` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_forward_cancel` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `flip_diagonal_air` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_powerslide_release` | 0.193 / 1.024 | 0.487 / 1.970 | 0.001 / 0.011 | 0.031 / 0.134 | 0.000 / 0.001 |
+| `ground_powerslide_release` | 0.001 / 0.002 | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_backflip` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_backflip_forward_speed` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_forwardflip_reverse_speed` | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_linear_speed_cap` | 0.000 / 0.001 | 0.001 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_angular_speed_cap` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `air_boost_one_tick` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_analog_steer` | 0.013 / 0.034 | 0.034 / 0.058 | 0.000 / 0.000 | 0.001 / 0.001 | 0.000 / 0.000 |
-| `ground_fast_steer` | 0.040 / 0.115 | 0.153 / 0.285 | 0.000 / 0.000 | 0.001 / 0.003 | 0.000 / 0.000 |
-| `landing_wheels` | 0.001 / 0.005 | 0.011 / 0.232 | 0.000 / 0.002 | 0.000 / 0.001 | 0.000 / 0.001 |
-| `landing_powerslide` | 0.013 / 0.067 | 0.073 / 0.234 | 0.000 / 0.002 | 0.001 / 0.005 | 0.000 / 0.001 |
+| `ground_analog_steer` | 0.000 / 0.001 | 0.001 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `ground_fast_steer` | 0.000 / 0.001 | 0.001 / 0.002 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `landing_wheels` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| `landing_powerslide` | 0.000 / 0.000 | 0.000 / 0.001 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
 | `ceiling_fall_airroll` | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
-| `ground_jump_into_wall` | 1.574 / 7.884 | 6.092 / 26.621 | 0.051 / 1.108 | 0.355 / 0.860 | 0.115 / 1.134 |
+| `ground_jump_into_wall` | 1.567 / 7.854 | 6.073 / 26.670 | 0.051 / 1.112 | 0.354 / 0.868 | 0.116 / 1.140 |
 
 ## Per-scenario finals
 
@@ -184,26 +161,26 @@ A car with a restored airborne flip uses a neutral second jump
 - Final forward RS [1.000, 0.000, -0.019] vs JS [1.000, 0.000, -0.019]
 
 ### `dominus_jump`
-- Worst position error at tick **120** (0.045 uu)
-- Final pos RS -995.78, 0.00, 225.97 vs JS -995.82, 0.00, 225.97
+- Worst position error at tick **118** (0.001 uu)
+- Final pos RS -995.78, 0.00, 225.97 vs JS -995.78, 0.00, 225.97
 - Final ω RS 0.000, 0.005, 0.000 vs JS 0.000, 0.005, 0.000
 - Final forward RS [1.000, 0.000, -0.031] vs JS [1.000, 0.000, -0.031]
 
 ### `plank_jump`
-- Worst position error at tick **120** (0.022 uu)
-- Final pos RS -998.16, 0.00, 227.46 vs JS -998.18, 0.00, 227.46
+- Worst position error at tick **120** (0.004 uu)
+- Final pos RS -998.16, 0.00, 227.46 vs JS -998.16, 0.00, 227.46
 - Final ω RS 0.000, 0.002, 0.000 vs JS 0.000, 0.002, 0.000
 - Final forward RS [1.000, 0.000, -0.013] vs JS [1.000, 0.000, -0.013]
 
 ### `breakout_jump`
-- Worst position error at tick **120** (0.059 uu)
-- Final pos RS -995.44, 0.00, 227.35 vs JS -995.50, 0.00, 227.36
+- Worst position error at tick **120** (0.005 uu)
+- Final pos RS -995.44, 0.00, 227.35 vs JS -995.44, 0.00, 227.35
 - Final ω RS 0.000, 0.006, 0.000 vs JS 0.000, 0.006, 0.000
-- Final forward RS [0.999, 0.000, -0.033] vs JS [0.999, 0.000, -0.032]
+- Final forward RS [0.999, 0.000, -0.033] vs JS [0.999, 0.000, -0.033]
 
 ### `hybrid_jump`
-- Worst position error at tick **120** (0.010 uu)
-- Final pos RS -997.76, 0.00, 225.78 vs JS -997.77, 0.00, 225.78
+- Worst position error at tick **120** (0.004 uu)
+- Final pos RS -997.76, 0.00, 225.78 vs JS -997.76, 0.00, 225.78
 - Final ω RS 0.000, 0.003, 0.000 vs JS 0.000, 0.003, 0.000
 - Final forward RS [1.000, 0.000, -0.017] vs JS [1.000, 0.000, -0.017]
 
@@ -214,26 +191,26 @@ A car with a restored airborne flip uses a neutral second jump
 - Final forward RS [1.000, 0.000, 0.009] vs JS [1.000, 0.000, 0.009]
 
 ### `dominus_landing`
-- Worst position error at tick **120** (0.287 uu)
-- Final pos RS -309.17, 248.70, 17.07 vs JS -309.18, 248.42, 17.07
+- Worst position error at tick **120** (0.000 uu)
+- Final pos RS -309.17, 248.70, 17.07 vs JS -309.17, 248.70, 17.07
 - Final ω RS 0.000, 0.000, -0.135 vs JS 0.000, 0.000, -0.135
 - Final forward RS [0.999, -0.036, -0.018] vs JS [0.999, -0.036, -0.018]
 
 ### `plank_landing`
-- Worst position error at tick **120** (0.391 uu)
-- Final pos RS -307.50, 248.71, 18.67 vs JS -307.52, 248.32, 18.67
+- Worst position error at tick **120** (0.000 uu)
+- Final pos RS -307.50, 248.71, 18.67 vs JS -307.50, 248.71, 18.67
 - Final ω RS 0.000, 0.000, -0.135 vs JS 0.000, 0.000, -0.135
-- Final forward RS [0.999, -0.042, -0.008] vs JS [0.999, -0.043, -0.008]
+- Final forward RS [0.999, -0.042, -0.008] vs JS [0.999, -0.042, -0.008]
 
 ### `breakout_landing`
-- Worst position error at tick **120** (0.354 uu)
-- Final pos RS -307.46, 249.50, 18.36 vs JS -307.48, 249.14, 18.36
+- Worst position error at tick **119** (0.000 uu)
+- Final pos RS -307.46, 249.50, 18.36 vs JS -307.46, 249.50, 18.36
 - Final ω RS 0.000, 0.000, -0.156 vs JS 0.000, 0.000, -0.156
 - Final forward RS [0.999, -0.047, -0.018] vs JS [0.999, -0.047, -0.018]
 
 ### `hybrid_landing`
-- Worst position error at tick **120** (0.163 uu)
-- Final pos RS -307.57, 247.50, 17.03 vs JS -307.58, 247.34, 17.03
+- Worst position error at tick **84** (0.000 uu)
+- Final pos RS -307.57, 247.50, 17.03 vs JS -307.57, 247.50, 17.03
 - Final ω RS 0.000, 0.000, -0.147 vs JS 0.000, 0.000, -0.147
 - Final forward RS [0.999, -0.047, -0.010] vs JS [0.999, -0.047, -0.010]
 
@@ -244,28 +221,28 @@ A car with a restored airborne flip uses a neutral second jump
 - Final forward RS [0.999, -0.034, 0.005] vs JS [0.999, -0.034, 0.005]
 
 ### `double_jump_early`
-- Worst position error at tick **183** (0.019 uu)
-- Final pos RS -993.62, 0.00, 17.03 vs JS -993.64, 0.00, 17.03
+- Worst position error at tick **63** (0.002 uu)
+- Final pos RS -993.62, 0.00, 17.03 vs JS -993.62, 0.00, 17.03
 - Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
 - Final forward RS [1.000, 0.000, -0.010] vs JS [1.000, 0.000, -0.010]
 
 ### `flip_window_before`
-- Worst position error at tick **180** (0.010 uu)
-- Final pos RS 124.64, 0.00, 131.68 vs JS 124.63, 0.00, 131.68
+- Worst position error at tick **179** (0.000 uu)
+- Final pos RS 124.64, 0.00, 131.68 vs JS 124.64, 0.00, 131.68
 - Final ω RS 0.000, 5.500, 0.000 vs JS 0.000, 5.500, 0.000
 - Final forward RS [-0.080, 0.000, -0.997] vs JS [-0.080, 0.000, -0.997]
 
 ### `roof_recovery`
-- Worst position error at tick **137** (36.332 uu)
-- Final pos RS -911.81, -21.69, 16.98 vs JS -903.62, -0.64, 17.03
-- Final ω RS 0.003, 0.002, 0.000 vs JS -0.002, 0.000, 0.000
-- Final forward RS [0.992, -0.124, -0.009] vs JS [1.000, 0.029, -0.009]
+- Worst position error at tick **175** (0.001 uu)
+- Final pos RS -911.81, -21.69, 16.98 vs JS -911.81, -21.69, 16.98
+- Final ω RS 0.003, 0.002, 0.000 vs JS 0.003, 0.002, 0.000
+- Final forward RS [0.992, -0.124, -0.009] vs JS [0.992, -0.124, -0.009]
 
 ### `ceiling_impact`
-- Worst position error at tick **120** (0.349 uu)
-- Final pos RS -519.82, 1.64, 1849.16 vs JS -519.48, 1.65, 1849.11
-- Final ω RS -0.047, 0.050, 0.216 vs JS -0.047, 0.051, 0.223
-- Final forward RS [0.952, 0.299, -0.067] vs JS [0.949, 0.308, -0.068]
+- Worst position error at tick **42** (0.001 uu)
+- Final pos RS -519.82, 1.64, 1849.16 vs JS -519.82, 1.64, 1849.16
+- Final ω RS -0.047, 0.050, 0.216 vs JS -0.047, 0.050, 0.216
+- Final forward RS [0.952, 0.299, -0.067] vs JS [0.952, 0.299, -0.067]
 
 ### `freefall_1s`
 No input mid-air for 1s — gravity only
@@ -438,7 +415,7 @@ Release inputs with initial roll rate 5.5 rad/s — damping coast
 ### `ground_rest_0_5s`
 Settled Octane on floor, no input for 0.5s
 
-- Worst position error at tick **6** (0.000 uu)
+- Worst position error at tick **20** (0.000 uu)
 - Final pos RS 0.16, 0.00, 17.03 vs JS 0.16, 0.00, 17.03
 - Final ω RS 0.000, -0.000, 0.000 vs JS 0.000, -0.000, 0.000
 - Final forward RS [1.000, 0.000, -0.010] vs JS [1.000, 0.000, -0.010]
@@ -456,7 +433,7 @@ Full throttle on open floor to drive-speed cap
 
 - Worst position error at tick **479** (0.008 uu)
 - Final pos RS -0.01, 611.80, 17.03 vs JS -0.00, 611.81, 17.03
-- Final ω RS 0.000, 0.000, -0.000 vs JS -0.000, 0.000, 0.000
+- Final ω RS 0.000, 0.000, -0.000 vs JS -0.000, -0.000, 0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [-0.000, 1.000, -0.010]
 
 ### `ground_boost_2s`
@@ -464,31 +441,31 @@ Throttle + boost on open floor for 2s
 
 - Worst position error at tick **240** (0.007 uu)
 - Final pos RS -0.01, -978.28, 17.01 vs JS -0.00, -978.28, 17.01
-- Final ω RS -0.000, -0.000, -0.000 vs JS -0.000, -0.000, 0.000
+- Final ω RS -0.000, -0.000, -0.000 vs JS -0.000, 0.000, 0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [-0.000, 1.000, -0.010]
 
 ### `ground_steer_right_1s`
 Throttle 1s then throttle+steer right 1s
 
-- Worst position error at tick **240** (0.170 uu)
-- Final pos RS 1039.89, 770.49, 17.03 vs JS 1039.81, 770.64, 17.03
+- Worst position error at tick **236** (0.001 uu)
+- Final pos RS 1039.89, 770.49, 17.03 vs JS 1039.89, 770.49, 17.03
 - Final ω RS -0.000, -0.000, 2.371 vs JS -0.000, -0.000, 2.371
-- Final forward RS [-0.616, 0.788, -0.010] vs JS [-0.615, 0.788, -0.010]
+- Final forward RS [-0.616, 0.788, -0.010] vs JS [-0.616, 0.788, -0.010]
 
 ### `ground_steer_left_1s`
 Throttle 1s then throttle+steer left 1s
 
-- Worst position error at tick **240** (0.170 uu)
-- Final pos RS 1039.89, -770.49, 17.03 vs JS 1039.81, -770.64, 17.03
+- Worst position error at tick **208** (0.001 uu)
+- Final pos RS 1039.89, -770.49, 17.03 vs JS 1039.89, -770.49, 17.03
 - Final ω RS 0.000, -0.000, -2.371 vs JS 0.000, -0.000, -2.371
-- Final forward RS [-0.616, -0.788, -0.010] vs JS [-0.615, -0.788, -0.010]
+- Final forward RS [-0.616, -0.788, -0.010] vs JS [-0.616, -0.788, -0.010]
 
 ### `ground_coast_1s`
 Throttle to speed then coast 1s
 
 - Worst position error at tick **719** (0.016 uu)
 - Final pos RS -0.01, 3171.61, 17.03 vs JS -0.00, 3171.62, 17.03
-- Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, -0.000
+- Final ω RS 0.000, 0.000, 0.000 vs JS -0.000, -0.000, 0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [-0.000, 1.000, -0.010]
 
 ### `ground_brake_0_25s`
@@ -496,29 +473,29 @@ Throttle to speed then reverse-brake 0.25s
 
 - Worst position error at tick **629** (0.011 uu)
 - Final pos RS -0.01, 2268.65, 17.03 vs JS -0.00, 2268.66, 17.03
-- Final ω RS -0.000, -0.000, 0.000 vs JS -0.000, -0.000, -0.000
+- Final ω RS -0.000, -0.000, 0.000 vs JS -0.000, -0.000, 0.000
 - Final forward RS [-0.000, 1.000, -0.010] vs JS [-0.000, 1.000, -0.010]
 
 ### `ground_powerslide_0_5s`
 Throttle 2s then throttle+steer+handbrake 0.5s
 
-- Worst position error at tick **300** (0.113 uu)
-- Final pos RS 2444.46, 137.71, 17.03 vs JS 2444.41, 137.81, 17.03
+- Worst position error at tick **299** (0.002 uu)
+- Final pos RS 2444.46, 137.71, 17.03 vs JS 2444.46, 137.71, 17.03
 - Final ω RS 0.000, -0.000, 3.243 vs JS 0.000, -0.000, 3.243
 - Final forward RS [0.297, 0.955, -0.010] vs JS [0.297, 0.955, -0.010]
 
 ### `ground_jump_full_hold`
 Full hold jump from settled ground
 
-- Worst position error at tick **120** (0.007 uu)
-- Final pos RS 2.48, 0.00, 225.78 vs JS 2.47, 0.00, 225.78
+- Worst position error at tick **120** (0.000 uu)
+- Final pos RS 2.48, 0.00, 225.78 vs JS 2.48, 0.00, 225.78
 - Final ω RS 0.000, 0.003, 0.000 vs JS 0.000, 0.003, 0.000
 - Final forward RS [1.000, 0.000, -0.018] vs JS [1.000, 0.000, -0.018]
 
 ### `ground_jump_tap`
 Single-tick jump tap from settled ground
 
-- Worst position error at tick **109** (0.003 uu)
+- Worst position error at tick **109** (0.000 uu)
 - Final pos RS 1.11, 0.00, 15.84 vs JS 1.11, 0.00, 15.84
 - Final ω RS 0.000, -0.038, 0.000 vs JS 0.000, -0.038, 0.000
 - Final forward RS [1.000, 0.000, -0.010] vs JS [1.000, 0.000, -0.010]
@@ -526,18 +503,18 @@ Single-tick jump tap from settled ground
 ### `ground_flip_forward`
 Jump then forward flip from ground
 
-- Worst position error at tick **120** (1.555 uu)
-- Final pos RS 409.67, -12.95, 86.17 vs JS 409.36, -12.51, 87.62
-- Final ω RS -0.120, 2.923, 0.086 vs JS -0.067, 2.925, 0.074
-- Final forward RS [0.738, 0.010, 0.675] vs JS [0.734, -0.000, 0.680]
+- Worst position error at tick **116** (0.000 uu)
+- Final pos RS 409.67, -12.95, 86.17 vs JS 409.67, -12.95, 86.17
+- Final ω RS -0.120, 2.923, 0.086 vs JS -0.120, 2.923, 0.086
+- Final forward RS [0.738, 0.010, 0.675] vs JS [0.738, 0.010, 0.675]
 
 ### `wall_drive_throttle_3s`
 Drive into +X wall and climb with throttle only
 
-- Worst position error at tick **360** (0.100 uu)
-- Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.93, 0.00, 1649.07
-- Final ω RS 0.000, -2.442, 0.000 vs JS -0.000, -2.441, -0.000
-- Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, 0.000, 0.970]
+- Worst position error at tick **357** (0.011 uu)
+- Final pos RS 4062.91, 0.00, 1649.17 vs JS 4062.91, -0.00, 1649.18
+- Final ω RS 0.000, -2.442, 0.000 vs JS 0.000, -2.442, 0.000
+- Final forward RS [-0.242, 0.000, 0.970] vs JS [-0.242, -0.000, 0.970]
 
 ### `ground_reverse_2s`
 Reverse acceleration from rest on open floor
@@ -550,9 +527,9 @@ Reverse acceleration from rest on open floor
 ### `ground_reverse_steer`
 Reverse acceleration then steer while reversing
 
-- Worst position error at tick **240** (0.122 uu)
-- Final pos RS -1227.47, 709.36, 17.03 vs JS -1227.53, 709.46, 17.03
-- Final ω RS -0.000, 0.000, -2.064 vs JS -0.000, 0.000, -2.063
+- Worst position error at tick **237** (0.001 uu)
+- Final pos RS -1227.47, 709.36, 17.03 vs JS -1227.47, 709.36, 17.03
+- Final ω RS -0.000, 0.000, -2.064 vs JS -0.000, 0.000, -2.064
 - Final forward RS [-0.419, -0.908, -0.010] vs JS [-0.419, -0.908, -0.010]
 
 ### `air_boost_depletion`
@@ -590,10 +567,10 @@ Diagonal forward-right dodge from rest
 ### `ground_powerslide_release`
 Accelerate, powerslide, then release handbrake while steering
 
-- Worst position error at tick **360** (1.024 uu)
-- Final pos RS 662.66, 370.06, 17.03 vs JS 661.87, 369.41, 17.03
+- Worst position error at tick **273** (0.002 uu)
+- Final pos RS 662.66, 370.06, 17.03 vs JS 662.66, 370.06, 17.03
 - Final ω RS 0.000, -0.000, 2.513 vs JS 0.000, -0.000, 2.513
-- Final forward RS [-0.868, -0.496, -0.010] vs JS [-0.867, -0.498, -0.010]
+- Final forward RS [-0.868, -0.496, -0.010] vs JS [-0.868, -0.496, -0.010]
 
 ### `air_backflip`
 Backward dodge from rest
@@ -646,23 +623,23 @@ One-tick boost press checks minimum boost duration
 ### `ground_analog_steer`
 Half throttle and quarter steering from a moving start
 
-- Worst position error at tick **120** (0.034 uu)
-- Final pos RS 68.17, 282.47, 17.03 vs JS 68.16, 282.51, 17.03
+- Worst position error at tick **119** (0.001 uu)
+- Final pos RS 68.17, 282.47, 17.03 vs JS 68.17, 282.47, 17.03
 - Final ω RS -0.000, 0.000, 0.579 vs JS -0.000, 0.000, 0.579
 - Final forward RS [0.853, 0.521, -0.010] vs JS [0.853, 0.521, -0.010]
 
 ### `ground_fast_steer`
 Steering at near-supersonic speed
 
-- Worst position error at tick **90** (0.115 uu)
-- Final pos RS -450.27, 447.28, 17.03 vs JS -450.29, 447.39, 17.03
+- Worst position error at tick **90** (0.001 uu)
+- Final pos RS -450.27, 447.28, 17.03 vs JS -450.27, 447.28, 17.03
 - Final ω RS 0.000, 0.000, 0.995 vs JS -0.000, -0.000, 0.995
 - Final forward RS [0.778, 0.628, -0.010] vs JS [0.778, 0.628, -0.010]
 
 ### `landing_wheels`
 Airborne downward and forward velocity landing on wheels
 
-- Worst position error at tick **65** (0.005 uu)
+- Worst position error at tick **120** (0.000 uu)
 - Final pos RS -268.90, 0.00, 17.03 vs JS -268.90, 0.00, 17.03
 - Final ω RS 0.000, 0.000, 0.000 vs JS 0.000, 0.000, 0.000
 - Final forward RS [1.000, 0.000, -0.010] vs JS [1.000, 0.000, -0.010]
@@ -670,8 +647,8 @@ Airborne downward and forward velocity landing on wheels
 ### `landing_powerslide`
 Sideways moving landing with powerslide held
 
-- Worst position error at tick **120** (0.067 uu)
-- Final pos RS -307.52, 248.41, 17.03 vs JS -307.53, 248.34, 17.03
+- Worst position error at tick **117** (0.000 uu)
+- Final pos RS -307.52, 248.41, 17.03 vs JS -307.52, 248.41, 17.03
 - Final ω RS 0.000, 0.000, -0.128 vs JS 0.000, 0.000, -0.128
 - Final forward RS [0.999, -0.041, -0.010] vs JS [0.999, -0.041, -0.010]
 
@@ -686,8 +663,8 @@ Inverted airborne car falls from near the ceiling while rolling
 ### `ground_jump_into_wall`
 Jump + boost into +X wall curve and climb (wheels on wall)
 
-- Worst position error at tick **180** (7.884 uu)
-- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.86, 687.90
+- Worst position error at tick **180** (7.854 uu)
+- Final pos RS 4078.99, -0.02, 687.74 vs JS 4078.99, 7.83, 688.00
 - Final ω RS -0.000, 0.001, 0.000 vs JS 0.000, 0.001, -0.000
 - Final forward RS [0.010, -0.000, 1.000] vs JS [0.010, 0.012, 1.000]
 

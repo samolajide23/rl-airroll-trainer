@@ -23,6 +23,7 @@ if (!files.length) {
 }
 
 const flat = [];
+const meshEnds = [];
 let triCount = 0;
 for (const name of files) {
   const buf = await readFile(path.join(SRC, name));
@@ -47,11 +48,13 @@ for (const name of files) {
     flat.push(...verts[a], ...verts[b], ...verts[c]);
     triCount += 1;
   }
+  meshEnds.push(triCount);
 }
 
 const body =
   "/** Auto-generated from RocketSim soccar .cmf (UU). Run gen_soccar_mesh.mjs to refresh. */\n" +
   `export const SOCCAR_TRI_COUNT = ${triCount};\n` +
+  `export const SOCCAR_MESH_ENDS = ${JSON.stringify(meshEnds)};\n` +
   `export const SOCCAR_TRIS = new Float32Array(${JSON.stringify(flat)});\n`;
 
 await writeFile(OUT, body);

@@ -370,7 +370,7 @@ function ballInvInertia(radius = RL.BALL_RADIUS) {
   return 1 / (0.4 * RL.BALL_MASS * radius * radius);
 }
 
-export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = false } = {}) {
+export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = false, deferContacts = false } = {}) {
   const R = RL.BALL_RADIUS;
   // RocketSim Arena::Step explicitly sleeps a ball with exactly zero linear
   // and angular velocity (including the kickoff ball). Contact impulses wake it.
@@ -382,34 +382,54 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
   if (!sleeping) ball.vel.z -= RL.GRAVITY * dt;
   const e = RL.BALL_RESTITUTION;
   const push = V();
+  const constraints = [];
+  const arenaContacts = arena ? sphereArenaContacts(ball.pos, R, 0.02 * (R + 4), { merge: !deferTransform }) : [];
+  for (const { normal, distance } of arenaContacts) {
+    if (distance < 0) push.addScaledVector(normal, Math.max(0, -distance * 0.8 - push.dot(normal)));
+  }
+  if (deferTransform && arenaContacts.length > 1) {
+    const normal = arenaContacts.reduce((sum, contact) => sum.add(contact.normal), V()).divideScalar(arenaContacts.length);
+    arenaContacts.splice(0, arenaContacts.length, { normal, distance: R });
+  }
   // Contacts are generated at the pre-integration transform, as in Bullet.
   // This is still a sequential sphere solver, not Bullet's persistent manifold.
-  for (const { normal: n, distance } of arena ? sphereArenaContacts(ball.pos, R) : []) {
-    if (distance < 0) push.addScaledVector(n, Math.max(0, -distance * 0.8 - push.dot(n)));
-    const vn = ball.vel.dot(n);
-    if (vn < 0) {
-      const incoming = preGravity.dot(n);
-      const bounce = incoming < -10 ? -e * incoming : 0;
-      const dvn = bounce - vn;
-      ball.vel.addScaledVector(n, dvn);
-      // Contact-point velocity including spin: v + ω × (−R n).
-      const r = n.clone().multiplyScalar(-R);
-      const vContact = ball.vel.clone().add(ball.omega.clone().cross(r));
-      const vt = vContact.clone().addScaledVector(n, -vContact.dot(n));
-      const vtLen = vt.length();
-      if (vtLen > 1e-6) {
-        const invM = 1 / RL.BALL_MASS;
-        const invI = ballInvInertia(R);
-        const denomT = invM + R * R * invI;
-        // Coulomb: |Jf| ≤ μ |Jn| with Jn = m · dvn
-        const maxJf = RL.BALL_FRICTION * RL.BALL_MASS * Math.abs(dvn);
-        const jfMag = Math.min(vtLen / denomT, maxJf);
-        const jf = vt.clone().multiplyScalar(-jfMag / vtLen);
-        ball.vel.addScaledVector(jf, invM);
-        // τ = r × Jf → Δω = (r × Jf) / I
-        ball.omega.add(r.clone().cross(jf).multiplyScalar(invI));
+  for (const { normal: n, distance } of arenaContacts) {
+    const incoming = preGravity.dot(n);
+    const bounce = incoming < -10 ? -e * incoming : 0;
+    const r = n.clone().multiplyScalar(-R);
+    const vContact = (deferTransform ? preGravity : ball.vel).clone().add(ball.omega.clone().cross(r));
+    const tangent = vContact.clone().addScaledVector(n, -vContact.dot(n));
+    if (tangent.lengthSq() > 1e-12) tangent.normalize();
+    else if (Math.abs(n.z) > Math.SQRT1_2) tangent.set(0, -n.z, n.y).normalize();
+    else tangent.set(-n.y, n.x, 0).normalize();
+    constraints.push({ normal: n, r, tangent, bounce, normalImpulse: 0, frictionImpulse: 0 });
+  }
+  const solveContacts = (phase = "all") => {
+    for (const row of constraints) {
+      if (!deferTransform && ball.vel.dot(row.normal) >= 0) continue;
+      if (phase !== "friction") {
+        const nextNormal = Math.max(0, row.normalImpulse + (row.bounce - ball.vel.dot(row.normal)) * RL.BALL_MASS);
+        ball.vel.addScaledVector(row.normal, (nextNormal - row.normalImpulse) / RL.BALL_MASS);
+        row.normalImpulse = nextNormal;
       }
+      if (phase === "normal") continue;
+      const velocity = ball.vel.clone().add(ball.omega.clone().cross(row.r));
+      if (!deferTransform) {
+        row.tangent.copy(velocity).addScaledVector(row.normal, -velocity.dot(row.normal));
+        if (row.tangent.lengthSq() > 1e-12) row.tangent.normalize();
+      }
+      const limit = RL.BALL_FRICTION * row.normalImpulse;
+      const denom = 1 / RL.BALL_MASS + row.r.clone().cross(row.tangent).lengthSq() * ballInvInertia(R);
+      const nextFriction = clamp(row.frictionImpulse - velocity.dot(row.tangent) / denom, -limit, limit);
+      const impulse = row.tangent.clone().multiplyScalar(nextFriction - row.frictionImpulse);
+      ball.vel.addScaledVector(impulse, 1 / RL.BALL_MASS);
+      ball.omega.add(row.r.clone().cross(impulse).multiplyScalar(ballInvInertia(R)));
+      row.frictionImpulse = nextFriction;
     }
+  };
+  if (!deferContacts) {
+    solveContacts();
+    if (deferTransform) for (let iteration = 1; iteration < 10; iteration++) solveContacts();
   }
   const finish = () => {
     ball.pos.addScaledVector(ball.vel, dt).add(push);
@@ -421,25 +441,30 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
     if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
     if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
   };
-  if (deferTransform) return finish;
+  if (deferTransform) {
+    finish.solveContacts = solveContacts;
+    return finish;
+  }
   finish();
 }
 
 /* --------------------------- car <-> ball hit --------------------------- */
 
 /** Returns contact info or null. Applies engine-style inelastic impulse + Psyonix extra impulse. */
-export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
+export function collideCarBall(car, ball, tick, { deferred = false, contactVelocity, externalAngularImpulse, solveBallArena } = {}) {
   const { f, l, u, center, half } = carHitbox(car);
   // Bullet's btBoxShape has a 0.04 BT (=2 uu) rounded collision margin.
-  // Keep the configured outer extents/inertia unchanged; clamp to inner box.
   const margin = deferred ? Math.min(2, Math.min(...half) * 0.1) : 0;
-  const [sx, sy, sz] = half.map(value => value - margin);
+  const [sx, sy, sz] = half.map(value => value - (deferred ? 2 : 0));
   const rel = ball.pos.clone().sub(center);
   const loc = V(rel.dot(f), rel.dot(l), rel.dot(u));
   const near = V(clamp(loc.x, -sx, sx), clamp(loc.y, -sy, sy), clamp(loc.z, -sz, sz));
   const diff = loc.clone().sub(near);
   const dist = diff.length();
-  if (dist > RL.BALL_RADIUS + margin) return null;
+  const contactDistance = deferred
+    ? 0.02 * Math.min(RL.BALL_RADIUS + 4, Math.hypot(...half) + center.distanceTo(car.pos))
+    : 0;
+  if (dist > RL.BALL_RADIUS + margin + contactDistance) return null;
 
   let penetration = RL.BALL_RADIUS + margin - dist;
   const localNormal = diff.clone();
@@ -450,7 +475,7 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
     const depths = [sx - Math.abs(loc.x), sy - Math.abs(loc.y), sz - Math.abs(loc.z)];
     const axis = depths.indexOf(Math.min(...depths));
     const sign = loc.getComponent(axis) < 0 ? -1 : 1;
-    near.setComponent(axis, sign * (half[axis] - margin));
+    near.setComponent(axis, sign * [sx, sy, sz][axis]);
     localNormal.set(0, 0, 0).setComponent(axis, sign);
     penetration += depths[axis];
   }
@@ -473,11 +498,12 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
     // and car hitbox angular response about the contact (box inertia).
     const { f: cf, l: cl, u: cu } = axes(car.q);
     const hb = car.hitbox ?? getHitboxPreset("octane");
-    const lx = hb.size[0];
-    const ly = hb.size[1];
-    const lz = hb.size[2];
+    const extentReduction = deferred ? 2 * (2 - margin) : 0;
+    const lx = hb.size[0] - extentReduction;
+    const ly = hb.size[1] - extentReduction;
+    const lz = hb.size[2] - extentReduction;
     const invI =
-      car.invInertiaLocal ??
+      (!deferred ? car.invInertiaLocal : undefined) ??
       V(
         12 / (RL.CAR_MASS * (ly * ly + lz * lz)),
         12 / (RL.CAR_MASS * (lx * lx + lz * lz)),
@@ -527,10 +553,14 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
         const nextNormal = Math.max(0, normalImpulse - relativeVelocity().dot(n) / impulseDenom(n));
         apply(n, nextNormal - normalImpulse);
         normalImpulse = nextNormal;
+        solveBallArena?.("normal");
         const limit = RL.CARBALL_FRICTION * normalImpulse;
-        const nextFriction = clamp(frictionImpulse - relativeVelocity().dot(tangent) / impulseDenom(tangent), -limit, limit);
+        const frictionVelocity = relativeVelocity();
+        if (externalAngularImpulse) frictionVelocity.add(externalAngularImpulse.clone().cross(carPoint));
+        const nextFriction = clamp(frictionImpulse - frictionVelocity.dot(tangent) / impulseDenom(tangent), -limit, limit);
         apply(tangent, nextFriction - frictionImpulse);
         frictionImpulse = nextFriction;
+        solveBallArena?.("friction");
       }
     } else {
     const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / impulseDenom(n);
@@ -569,7 +599,7 @@ export function collideCarBall(car, ball, tick, { deferred = false } = {}) {
     const forwardKeep = RL.EXTRA_IMPULSE_FWD;
     hitDir.sub(f.clone().multiplyScalar(hitDir.dot(f) * (1 - forwardKeep)));
     if (hitDir.lengthSq() > 1e-12) hitDir.normalize();
-    const relSpeed = Math.min(dv0.length(), RL.EXTRA_IMPULSE_MAX_DV);
+    const relSpeed = Math.min((contactVelocity ?? dv0).length(), RL.EXTRA_IMPULSE_MAX_DV);
     if (relSpeed > 0) {
       const impulse =
         relSpeed * extraImpulseScale(relSpeed) * RL.EXTRA_FORCE_SCALE;

@@ -19,6 +19,9 @@ function controls(c = {}) {
 
 /** Reject stale/misaligned/incomplete fixtures before computing any errors. */
 export function validatePair(rs, js) {
+  for (const data of [rs, js]) {
+    assert(!Object.hasOwn(data, "diagnostic_reference_seed_interval"), "Reference-seeded diagnostics cannot certify open-loop parity");
+  }
   for (const key of ["id", "game_mode", "ticks", "scenario_sha256"]) {
     assert(rs[key] !== undefined, `Missing reference ${key}`);
     assert.deepEqual(js[key], rs[key], `${rs.id}: ${key} mismatch`);

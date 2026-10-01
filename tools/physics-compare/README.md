@@ -1,3 +1,50 @@
+# Car-only movement bot
+
+Run `npm run bot:movement`. The first run records RocketSim references in
+`out/movement-bot/rocketsim`; subsequent runs reuse those references and the
+recorded scenario file. Existing Skybot and chassis references are untouched.
+The suite includes the 73 isolated movement fixtures plus six longer scripted
+routes: straight boost/brake, analog slalom, powerslide/reverse, jump/dodge,
+aerial/landing, and goal-roof recovery. Inputs are open-loop, not separate
+adaptive bot decisions in each engine. Native car-only cases keep the ball
+parked at z=10000 every tick; JS uses `stepCar` without a ball.
+
+`report.md` enforces the tightened regression budgets: defaults are 0.002 uu
+position, 0.005 uu/s velocity, 0.0001 rad/s omega, 0.0005 degrees forward/up,
+0.0001 boost, 0.0003 seconds air time, and zero ground-state mismatch ticks.
+Numeric car budgets, including legacy car-contact exceptions, were reduced
+100-fold from the original budgets. Dedicated ball/contact budgets and the ball-goal velocity exception
+are unchanged. `tick-report.md` and `tick-errors.json` report the first allowed
+budget failure using the same defaults and scenario exceptions. They also
+report finer diagnostics: 0.0001 uu position, 0.0001 uu/s velocity, 0.00001
+rad/s omega, and 0.00001 degrees forward/up. Per-tick orientation errors use
+atan2 of cross-product magnitude and dot product to resolve tiny angles.
+These thresholds are not a claim of bit-exact parity. The command exits
+nonzero when the regression gate fails.
+
+Airborne replay now matches the native replacement CarState's grounded flag at
+tick zero; both engines recompute wheel contact before applying first-tick
+controls. Boost consumption uses native float32 rate/product/subtraction.
+Persistent float32 Bullet-unit translation now keeps the internal origin
+between ticks and resynchronizes after external position changes. Together,
+these fixes yield 66/79 passing at the current tighter budgets. Remaining
+failures include force/velocity drift and arena contact divergence.
+A partial float32 translation probe improved individual jumps but reduced
+overall passes to 37/79 because it reconstructed the internal origin from
+rounded public snapshots every tick; it was replaced by persistent storage.
+
+Before tightening, all 73 existing fixtures and the new powerslide route passed
+their budgets; the other five long routes failed. At jump/dodge tick 302,
+exact-start diagnostic replay matches velocity within 0.000389 uu/s and omega
+within 0.000011 rad/s, while the unseeded route selects the opposite lateral
+landing contact after inherited drift. At aerial tick 305, exact-start replay
+still differs by 68.600235 uu/s: this is a local upright-floor contact defect.
+Removing tuned corner offsets reduced that local error to 0.071087 uu/s but
+worsened the long jump/dodge route; both offset probes were reverted. Exact
+native witnesses and consistent contact generation are needed before retaining
+a production physics change. Seeded diagnostic output is never accepted as
+formal parity evidence.
+
 # Physics compare harness
 
 Offline validation of `src/shared/carSim.js` against **[RocketSim](https://github.com/ZealanL/RocketSim)** (Python bindings).
@@ -8,11 +55,11 @@ Reference is pinned to **RocketSim 2.2.1**. This is a regression suite, not proo
 of exact Rocket League parity. Live-game measurements are a separate requirement.
 
 - `npm test`: standalone physics and comparison-integrity tests (no Python).
-- `npm run physics:compare`: regenerate and enforce the 69 car scenarios.
+- `npm run physics:compare`: regenerate and enforce the 73 car scenarios.
 - `npm run physics:ball`: regenerate and enforce 10 isolated ball scenarios.
 - `npm run physics:parity`: scalar/config checks, including live RocketSim when available.
-- `npm run physics:contact`: strict coupled car/ball comparisons; currently fails
-	and exposes contact timing/solver gaps. See `docs/physics-source-evidence.md`.
+- `npm run physics:contact`: five strict coupled car/ball comparisons, passing
+	unchanged budgets. See `docs/physics-source-evidence.md`.
 - `npm run physics:meshes`: fetch 16 soccar fixtures from the SHA-256-pinned
 	RLGym 2.0.1 source archive. Does not install RLGym or replace browser geometry.
 	Keeps source/hash metadata and available package license beside ignored fixtures.
@@ -23,6 +70,55 @@ platform Python 3 commands. Windows paths with spaces and redirected UTF-8
 output are supported. Missing/different meshes fail explicitly.
 
 ### Current measured results
+
+Latest continuation supersedes the historical baseline below: **73/73 movement
+and 5/5 strict coupled-contact cases pass**. Roof recovery and ceiling gates are
+resolved. The immutable ten-second bot replay still fails, with maximum car
+position error 79.726 uu and ball position error 61.012 uu. Exact goal-wall
+tick-1093 velocity error is reduced from 483.58 to 0.05832 uu/s; angular velocity
+error is 0.0001412 rad/s. A native two-contact witness and split-rotation
+regression covers this repair. References, controls and budgets are unchanged.
+
+Coupled iterations now follow RocketSim's special-row ordering: ordinary
+car-ball normal, special ball-world normal, ordinary car-ball friction, then
+special ball-world friction. The grounded tick-812 reference-state regression
+requires ball/car velocity errors below 0.001 uu/s and angular error below
+0.00001 rad/s. This isolated check does not certify the full trajectory.
+
+The full replay's first car velocity-budget failure is tick 885. Tiny early
+wheel/suspension and orientation differences accumulate before later contacts.
+`roof_trace.cpp MESH_DIRECTORY drive` traces the first four boosted-drive ticks,
+including wheel lengths, forces, pushback and contact points. Its scalar
+Zig/Clang build differs from the saved Windows reference by about 0.0000017
+rad/s on the first tick. The SIMD build now reproduces that first-tick velocity
+and angular velocity exactly. Required Clang flags are `-ffp-contract=off`,
+`-DBT_NO_SIMD_OPERATOR_OVERLOADS`, `-DBT_USE_SSE`, `-DBT_USE_SSE_IN_API`,
+`-DBT_USE_SIMD_VECTOR3` and `-include emmintrin.h`.
+
+`roof_trace_sse.exe MESH_DIRECTORY replay` reads 1200 whitespace-separated
+control rows from stdin: throttle, steer, pitch, yaw, roll, boost, jump,
+handbrake. Boolean fields use 0/1. It emits car and ball contacts around the
+first divergence windows, including witness points and contact lifetimes.
+This diagnostic has a small late-replay residual (about 0.014 uu final X),
+so it must not replace the immutable reference. Partial float32 orientation,
+ball-integration, wheel-ray and suspension-force probes were rejected and
+are not retained.
+
+An exact-start replay of the low bounce at ticks 739-749 matches native height
+and vertical velocity within 0.00001 per tick. Native floor contacts are fresh
+(lifetime 1), not persistent across these ticks; the earlier full-replay stop
+comes from accumulated incoming-state drift, not an incorrect floor threshold.
+The one-tick reference-seeded diagnostic has maximum velocity errors of
+0.02294 uu/s for the ball and 0.05832 uu/s for the car. These local results do
+not establish unseeded trajectory parity.
+
+For local investigation, `run_js.mjs --seed-reference FILE --seed-every N`
+restores exported transforms/velocities while retaining JS hidden histories.
+Seed inputs are validated against the scenario and output is marked diagnostic.
+Normal parity comparison rejects reference-seeded output. See
+`docs/skybot-diagnostic.md` for the replay command and limitations.
+
+Historical baseline before these repairs:
 
 - Movement audit: **62/69 scenarios pass** with unchanged tolerances. Coverage
 	includes speed/spin caps, analog/high-speed steering, reverse and diagonal

@@ -3,7 +3,7 @@ import { BoostTrail } from "../shared/boostTrail.js";
 import { cloneBallMesh, preloadBall } from "../shared/ball.js";
 import { preloadCars, isCarReady } from "../shared/carAssets.js";
 import { syncCarWheels, syncCarExhaust } from "../shared/carVisualCalibration.js";
-import { stepCarBall } from "../shared/carSim.js";
+import { SkybotDiagnostic } from "../shared/skybot.js";
 import { applyFreePlayBallControl } from "../shared/freePlayBallControls.js";
 import { disposeCarVisual, makeCar } from "../shared/car.js";
 import {
@@ -17,10 +17,12 @@ import {
   createSoccarBoostPads,
   getHitboxForCarId,
   makeBall,
-  makePhysCar,
+  makeSoccarKickoffCar,
   physToThree,
   resetBoostPads,
   stepBoostPads,
+  stepCar,
+  stepCarBall,
   syncHitboxHelper,
   withFreeAirRoll,
 } from "../shared/carPhysics.js";
@@ -54,8 +56,10 @@ const BALL_VIS_R = RL.BALL_RADIUS * ARENA_UU;
  */
 export class FreePlayMode {
   /** @param {object} ctx */
-  constructor(ctx) {
+  constructor(ctx, { diagnostics = true, training = false } = {}) {
     this.ctx = ctx;
+    this.diagnostics = diagnostics;
+    this.training = training;
     this.title = "Free Play";
     this.modeId = "free-play";
     this.root = new THREE.Group();
@@ -95,6 +99,7 @@ export class FreePlayMode {
       model.scale.setScalar(BALL_VIS_R);
       this.ballVisual.add(model);
       this.ballMesh.visible = false;
+      this.ballVisual.visible = Boolean(this.physBall);
     };
     preloadBall().then(upgradeBall);
 
@@ -119,17 +124,27 @@ export class FreePlayMode {
     this.hitboxHelper.visible = false;
     this.root.add(this.hitboxHelper);
 
-    const spawn0 = RL.SOCCAR_SPAWNS[4];
-    this.physCar = makePhysCar(
-      new THREE.Vector3(spawn0.x, spawn0.y, this.hitbox.restZ),
-      spawn0.yaw,
-      this.hitbox,
-    );
+    this.physCar = makeSoccarKickoffCar(this.hitbox);
     this.physCar.id = 1;
     this.physCar.boost = RL.BOOST_SPAWN;
     this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
     this.tick = 0;
     this.boosting = false;
+    this.bot = new SkybotDiagnostic();
+    this.botEnabled = false;
+    this.botLines = [0x39ff14, 0x83cdec].map(color => {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(601 * 3), 3));
+      geometry.setDrawRange(0, 0);
+      const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color, depthTest: false }));
+      line.frustumCulled = false;
+      line.visible = false;
+      this.root.add(line);
+      return line;
+    });
+    this.botTarget = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshBasicMaterial({ color: 0x39ff14, wireframe: true, depthTest: false }));
+    this.botTarget.visible = false;
+    this.root.add(this.botTarget);
 
     this.clock = new FixedStepClock();
     this.chase = new ChaseCamera();
@@ -211,6 +226,26 @@ export class FreePlayMode {
     if (arena) arena.visible = false;
 
     scene.add(this.root);
+    if (this.diagnostics) {
+    this.botPanel = document.createElement("div");
+    this.botPanel.className = "bot-diagnostic";
+    this.botPanel.innerHTML = '<label><input type="checkbox"> Skybot diagnostic</label><div class="bot-actions"><button type="button" class="btn-ghost" data-bot-reset>Restart run</button><button type="button" class="btn-ghost" data-bot-export disabled>Export replay</button></div><output aria-live="off"></output><small><span style="color:#39ff14">Predicted</span> / <span style="color:#83cdec">observed</span> · approximate model</small>';
+    hud.root.append(this.botPanel);
+    this.botPanel.querySelector("input").addEventListener("change", event => {
+      this.botEnabled = event.target.checked;
+      this.resetState();
+    });
+    this.botPanel.querySelector("[data-bot-reset]").addEventListener("click", () => this.resetState());
+    this.botPanel.querySelector("[data-bot-export]").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(this.bot.recording, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "skybot-recording.json";
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    }
     this._unbindHelp = onBindsChange(() => {
       if (hud.help) {
         hud.help.textContent = `${formatControlsHelp()} · Skip resets the ball`;
@@ -223,6 +258,11 @@ export class FreePlayMode {
     resetJumpTransitions();
     const { hud, scene, arena, camera } = this.ctx;
     this._stopped = true;
+    this.botPanel?.remove();
+    for (const visual of [...this.botLines, this.botTarget]) {
+      visual.geometry.dispose();
+      visual.material.dispose();
+    }
     hud.root.classList.remove("freeplay-hud");
     hud.root.classList.add("hidden");
     if (hud.alignMeter) hud.alignMeter.classList.add("hidden");
@@ -266,12 +306,7 @@ export class FreePlayMode {
     resetJumpTransitions();
     this.hitbox = getHitboxForCarId(this.carId);
     // RocketSim center kickoff slot (CAR_SPAWN_LOCATIONS_SOCCAR[4]).
-    const spawn = RL.SOCCAR_SPAWNS[4];
-    this.physCar = makePhysCar(
-      new THREE.Vector3(spawn.x, spawn.y, this.hitbox.restZ),
-      spawn.yaw,
-      this.hitbox,
-    );
+    this.physCar = makeSoccarKickoffCar(this.hitbox);
     this.physCar.id = 1;
     this.physCar.infiniteBoost = false;
     this.physCar.boost = RL.BOOST_SPAWN;
@@ -281,6 +316,10 @@ export class FreePlayMode {
     for (const action of FREEPLAY_BALL_ACTIONS) this.ballControlLatches[action].wasDown = isActionDown(action);
     this.tick = 0;
     this.boosting = false;
+    this.bot.reset();
+    if (this.botEnabled) this.bot.begin(this.physCar, this.physBall);
+    for (const line of this.botLines) line.visible = false;
+    this.botTarget.visible = false;
     resetBoostPads(this.pads);
     this.clock.reset();
     this.chase.invalidate();
@@ -301,10 +340,15 @@ export class FreePlayMode {
       this._exhaustCar = this.carMesh;
       this._exhaustScale = this.carMesh.scale.x;
     }
-    physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
-    this.ballVisual.position.copy(this.ballMesh.position);
+    this.ballMesh.visible = Boolean(this.physBall) && this.ballVisual.children.length === 0;
+    this.ballVisual.visible = Boolean(this.physBall);
+    this.ballShadow.visible = Boolean(this.physBall);
+    if (this.physBall) {
+      physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
+      this.ballVisual.position.copy(this.ballMesh.position);
+      this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1);
+    }
     this.updateShadow(this.carShadow, this.carMesh.position, this.physCar.hitbox.size[1] * ARENA_UU * 1.2, this.physCar.hitbox.size[0] * ARENA_UU * 1.2);
-    this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1);
     // Project the car-forward vector onto the ground for a correctly oriented
     // footprint, without altering the chase camera or simulation orientation.
     const projectedForward = this.shadowForward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
@@ -350,10 +394,12 @@ export class FreePlayMode {
   /** @param {number} dt */
   _stepOnce(dt, input = readControls()) {
     this.physCar.dodgeDeadzone = getPad().dodgeDeadzone;
-    stepCarBall(this.physCar, this.physBall, withFreeAirRoll(input, this.physCar), this.tick, dt);
+    const controls = this.botEnabled ? this.bot.controls(this.physCar, this.physBall) : withFreeAirRoll(input, this.physCar);
+    const contact = this.physBall ? stepCarBall(this.physCar, this.physBall, controls, this.tick, dt) : (stepCar(this.physCar, controls, dt), null);
     stepBoostPads(this.pads, this.physCar, dt);
+    if (this.botEnabled) this.bot.observe(this.physCar, this.physBall, controls, Boolean(contact));
     this.boosting = Boolean(this.physCar.isBoosting);
-    const spin = physToThree(this.physBall.omega, this.ballSpin).negate();
+    const spin = this.physBall ? physToThree(this.physBall.omega, this.ballSpin).negate() : this.ballSpin.set(0, 0, 0);
     if (spin.lengthSq() > 1e-10) {
       const angle = spin.length() * dt;
       this.ballSpinRotation.setFromAxisAngle(spin.normalize(), angle);
@@ -362,11 +408,14 @@ export class FreePlayMode {
     this.tick += 1;
 
     syncCarWheels(this.carMesh, this.physCar, dt);
+    this.onPhysicsStep?.(dt, controls, contact);
   }
 
   pollUtilityKeys() {
     for (const action of FREEPLAY_BALL_ACTIONS) {
+      if (this.training) break;
       if (!pollActionEdge(action, this.ballControlLatches[action])) continue;
+      if (this.botEnabled) continue;
       this.physBall = applyFreePlayBallControl(action, this.physCar, this.physBall);
       this.ballVisual.quaternion.identity();
       this.ctx.hud.status.textContent = BIND_LABELS[action];
@@ -374,8 +423,9 @@ export class FreePlayMode {
     const nt = isActionDown("newTarget");
     if (nt && !this.spaceLatch) {
       this.spaceLatch = true;
-      this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
-      this.ctx.hud.status.textContent = "Ball reset to centre";
+      if (this.botEnabled || this.training) this.resetState();
+      else this.physBall = makeBall(new THREE.Vector3(0, 0, RL.BALL_REST_Z));
+      if (!this.training) this.ctx.hud.status.textContent = "Ball reset to centre";
     }
     if (!nt) this.spaceLatch = false;
 
@@ -402,12 +452,12 @@ export class FreePlayMode {
   updateCamera(dt, input = readControls()) {
     const camCfg = getCamera();
     // Hold mode: effective ball cam is the live button state (avoid storage lag).
-    const ballCam =
+    const ballCam = Boolean(this.physBall) && (
       (camCfg.ballCamMode ?? "toggle") === "hold"
         ? isActionDown("toggleBallCam")
-        : Boolean(camCfg.ballCam);
+        : Boolean(camCfg.ballCam));
     // Keep feeding the ball while TransitionSpeed blends in/out of ball cam.
-    const feedBall = ballCam || this.chase.ballCamBlend > 0.001;
+    const feedBall = Boolean(this.physBall) && (ballCam || this.chase.ballCamBlend > 0.001);
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
     applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
@@ -446,6 +496,7 @@ export class FreePlayMode {
     this.updateBoostMeter();
     this.trail.update(this.carMesh, this.boosting, dt);
     this.updateCamera(dt, input);
+    this.updateBotDiagnostic();
 
     const speed = this.physCar.vel.length();
     const state = this.physCar.onGround
@@ -458,6 +509,33 @@ export class FreePlayMode {
     const flip = canFlipOrJump(this.physCar) ? "flip✓" : "flip✗";
     const ss = this.physCar.isSupersonic ? " · SS" : "";
     const status = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}${ss}`;
-    if (hud.status.textContent !== status) hud.status.textContent = status;
+    if (this.training) this.updateDrillStatus?.();
+    else if (hud.status.textContent !== status) hud.status.textContent = status;
+  }
+
+  updateBotDiagnostic() {
+    if (!this.botPanel) return;
+    this.botPanel.querySelector("[data-bot-export]").disabled = !this.bot.recording?.scenarios[0].ticks;
+    if (!this.botEnabled) {
+      this.botPanel.querySelector("output").textContent = "Manual control";
+      return;
+    }
+    const paths = [this.bot.prediction, this.bot.actual];
+    paths.forEach((points, index) => {
+      const line = this.botLines[index];
+      const attribute = line.geometry.getAttribute("position");
+      points.slice(0, 601).forEach((point, pointIndex) => attribute.setXYZ(pointIndex, point[0] * ARENA_UU, point[2] * ARENA_UU, point[1] * ARENA_UU));
+      attribute.needsUpdate = true;
+      line.geometry.setDrawRange(0, Math.min(points.length, 601));
+      line.visible = true;
+    });
+    const target = this.bot.target;
+    this.botTarget.visible = Boolean(target);
+    if (target) this.botTarget.position.set(target[0] * ARENA_UU, target[2] * ARENA_UU, target[1] * ARENA_UU);
+    const contact = this.bot.lastContact;
+    const error = this.bot.error == null ? "—" : `${this.bot.error.toFixed(1)} uu`;
+    const timing = contact?.timingError == null ? "—" : `${(contact.timingError * 1000).toFixed(0)} ms`;
+    const miss = contact?.positionError == null ? "—" : `${contact.positionError.toFixed(1)} uu`;
+    this.botPanel.querySelector("output").textContent = `Ball error ${error} · Run ${(this.bot.tick / 120).toFixed(1)} s\nFirst contact ${contact ? `${contact.time.toFixed(2)} s` : "pending"} · Timing Δ ${timing} · Position Δ ${miss}${this.bot.tick >= 7200 ? "\nRecording full (60 s)" : ""}`;
   }
 }

@@ -10,9 +10,10 @@ import { fileURLToPath } from "node:url";
 import * as THREE from "three";
 import { RL, axes, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
 import { makeBall, stepBall } from "../../src/shared/rl-physics.js";
-import { RS } from "../../src/shared/carSim.js";
+import { RS, setCarOrientation } from "../../src/shared/carSim.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
 import { createSoccarBoostPads, stepBoostPads } from "../../src/shared/boostPads.js";
+import { validatePair } from "./trajectory.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCENARIOS = path.join(HERE, "scenarios.json");
@@ -54,31 +55,7 @@ function vecList(v) {
 
 /** Match RocketSim Angle / RotMat: yaw, pitch, roll about Z, Y-after-yaw? Angle.as_rot_mat. */
 function setOrientation(car, yaw, pitch, roll) {
-  yaw = Math.fround(yaw);
-  pitch = Math.fround(pitch);
-  roll = Math.fround(roll);
-  // RocketSim Angle YPR → RotMat (f, right, up). `axes().l` is local +Y
-  // = car right, so pass right as the Y column (not -right; that would be improper).
-  const cy = Math.cos(yaw);
-  const sy = Math.sin(yaw);
-  const cp = Math.cos(pitch);
-  const sp = Math.sin(pitch);
-  const cr = Math.cos(roll);
-  const sr = Math.sin(roll);
-
-  const forward = new THREE.Vector3(cp * cy, cp * sy, sp);
-  const right = new THREE.Vector3(
-    cy * sp * sr - sy * cr,
-    sy * sp * sr + cy * cr,
-    -cp * sr,
-  );
-  const up = new THREE.Vector3(
-    -cy * sp * cr - sy * sr,
-    -sy * sp * cr + cy * sr,
-    cp * cr,
-  );
-  car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(forward, right, up));
-  car.q.normalize();
+  setCarOrientation(car, yaw, pitch, roll);
 }
 
 function scenarioMode(scenario, initial) {
@@ -157,7 +134,7 @@ function prepareAirborne(car, initial) {
   car.omega.set(...initial.ang_vel);
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
-  car.onGround = false;
+  car.onGround = true;
   car.wheelsContact = false;
   car.numWheelsInContact = 0;
   // Reference set_state replaces gameplay state after its warmup tick.
@@ -266,7 +243,7 @@ function dumpJsConstants() {
   };
 }
 
-function runScenario(scenario, defaults) {
+function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
   const initial = deepMerge(defaults.initial ?? {}, scenario.initial);
   const ticks = scenario.ticks;
   const mode = scenarioMode(scenario, initial);
@@ -284,6 +261,7 @@ function runScenario(scenario, defaults) {
     return { id: scenario.id, description: scenario.description ?? "", entity: "ball", engine: "rl-physics.js", game_mode: mode, tick_rate: 1 / RL.DT, tick_time: RL.DT, ticks, initial, frames };
   }
   const car = initCar(initial);
+  car.captureArenaContacts = !!seedReference;
   car.arenaCollisions = mode !== "void";
   const pads = mode === "soccar" ? createSoccarBoostPads() : [];
   if (initial.on_ground) prepareGround(car, initial, settleTicks, pads);
@@ -297,6 +275,7 @@ function runScenario(scenario, defaults) {
   }
   const capture = (tick, controls) => {
     const frame = snapshot(car, tick, controls);
+    if (seedReference) frame.arena_contacts = car.lastArenaContacts ?? [];
     if (ball) frame.ball = { pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega) };
     return frame;
   };
@@ -305,6 +284,21 @@ function runScenario(scenario, defaults) {
   frames.push(capture(0, ctrl0));
 
   for (let tick = 0; tick < ticks; tick++) {
+    if (seedReference && tick % seedEvery === 0) {
+      const seed = seedReference.frames[tick];
+      car.pos.fromArray(seed.pos);
+      car.vel.fromArray(seed.vel);
+      car.omega.fromArray(seed.ang_vel);
+      car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+        ...["forward", "right", "up"].map(axis => new THREE.Vector3(...seed.rot[axis])),
+      )).normalize();
+      car.boost = seed.boost;
+      if (ball) {
+        ball.pos.fromArray(seed.ball.pos);
+        ball.vel.fromArray(seed.ball.vel);
+        ball.omega.fromArray(seed.ball.ang_vel);
+      }
+    }
     const ctrl = controlsAtTick(tick, defaults, scenario);
     if (ball) stepCarBall(car, ball, ctrl, tick, RL.DT);
     else stepCar(car, ctrl, RL.DT);
@@ -322,6 +316,7 @@ function runScenario(scenario, defaults) {
     ticks,
     initial,
     ball_initial: ballInitial,
+    ...(seedReference ? { diagnostic_reference_seed_interval: seedEvery } : {}),
     frames,
   };
 }
@@ -333,6 +328,8 @@ function parseArgs(argv) {
     if (a === "--scenarios") args.scenarios = argv[++i];
     else if (a === "--out") args.out = argv[++i];
     else if (a === "--only") args.only.push(argv[++i]);
+    else if (a === "--seed-reference") args.seedReference = argv[++i];
+    else if (a === "--seed-every") args.seedEvery = Number(argv[++i]);
   }
   return args;
 }
@@ -341,6 +338,10 @@ const args = parseArgs(process.argv.slice(2));
 const data = JSON.parse(await readFile(args.scenarios, "utf8"));
 const scenarioHash = createHash("sha256").update(await readFile(args.scenarios)).digest("hex");
 const defaults = data.defaults ?? {};
+const seedReference = args.seedReference ? JSON.parse(await readFile(args.seedReference, "utf8")) : null;
+if (seedReference && (!Number.isInteger(args.seedEvery ?? 1) || (args.seedEvery ?? 1) < 1)) {
+  throw new Error("--seed-every must be a positive integer");
+}
 let scenarios = data.scenarios;
 if (args.only.length) {
   const wanted = new Set(args.only);
@@ -360,7 +361,27 @@ await writeFile(
 
 const index = [];
 for (const scenario of scenarios) {
-  const result = runScenario(scenario, defaults);
+  if (seedReference && (seedReference.id !== scenario.id || seedReference.frames.length !== scenario.ticks + 1)) {
+    throw new Error("Seed reference must match the selected scenario ID and tick count");
+  }
+  if (seedReference) {
+    if (scenario.entity === "ball") throw new Error("Reference seeding supports car scenarios only");
+    const initial = deepMerge(defaults.initial ?? {}, scenario.initial);
+    validatePair(seedReference, {
+      ...seedReference,
+      id: scenario.id,
+      game_mode: scenarioMode(scenario, initial),
+      ticks: scenario.ticks,
+      scenario_sha256: scenarioHash,
+      initial,
+      ball_initial: scenario.ball ?? null,
+      frames: seedReference.frames.map((frame, tick) => ({
+        ...frame,
+        controls: controlsAtTick(Math.max(0, tick - 1), defaults, scenario),
+      })),
+    });
+  }
+  const result = runScenario(scenario, defaults, seedReference, args.seedEvery ?? 1);
   result.scenario_sha256 = scenarioHash;
   const fileName = `${scenario.id}.json`;
   await writeFile(

@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test tools/physics-compare",
+    "bot:record": "node tools/physics-compare/record-skybot.mjs",
+    "bot:movement": "node tools/physics-compare/movement-bot.mjs",
     "physics:ball": "node tools/python-runner.mjs tools/physics-compare/generate_rocketsim.py --scenarios tools/physics-compare/ball-scenarios.json --out tools/physics-compare/out/ball/rocketsim && node tools/physics-compare/run_js.mjs --scenarios tools/physics-compare/ball-scenarios.json --out tools/physics-compare/out/ball/js && node tools/physics-compare/compare.mjs --rs tools/physics-compare/out/ball/rocketsim --js tools/physics-compare/out/ball/js --out tools/physics-compare/out/ball/report.md",
     "physics:meshes": "node tools/python-runner.mjs tools/physics-compare/setup_meshes.py",
     "physics:dimensions": "node tools/physics-compare/mesh-dimensions.mjs && npm run physics:parity",
@@ -20,6 +22,7 @@
     "physics:signs": "node tools/orientation-signs.mjs"
   },
   "dependencies": {
+    "lucide": "^1.49.0",
     "three": "^0.170.0"
   },
   "devDependencies": {

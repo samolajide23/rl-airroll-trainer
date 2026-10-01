@@ -49,6 +49,10 @@ shot placement targets stay within the mechanic's progression. Catalog goals
 describe the curriculum, not additional implemented gameplay stages.
 
 ### Free Play
+Free Play includes a toggleable Skybot-derived driving diagnostic, independent
+ball prediction overlays, contact telemetry and RocketSim replay export.
+See [Skybot diagnostic](docs/skybot-diagnostic.md) for scope, licensing and replay commands.
+
 | Mode | What it trains |
 |---|---|
 | **Arena** | Drive a soccar field — ground, jump, boost, air roll, ball |

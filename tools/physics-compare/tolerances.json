@@ -1,9 +1,9 @@
 {
-  "notes": "Regression budgets, not exact parity. Floor scrapes and wall jumps retain explicit measured approximation budgets. Goal-ramp multi-contact residual is <=0.2 uu position and <=4 uu/s velocity; do not mistake that allowance for exact parity.",
-  "defaults": { "pos_max": 0.2, "vel_max": 0.5, "omega_max": 0.01, "fwd_max_deg": 0.05, "up_max_deg": 0.05, "boost_max": 0.01, "air_time_max": 0.03, "ground_mismatch_ticks": 1 },
+  "notes": "Numeric regression budgets tightened another tenfold (100x stricter than the original defaults); zero ground-state mismatches allowed. These are accuracy gates, not exact-parity certification. Explicit car-contact exceptions are also 100x stricter. Ball-goal velocity exception is unchanged; dedicated ball/contact budget files are separate.",
+  "defaults": { "pos_max": 0.002, "vel_max": 0.005, "omega_max": 0.0001, "fwd_max_deg": 0.0005, "up_max_deg": 0.0005, "boost_max": 0.0001, "air_time_max": 0.0003, "ground_mismatch_ticks": 0 },
   "scenarios": {
     "ball_goal": { "vel_max": 4 },
-    "ground_flip_forward": { "pos_max": 1.7, "vel_max": 10, "omega_max": 0.75, "fwd_max_deg": 1.3, "up_max_deg": 1.3 },
-    "ground_jump_into_wall": { "pos_max": 8.5, "vel_max": 30, "omega_max": 1.2, "fwd_max_deg": 1, "up_max_deg": 1.3 }
+    "ground_flip_forward": { "pos_max": 0.017, "vel_max": 0.1, "omega_max": 0.0075, "fwd_max_deg": 0.013, "up_max_deg": 0.013 },
+    "ground_jump_into_wall": { "pos_max": 0.085, "vel_max": 0.3, "omega_max": 0.012, "fwd_max_deg": 0.01, "up_max_deg": 0.013 }
   }
 }

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drill Design Studies | AIRLAB</title>
+  <link rel="stylesheet" href="./drills.css">
+</head>
+<body>
+  <header class="study-bar"><a href="/">Return to trainer</a><strong>DRILL PAGE / 15 DESIGN STUDIES</strong><span>Concept preview / Sample data</span></header>
+  <div class="gallery"><label>Design <select id="design-select" aria-label="Design"></select></label><button id="previous" class="icon" title="Previous design" aria-label="Previous design"><i data-lucide="chevron-left"></i></button><button id="next" class="icon" title="Next design" aria-label="Next design"><i data-lucide="chevron-right"></i></button><button id="favourite" title="Shortlist this design"><i data-lucide="star"></i><span>Shortlist</span></button><span id="direction"></span><button id="compare"><i data-lucide="layout-grid"></i>All designs</button></div>
+  <section id="comparison" hidden aria-label="All design directions"></section>
+  <main id="preview"></main>
+  <dialog id="settings"><form method="dialog"><header><h2>Shared Profile</h2><button class="icon" aria-label="Close settings" title="Close"><i data-lucide="x"></i></button></header><p>Training uses your existing car, camera and controls. These concepts do not save a separate drill profile.</p><dl><div><dt>Car</dt><dd>Octane</dd></div><div><dt>Camera</dt><dd>Current trainer profile</dd></div><div><dt>Controls</dt><dd>Current trainer bindings</dd></div></dl><a href="/">Open trainer</a></form></dialog>
+  <script type="module" src="./drills.js"></script>
+</body>
+</html>

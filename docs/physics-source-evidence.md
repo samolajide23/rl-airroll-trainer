@@ -1,5 +1,238 @@
 # Physics source evidence
 
+## Goal-wall finite contacts and split rotation
+
+Pinned RocketSim/Bullet tracing shows two chassis rows at replay tick 1093:
+a 1.261425 uu positive-gap triangle contact and a -7.037735 uu penetrating
+contact. The browser previously retained only the deepest row. A finite
+box-triangle GJK query now supplies the missing separated witness. Internal-edge
+adjustment changes the normal but must not change the raw-normal margin offset
+of the car-side witness. Its position matches the native trace within 0.001 uu.
+
+Bullet `btSolverBody::writebackVelocityAndTransform` scales split turn velocity
+by `m_splitImpulseTurnErp`, whose pinned default is 0.1. Applying that factor to
+wall rows resolves the tick-1093 orientation discrepancy. The exact-state
+regression measures velocity error 0.05832 uu/s, angular-velocity error
+0.0001412 rad/s, and forward/up vector error below 0.00001.
+
+The current 73 movement and five strict contact gates pass unchanged budgets.
+The immutable bot replay still fails: maximum car position error 324.163647 uu,
+velocity error 521.221890 uu/s, and ball position error 61.021485 uu. The remaining
+penetrating witness is approximate; exact native float32 solver parity and the
+full bot port are not established. Reference-seeded diagnostics retain JS hidden
+history and are explicitly rejected by ordinary parity comparisons. These
+results supersede the older roof and movement failures recorded below.
+
+## Force-integrated friction direction
+
+The pinned Bullet `getVelocityInLocalPointNoDelta` includes external force and
+torque impulses when choosing friction direction. Restitution remains
+pre-force; the friction RHS includes external linear force but excludes external
+angular torque. The chassis solver now follows that distinction.
+
+At ceiling tick 38, exact-state velocity error falls from 0.503268 to
+0.00009444 uu/s and angular error to 0.000006023 rad/s. A new regression pins
+that impact, and the ceiling endpoint checks are tightened. The unchanged
+movement gate now passes 72 of 73 cases: ceiling passes, while roof recovery
+still fails with maximum position/velocity errors 18.585278 uu / 218.182070 uu/s.
+Its early physical impulses match closely, but cached split penetration
+correction first diverges at tick 31. Removing roof persistence matches that
+tick but worsens full recovery, so that probe was reverted.
+
+Five strict contact cases, production build and editor checks pass. The
+immutable bot replay still fails with maximum car-position error 338.338638 uu.
+References, recorded controls and full-trajectory budgets remain unchanged.
+The older pre-force friction-direction description below is superseded by
+this source-grounded correction; exact manifold parity remains unresolved.
+
+## Shared chassis inertia correction
+
+The chassis now calculates inverse inertia from the same effective safe-margin
+box dimensions as the deferred car-ball solver. Inverted-floor and ceiling
+support points use those dimensions consistently. All six presets have a direct
+inertia regression. This fixes the four failing preset landings and powerslide
+release without changing reference trajectories, controls or movement budgets.
+
+The final movement gate passes 71 of 73 cases. Roof recovery remains outside
+budget (21.700 uu maximum position error, 223.105 uu/s velocity error), as does
+ceiling impact (0.328 uu, 0.749 uu/s). The ceiling matches through its first
+impact; divergence begins on the next contact tick. The previous ceiling unit
+test asserted a JS-only snapshot; it now checks a recorded RocketSim endpoint
+envelope separately from the unchanged, stricter full-trajectory gate.
+
+All 46 focused tests, five freshly replayed strict car-ball cases, editor
+diagnostics and production build pass. The immutable bot replay still fails
+with maximum car-position error 338.458 uu. Roof generation-gap persistence,
+partial nonmerging four-slot reduction and ceiling persistence probes did not
+improve the full trajectories and were removed. The pinned RocketSim fork
+disables nearby-point replacement in `getCacheEntry`; implementing that alone
+without matching insertion/refresh order did not establish manifold parity.
+Earlier sections below describe the preceding revision's measurements.
+
+## Latest arena-contact validation
+
+Mesh-local internal-edge metadata removes the goal-ramp tick-907 ball impulse
+error: exact-state velocity error falls from 20.632 to 0.000976 uu/s. Three
+reference-pinned seam regressions cover the ramp and goal roof. The production
+compact-data transform now retains the mesh boundary export as well.
+
+Rounded inner-core plus spherical-margin corner queries reject the false
+goal-wall contact at tick 1092. Exact-state velocity error falls from 907.856
+to 0.0000102 uu/s without rejecting legitimate positive-gap contacts globally.
+This remains a bounded corner-query approximation, not full box-triangle GJK.
+
+Inverted floor contacts now use signed outer-box plane support, pre-force
+restitution/friction directions, retained anchors without warm starting, and
+0.1 split-turn ERP. The first roof impact is within 0.034 uu/s and 0.0042 rad/s
+of RocketSim. Tick-30 velocity error falls from 21.043 to 1.774 uu/s. Full roof
+recovery maximum position error improves from 36.332 to 20.863 uu, but angular
+and later recovery errors remain large. This does not establish plane-manifold
+parity, and the existing helper's reduction differs from Bullet's algorithm.
+
+Validation: 45 focused tests, ten ball gates, five strict car-ball gates, editor
+diagnostics and production build pass. The matching 73-case movement gate still
+fails seven cases: four preset landings, roof recovery, ceiling impact and
+powerslide release. The immutable ten-second bot replay still fails, with
+maximum car/ball position errors 338.961/61.008 uu. References, controls and
+existing gate budgets were not changed. Earlier sections record prior revisions.
+
+## Safe-margin contact correction
+
+The pinned RocketSim Bullet fork subtracts the initial 2 uu box margin before
+calling `setSafeMargin`. Its base `setMargin` is nonvirtual and only replaces
+the margin; the derived box setter that preserves outer dimensions is not
+called from that base helper. Thus the effective half-extents are
+`nominalHalf - 2 + min(2, minimumHalf * 0.1)`. For Octane this reduces each
+full dimension by 0.13409 uu. The box inertia uses those effective dimensions.
+See the pinned
+[box constructor](https://raw.githubusercontent.com/mtheall/RocketSim/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/BulletCollision/CollisionShapes/btBoxShape.cpp),
+[base helper](https://raw.githubusercontent.com/mtheall/RocketSim/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/BulletCollision/CollisionShapes/btConvexInternalShape.h),
+and [box setter](https://raw.githubusercontent.com/mtheall/RocketSim/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/BulletCollision/CollisionShapes/btBoxShape.h).
+
+The deferred car-ball solver now uses these inner extents and inertia. All five
+coupled scenarios pass unchanged contact-specific budgets, including the three
+previously failing orientation cases. Maximum ball-position error is 0.000959
+uu and maximum ball-velocity error is 0.002625 uu/s across these fixtures.
+A first-hit angular-response regression detects the old nominal-size error.
+Shared car-arena inertia remains unchanged and is not certified by this repair.
+
+Ball-arena contact range also uses 1.905 uu rather than 2 uu, removing a
+premature floor rebound at replay tick 635; the reference rebounds at 636.
+With both repairs, replay ball-velocity errors at ticks 523 and 609 are
+0.099850 and 0.483729 uu/s. The first remaining car-velocity gate failure is
+tick 812, a grounded car-ball touch after low-speed floor-bounce drift.
+Interleaving accumulated ball-arena rows with car-ball iterations further
+reduces the exact-state tick-812 ball-velocity error from about 60 to 0.260
+uu/s, and car-velocity error to 0.061 uu/s. A regression includes preceding
+wheel state and checks this simultaneous grounded response. The low bounces
+match the reference when restored from its exact tick-636 state; their earlier
+full-replay mismatch is accumulated drift, not a demonstrated restitution bug.
+
+The complete 1,201-frame replay still fails: maximum car/ball position errors
+are 329.788/68.057 uu. Worst car-position error increases, so this is not a
+uniform improvement.
+The first car-velocity error above 0.5 uu/s moves to tick 836. Persistent
+contacts, remaining simultaneous chassis constraints and floating-point
+differences remain unresolved. Full-history reference-state restoration shows
+ticks 836 and 900 have local velocity errors below 0.0001 uu/s: their replay
+failures are accumulated drift. A short wheel warmup falsely implicated tick
+1000; preserving persistent suspension pushback reduces its local car error
+from 0.825 to 0.0295 uu/s.
+
+The largest isolated chassis error is tick 1092: the corner-based arena solver
+responds at 0.864 uu positive goal-wall clearance, producing 907.856 uu/s error.
+Rejecting all positive chassis clearance fixes that tick but worsens roof
+recovery to 74.264 uu, so that probe was removed. Revisited chassis constraint
+iterations did not measurably change these trajectories and were also removed.
+The largest isolated ball error is tick 907 at the goal ramp (20.632 uu/s).
+These remain open contact-generation and manifold defects, not certified fixes.
+Earlier measurements below
+describe prior revisions, not the current contact-suite status.
+
+## Repeated-touch boundary correction
+
+The tick-576 extra kick was a false positive-distance contact, not an incorrect
+cooldown. Pinned Bullet's dispatcher enables relative contact-breaking thresholds:
+the threshold is 0.02 times the smaller shape angular-motion disc. RocketSim's
+sphere bounding-radius override adds 0.08 BT (4 uu), so the Octane/ball pair uses
+1.905 uu, not the previously hardcoded 2 uu. The car disc includes its box
+half-diagonal and local hitbox offset. See the pinned
+[dispatcher](https://raw.githubusercontent.com/mtheall/RocketSim/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/BulletCollision/CollisionDispatch/btCollisionDispatcher.cpp)
+and [shape calculation](https://raw.githubusercontent.com/mtheall/RocketSim/2da51b1dac7b8127127613a5ff30e490bdd70dd8/libsrc/bullet3-3.24/BulletCollision/CollisionShapes/btCollisionShape.cpp).
+
+Using that shape-relative range removes the spurious third-touch follow-up.
+With identical recorded controls, tick-576 ball velocity error falls from
+33.576817 to 0.584802 uu/s; tick-609 error falls from 100.070946 to 2.017775 uu/s.
+Tests cover acceptance at 1.904 uu, rejection at 1.906 uu, and no extra impulse
+at a separating 1.95 uu gap. All 39 focused tests and the production build pass.
+The coupled suite retains its same three orientation failures; all five ball
+trajectories meet unchanged budgets. Later full-replay divergence remains;
+this correction does not establish exact overall parity.
+
+## Second-touch callback timing correction
+
+The separate instrumented Skybot reference now records touch-callback positions,
+velocities and ball-hit telemetry. All 1,201 trajectory frames remain numerically
+identical to the original reference. At tick 523 the callback sees the car after
+wheel impulses and the damped ball before gravity/solver force integration.
+The ball-only extra impulse now uses that phase, while physical contact still
+uses force-integrated velocities. With measured callback inputs, JS extra
+velocity agrees with RocketSim within 0.00002 uu/s.
+
+The isolated second-touch fixture previously omitted prior wheel parameters.
+Initializing them from the preceding reference velocity reduces its ball velocity
+error to approximately 0.0043 uu/s; its unchanged 0.5 uu/s assertion now passes
+without a TODO. The unchanged-control full replay improves tick-523 velocity
+error from 5.672806 to 0.319131 uu/s. The third touch now occurs on reference
+tick 574 rather than 575, with ball position error 0.227262 uu at that tick.
+All 38 focused physics, bot, Free Play ball and contact-manifold tests pass.
+
+Exact parity is not established. The full replay still fails strict budgets
+(maximum car/ball position errors 331.828/204.935 uu), and the existing coupled
+suite remains 2/5 overall because three car-orientation errors exceed 0.05
+degrees. All five coupled ball trajectories still meet their existing budgets.
+No geometry, physical parameters, recorded controls or comparison budgets changed.
+
+## Dimension audit and next movement target
+
+Re-ran the installed RocketSim reference checks: 310 assertions pass, including
+all six car hitbox sizes, offsets, wheel radii and suspension configuration, and
+the 91.25 uu ball collision radius. All 8,020 arena triangles are bit-identical
+to hash-verified fixtures. Twelve arena/boost tests and four car-calibration
+tests pass. These results are offline reference verification, not confirmation
+against a running Rocket League match.
+
+| Surface | Checked dimensions (uu) | Evidence and limits |
+| --- | --- | --- |
+| Octane collision box | 120.507 x 86.6994 x 38.6591; offset 13.8757, 0, 20.755 | Installed RocketSim CarConfig; all six presets checked |
+| Car artwork | Wheelbase calibration, independent tire radii | Fennec/Dominus export measurements; Octane approximate; body silhouettes are not certified |
+| Ball | Collision diameter 182.5; rendered model normalized to the same diameter | Installed RocketSim radius; normalization inspected, not a fresh live asset measurement |
+| Standard arena | Width 8192, length 10240, ceiling 2048 | Hash-verified collision triangles and render-scale tests |
+| Goals | Width 1785.51, height 642.775, depth 880 | Local constants and collision/render fixtures |
+| Boost pickup | Small/big cylinder radii 144/208, height 95; locked box radii 120/160, height 64 | Pinned reference constants and pickup behavior tests, not live boundary sweeps |
+| Boost layout/artwork | 28 small + 6 big; visual radii 48/84 | All locations checked; visible discs are explicitly approximate |
+
+The [RLBot game-data schema](https://raw.githubusercontent.com/RLBot/flatbuffers-schema/main/schema/gamedata.fbs)
+exposes player hitbox dimensions/offset, ball collision shape, goal width/height,
+and boost locations/types. Despite its descriptive comments, BoostPad has no
+pickup radius or height fields. FieldInfo has no full arena collision mesh or
+rendered asset bounds. Those require collision probes or independent mesh/asset
+measurements. No RocketLeague or RLBotServer process was found during this audit;
+no live packets were captured. A future live check should save GamePacket and
+FieldInfo for each equipped body on a standard soccar map with default mutators,
+then compare those exposed fields before performing pickup/wall boundary sweeps.
+
+The same-input Skybot replay localizes the next movement discrepancy to the
+second touch, tick 523: ball position error is only 0.081469 uu, but velocity error
+rises from 0.059397 to 5.672806 uu/s. By tick 573 it produces 2.355488 uu position
+error and delays the third touch by one tick. Before that third touch the car
+position error remains 0.039489 uu. A new regression confirms that the unchanged
+solver detects the third touch from the exact RocketSim pre-contact state.
+This rules out a missing contact at that reference state, but does not certify
+its impulse accuracy. Next investigate the second-touch normal/friction/extra
+impulse response, not larger hitboxes or a wider contact threshold. No physics
+parameters or tolerance budgets were changed in this audit.
+
 ## Further offline contact probes
 
 Bullet 3.24 convex-plane collision begins with a supporting vertex and can add

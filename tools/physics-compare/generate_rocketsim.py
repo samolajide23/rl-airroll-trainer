@@ -185,6 +185,13 @@ def snapshot(car: rs.Car, tick: int, controls: dict[str, Any]) -> dict[str, Any]
         "boost": float(st.boost),
         "on_ground": bool(st.is_on_ground),
         "air_time": float(st.air_time),
+        "ball_hit": {
+            "valid": bool(st.ball_hit_info.is_valid),
+            "tick": int(st.ball_hit_info.tick_count_when_hit),
+            "extra_tick": int(st.ball_hit_info.tick_count_when_extra_impulse_applied),
+            "extra_vel": vec_list(st.ball_hit_info.extra_hit_vel),
+            "point": vec_list(st.ball_hit_info.relative_pos_on_ball),
+        },
     }
 
 
@@ -367,12 +374,35 @@ def run_scenario(
         car.set_state(state)
 
     ball_initial = scenario.get("ball")
+    car_only = bool(scenario.get("car_only", False))
+    if car_only and ball_initial:
+        raise ValueError("Car-only scenarios cannot include a ball")
+    parked_ball = rs.BallState() if car_only else None
+    if parked_ball is not None:
+        parked_ball.pos = rs.Vec(0, 0, 10000)
+        arena.ball.set_state(parked_ball)
     if ball_initial:
         state = rs.BallState()
         state.pos = rs.Vec(*ball_initial["pos"])
         state.vel = rs.Vec(*ball_initial.get("vel", [0, 0, 0]))
         state.ang_vel = rs.Vec(*ball_initial.get("ang_vel", [0, 0, 0]))
         arena.ball.set_state(state)
+
+    touch_callbacks: list[dict[str, Any]] = []
+    if ball_initial:
+        def capture_touch(arena: rs.Arena, car: rs.Car, data: Any) -> None:
+            car_state = car.get_state()
+            ball_state = arena.ball.get_state()
+            touch_callbacks.append({
+                "tick": tick + 1,
+                "car_pos": vec_list(car_state.pos),
+                "car_vel": vec_list(car_state.vel),
+                "car_ang_vel": vec_list(car_state.ang_vel),
+                "ball_pos": vec_list(ball_state.pos),
+                "ball_vel": vec_list(ball_state.vel),
+                "ball_ang_vel": vec_list(ball_state.ang_vel),
+            })
+        arena.set_ball_touch_callback(capture_touch)
 
     def capture(tick: int, controls: dict[str, Any]) -> dict[str, Any]:
         frame = snapshot(car, tick, controls)
@@ -388,6 +418,8 @@ def run_scenario(
     for tick in range(ticks):
         ctrl = controls_at_tick(tick, defaults, scenario)
         car.set_controls(make_controls(ctrl))
+        if parked_ball is not None:
+            arena.ball.set_state(parked_ball)
         arena.step(1)
         frames.append(capture(tick + 1, ctrl))
 
@@ -402,6 +434,8 @@ def run_scenario(
         "ticks": ticks,
         "initial": initial,
         "ball_initial": ball_initial,
+        "car_only": car_only,
+        "touch_callbacks": touch_callbacks,
         "frames": frames,
     }
 

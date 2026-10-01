@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { SOCCAR_TRI_COUNT, SOCCAR_TRIS } from "./soccarMeshData.js";
+import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS } from "./soccarMeshData.js";
 
 /**
  * Soccar arena collision — RocketSim SOCCAR layout:
@@ -306,16 +306,6 @@ function closestOnTri(px, py, pz, tri, outPoint, outNormal) {
   );
   if (outNormal.lengthSq() < EPS) outNormal.set(0, 0, 1);
   else outNormal.normalize();
-  // Soccar CMF winding faces playable space. Orient toward arena centre so
-  // points under ramps (inside the solid) get an outward normal, not a
-  // toward-query flip that points deeper into the wedge.
-  const toCenterX = -outPoint.x;
-  const toCenterY = -outPoint.y;
-  const toCenterZ = CEILING / 2 - outPoint.z;
-  if (outNormal.x * toCenterX + outNormal.y * toCenterY + outNormal.z * toCenterZ < 0) {
-    outNormal.negate();
-  }
-
   const ex = px - outPoint.x;
   const ey = py - outPoint.y;
   const ez = pz - outPoint.z;
@@ -333,6 +323,61 @@ const _cp = new THREE.Vector3();
 const _cn = new THREE.Vector3();
 const _meshP = new THREE.Vector3();
 const _meshN = new THREE.Vector3();
+let sharedEdges;
+
+function adjustInternalEdgeNormal(triangle, point, normal) {
+  if (!sharedEdges) {
+    sharedEdges = new Map();
+    const edges = new Map();
+    for (let index = 0; index < ARENA_TRI_COUNT; index++) {
+      const mesh = SOCCAR_MESH_ENDS.findIndex(end => index < end);
+      const vertices = [0, 3, 6].map(offset => new THREE.Vector3().fromArray(TRI, index * 9 + offset));
+      const face = vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();
+      for (let edge = 0; edge < 3; edge++) {
+        const start = vertices[edge], end = vertices[(edge + 1) % 3];
+        const key = `${mesh}:` + [start.toArray().join(","), end.toArray().join(",")].sort().join(";");
+        const previous = edges.get(key);
+        if (previous) {
+          const current = { index, start, end, face, interior: vertices[(edge + 2) % 3] };
+          for (const [entry, neighbor] of [[previous, current], [current, previous]]) {
+            const list = sharedEdges.get(entry.index) ?? [];
+            list.push({ ...entry, neighbor });
+            sharedEdges.set(entry.index, list);
+          }
+        } else edges.set(key, { index, start, end, face, interior: vertices[(edge + 2) % 3] });
+      }
+    }
+  }
+  let closest;
+  let closestDistance = 5;
+  for (const entry of sharedEdges.get(triangle) ?? []) {
+    const { start, end } = entry;
+    const direction = end.clone().sub(start);
+    const amount = THREE.MathUtils.clamp(point.clone().sub(start).dot(direction) / direction.lengthSq(), 0, 1);
+    const nearest = start.clone().addScaledVector(direction, amount);
+    const distance = point.distanceTo(nearest);
+    if (distance < closestDistance) {
+      closest = entry;
+      closestDistance = distance;
+    }
+  }
+  if (!closest) return;
+  const { start, end, face, neighbor } = closest;
+  const planar = face.clone().cross(neighbor.face).lengthSq() < 0.0001;
+  const convex = face.dot(neighbor.interior.clone().sub(start)) < 0;
+  if (planar || !convex) {
+    if (face.dot(normal) >= 0) normal.copy(face);
+    return;
+  }
+  const axis = start.clone().sub(end).normalize();
+  const transverse = axis.clone().cross(face).normalize();
+  const edgeAngle = Math.atan2(neighbor.face.dot(transverse), neighbor.face.dot(face));
+  const contactAngle = Math.atan2(normal.dot(transverse), normal.dot(face));
+  if (edgeAngle < 0 ? contactAngle < edgeAngle : contactAngle > edgeAngle) {
+    const adjusted = normal.clone().applyAxisAngle(axis, edgeAngle - contactAngle);
+    if (adjusted.dot(face) > 0) normal.copy(adjusted);
+  }
+}
 
 /**
  * Sphere contacts against finite triangle features and arena planes.
@@ -341,7 +386,7 @@ const _meshN = new THREE.Vector3();
  * Triangle normals point from the closest feature toward the sphere, so goal
  * interiors do not depend on a global "toward arena centre" heuristic.
  */
-export function sphereArenaContacts(position, radius, margin = 1) {
+export function sphereArenaContacts(position, radius, margin = 1, { merge = true } = {}) {
   const contacts = [];
   const { x, y, z } = position;
   for (const plane of PLANES) {
@@ -364,9 +409,10 @@ export function sphereArenaContacts(position, radius, margin = 1) {
     const normal = position.clone().sub(_cp);
     if (d2 > EPS) normal.multiplyScalar(1 / Math.sqrt(d2));
     else normal.copy(_cn);
+    if (!merge) adjustInternalEdgeNormal(node.tri, _cp, normal);
     const distance = Math.sqrt(d2) - radius;
     // Adjacent coplanar triangles describe one constraint, not repeated hits.
-    const same = contacts.find((c) => c.normal.dot(normal) > 0.9999);
+    const same = merge && contacts.find((c) => c.normal.dot(normal) > 0.9999);
     if (same) same.distance = Math.min(same.distance, distance);
     else contacts.push({ normal, distance });
   }
@@ -382,7 +428,83 @@ export function sphereArenaContacts(position, radius, margin = 1) {
  * @param {number} x @param {number} y @param {number} z
  * @param {THREE.Vector3} [outNormal]
  */
-export function arenaDistance(x, y, z, outNormal) {
+export function boxTriangleGapContacts(center, axes, halfSize, margin, threshold = 2) {
+  const contacts = [];
+  const radius = Math.hypot(...halfSize) + margin + threshold;
+  const stack = [BVH_ROOT];
+  while (stack.length) {
+    const node = BVH[stack.pop()];
+    if (pointAabbDistSq(center.x, center.y, center.z, node.min, node.max) > radius * radius) continue;
+    if (node.tri < 0) {
+      stack.push(node.right, node.left);
+      continue;
+    }
+    const vertices = [0, 3, 6].map(offset => new THREE.Vector3().fromArray(TRI, node.tri * 9 + offset).sub(center));
+    const face = vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();
+    if (Math.abs(face.z) >= 0.5) continue;
+    const support = direction => {
+      const box = new THREE.Vector3();
+      axes.forEach((axis, index) => box.addScaledVector(axis, (axis.dot(direction) >= 0 ? 1 : -1) * halfSize[index]));
+      let triangle = vertices[0];
+      for (const vertex of vertices) if (vertex.dot(direction) < triangle.dot(direction)) triangle = vertex;
+      return { box, triangle, difference: box.clone().sub(triangle) };
+    };
+    let simplex = [];
+    let closest = new THREE.Vector3(0, 1, 0);
+    let weights;
+    for (let iteration = 0; iteration < 64; iteration++) {
+      const vertex = support(closest.clone().negate());
+      if (simplex.some(entry => entry.difference.distanceToSquared(vertex.difference) < 1e-12)) break;
+      const previousDistance = closest.lengthSq();
+      if (simplex.length && previousDistance - closest.dot(vertex.difference) <= previousDistance * 1e-6) break;
+      simplex.push(vertex);
+      let best;
+      for (let mask = 1; mask < 1 << simplex.length; mask++) {
+        const indices = simplex.map((_, index) => index).filter(index => mask & (1 << index));
+        const base = simplex[indices[0]].difference;
+        const edges = indices.slice(1).map(index => simplex[index].difference.clone().sub(base));
+        const matrix = edges.map(edge => [...edges.map(other => edge.dot(other)), -edge.dot(base)]);
+        let valid = true;
+        for (let column = 0; column < edges.length; column++) {
+          let pivot = column;
+          for (let row = column + 1; row < edges.length; row++) if (Math.abs(matrix[row][column]) > Math.abs(matrix[pivot][column])) pivot = row;
+          [matrix[column], matrix[pivot]] = [matrix[pivot], matrix[column]];
+          const divisor = matrix[column][column];
+          if (Math.abs(divisor) < 1e-12) { valid = false; break; }
+          for (let entry = column; entry <= edges.length; entry++) matrix[column][entry] /= divisor;
+          for (let row = 0; row < edges.length; row++) {
+            if (row === column) continue;
+            const factor = matrix[row][column];
+            for (let entry = column; entry <= edges.length; entry++) matrix[row][entry] -= factor * matrix[column][entry];
+          }
+        }
+        if (!valid) continue;
+        const amounts = matrix.map(row => row[edges.length]);
+        amounts.unshift(1 - amounts.reduce((sum, amount) => sum + amount, 0));
+        if (amounts.some(amount => amount < -1e-8)) continue;
+        const point = new THREE.Vector3();
+        indices.forEach((index, entry) => point.addScaledVector(simplex[index].difference, amounts[entry]));
+        if (!best || point.lengthSq() < best.point.lengthSq()) best = { indices, amounts, point };
+      }
+      if (!best) break;
+      simplex = best.indices.map(index => simplex[index]);
+      weights = best.amounts;
+      closest = best.point;
+      if (closest.lengthSq() < 1e-10) break;
+    }
+    const distance = closest.length() - margin;
+    if (!weights || distance <= 0 || distance >= threshold) continue;
+    const normal = closest.clone().normalize();
+    const rawNormal = normal.clone();
+    adjustInternalEdgeNormal(node.tri, center.clone().add(simplex.reduce((point, vertex, index) => point.addScaledVector(vertex.triangle, weights[index]), new THREE.Vector3())), normal);
+    const point = simplex.reduce((point, vertex, index) => point.addScaledVector(vertex.box, weights[index]), center.clone()).addScaledVector(rawNormal, -margin);
+    if (contacts.some(contact => contact.point.distanceToSquared(point) < 1 && contact.normal.dot(normal) > 0.9999)) continue;
+    contacts.push({ point, normal, rawNormal, distance, triangle: node.tri });
+  }
+  return contacts;
+}
+
+export function arenaDistance(x, y, z, outNormal, referencePoint) {
   // Union of solids: playable SDF = min(signed distances). Using min-|d|
   // wrongly preferred a small inside-ramp distance with an inverted normal
   // over the floor/wall, so jump-into-wall sucked the car into the curve.
@@ -428,7 +550,7 @@ export function arenaDistance(x, y, z, outNormal) {
   }
 
   if (meshBest < Infinity) {
-    // Outward normal (toward arena centre). Sign from query vs surface.
+    if (referencePoint && (referencePoint.x - _meshP.x) * _meshN.x + (referencePoint.y - _meshP.y) * _meshN.y + (referencePoint.z - _meshP.z) * _meshN.z < 0) _meshN.negate();
     const side =
       (x - _meshP.x) * _meshN.x +
       (y - _meshP.y) * _meshN.y +

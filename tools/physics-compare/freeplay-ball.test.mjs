@@ -45,13 +45,15 @@ test("stationary start dribble falls onto the hood instead of sleeping in midair
   const car = makeCar(new THREE.Vector3(0, 0, 17), 0);
   const ball = applyFreePlayBallControl("startDribble", car, makeBall());
   const initialHeight = ball.pos.z;
+  let minimumHeight = initialHeight;
   assert(ball.vel.lengthSq() > 0);
   let contacted = false;
   for (let tick = 0; tick < 60; tick++) {
     if (stepCarBall(car, ball, {}, tick)) contacted = true;
+    minimumHeight = Math.min(minimumHeight, ball.pos.z);
   }
   assert(contacted);
-  assert(ball.pos.z < initialHeight);
+  assert(minimumHeight < initialHeight - 0.1);
 });
 
 test("pass intercepts a moving car using the ball's discrete damping and gravity", () => {

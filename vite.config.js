@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import { SOCCAR_TRI_COUNT, SOCCAR_TRIS } from "./src/shared/soccarMeshData.js";
+import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS } from "./src/shared/soccarMeshData.js";
 
 export default defineConfig({
   plugins: [{
@@ -14,6 +14,7 @@ export default defineConfig({
       return {
         code: `
           export const SOCCAR_TRI_COUNT = ${SOCCAR_TRI_COUNT};
+          export const SOCCAR_MESH_ENDS = ${JSON.stringify(SOCCAR_MESH_ENDS)};
           const encoded = atob(${JSON.stringify(bytes.toString("base64"))});
           const bytes = Uint8Array.from(encoded, character => character.charCodeAt(0));
           const view = new DataView(bytes.buffer);
