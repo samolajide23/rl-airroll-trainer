@@ -29,6 +29,7 @@ export const DEFAULT_BINDS = {
   yawRight: "KeyD",
   boost: "ShiftLeft",
   jump: "Space",
+  jumpAlternative: "",
   powerslide: "ControlLeft",
   /** Free air-roll hold (RL "Air Roll") — defaults to same key as Powerslide. */
   airRoll: "ControlLeft",
@@ -72,6 +73,7 @@ export const BIND_LABELS = {
   yawRight: "Air Steer Right",
   boost: "Boost",
   jump: "Jump",
+  jumpAlternative: "Jump (Alternative)",
   powerslide: "Powerslide",
   airRoll: "Air Roll",
   airRollLeft: "Air Roll Left",
@@ -108,6 +110,7 @@ export const BIND_SECTIONS = [
       { id: "steerRight", pad: "stick:Left Stick" },
       { id: "steerLeft", pad: "stick:Left Stick" },
       { id: "jump", pad: "jump" },
+      { id: "jumpAlternative", pad: "jumpAlternative" },
       { id: "boost", pad: "boost" },
       { id: "powerslide", pad: "powerslide" },
       { id: "airRoll", pad: "airRoll" },
@@ -161,6 +164,7 @@ export const DEFAULT_PAD = {
   brake: 6, // LT / L2
   boost: 1, // B / Circle
   jump: 0, // A / Cross
+  jumpAlternative: null,
   powerslide: 2, // X / Square
   airRoll: 2, // X / Square (same as powerslide by default)
   airRollLeft: 4, // LB
@@ -204,6 +208,7 @@ export const PAD_BUTTON_ACTIONS = [
   "brake",
   "boost",
   "jump",
+  "jumpAlternative",
   "powerslide",
   "airRoll",
   "airRollLeft",
@@ -271,23 +276,41 @@ export const BALL_CAM_MODE_OPTIONS = [
 
 /** Xbox-ish button names for Gamepad API indices */
 const PAD_BUTTON_NAMES = {
-  0: "A / Cross",
-  1: "B / Circle",
-  2: "X / Square",
-  3: "Y / Triangle",
-  4: "LB / L1",
-  5: "RB / R1",
-  6: "LT / L2",
-  7: "RT / R2",
-  8: "Back / Share",
-  9: "Start / Options",
-  10: "L3",
-  11: "R3",
+  0: "A",
+  1: "B",
+  2: "X",
+  3: "Y",
+  4: "LB",
+  5: "RB",
+  6: "LT",
+  7: "RT",
+  8: "View",
+  9: "Menu",
+  10: "LS",
+  11: "RS",
   12: "D-Pad Up",
   13: "D-Pad Down",
   14: "D-Pad Left",
   15: "D-Pad Right",
 };
+
+const PLAYSTATION_BUTTON_NAMES = {
+  ...PAD_BUTTON_NAMES,
+  0: "Cross", 1: "Circle", 2: "Square", 3: "Triangle",
+  4: "L1", 5: "R1", 6: "L2", 7: "R2",
+  8: "Share", 9: "Options", 10: "L3", 11: "R3",
+};
+let controllerLayout = "xbox";
+
+export function getControllerLayout() {
+  return controllerLayout;
+}
+
+export function setControllerLayout(value) {
+  if (value !== "xbox" && value !== "playstation") return;
+  controllerLayout = value;
+  persist();
+}
 
 /** @type {Record<string, string>} */
 let binds = { ...DEFAULT_BINDS };
@@ -307,7 +330,7 @@ function persist() {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ binds, pad, camera }),
+      JSON.stringify({ binds, pad, camera, controllerLayout }),
     );
   } catch { }
   notify();
@@ -449,6 +472,7 @@ function load() {
     }
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (parsed?.controllerLayout === "playstation") controllerLayout = "playstation";
       if (parsed?.binds && typeof parsed.binds === "object") {
         for (const key of Object.keys(DEFAULT_BINDS)) {
           if (typeof parsed.binds[key] === "string") {
@@ -611,8 +635,39 @@ export function resetBinds() {
 }
 
 export function getControlPreset() {
+  if (Object.entries(XEXEAD_CONTROLS.binds).every(([key, value]) => binds[key] === value) &&
+    Object.entries(XEXEAD_CONTROLS.pad).every(([key, value]) => pad[key] === value)) return "xexead";
   return Object.entries(DEFAULT_BINDS).every(([key, value]) => binds[key] === value) &&
     PAD_BUTTON_ACTIONS.every(key => pad[key] === DEFAULT_PAD[key]) ? "default" : "custom";
+}
+
+export const XEXEAD_CONTROLS = {
+  binds: {
+    throttle: "KeyW", reverse: "KeyS", steerRight: "KeyD", steerLeft: "KeyA",
+    yawRight: "KeyD", yawLeft: "KeyA", pitchUp: "KeyS", pitchDown: "KeyW",
+    jump: "KeyJ", jumpAlternative: "", boost: "KeyK", powerslide: "KeyL", airRoll: "",
+    airRollRight: "KeyE", airRollLeft: "KeyQ", toggleBallCam: "KeyU", lookBehind: "KeyI",
+    lookUp: "", lookDown: "", lookRight: "", lookLeft: "",
+  },
+  pad: {
+    throttle: 7, brake: 6, jump: 0, jumpAlternative: null, boost: 15, powerslide: 2, airRoll: null,
+    resetCar: 1,
+    airRollRight: 5, airRollLeft: 4, toggleBallCam: 3, lookBehind: 11,
+    pitchAxis: 1, yawAxis: 0, lookXAxis: 2, lookYAxis: 3,
+    invertPitch: false, invertYaw: false, invertLookX: false, invertLookY: false,
+    steeringSensitivity: 1, aerialSensitivity: 1, deadzone: 0, freeLookDeadzone: 0.1, dodgeDeadzone: 0.8,
+  },
+};
+
+export function applyControlPreset(id) {
+  if (id !== "xexead") return;
+  Object.assign(binds, XEXEAD_CONTROLS.binds);
+  Object.assign(pad, XEXEAD_CONTROLS.pad);
+  for (const action of FREEPLAY_BALL_ACTIONS.concat("newTarget")) {
+    if (pad[action] === pad.boost || pad[action] === pad.toggleBallCam) pad[action] = null;
+  }
+  setControllerLayout("playstation");
+  persist();
 }
 
 export function resetControlBindings() {
@@ -804,7 +859,8 @@ export function formatKeyCode(code) {
  */
 export function formatPadButton(index) {
   if (index === null || index === undefined) return "—";
-  return PAD_BUTTON_NAMES[index] ?? `Button ${index}`;
+  const names = controllerLayout === "playstation" ? PLAYSTATION_BUTTON_NAMES : PAD_BUTTON_NAMES;
+  return names[index] ?? `Button ${index}`;
 }
 
 /**

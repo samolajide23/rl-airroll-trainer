@@ -1,6 +1,155 @@
 # Local Free Play telemetry recorder
 
+## Contact Replay
+
+Replay recorder 0.3.0 Octane captures with continuous coupled car-ball physics:
+
+```text
+node tools/telemetry/replay.mjs capture.ndjson contact-report.json --contact --pre-roll 30
+node tools/telemetry/replay.mjs capture.ndjson short-report.json --contact --pre-roll 1
+```
+
+Pre-roll must be an integer from 1 to 30. Compare the continuous 30-tick
+approach with the one-tick recorded-state diagnostic to distinguish approach
+drift from collision response. Reports include first simulated contact,
+pre-impact errors, car orientation and angular velocity, ball angular velocity,
+wheel/ground contact mismatches and the first state divergence. The first-state
+thresholds are diagnostic: 1 uu/s car velocity, 0.01 rad/s angular velocity,
+0.001 rad orientation or any wheel/ground mismatch, not parity gates.
+Two preceding recorded transforms and inputs seed cached wheel commands and
+steering geometry before restoring the starting rigid state, avoiding
+artificial first-tick idle braking. This does not restore hidden contact
+impulses or complete powerslide history. Candidate impulses
+are not confirmed touches; warmed suspension is not recorded internal state.
+Boosted windows, discontinuities and already-active jump histories are excluded.
+Shorter histories may admit additional candidates and do not prove continuous
+parity. Neither report certifies exact native physics. The original straight
+replay positional command remains unchanged.
+
+## Comprehensive Native Batch
+
+The VS Code task **Native comprehensive parity batch** runs a single Octane
+(body ID 23) in an unlimited-length, state-setting-enabled solo Soccar match.
+It records two passes of 64 cases: boost taps/holds/exhaustion and mixed
+throttle; jump hold lengths, re-press and delayed double jumps; directional
+flips and cancellation delays/strengths; independent and combined aerial
+inputs; ground throttle/braking/steering/powerslide; wall/ceiling impacts and
+inverted landing; ball bounces/spin and car-ball approaches/flick setup.
+
+Each case lasts 360 physics ticks, with scripted controls starting at tick 60
+where applicable. A complete two-pass sequence requires 384 game seconds;
+the task allows 450 wall-clock seconds for startup. No opponent is spawned.
+The batch changes match length only, not gravity or physics speed.
+
+```text
+python tools/physics-compare/coconut_trial.py --check-batch
+python tools/physics-compare/coconut_trial.py --native --batch-probe --seconds 450
+python tools/physics-compare/coconut_trial.py --audit-batch path/to/capture.ndjson
+```
+
+Use the configured Coconut native Python environment. Captures remain in the
+local AIRLAB Coconut cache, not the repository. The header includes resolved
+match configuration and full case definitions. Every packet records case/pass
+index, relative tick, reset marker, observed inputs and commands sent after
+that packet. Native packets also contain actual hitbox/offset, dodge elapsed
+time/direction and latest touch metadata; retain those for later comparisons.
+
+Scripted probes bypass RLBot's normal latest-packet coalescing and process every
+received packet. Coconut policy matches keep the SDK's usual loop. Packet writes
+are buffered, with flushes at headers, resets and batch completion, and the file
+is closed on normal agent retirement. This removes known client-side packet loss;
+it does not guarantee that Rocket League or RLBotServer delivered every frame.
+
+The adjacent `.coverage.json` report requires a completion marker and two full,
+gap-free Active-phase segments per case, standard gravity/speed and the sole
+recorded player. It reports observed jumps/dodges, boost and height ranges,
+speed, hitbox and touch metadata changes, excluding the pre-reset packet from
+outcomes. Rejections include exact frame/time gaps. Missing frames, incorrect
+case/tick labels, absent reset markers or incomplete passes fail rather than
+silently reducing the required coverage. The self-check tests packet dispatch,
+complete synthetic segments, and rejection of gaps, missing footer/reset markers,
+non-Active phases and nonstandard gravity/speed.
+
+If a completed canonical batch lacks clean segments, retry only its missing
+cases, then combine the original and retry captures:
+
+```text
+python tools/physics-compare/coconut_trial.py --check-batch --retry-batch original.coverage.json
+python tools/physics-compare/coconut_trial.py --native --retry-batch original.coverage.json --seconds 195
+python tools/physics-compare/coconut_trial.py --merge-batches original.ndjson retry.ndjson
+```
+
+Prefer short retries, with at most six cases per capture:
+
+```text
+python tools/physics-compare/coconut_trial.py --check-batch --retry-batch original.coverage.json --case-limit 6
+python tools/physics-compare/coconut_trial.py --native --retry-batch original.coverage.json --case-limit 6 --seconds 180
+```
+
+Use `--case-offset 6`, then 12, etc. to select subsequent groups from the same
+report. Bounds apply after missing-case filtering; using an updated combined
+report instead selects only the remaining cases. Never run native captures
+concurrently. Six cases require 36 game seconds for both passes. Allow extra
+wall time: observed game progression can be slower than real time, and a
+195-second allowance did not finish the 156-game-second retry in this session.
+Short batches reduce wasted retries, not server packet-loss risk; retain the
+strict gap checks. Retry case definitions stay canonical.
+The combined report retains source paths and SHA256 hashes, rejects
+duplicate paths/content or changed definitions, reruns strict per-segment audits and
+requires two accepted segments for every original case. It does not join across
+packet gaps or turn rejected segments into accepted ones.
+
+Sample coverage is not event certification. Confirm that intended impacts,
+touches and successful carries actually occurred from packet trajectories and
+touch metadata before using a case to tune physics. Settling can change the
+requested initial state, so replay starts must use observed packets, not the
+reset request. The native mechanics replayer supports its original isolated
+cases and strictly complete jump-hold or unboosted aerial batch segments:
+
+```text
+node tools/telemetry/native-air-replay.mjs path/to/batch.ndjson jump-report.json --summary
+node tools/telemetry/native-air-replay.mjs path/to/batch.ndjson air-report.json --air-batch --summary
+```
+
+Jump replay warms rather than observes suspension. Aerial replay retains state
+for up to 180 steps, excludes jump/dodge/boost transitions and stops before
+nearby arena, ball or car contact. Both packet input timings are reported.
+Complete-segment guards reject gaps, incorrect case/tick labels and extra resets;
+this does not replace the canonical source-hash coverage audit. Simulator-generated
+fixtures test replay consistency, not independent native parity.
+
+Three cached captures yielded 23 accepted aerial trajectories across all nine
+cases, with at least two per case. Following-packet inputs fit rotation better:
+peak angular velocity error is 0.003280 rad/s and orientation error is
+0.002553 rad. Peak position and velocity errors are 1.230549 uu and
+1.246657 uu/s over 180 steps. These are measured residuals, not exact parity.
+Other batch families remain excluded; do not label the full batch certified.
+
+Remaining measurements include per-wheel suspension/contact normals and hidden
+jump timers, other car hitboxes, car-car collisions and camera behavior. RLBot
+packets do not expose suspension internals. The separate BakkesMod recorder
+below exposes wheel-contact counts but is limited to local Free Play; it is not
+automatically synchronized with this solo Soccar batch. Neither recording
+format certifies exact parity.
+
 ## Recorder Panel
+
+Version 0.3.0 adds read-only per-wheel contact flags, change timestamps,
+contact locations/normals, suspension distance and configured geometry/damping.
+It also records ground normal, time on/off ground, sticky-force settings and
+jump-component active state, activity timestamps and force settings. These
+accessors compile and link against the installed SDK, but their runtime units,
+stale no-contact values and callback phase still require a real capture.
+No gameplay setters or contact-delay constants were added.
+
+For the takeoff investigation, reload the plugin in local Free Play, start a
+capture, let the stationary Octane settle, then perform three short jump taps
+and three full jump holds. Allow each landing to settle; do not boost, steer,
+double jump or reset during the capture. Stop and save after about 20 seconds.
+Validate the resulting file with the command below before comparing takeoff
+gains to wheel release and jump activity. `contact_samples` counts samples with
+all four wheels and a jump component; `unavailable_contact_samples` reports
+missing wrappers. Neither count certifies tick alignment or physics parity.
 
 Version 0.2.0 adds **F2 > Plugins > Airroll Recorder** with Start Recording,
 Stop & Save, elapsed time, input/camera counts, capture size and Copy File Path.
@@ -73,8 +222,10 @@ The official MechanicalPlugin example uses `Car_TA.SetVehicleInput` with a
 reads the local car without altering params. This is **not a post-physics tick**.
 Calls may repeat a physics timestamp; camera samples use their own sequence and
 steady-clock elapsed time. Do not align streams by array index or assume 120 Hz.
-Capture does not yet include raw device inputs, wheel normals, all hidden jump
-timers, mutators, ball-command labels, or authoritative camera input/state names.
+Capture does not yet include raw device inputs, all hidden jump timers,
+mutators, ball-command labels, or authoritative camera input/state names.
+Version 0.3.0 includes wheel normals and jump-component activity observations,
+not a guaranteed post-physics suspension history.
 
 The first capture must establish which records precede/follow physics integration,
 then a dedicated post-physics hook can be validated against it. Hook existence

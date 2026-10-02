@@ -12,9 +12,9 @@ function turfTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 1024;
   const ctx = canvas.getContext("2d");
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 2; i++) {
     ctx.fillStyle = i % 2 ? "#264146" : "#21383e";
-    ctx.fillRect(0, i * 64, 1024, 64);
+    ctx.fillRect(0, i * 512, 1024, 512);
   }
   let seed = 8217;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -24,7 +24,9 @@ function turfTexture() {
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8);
+  texture.anisotropy = 16;
   return texture;
 }
 
@@ -48,7 +50,7 @@ export function createStadium() {
   root.name = "soccar-arena";
   const hw = RL.HALF_W * UU, hl = RL.HALF_L * UU, height = RL.CEILING * UU;
   const gw = RL.GOAL_HALF_W * UU, gh = RL.GOAL_HEIGHT * UU, gd = RL.GOAL_DEPTH * UU;
-  const turf = new THREE.MeshStandardMaterial({ map: turfTexture(), roughness: 0.72, metalness: 0.08 });
+  const turf = new THREE.MeshStandardMaterial({ map: turfTexture(), roughness: 0.92, metalness: 0 });
   const paint = new THREE.MeshBasicMaterial({ color: 0xd7eee4, transparent: true, opacity: 0.7, depthWrite: false });
   const dark = new THREE.MeshStandardMaterial({ color: 0x182c39, roughness: 0.55, metalness: 0.32, side: THREE.DoubleSide });
   const blue = new THREE.MeshStandardMaterial({ color: 0x214966, roughness: 0.48, metalness: 0.28, side: THREE.DoubleSide, transparent: true, opacity: 0.55, depthWrite: false });

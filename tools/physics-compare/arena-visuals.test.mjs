@@ -88,6 +88,9 @@ test("boost trail reuses bounded particles and stops work when empty", () => {
     parent.add(car);
     const trail = new BoostTrail(parent, { max: 8 });
     trail.attachFlames(car);
+    assert.equal(trail.flames.children.length, 2);
+    assert(trail.flames.children.every(flame => flame.children.length === 14));
+    assert(trail.flames.children.every(flame => flame.children.every(puff => puff.isSprite && puff.position.z <= 0)));
     const identities = new Set(trail._pool);
     for (let tick = 0; tick < 240; tick++) trail.update(car, true, 1 / 120);
     assert.equal(trail.particles.length + trail._pool.length, 8);
@@ -96,6 +99,7 @@ test("boost trail reuses bounded particles and stops work when empty", () => {
     for (let tick = 0; tick < 120; tick++) trail.update(car, false, 1 / 120);
     assert.equal(trail.particles.length, 0);
     assert.equal(trail.points.visible, false);
+    assert(trail.flames.children.every(flame => !flame.visible));
     const version = trail.geo.attributes.position.version;
     trail.update(car, false, 1 / 120);
     assert.equal(trail.geo.attributes.position.version, version);

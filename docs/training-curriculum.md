@@ -41,23 +41,25 @@ not yet implemented. Thresholds and message timing still need human playtesting.
 
 ### Driving & Boost
 
-Five playable car-only stages: Straight-Line Control, Turn With Control, Boost
-With Purpose, Brake and Reposition, and Follow a Route. The active floor target
-is yellow, future targets blue and completed targets green. Route targets must
-be reached in order. All target radii are 180 uu and require ground contact.
+Five distinct car-only stages, all requiring wheels-down entry:
 
-Straight-Line Control forbids boost and jumping and keeps the car within a
-180 uu lateral lane. Turn With Control requires at least 0.1 seconds of
-full-strength-equivalent steering and arrival facing within 30 degrees of the
-approach line. Boost With Purpose requires 0.1 seconds of actual boost and
-arrival speed of at least 1,600 uu/s. Brake and Reposition requires brake input,
-speed below 150 uu/s and a 0.25-second hold inside the target; travelling more
-than 350 uu beyond the stop target fails. Follow a Route connects three targets.
+- Precision Straight: a 2,200 uu throttle-only run within 100 uu of the centre
+	line, entering a 100 uu target at 35 km/h or faster.
+- Controlled Corner: three 120 uu checkpoints with deliberate steering,
+	throttle only and no arrival-facing restriction.
+- Boosted Sprint: a 3,000 uu run within 140 uu of the centre line, using at
+	least 0.8 seconds of boost and entering a 120 uu target at 80 km/h or faster.
+- High-Speed Stop: start at 50 km/h toward a target 1,800 uu away. Brake and
+	remain inside its 100 uu radius below 5 km/h for 0.5 continuous seconds.
+	Passing more than 350 uu beyond the target fails. Boost is forbidden.
+- Slalom at Pace: three opposing-turn checkpoints with 120 uu radii, entered
+	in order at 25 km/h or faster without boost.
 
-Fixed target distance is 1,000 uu, or 1,800 uu for boost. Turning starts 45
-degrees off line. Braking starts at 700 uu/s. Varied distances change by up to
-100 uu and starting headings by up to 10 degrees; turn and route sides alternate.
-The fixed route is (0,700), (450,1300), (0,1900) uu relative to spawn.
+Jumping fails every stage. Reaching a later checkpoint before the active one
+fails. Visible circles and lane boundaries match scoring dimensions. Varied
+runs change distances by up to 300 uu, mirror corners and alternate six slalom
+routes. Revised driving mastery uses a new history key; old completions remain
+stored but do not qualify for the harder stages.
 
 ### Jumps & Dodges
 

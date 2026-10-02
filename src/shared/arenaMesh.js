@@ -192,6 +192,7 @@ export function raycastArena(origin, dir, maxLen) {
   const bestP = new THREE.Vector3();
   const bestN = new THREE.Vector3();
   let bestT = maxLen;
+  let triangle = -1;
   let hit = false;
 
   const planeT = raycastPlanes(origin, dir, bestT, bestP, bestN);
@@ -216,6 +217,7 @@ export function raycastArena(origin, dir, maxLen) {
       const t = rayTriangle(origin, dir, node.tri, bestT, _hp, _hn);
       if (t > 0 && t < bestT) {
         bestT = t;
+        triangle = node.tri;
         bestP.copy(_hp);
         bestN.copy(_hn);
         hit = true;
@@ -226,7 +228,7 @@ export function raycastArena(origin, dir, maxLen) {
     if (node.left >= 0) _stack[sp++] = node.left;
   }
   if (!hit) return null;
-  return { dist: bestT, point: bestP.clone(), normal: bestN.clone() };
+  return { dist: bestT, point: bestP.clone(), normal: bestN.clone(), triangle };
 }
 
 /** Closest point on triangle to p. Returns squared distance. */

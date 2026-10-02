@@ -2,6 +2,30 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { CAMERA_PRESETS, matchingCameraPreset } from "../../src/shared/cameraPresets.js";
 
+test("xexead controls import the verified profile and preserve trainer commands", async () => {
+  await withSettings(null, settings => {
+    settings.applyControlPreset("xexead");
+    assert.equal(settings.getControlPreset(), "xexead");
+    assert.equal(settings.getBind("jump"), "KeyJ");
+    assert.equal(settings.getBind("boost"), "KeyK");
+    assert.equal(settings.getBind("powerslide"), "KeyL");
+    assert.equal(settings.getBind("airRoll"), "");
+    assert.equal(settings.getBind("resetCar"), "KeyR");
+    assert.equal(settings.getPad().boost, 15);
+    assert.equal(settings.getPad().toggleBallCam, 3);
+    assert.equal(settings.getPad().lookBehind, 11);
+    assert.equal(settings.getPad().airRoll, null);
+    assert.equal(settings.getPad().resetCar, 1);
+    assert.equal(settings.getPad().jumpAlternative, null);
+    assert.equal(settings.getPad().deadzone, 0);
+    assert.equal(settings.getPad().dodgeDeadzone, 0.8);
+    assert.equal(settings.getPad().launchBall, null);
+    assert.equal(settings.getPad().newTarget, null);
+    settings.setPad("dodgeDeadzone", 0.7);
+    assert.equal(settings.getControlPreset(), "custom");
+  }, "xexead-controls");
+});
+
 test("binding presets reset only bindings and list each supported action once", async () => {
   await withSettings(null, settings => {
     const actions = settings.BIND_SECTIONS.flatMap(section => section.actions.map(action => action.id));
@@ -33,6 +57,10 @@ test("controller sensitivity and dodge settings load, clamp and reject malformed
 });
 
 test("camera presets apply exact values without modifying controls", async () => {
+  assert.deepEqual(CAMERA_PRESETS.find(preset => preset.id === "xexead")?.camera, {
+    fov: 108, height: 80, angle: -3, distance: 270, stiffness: 1,
+    swivelSpeed: 7.7, transitionSpeed: 1.8, shake: false, ballCamMode: "toggle",
+  });
   await withSettings(null, settings => {
     const binds = { ...settings.getBinds() };
     const pad = { ...settings.getPad() };

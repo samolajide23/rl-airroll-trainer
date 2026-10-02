@@ -4,6 +4,10 @@
  */
 export const UU = 0.01;
 
+export function formatSpeed(speed) {
+  return `${(speed * UU * 3.6).toFixed(1)} km/h`;
+}
+
 /** @param {number} uu */
 export function uuToThree(uu) {
   return uu * UU;

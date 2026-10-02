@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { formatSpeed } from "./rl-units.js";
 
 const radians = Math.PI / 180;
 const cue = (id, title, detail, priority = 1, value = null) => ({ id, title, detail, priority, value });
@@ -19,12 +20,16 @@ export function coachingFault(mode, controls = {}) {
     const delta = new THREE.Vector3(...target).sub(car.pos).setZ(0);
     const error = Math.atan2(forward.x * delta.y - forward.y * delta.x, forward.x * delta.x + forward.y * delta.y);
     const distance = delta.length();
-    if (stage === 0 && Math.abs(car.pos.x) > 100) return cue("lane", "Return to the lane", "Steer toward the centre line before crossing the lane boundary.", 4, `${Math.round(Math.abs(car.pos.x))} / 180 uu offset`);
-    if (stage === 3 && speed > 150 && distance < speed * speed / 7000 + 180 && controls.throttle >= 0) return cue("brake", "Brake now", "You are closing on the stopping target. Reduce speed before entering it.", 4, `${Math.round(speed)} uu/s · ${Math.round(distance)} uu remaining`);
-    if (Math.abs(error) > 15 * radians && controls.steer * error < -0.1 && controls.throttle > 0) return cue("wrong-turn", error > 0 ? "Turn left toward the target" : "Turn right toward the target", "Your steering input points away from the active target.", 3, `${Math.round(Math.abs(error) / radians)} degrees off target`);
-    if (Math.abs(error) > 30 * radians && speed > 700 && controls.throttle > 0) return cue("turn-speed", "Ease off while turning", "Reduce throttle until your nose points toward the active target.", 2, `${Math.round(Math.abs(error) / radians)} degrees off target`);
-    if (stage === 2 && distance < 900 && speed < 1600 && !car.isBoosting) return cue("boost", "Build speed with boost", "This stage requires boost and at least 1,600 uu/s at the target.", 2, `${Math.round(speed)} / 1,600 uu/s`);
-    if (stage === 3 && distance <= 180 && speed >= 150) return cue("stop-speed", "Keep braking inside the target", "Settle below 150 uu/s, wheels-down, to complete the stop.", 3, `${Math.round(speed)} / 150 uu/s`);
+    if (mode.setup.laneWidth && Math.abs(car.pos.x) > mode.setup.laneWidth * 0.7) return cue("lane", "Return to the lane", "Steer toward the centre line before crossing the lane boundary.", 4, `${Math.round(Math.abs(car.pos.x))} / ${mode.setup.laneWidth} uu offset`);
+    if (stage === 3 && speed > mode.setup.stopSpeed && distance < speed * speed / 7000 + mode.setup.targetRadius && controls.throttle >= 0) return cue("brake", "Brake now", "You are closing on the stopping target. Reduce speed before entering it.", 4, `${formatSpeed(speed)} · ${Math.round(distance)} uu remaining`);
+    if (distance > mode.setup.targetRadius && Math.abs(error) > 15 * radians) {
+      const wrongTurn = (controls.steer || 0) * error < -0.1 && controls.throttle > 0;
+      const fastTurn = Math.abs(error) > 30 * radians && speed > 700 && controls.throttle > 0;
+      const detail = wrongTurn ? "Your steering points away from the target. Steer the other way." : "Steer toward the yellow target, then straighten as it comes ahead.";
+      return cue(wrongTurn ? "wrong-turn" : "turn-direction", error > 0 ? "Turn right toward the target" : "Turn left toward the target", fastTurn ? `${detail} Ease off the throttle through the turn.` : detail, 3, `${Math.round(Math.abs(error) / radians)} degrees off target`);
+    }
+    if (stage === 2 && distance < 1500 && speed < mode.setup.minSpeed && !car.isBoosting) return cue("boost", "Build speed with boost", "Use at least 0.8 seconds of boost and arrive at 80 km/h or faster.", 2, `${formatSpeed(speed)} / 80 km/h`);
+    if (stage === 3 && distance <= mode.setup.targetRadius && speed >= mode.setup.stopSpeed) return cue("stop-speed", "Keep braking inside the target", "Settle below 5 km/h, wheels-down, for half a second.", 3, `${formatSpeed(speed)} / 5 km/h`);
     return null;
   }
   if (mode.variant === "dodges") {
@@ -54,7 +59,7 @@ export function coachingFault(mode, controls = {}) {
     if (stage >= 1 && error > 25 * radians) return cue("nose", "Square your nose to the ball", "Your approach is side-on. Align the nose before contact.", 2, `${Math.round(error / radians)} degrees off ball`);
     if (mode.variant === "soft") {
       const closing = horizontal(car.vel.clone().sub(ball.vel)).dot(offset);
-      if (closing > 900) return cue("closing", "Reduce your closing speed", "You are closing quickly. Ease off or brake to cushion the incoming ball.", 3, `${Math.round(closing)} uu/s closing speed`);
+      if (closing > 900) return cue("closing", "Reduce your closing speed", "You are closing quickly. Ease off or brake to cushion the incoming ball.", 3, `${formatSpeed(closing)} closing speed`);
     }
   }
   if (mode.variant === "static" && stage === 4 && mode.gateHit) {
@@ -64,15 +69,64 @@ export function coachingFault(mode, controls = {}) {
   return null;
 }
 
+export function coachingAction(mode, controls = {}) {
+  const stage = mode.masteryStep;
+  const car = mode.physCar;
+  if (!car) return null;
+  const speed = Math.hypot(car.vel.x, car.vel.y);
+  if (mode.variant === "driving") {
+    const target = mode.setup?.targets[mode.nextTarget];
+    if (!target) return null;
+    const distance = Math.hypot(target[0] - car.pos.x, target[1] - car.pos.y);
+    if (stage === 3) return distance <= mode.setup.targetRadius
+      ? cue("action-stop", "Hold your stop inside the target", "Keep the wheels down and stay below 5 km/h for half a second.")
+      : cue("action-arrive", "Brake before the target", "You start at speed. Brake early enough to stop inside the small yellow circle; do not boost.");
+    if (stage === 2) return cue("action-boost", `Boost through target ${mode.nextTarget + 1} of ${mode.setup.targets.length}`, "Reach each target while boosting at 80 km/h or faster. Stay between the lane edges.");
+    if (stage === 4) return cue("action-route", `Drive to target ${mode.nextTarget + 1} of ${mode.setup.targets.length}`, "Reach checkpoints in order at 25 km/h or faster without boost. Lift before turns and accelerate out.");
+    return cue("action-drive", stage === 0 ? "Build throttle speed in the narrow lane" : `Take corner checkpoint ${mode.nextTarget + 1} of ${mode.setup.targets.length}`, stage === 0 ? "Stay between the lane edges without boost. Enter the target at 35 km/h or faster." : "Use throttle and steering without boost. Ease off before the corner, then accelerate toward the next checkpoint.");
+  }
+  if (mode.variant === "dodges") {
+    if (!mode.jumped) return cue("action-jump", stage === 0 ? "Tap jump once" : "Hold your first jump", stage === 0 ? "Release jump after the tap. Do not jump again; prepare to land wheels-down." : "Hold through the initial rise, then release before the next action.");
+    if (stage === 1 && controls.jump && mode.jumpHold < 0.18) return cue("action-hold", "Keep holding jump", "Finish the 0.18-second hold, then release and prepare your landing.");
+    if (stage >= 2 && !mode.doubleJumped && !mode.flipped) return controls.jump
+      ? cue("action-release", "Release jump before pressing again", "A second jump needs a fresh press, not a continuous hold.")
+      : cue("action-second-jump", stage === 2 ? "Press jump again with neutral input" : `Press jump again to dodge ${mode.setup.dodge}`, stage === 2 ? "Centre your directional input for a double jump, then prepare to land upright." : "Hold the requested direction on the second press, then release it and prepare to land.");
+    return cue("action-land", car.onGround ? "Stay upright and let the landing settle" : "Prepare to land wheels-down", "Stop adding rotation and hold a stable upright landing for a quarter second. Do not boost.");
+  }
+  if (mode.variant === "static") {
+    if (!mode.touches) return cue("action-contact", stage >= 2 ? "Line up the ball with the yellow gate" : "Drive into the ball with your nose", stage >= 2 ? "Aim your first touch through the gate. Keep the touch low and do not hit it again." : "Use a controlled approach and keep the front of the car facing the ball.");
+    if (stage === 4 && mode.gateHit) return cue("action-follow", "Follow the ball through the gate", "Stay within 600 uu, grounded and facing the ball, for half a second.");
+    return cue("action-watch", "Let your first touch travel", stage >= 3 ? "Do not add another touch. Watch the ball cross the gate at 28.8-43.2 km/h." : "Do not hit it again. Let the ball travel through the yellow gate.");
+  }
+  if (mode.variant === "soft") {
+    if (mode.firstTouchTime == null) return cue("action-receive", "Meet the ball gently", "Face the incoming ball, ease off the throttle and cushion it with a low first touch.");
+    if (stage === 2) return cue("action-exit", `Guide the reception ${mode.setup.exitSide > 0 ? "left" : "right"}`, "Move toward the marked exit while keeping the ball close and low. Avoid an extra hit.");
+    if (stage === 4 && mode.receptionReady) return cue("action-next-touch", "Make your separate second touch now", "The reception is ready. Reach the ball again before the three-second window closes.");
+    return cue("action-cushion", "Follow gently while the ball settles", "Stay close without another hit yet. Keep the ball low and match its movement.");
+  }
+  if (["rollTouch", "recovery"].includes(mode.variant)) {
+    const needsTouch = mode.variant === "rollTouch" || stage >= 3;
+    if (needsTouch && mode.firstTouchTime == null) return cue("action-roll-touch", "Roll into alignment, then meet the ball", stage === 0 && mode.variant === "rollTouch" ? "Use a short deliberate air roll while keeping your approach on the ball." : "Bring the wheels underneath, release roll as you align, and keep your nose aimed at the ball.");
+    if (mode.variant === "rollTouch" && stage < 4) return cue("action-release-touch", "Let the aerial touch settle", "Do not add another hit. Let the release speed be measured before the attempt finishes.");
+    if (car.onGround && mode.variant === "recovery" && [2, 4].includes(stage) && mode.landingTime != null) return cue("action-drive-out", "Drive forward out of the landing", "Stay wheels-down and carry at least 10.8 km/h along your landing direction for the 150 uu exit.");
+    return cue("action-recover", car.onGround ? "Hold a stable wheels-down landing" : "Recover toward the floor", "Release unnecessary rotation, face along your movement and settle on all four wheels.");
+  }
+  return null;
+}
+
 const explanations = {
-  "Keep the wheels down": "A jump was detected. Keep jump released throughout this driving stage.",
-  "Throttle only": "Boost was used. Use throttle without boost in this stage.",
-  "Left the lane": "The car crossed the 180 uu lane boundary. Make smaller steering corrections toward the centre.",
-  "Overshot the stop": "The car travelled beyond the stopping area. Begin braking earlier on the next attempt.",
-  "No boost in this stage": "Boost was used. Complete the jump using jump and directional controls only.",
-  "Single jump only": "A second jump or dodge was detected. Use one jump, then land.",
-  "Neutral second jump required": "The second jump became a dodge. Centre directional input before the second press.",
-  "Wrong dodge direction": "The measured dodge impulse missed the requested direction. Set the requested direction before the second jump press.",
+  "Entered target too slowly": "You entered below the required pace. Build speed before reaching the checkpoint.",
+  "Not enough boost": "Use at least 0.8 seconds of boost before entering the first target.",
+  "Boost through each target": "Keep boost active as you reach each of the five targets.",
+  "Skipped checkpoint": "You reached a later checkpoint first. Follow the active yellow target in order.",
+  "Keep the wheels down": "You jumped. Stay on the ground for this drill.",
+  "Throttle only": "You used boost. Drive without boost this time.",
+  "Left the lane": "You drove outside the lane. Use smaller turns to stay between the lines.",
+  "Overshot the stop": "You went past the target. Brake earlier and stop inside it.",
+  "No boost in this stage": "You used boost. Use only jump and steering for this drill.",
+  "Single jump only": "You jumped twice. Jump once, then land.",
+  "Neutral second jump required": "You dodged instead of double jumping. Centre the stick before your second jump.",
+  "Wrong dodge direction": "You dodged the wrong way. Hold the requested direction on your second jump.",
   "No deliberate air roll": "Not enough deliberate roll was measured before contact. Add a short air roll, then align for the touch.",
   "Touch before alignment": "Contact occurred while the car was tilted. Release roll earlier and settle the orientation before contact.",
   "Grounded contact": "The touch happened on the ground. Reach the ball while airborne in this stage.",
@@ -82,7 +136,7 @@ const explanations = {
   "Extra touch": "Another contact occurred before the stage was complete. Let the first touch travel and focus on the next objective.",
   "Extra touch before reception": "The next contact happened before a controlled reception was ready. Cushion and follow first.",
   "Reception too high": "The ball rose above 200 uu. Use a lower, gentler contact on the next attempt.",
-  "Not cushioned enough": "The ball retained more than 60% of its incoming speed. Reduce the impact's closing speed.",
+  "Not cushioned enough": "Your touch did not slow the ball enough. Brake and meet it more gently.",
   "Too far away": "The ball left the control zone. Follow sooner without adding an uncontrolled touch.",
   "Facing away": "The car stopped facing the ball. Keep the nose aligned during follow-through.",
   "Not wheels-down": "The wheels-down hold was interrupted. Remain upright and grounded while following.",
@@ -104,11 +158,11 @@ const explanations = {
 export function resultCoaching(mode, opening) {
   const message = mode.result.message.replace(/^Practice: /, "");
   if (mode.result.success) return cue("success", message, "Stage complete. Repeat the same control on the next attempt.", 5);
-  const detail = explanations[message] || `The stage ended without completing all its conditions. Next attempt: ${opening}`;
+  const detail = explanations[message] || `You didn't finish the goal. Try again: ${mode.prompt || opening}`;
   let value = null;
   if (message === "Wrong dodge direction") value = `Requested: ${mode.setup.dodge}`;
-  if (message === "Not cushioned enough" && mode.receivedSpeed != null) value = `${Math.round(mode.receivedSpeed)} uu/s after contact · limit ${Math.round(mode.incomingSpeed * 0.6)} uu/s`;
-  if (["Too soft", "Too hard"].includes(message)) value = `${Math.round(mode.variant === "rollTouch" ? mode.receivedSpeed : mode.gateSpeed)} uu/s measured`;
+  if (message === "Not cushioned enough" && mode.receivedSpeed != null) value = `${formatSpeed(mode.receivedSpeed)} after contact · limit ${formatSpeed(mode.incomingSpeed * 0.6)}`;
+  if (["Too soft", "Too hard"].includes(message)) value = `${formatSpeed(mode.variant === "rollTouch" ? mode.receivedSpeed : mode.gateSpeed)} measured`;
   return cue(`result-${message}`, message, detail, 5, value);
 }
 
@@ -125,6 +179,8 @@ export class DrillCoach {
     this.pendingTime = 0;
     this.clearTime = 0;
     this.resultSeen = false;
+    this.finishedResult = null;
+    this.resultFeedback = null;
   }
 
   update(mode, controls, dt, opening) {
@@ -133,6 +189,7 @@ export class DrillCoach {
       this.reset();
     }
     if (mode.result) {
+      if (this.finishedResult === mode.result) return this.resultFeedback;
       const feedback = resultCoaching(mode, opening);
       if (mode.result.message === "Time expired") {
         if (this.current?.priority >= 2) {
@@ -149,6 +206,8 @@ export class DrillCoach {
         this.resultSeen = true;
       }
       this.current = feedback;
+      this.finishedResult = mode.result;
+      this.resultFeedback = feedback;
       return feedback;
     }
     const fault = coachingFault(mode, controls);
@@ -163,6 +222,6 @@ export class DrillCoach {
       this.clearTime += dt;
       if (this.clearTime >= 0.5) this.current = null;
     }
-    return this.current || (mode.elapsed < 1.5 && this.missCount >= 2 ? cue("repeat", "Focus for this attempt", this.repeatedMiss.detail, 1) : cue("objective", mode.prompt || "Stage objective", opening, 0));
+    return this.current || (mode.elapsed < 1.5 && this.missCount >= 2 ? cue("repeat", "Focus for this attempt", this.repeatedMiss.detail, 1) : coachingAction(mode, controls) || cue("objective", mode.prompt || "Stage objective", opening, 0));
   }
 }

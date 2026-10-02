@@ -1,11 +1,99 @@
 # Skybot Diagnostic
 
-Enable **Skybot diagnostic** in Free Play to give the equipped car to the bot.
+Enable **Bot control** in Free Play to give the equipped car to the selected bot.
+The selector offers Skybot ground interception, **Kamael**, and
+**Kamael / Wyrm dribbler**. Kamael runs Impossibum's original Python decision
+code from RLBotPack, not a relabeled custom JavaScript controller. Wyrm selects
+the original name-based dribbler personality; it does not guarantee a flick.
+
+## Kamael Browser Runtime
+
+Source is pinned to RLBotPack revision
+`0033a98d4e060670f334f60f7f8dc5ee21ba93bb`. The original Python files are
+unchanged, with SHA-256 hashes checked by the worker. Refresh the vendor assets
+with `node tools/physics-compare/vendor-kamael.mjs`.
+
+Pyodide 0.27.7 and NumPy load from jsDelivr into a module worker. First load
+requires network access and may take several seconds. No local Python install
+or separate bot server is required. The separate browser adapter supplies
+RLBot packet interfaces and no-op rendering, game-state edits and match
+communications. Numba JIT is disabled; its decorated functions run as Python.
+This is not native RLBot/Numba execution parity.
+
+Packets use the equipped car, live pad states in canonical RLBot order, and a
+six-second trainer ball forecast sampled at 60 Hz. There are no opponents or
+teammates. Forecasts exclude future car touches and are not RLBot predictions.
+After runtime initialization, physics advances at fixed 120 Hz from elapsed
+render time, holding the last controller output until the worker supplies a
+replacement. Pending decisions no longer pause movement or limit it to one
+tick per rendered frame. Packet timestamps match the current simulation tick.
+Loading and runtime failures stop bot stepping; elapsed catch-up is bounded
+by the shared clock's 0.1-second cap. Slow Python decisions can still change
+closed-loop behavior even though physics timing is independent of them.
+
+Regression tests compare one second of movement at 30, 60, and 144 render FPS
+with delayed worker replies: all advance 120 ticks with identical position
+and velocity. This verifies scheduling, not equality to Rocket League's
+physics or native bot decision latency.
+
+Browser checks exercised initialization, kickoff, a ball touch, airborne
+control, restart, and Wyrm control output. Packet and restart tests cover pad
+index alignment, finite forecasts, non-mutation, and stale worker replies.
+Advanced mechanics and full original-runtime output equivalence are not
+certified. Replay exports retain the controls actually issued.
+
+Kamael source: https://github.com/RLBot/RLBotPack/tree/0033a98d4e060670f334f60f7f8dc5ee21ba93bb/RLBotPack/Kamael_family
+
+The pinned family directory contains no separate license file. RLBotPack's
+root MIT license is retained in `public/bots/kamael/LICENSE`. Kamael is credited
+to Impossibum in the upstream configuration; the browser adapter is separate
+from the unchanged vendor code.
+
+## Native Rocket League Check
+
+On 2026-10-01, the pinned Kamael ran in an offline Rocket League match against
+a built-in All-Star opponent. A short capture contained 729 decisions spanning
+10.208 game seconds. Kamael touched the ball at game time 9.325 and the final
+captured score was 1-0 for blue. States included PreemptiveStrike, LeapOfFaith,
+HolyProtector, DivineGrace, and BlessingOfSafety. Mean decision time, excluding
+capture serialization, was 7.391 ms. This is a smoke test, not a mechanics or
+playing-strength certification.
+
+Replaying all 729 captured inputs through a fresh browser worker produced no
+state or control mismatches: booleans matched exactly and numeric controls
+agreed within 0.001. The replay used real opponent packets and real RLBot ball
+predictions, not the trainer's synthetic input. This bounded result does not
+establish equivalence on other scenarios or certify trainer physics.
+
+The trainer's no-opponent packet exercises an upstream fallback which sets
+the nearest enemy to the bot itself. Wyrm also deliberately disables aerial
+planning. These are important differences from a normal match, not verified
+explanations for every observed trainer failure.
+
+The native wrapper leaves the upstream strategy unchanged and records packet,
+field information, prediction, controls, state, and decision timing into
+`tools/physics-compare/out/kamael-native/`. Use an isolated Python 3.11 environment:
+
+```powershell
+.\.venv-kamael\Scripts\python.exe -m pip install rlbot==1.67.7 numba==0.60.0 numpy==1.26.4 scipy==1.17.1 websockets==10.4
+.\.venv-kamael\Scripts\python.exe tools/physics-compare/kamael_native.py --check
+.\.venv-kamael\Scripts\python.exe tools/physics-compare/kamael_native.py --seconds 120
+```
+
+Add `--wyrm` to select that personality. Launch only for an offline test; this
+starts a match and stops its bot processes afterward. The duration starts when
+bot processes launch, so startup reduces the recorded playing time. RLBot v1's
+matchcomms requires the pinned websockets version. Standard boost uses the
+native `Default` amount enum and `1x` strength. Initial stationary-car attempts
+failed before agent initialization and are not evidence of bad strategy.
+
+## Controls And Skybot Overlays
+
 Restart run resets the simulation and recording. Disabling it restores manual
 control. Ball manipulation is suppressed while the bot runs; camera controls
 remain available. Export replay downloads a scenario file, capped at 60 seconds.
 
-Green is an independent five-second ball forecast; blue is the observed path
+For Skybot, green is an independent five-second ball forecast; blue is the observed path
 over the same time window. Forecasts refresh every 2.5 seconds. The green marker
 is the current drive target. Ball error measures the forecast at the current
 tick, including unmodelled car touches. First-contact timing and position deltas

@@ -123,9 +123,9 @@ export class FixedStepClock {
   advance(elapsed, stepFn, maxCatchUp = 0.1) {
     this.acc += Math.min(elapsed, maxCatchUp);
     let steps = 0;
-    while (this.acc >= RL.DT) {
+    while (this.acc + RL.DT * 1e-10 >= RL.DT) {
       stepFn(RL.DT);
-      this.acc -= RL.DT;
+      this.acc = Math.max(0, this.acc - RL.DT);
       steps++;
     }
     return steps;

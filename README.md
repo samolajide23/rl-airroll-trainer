@@ -51,6 +51,11 @@ describe the curriculum, not additional implemented gameplay stages.
 ### Free Play
 Free Play includes a toggleable Skybot-derived driving diagnostic, independent
 ball prediction overlays, contact telemetry and RocketSim replay export.
+The selector also runs original pinned Kamael Python in a Pyodide worker,
+including its Wyrm dribbler personality. This requires a CDN download on first
+load. Physics runs at fixed 120 Hz independently of worker decisions, holding
+the latest controls between replies. A bounded native-input decision replay
+passed, but exact Rocket League movement and decision-latency parity are not established.
 See [Skybot diagnostic](docs/skybot-diagnostic.md) for scope, licensing and replay commands.
 
 | Mode | What it trains |

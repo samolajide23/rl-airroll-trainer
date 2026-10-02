@@ -72,6 +72,51 @@ const wheelVelocity = new THREE.Vector3();
 const wheelRotation = new THREE.Quaternion();
 const visualInverse = new THREE.Matrix4();
 
+export function syncCarJump(carMesh, car, dt = 0) {
+  let animation = carMesh.userData.jumpAnimation;
+  if (!animation) {
+    const burst = new THREE.Group();
+    burst.name = "jump-burst";
+    burst.visible = false;
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xccefff, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    });
+    const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8), material);
+    burst.add(flash);
+    for (const lateral of [-0.24, 0.24]) {
+      const jet = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 8), material);
+      jet.position.set(lateral, -0.13, 0);
+      burst.add(jet);
+    }
+    carMesh.add(burst);
+    animation = { burst, flash, material, car, first: car.hasJumped,
+      second: car.hasDoubleJumped, flip: car.hasFlipped, age: 1 };
+    carMesh.userData.jumpAnimation = animation;
+  }
+  if (animation.car !== car || dt <= 0) {
+    animation.car = car;
+    animation.age = 1;
+  } else if ((!animation.first && car.hasJumped)
+    || (!animation.second && car.hasDoubleJumped)
+    || (!animation.flip && car.hasFlipped)) {
+    animation.age = 0;
+  }
+  animation.first = car.hasJumped;
+  animation.second = car.hasDoubleJumped;
+  animation.flip = car.hasFlipped;
+  animation.age += Math.max(0, dt);
+  const progress = animation.age / 0.18;
+  animation.burst.visible = progress < 1;
+  if (!animation.burst.visible) return;
+  const scale = Math.abs(carMesh.scale.x) || 1;
+  const underside = (car.hitbox.offset[2] - car.hitbox.size[2] / 2) * 0.01;
+  animation.burst.position.set(0, (underside - 0.04) / scale, 0);
+  animation.burst.scale.setScalar(1 / scale);
+  animation.flash.scale.set(0.22 + progress * 0.45, 0.035 + progress * 0.07, 0.35 + progress * 0.6);
+  animation.material.opacity = (1 - progress) ** 2 * 0.8;
+}
+
 /** Apply suspension, steering and rolling to the existing separate wheel meshes. */
 export function syncCarWheels(carMesh, car, dt = 0) {
   const visual = carMesh.userData.visual;

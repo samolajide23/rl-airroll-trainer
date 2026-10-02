@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { frameElapsed } from "./shared/aerial.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES } from "./modes/catalog.js";
+import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES, nextTrainingDrill, previousTrainingDrill } from "./modes/catalog.js";
 import { recentAttempts } from "./shared/metrics.js";
 import { preloadBall } from "./shared/ball.js";
 import { preloadCars } from "./shared/carAssets.js";
@@ -46,13 +46,16 @@ import {
   getBinds,
   getCamera,
   getControlPreset,
+  getControllerLayout,
   getPad,
   onBindsChange,
   resetCamera,
   resetControlBindings,
+  applyControlPreset,
   resetAllControls,
   setBind,
   setCamera,
+  setControllerLayout,
   setPad,
 } from "./shared/settings.js";
 import { CAMERA_PRESETS, CAMERA_PRESET_SOURCE, matchingCameraPreset } from "./shared/cameraPresets.js";
@@ -188,10 +191,105 @@ for (const [rx, ry] of [
   arena.add(ring);
 }
 
-const modeCtx = { scene, camera, hud, arena };
+const modeCtx = { scene, camera, hud, arena, nextDrill: () => {
+  const next = nextTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
+  if (next) startMode(next.def, { masteryStep: next.masteryStep, varied: activeMode.varied });
+}, previousDrill: () => {
+  const previous = previousTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
+  if (previous) startMode(previous.def, { masteryStep: previous.masteryStep, varied: activeMode.varied });
+}, selectStage: stage => {
+  if (pauseMenu.open || pauseSettings) return;
+  const def = GAME_MODES.find(mode => mode.id === activeMode?.catalogId);
+  if (def && stage !== activeMode.masteryStep) startMode(def, { masteryStep: stage, varied: activeMode.varied });
+} };
 
 /** @type {null | { start(): void, stop(): void, update(dt: number, now: number): void }} */
 let activeMode = null;
+const drillLoading = document.createElement("div");
+drillLoading.className = "drill-loading";
+drillLoading.hidden = true;
+drillLoading.setAttribute("role", "status");
+drillLoading.setAttribute("aria-live", "polite");
+drillLoading.innerHTML = `<div class="drill-loading-content"><span>PREPARING DRILL</span><strong></strong><div class="drill-loading-line" aria-hidden="true"></div></div>`;
+document.body.append(drillLoading);
+const pauseMenu = document.createElement("dialog");
+pauseMenu.className = "training-pause";
+pauseMenu.setAttribute("aria-labelledby", "pause-title");
+pauseMenu.innerHTML = `<h2 id="pause-title">Paused</h2>
+  <button type="button" data-pause="resume" autofocus>Resume Game</button>
+  <button type="button" data-pause="restart">Restart Training</button>
+  <button type="button" data-pause="change">Change Mode/Match</button>
+  <button type="button" data-pause="settings">Settings</button>
+  <button type="button" data-pause="reset">Reset Progress</button>
+  <button type="button" data-pause="exit">End Training</button>`;
+let pauseSettings = false;
+let resetProgressConfirmed = false;
+document.body.append(pauseMenu);
+pauseMenu.addEventListener("cancel", event => {
+  event.preventDefault();
+  escLatch = true;
+  resumeMode();
+});
+pauseMenu.addEventListener("click", event => {
+  const action = event.target.closest("[data-pause]")?.dataset.pause;
+  if (action === "resume") resumeMode();
+  if (action === "restart") {
+    const def = GAME_MODES.find(mode => mode.id === activeMode?.catalogId);
+    if (def) startMode(def, { masteryStep: activeMode.masteryStep, varied: activeMode.varied });
+  }
+  if (action === "change") {
+    showPlay();
+    globalThis.__trainerMenu?.ui?.training();
+  }
+  if (action === "settings") {
+    pauseMenu.close();
+    pauseSettings = true;
+    globalThis.__trainerMenu?.parkSettings();
+    settingsEl.classList.remove("hidden");
+    hud.root.classList.add("hidden");
+    setSettingsTab(settingsTab);
+    menuGamepad.onScreenChange();
+  }
+  if (action === "reset") {
+    if (!resetProgressConfirmed) {
+      resetProgressConfirmed = true;
+      event.target.textContent = "Confirm Reset Session Progress";
+      return;
+    }
+    activeMode.elapsed = 0;
+    for (const field of ["hits", "streak", "best", "round", "setupIndex"]) if (field in activeMode) activeMode[field] = 0;
+    if (activeMode.setAttempts) activeMode.setAttempts = [];
+    activeMode.resetState();
+    activeMode.updateDrillStatus?.();
+    resumeMode();
+  }
+  if (action === "exit") showHub();
+});
+
+function resumeMode() {
+  resetProgressConfirmed = false;
+  pauseMenu.querySelector('[data-pause="reset"]').textContent = "Reset Progress";
+  pauseMenu.close();
+  keys.clear();
+  last = performance.now();
+  if (practiceSessionActive) practiceStartedAt = document.hidden ? null : performance.now();
+  setTouchControlsVisible(Boolean(activeMode));
+  menuGamepad.onScreenChange();
+}
+
+function togglePauseMenu() {
+  if (pauseMenu.open) return resumeMode();
+  savePractice();
+  practiceStartedAt = null;
+  keys.clear();
+  pauseMenu.querySelector('[data-pause="restart"]').disabled = typeof activeMode?.resetState !== "function";
+  pauseMenu.querySelector('[data-pause="reset"]').disabled = typeof activeMode?.resetState !== "function";
+  resetProgressConfirmed = false;
+  pauseMenu.querySelector('[data-pause="reset"]').textContent = "Reset Progress";
+  pauseMenu.showModal();
+  setTouchControlsVisible(false);
+  menuGamepad.onScreenChange();
+}
 let modeStartId = 0;
 /** @type {import("./modes/catalog.js").GameModeDef | null} */
 let pendingMode = null;
@@ -225,6 +323,7 @@ function hideAllScreens() {
 
 /** @returns {HTMLElement | null} */
 function getActiveMenuScreen() {
+  if (pauseMenu.open) return pauseMenu;
   const liveScreen = globalThis.__trainerMenu?.ui?.active();
   if (liveScreen) return liveScreen;
   if (!hubEl.classList.contains("hidden")) return hubEl;
@@ -242,7 +341,17 @@ function handleMenuBack() {
     return;
   }
   if (activeMode) {
-    showHub();
+    if (pauseSettings) {
+      if (editingBindings) { setBindingsView(false); return; }
+      cancelListening();
+      settingsEl.classList.add("hidden");
+      hud.root.classList.remove("hidden");
+      pauseSettings = false;
+      pauseMenu.showModal();
+      menuGamepad.onScreenChange();
+      return;
+    }
+    togglePauseMenu();
     return;
   }
   if (globalThis.__trainerMenu?.ui?.active()) {
@@ -282,7 +391,7 @@ function handleMenuBack() {
 
 const menuGamepad = createMenuGamepad({
   getActiveScreen: getActiveMenuScreen,
-  isMenuActive: () => !activeMode && getActiveMenuScreen() !== null,
+  isMenuActive: () => pauseMenu.open || pauseSettings || !activeMode && getActiveMenuScreen() !== null,
   isListeningPad: () => listeningPadAction !== null,
   isListeningKey: () => listeningKeyAction !== null,
   cancelListening: () => cancelListening(),
@@ -317,11 +426,14 @@ function savePractice(endSession = false) {
   if (practiceStartedAt !== null) totals.seconds += Math.max(0, performance.now() - practiceStartedAt) / 1000;
   if (endSession) totals.sessions++;
   try { localStorage.setItem('rl-training-practice-totals', JSON.stringify(totals)); } catch { }
-  practiceStartedAt = document.hidden || endSession ? null : performance.now();
+  practiceStartedAt = document.hidden || endSession || pauseMenu.open || pauseSettings ? null : performance.now();
   if (endSession) practiceSessionActive = false;
 }
 
 function stopActiveMode() {
+  pauseSettings = false;
+  drillLoading.hidden = true;
+  pauseMenu.close();
   modeStartId++;
   savePractice(true);
   if (activeMode) {
@@ -411,10 +523,15 @@ async function startMode(def, options = {}) {
   cancelListening();
   stopActiveMode();
   const requestId = modeStartId;
+  drillLoading.querySelector("strong").textContent = def.title;
+  drillLoading.hidden = false;
   try {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    if (requestId !== modeStartId) return;
     const module = await def.load?.();
     if (requestId !== modeStartId) return;
     activeMode = def.create(modeCtx, options, module);
+    activeMode.catalogId = def.id;
     pendingMode = null;
     hideAllScreens();
     menuGamepad.onScreenChange();
@@ -427,6 +544,8 @@ async function startMode(def, options = {}) {
       globalThis.__activeMode = activeMode;
       globalThis.__gameCamera = camera;
     }
+    renderer.render(scene, camera);
+    if (requestId === modeStartId) drillLoading.hidden = true;
   } catch (error) {
     if (requestId !== modeStartId) return;
     console.error("Failed to start mode:", error);
@@ -685,8 +804,20 @@ function setBindingsView(editing) {
   menuGamepad.onScreenChange();
 }
 
+function makeControllerLayoutRow() {
+  return makeStringSelectRow("Controller Layout", getControllerLayout(), [
+    { value: "xbox", label: "Xbox" },
+    { value: "playstation", label: "PlayStation" },
+  ], value => {
+    setControllerLayout(value);
+    buildBindList();
+    controlOptions.querySelector('select').value = value;
+  });
+}
+
 function buildControlOptions() {
   controlOptions.replaceChildren();
+  controlOptions.append(makeControllerLayoutRow());
   for (const meta of CONTROL_SLIDERS) {
     const row = document.createElement("div");
     row.className = "bind-row";
@@ -794,7 +925,7 @@ function buildCameraList() {
       const preset = CAMERA_PRESETS.find(preset => preset.id === value);
       if (!preset) return;
       applyCameraPreset(preset.camera);
-      if (value === "my-camera") {
+      if (value === "xexead") {
         setPad("invertLookX", false);
         setPad("invertLookY", false);
       }
@@ -811,7 +942,7 @@ function buildCameraList() {
     presetSelect.value = id;
     const preset = CAMERA_PRESETS.find(preset => preset.id === id);
     source.replaceChildren();
-    if (preset && id !== "my-camera") {
+    if (preset && id !== "xexead") {
       const link = document.createElement("a");
       link.href = CAMERA_PRESET_SOURCE;
       link.target = "_blank";
@@ -924,7 +1055,9 @@ function renderGamepadIcons(element, index, stick = null) {
     ["⧉", "SHARE"], ["☰", "OPTIONS"], ["LS", "L3"], ["RS", "R3"],
     ["↑"], ["↓"], ["←"], ["→"],
   ];
-  const symbols = stick ? [stick.startsWith("Right") ? "R" : "L"] : labels[index];
+  const layout = getControllerLayout();
+  const symbols = stick ? [stick.startsWith("Right") ? "R" : "L"]
+    : labels[index] ? [labels[index][layout === "playstation" && labels[index].length > 1 ? 1 : 0]] : null;
   if (!symbols) {
     element.textContent = formatPadButton(index);
     return;
@@ -932,9 +1065,9 @@ function renderGamepadIcons(element, index, stick = null) {
   const group = document.createElement("span");
   group.className = "gamepad-icons";
   group.setAttribute("aria-hidden", "true");
-  symbols.forEach((symbol, position) => {
+  symbols.forEach(symbol => {
     const icon = document.createElement("span");
-    icon.className = `gamepad-icon ${stick ? "stick-icon" : index < 4 ? `face-icon ${position === 0 ? "xbox" : "playstation"} face-${index}` : index >= 12 ? "dpad-icon" : "shoulder-icon"}`;
+    icon.className = `gamepad-icon ${stick ? "stick-icon" : index < 4 ? `face-icon ${layout} face-${index}` : index >= 12 ? "dpad-icon" : "shoulder-icon"}`;
     icon.textContent = symbol;
     group.append(icon);
   });
@@ -956,6 +1089,7 @@ function buildBindList() {
   const binds = getBinds();
   const pad = getPad();
   bindListEl.replaceChildren();
+  bindListEl.append(makeControllerLayoutRow());
   updatePadStatusLine();
   document.getElementById("control-preset").value = getControlPreset();
 
@@ -1229,13 +1363,14 @@ function makeDeadzoneRow(value) {
   return row;
 }
 
-btnMenu.addEventListener("click", showHub);
+btnMenu.addEventListener("click", handleMenuBack);
 btnPlay.addEventListener("click", showPlay);
 btnLocker.addEventListener("click", showLocker);
 btnSettings.addEventListener("click", showSettings);
 document.getElementById("btn-view-bindings").addEventListener("click", () => setBindingsView(true));
 document.getElementById("control-preset").addEventListener("change", event => {
   if (event.target.value === "default") resetControlBindings();
+  else applyControlPreset(event.target.value);
   rebuildControls();
 });
 btnPlayBack.addEventListener("click", handleMenuBack);
@@ -1344,7 +1479,7 @@ function frame(now) {
   }
   if (!keys.has("Escape")) escLatch = false;
 
-  // Start / Options → same as Escape (hub from drill, back through menus).
+  // Start / Options follows Escape for gameplay and menus.
   // Ignore while remapping a pad bind so Start can still be captured.
   {
     const pad = getActiveGamepad();
@@ -1370,8 +1505,8 @@ function frame(now) {
     updatePadStatusLine();
   }
 
-  if (activeMode) activeMode.update(dt, now);
-  else updateLockerPreview(dt);
+  if (activeMode && !pauseMenu.open && !pauseSettings) activeMode.update(dt, now);
+  else if (!activeMode) updateLockerPreview(dt);
 
   if (!activeMode) {
     arena.rotation.y += dt * 0.05;
@@ -1459,8 +1594,8 @@ globalThis.__trainerMenu = {
     lockerEl.querySelector('.menu-panel').append(lockerListEl, lockerCreditEl);
   },
 };
-showHub();
 import('./menus/volt.js').then(async () => {
+  document.body.classList.remove("menu-loading");
   if (new URLSearchParams(location.search).get("replay") !== "rocketsim") return;
   const replayModule = await import("./modes/referenceReplay.js");
   if (!replayModule.hasReferenceRecording) {
@@ -1474,6 +1609,10 @@ import('./menus/volt.js').then(async () => {
     load: () => Promise.resolve(replayModule),
     create: (ctx, options, module) => new module.ReferenceReplayMode(ctx),
   }).then(() => setTouchControlsVisible(false));
+}).catch(error => {
+  console.error("Unable to load the main menu:", error);
+  document.body.classList.remove("menu-loading");
+  showHub();
 });
 requestAnimationFrame(frame);
 

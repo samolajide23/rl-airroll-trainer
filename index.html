@@ -7,12 +7,23 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#181a18" />
   <title>RL Air Roll Trainer</title>
   <link rel="stylesheet" href="/src/style.css" />
+  <style>
+    :root {
+      --bg: #181a18;
+    }
+
+    body.menu-loading > .screen,
+    body.menu-loading > #stage,
+    body.menu-loading > #live-menu {
+      visibility: hidden;
+    }
+  </style>
 </head>
 
-<body>
+<body class="menu-loading">
   <div id="hub" class="screen">
     <div class="menu-panel hub-panel">
       <p class="menu-kicker">The aerial training ground</p>
@@ -113,6 +124,7 @@
             <select id="control-preset" aria-label="Control Presets">
               <option value="custom">Custom</option>
               <option value="default">Default</option>
+              <option value="xexead">XeXead</option>
             </select>
           </div>
           <p id="pad-status-line" class="pad-status-line">No controller detected — plug one in to rebind buttons.</p>

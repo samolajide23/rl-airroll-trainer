@@ -11,8 +11,9 @@ const COURSE = [
 const PASS_RADIUS = 230;
 
 export class RingsMode extends ArenaDrillBase {
-  constructor(ctx) {
+  constructor(ctx, options = {}) {
     super(ctx, "Rings");
+    this.varied = options.varied !== false;
     this.modeId = "rings";
     this.roundLimit = 60;
     this.nextIndex = 0;
@@ -38,6 +39,18 @@ export class RingsMode extends ArenaDrillBase {
 
   setupRound() {
     this.spawn([0, -3000, this.hitbox.restZ], null);
+    const index = Math.max(0, (this.round ?? 1) - 1);
+    const side = index % 2 ? -1 : 1;
+    const pattern = Math.floor(index / 2) % 3;
+    this.rings.forEach((ring, ringIndex) => {
+      const point = COURSE[ringIndex];
+      const horizontal = pattern === 1 ? Math.sin(ringIndex * Math.PI / 3) * 650 : pattern === 2 ? (ringIndex % 2 ? 450 : -450) : point[0];
+      ring.center.set(this.varied ? horizontal * side : point[0], point[1], point[2] + (this.varied ? (Math.random() * 2 - 1) * 60 : 0));
+      const previous = ringIndex === 0 ? this.physCar.pos : this.rings[ringIndex - 1].center;
+      ring.normal.copy(ring.center).sub(previous).normalize();
+      physToThree(ring.center, ring.mesh.position).multiplyScalar(ARENA_UU);
+      ring.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), physToThree(ring.normal, new THREE.Vector3()).normalize());
+    });
     this.nextIndex = 0;
     this.previousPosition.copy(this.physCar.pos);
     this.refreshRings();

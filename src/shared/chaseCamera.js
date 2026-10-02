@@ -308,7 +308,9 @@ export class ChaseCamera {
     // Prefer momentum in air (RL car-cam). Never track tumbling nose while
     // airborne without velocity — that reverses yaw when the car faces back
     // mid-flip and whips the camera even with FLAT_FORWARD_MAX_UP.
-    if (velOk && (airborne || noseUnstable)) {
+    if (airborne && this._ready && !opts.snap) {
+      this.tmp.copy(this.smoothDir);
+    } else if (velOk && (airborne || noseUnstable)) {
       this.tmp.copy(this.tmp2).normalize();
     } else if (!airborne && !noseUnstable && flatFwdSq > 1e-6) {
       this.tmp.normalize();

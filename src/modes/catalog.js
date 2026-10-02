@@ -73,7 +73,7 @@ const ORIGINAL_PHASES = [
           "Free-fly a hoop course — boost and air roll to thread glowing rings.",
         available: true,
         load: () => import("./ringsMode.js"),
-        create: (ctx, options, module) => new module.RingsMode(ctx),
+        create: (ctx, options, module) => new module.RingsMode(ctx, options),
       },
     ],
   },
@@ -180,11 +180,32 @@ function mechanic(id, title, level, steps, drillId, options = {}) {
   };
 }
 
+export function previousTrainingDrill(id, masteryStep = 0) {
+  const modes = PHASES[0].modes.filter(mode => mode.available);
+  const index = modes.findIndex(mode => mode.id === id);
+  if (index < 0) return null;
+  const step = Math.max(0, Math.trunc(masteryStep)) - 1;
+  const previous = modes[(index - 1 + modes.length) % modes.length];
+  return step >= 0
+    ? { def: modes[index], masteryStep: step }
+    : { def: previous, masteryStep: previous.steps.length - 1 };
+}
+
+export function nextTrainingDrill(id, masteryStep = 0) {
+  const modes = PHASES[0].modes.filter(mode => mode.available);
+  const index = modes.findIndex(mode => mode.id === id);
+  if (index < 0) return null;
+  const step = Math.max(0, Math.trunc(masteryStep)) + 1;
+  return step < modes[index].steps.length
+    ? { def: modes[index], masteryStep: step }
+    : { def: modes[(index + 1) % modes.length], masteryStep: 0 };
+}
+
 export const STATIC_BALL_MASTERY = [
   { title: "Find Contact", goal: "Approach the stationary ground ball and make contact.", success: "Any car contact before the 15-second round ends.", benefit: "Learn spacing and steering into the ball.", cue: "Line up before accelerating; watch where your nose will meet the ball.", playable: true },
   { title: "Square the Nose", goal: "Make deliberate front contact rather than clipping the ball with the side.", success: "First contact with the front of the car; outgoing direction is not scored.", benefit: "Build predictable, repeatable touches.", cue: "Finish steering before the touch so your nose meets the ball squarely." },
   { title: "Place the Touch", goal: "Send the ball through a wide target gate, including targets left and right.", success: "A front touch sends the ball through the requested gate.", benefit: "Learn contact angles for passes and shots.", cue: "Choose your approach angle before committing to contact." },
-  { title: "Add Pace", goal: "Reach the target within a requested ball-speed range.", success: "Front contact, then cross the gate at the requested ground pace: 800-1,200 uu/s initially.", benefit: "Add purposeful power without losing accuracy.", cue: "Adjust approach speed while keeping the same contact line." },
+  { title: "Add Pace", goal: "Reach the target within a requested ball-speed range.", success: "Front contact, then cross the gate at the requested ground pace: 28.8-43.2 km/h initially.", benefit: "Add purposeful power without losing accuracy.", cue: "Adjust approach speed while keeping the same contact line." },
   { title: "Stay in the Play", goal: "Place the touch, then stay in control and follow its path.", success: "Front contact and a target hit, then follow within 600 uu for 0.5 seconds, wheels-down and facing the ball. No speed-band requirement.", benefit: "Stay available for the next touch instead of overcommitting.", cue: "Plan your exit and follow-through before striking the ball." },
 ].map(step => ({ ...step, playable: true }));
 
@@ -199,8 +220,8 @@ export const SOFT_TOUCH_MASTERY = [
 export const STATIC_BALL_PLAN = [
   { setup: "Start 700-1,100 uu from the ball, with up to 150 uu lateral offset and 10 degrees of heading variation.", feedback: "Contact or no contact, plus time to first touch." },
   { setup: "Start 800-1,200 uu away, with up to 200 uu lateral offset and 15 degrees of heading variation.", feedback: "Front, side, rear or roof contact; no contact on timeout." },
-  { setup: "Start 900-1,300 uu away, with up to 250 uu lateral offset and 20 degrees of heading variation. A 600 uu-wide gate sits 1,400 uu beyond the ball, at 0 or 20 degrees left or right.", feedback: "Target hit, missed left, missed right, too high, wrong contact or no contact." },
-  { setup: "Use the Place the Touch bounds and target an 800-1,200 uu/s ground-speed band at the gate.", feedback: "Target accuracy and gate speed; too soft or too hard only when the target is hit." },
+  { setup: "Start 900-1,300 uu away, with up to 250 uu lateral offset and 20 degrees of heading variation. Varied practice cycles nine approach lines up to 65 degrees left or right. A 600 uu-wide gate sits 1,400 uu beyond the ball on that line.", feedback: "Target hit, missed left, missed right, too high, wrong contact or no contact." },
+  { setup: "Use the Place the Touch bounds and target a 28.8-43.2 km/h ground-speed band at the gate.", feedback: "Target accuracy and gate speed; too soft or too hard only when the target is hit." },
   { setup: "Use the Place the Touch bounds. After a target hit, follow within 600 uu for 0.5 seconds, grounded and facing within 30 degrees of the ball, within 3 seconds of crossing.", feedback: "Target accuracy, then controlled follow-through, too far away, facing away or not wheels-down." },
 ];
 

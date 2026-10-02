@@ -1,8 +1,14 @@
 import * as THREE from "three";
 import { FreePlayMode } from "../modes/freePlay.js";
-import { makePhysCar, makeBall, RL } from "./carPhysics.js";
+import { makePhysCar, makeBall, stepCar, RL } from "./carPhysics.js";
 import { formatConsistency, recordAttempt } from "./metrics.js";
 import { formatControlsHelp, onBindsChange } from "./settings.js";
+import { readControls } from "./input.js";
+
+function hasDrillInput(controls) {
+  return [controls.throttle, controls.steer, controls.pitch, controls.yaw, controls.roll].some(value => Math.abs(value || 0) > 0)
+    || Boolean(controls.jump || controls.boost || controls.powerslide || controls.airRoll || controls.airLeft || controls.airRight);
+}
 
 export class ArenaDrillBase extends FreePlayMode {
   constructor(ctx, title) {
@@ -26,6 +32,15 @@ export class ArenaDrillBase extends FreePlayMode {
     super.start();
     this.ctx.hud.root.classList.remove("freeplay-hud");
     this.ctx.hud.alignMeter?.classList.remove("hidden");
+    this.countdown = document.createElement("div");
+    this.countdown.className = "drill-countdown";
+    this.countdown.setAttribute("role", "timer");
+    this.countdown.setAttribute("aria-label", "Attempt time remaining");
+    const label = document.createElement("span");
+    label.textContent = "TIME LEFT";
+    this.countdownValue = document.createElement("strong");
+    this.countdown.append(label, this.countdownValue);
+    this.ctx.hud.root.parentElement.append(this.countdown);
     this.updateDrillStatus();
     this._unbindHelp?.();
     const updateHelp = () => {
@@ -45,6 +60,8 @@ export class ArenaDrillBase extends FreePlayMode {
     this.result = null;
     this.resultTime = 0;
     this.progress = 0;
+    this.awaitingInput = true;
+    this.inputReady = !hasDrillInput(readControls());
     this.setupRound();
     this.syncMeshes();
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
@@ -73,8 +90,37 @@ export class ArenaDrillBase extends FreePlayMode {
     if (!this.result && this.elapsed >= this.roundLimit) this.finishRound(false, "Time expired");
   }
 
+  stopRoundCar(dt = 0) {
+    this.physCar.isBoosting = false;
+    this.boosting = false;
+    if (this.resultTime >= 0.4) {
+      this.physCar.vel.set(0, 0, 0);
+      this.physCar.omega.set(0, 0, 0);
+    } else if (dt > 0) {
+      const damping = Math.exp(-12 * dt);
+      this.physCar.vel.multiplyScalar(damping);
+      this.physCar.omega.multiplyScalar(damping);
+      stepCar(this.physCar, {}, dt);
+    }
+  }
+
+  _stepOnce(dt, controls = readControls()) {
+    if (this.result) {
+      this.stopRoundCar(dt);
+      this.onPhysicsStep(dt, controls || {}, null);
+      return;
+    }
+    if (this.awaitingInput) {
+      const active = hasDrillInput(controls);
+      if (!active) this.inputReady = true;
+      if (!this.inputReady || !active) return;
+      this.awaitingInput = false;
+    }
+    super._stepOnce(dt, controls);
+  }
+
   update(dt, now) {
-    if (this.resultTime >= 1.2) this.resetState();
+    if (this.resultTime >= 1.2 && !this.coachView?.failure?.open) this.resetState();
     super.update(dt, now);
   }
 
@@ -82,6 +128,7 @@ export class ArenaDrillBase extends FreePlayMode {
     if (this.result) return;
     this.result = { success, message };
     this.resultTime = 0;
+    this.stopRoundCar();
     if (success) {
       this.hits += 1;
       this.streak += 1;
@@ -91,8 +138,18 @@ export class ArenaDrillBase extends FreePlayMode {
   }
 
   updateDrillStatus() {
+    if (this.countdown) {
+      const remaining = Math.max(0, this.roundLimit - this.elapsed);
+      this.countdownValue.textContent = `${remaining.toFixed(1)} s`;
+      this.countdown.dataset.state = this.result ? "finished" : this.awaitingInput ? "ready" : remaining <= 5 ? "urgent" : "running";
+    }
     this.setScoreRow(this.hits, this.streak, this.best, formatConsistency(this.modeId));
     this.ctx.hud.status.textContent = this.result?.message ?? `${this.prompt} · ${this.touches} touches · ${Math.max(0, this.roundLimit - this.elapsed).toFixed(1)} s`;
     if (this.ctx.hud.alignFill) this.ctx.hud.alignFill.style.width = `${Math.round(THREE.MathUtils.clamp(this.progress, 0, 1) * 100)}%`;
+  }
+
+  stop() {
+    this.countdown?.remove();
+    super.stop();
   }
 }

@@ -1,0 +1,6449 @@
+{
+  "id": "dominus_landing",
+  "description": "",
+  "engine": "carSim.js",
+  "game_mode": "soccar",
+  "tick_rate": 120,
+  "tick_time": 0.008333333333333333,
+  "ticks": 120,
+  "initial": {
+    "pos": [
+      -1000,
+      0,
+      250
+    ],
+    "vel": [
+      600,
+      300,
+      -300
+    ],
+    "ang_vel": [
+      0,
+      0,
+      0
+    ],
+    "yaw": 0,
+    "pitch": 0,
+    "roll": 0,
+    "boost": 100,
+    "on_ground": false,
+    "hitbox": "dominus"
+  },
+  "ball_initial": null,
+  "frames": [
+    {
+      "tick": 0,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -1000,
+        0,
+        250
+      ],
+      "vel": [
+        600,
+        300,
+        -300
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 1,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -994.9954223632812,
+        2.500000238418579,
+        247.45486450195312
+      ],
+      "vel": [
+        600.5555419921875,
+        300,
+        -305.4166564941406
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.008333333333333333
+    },
+    {
+      "tick": 2,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -989.9861450195312,
+        5.000000476837158,
+        244.8645782470703
+      ],
+      "vel": [
+        601.1111450195312,
+        300,
+        -310.83331298828125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.016666666666666666
+    },
+    {
+      "tick": 3,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -984.9722900390625,
+        7.500000476837158,
+        242.2291717529297
+      ],
+      "vel": [
+        601.6666870117188,
+        300,
+        -316.2499694824219
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.025
+    },
+    {
+      "tick": 4,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -979.9537353515625,
+        10.000000953674316,
+        239.54861450195312
+      ],
+      "vel": [
+        602.2222290039062,
+        300,
+        -321.6666259765625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.03333333333333333
+    },
+    {
+      "tick": 5,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -974.9305419921875,
+        12.500001907348633,
+        236.8229217529297
+      ],
+      "vel": [
+        602.77783203125,
+        300,
+        -327.0832824707031
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.041666666666666664
+    },
+    {
+      "tick": 6,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -969.90283203125,
+        15.000001907348633,
+        234.05209350585938
+      ],
+      "vel": [
+        603.3333740234375,
+        300,
+        -332.49993896484375
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.049999999999999996
+    },
+    {
+      "tick": 7,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -964.870361328125,
+        17.500001907348633,
+        231.2361297607422
+      ],
+      "vel": [
+        603.888916015625,
+        300,
+        -337.9165954589844
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.05833333333333333
+    },
+    {
+      "tick": 8,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -959.8333129882812,
+        20.000003814697266,
+        228.375
+      ],
+      "vel": [
+        604.4445190429688,
+        300,
+        -343.333251953125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.06666666666666667
+    },
+    {
+      "tick": 9,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -954.7916259765625,
+        22.500003814697266,
+        225.46875
+      ],
+      "vel": [
+        605.0000610351562,
+        300,
+        -348.7499084472656
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.075
+    },
+    {
+      "tick": 10,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -949.745361328125,
+        25.000003814697266,
+        222.51736450195312
+      ],
+      "vel": [
+        605.5556030273438,
+        300,
+        -354.16656494140625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.08333333333333333
+    },
+    {
+      "tick": 11,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -944.6943969726562,
+        27.500003814697266,
+        219.52085876464844
+      ],
+      "vel": [
+        606.1112060546875,
+        300,
+        -359.5832214355469
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.09166666666666666
+    },
+    {
+      "tick": 12,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -939.638916015625,
+        30.000003814697266,
+        216.47918701171875
+      ],
+      "vel": [
+        606.666748046875,
+        300,
+        -364.9998779296875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.09999999999999999
+    },
+    {
+      "tick": 13,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -934.5787353515625,
+        32.500003814697266,
+        213.3923797607422
+      ],
+      "vel": [
+        607.2222900390625,
+        300,
+        -370.4165344238281
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.10833333333333332
+    },
+    {
+      "tick": 14,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -929.513916015625,
+        35.000003814697266,
+        210.26043701171875
+      ],
+      "vel": [
+        607.7778930664062,
+        300,
+        -375.83319091796875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.11666666666666665
+    },
+    {
+      "tick": 15,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -924.4444580078125,
+        37.50000762939453,
+        207.0833740234375
+      ],
+      "vel": [
+        608.3334350585938,
+        300,
+        -381.2498474121094
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.12499999999999999
+    },
+    {
+      "tick": 16,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -919.370361328125,
+        40.00000762939453,
+        203.86114501953125
+      ],
+      "vel": [
+        608.8890380859375,
+        300,
+        -386.66650390625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.13333333333333333
+    },
+    {
+      "tick": 17,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -914.2916870117188,
+        42.50000762939453,
+        200.59378051757812
+      ],
+      "vel": [
+        609.444580078125,
+        300,
+        -392.0831298828125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.14166666666666666
+    },
+    {
+      "tick": 18,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -909.2083129882812,
+        45.00000762939453,
+        197.2812957763672
+      ],
+      "vel": [
+        610.0001220703125,
+        300,
+        -397.4997863769531
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.15
+    },
+    {
+      "tick": 19,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -904.120361328125,
+        47.50000762939453,
+        193.92364501953125
+      ],
+      "vel": [
+        610.5557250976562,
+        300,
+        -402.9164733886719
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.15833333333333333
+    },
+    {
+      "tick": 20,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -899.0277099609375,
+        50.00000762939453,
+        190.5208740234375
+      ],
+      "vel": [
+        611.1112670898438,
+        300,
+        -408.3331604003906
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.16666666666666666
+    },
+    {
+      "tick": 21,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -893.9305419921875,
+        52.500003814697266,
+        187.0729522705078
+      ],
+      "vel": [
+        611.6668090820312,
+        300,
+        -413.7498474121094
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.175
+    },
+    {
+      "tick": 22,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -888.8286743164062,
+        55,
+        183.57989501953125
+      ],
+      "vel": [
+        612.222412109375,
+        300,
+        -419.16650390625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.18333333333333332
+    },
+    {
+      "tick": 23,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -883.7222290039062,
+        57.5,
+        180.0417022705078
+      ],
+      "vel": [
+        612.7779541015625,
+        300,
+        -424.58319091796875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.19166666666666665
+    },
+    {
+      "tick": 24,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -878.611083984375,
+        59.999996185302734,
+        176.4583740234375
+      ],
+      "vel": [
+        613.33349609375,
+        300,
+        -429.9998779296875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.19999999999999998
+    },
+    {
+      "tick": 25,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -873.495361328125,
+        62.49999237060547,
+        172.82989501953125
+      ],
+      "vel": [
+        613.8890991210938,
+        300,
+        -435.41656494140625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.20833333333333331
+    },
+    {
+      "tick": 26,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -868.375,
+        64.99999237060547,
+        169.1562957763672
+      ],
+      "vel": [
+        614.4446411132812,
+        300,
+        -440.8332214355469
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.21666666666666665
+    },
+    {
+      "tick": 27,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -863.25,
+        67.49999237060547,
+        165.4375457763672
+      ],
+      "vel": [
+        615.0001831054688,
+        300,
+        -446.2499084472656
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.22499999999999998
+    },
+    {
+      "tick": 28,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -858.120361328125,
+        69.99998474121094,
+        161.6736602783203
+      ],
+      "vel": [
+        615.5557861328125,
+        300,
+        -451.6665954589844
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.2333333333333333
+    },
+    {
+      "tick": 29,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -852.9860229492188,
+        72.49998474121094,
+        157.8646240234375
+      ],
+      "vel": [
+        616.111328125,
+        300,
+        -457.0832824707031
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.24166666666666664
+    },
+    {
+      "tick": 30,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -847.84716796875,
+        74.99998474121094,
+        154.01046752929688
+      ],
+      "vel": [
+        616.6668701171875,
+        300,
+        -462.49993896484375
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.24999999999999997
+    },
+    {
+      "tick": 31,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -842.70361328125,
+        77.4999771118164,
+        150.1111602783203
+      ],
+      "vel": [
+        617.2224731445312,
+        300,
+        -467.9166259765625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.2583333333333333
+    },
+    {
+      "tick": 32,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -837.5554809570312,
+        79.9999771118164,
+        146.16671752929688
+      ],
+      "vel": [
+        617.7780151367188,
+        300,
+        -473.33331298828125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.26666666666666666
+    },
+    {
+      "tick": 33,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -832.4027099609375,
+        82.4999771118164,
+        142.1771240234375
+      ],
+      "vel": [
+        618.3335571289062,
+        300,
+        -478.75
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.275
+    },
+    {
+      "tick": 34,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -827.245361328125,
+        84.99996948242188,
+        138.1424102783203
+      ],
+      "vel": [
+        618.88916015625,
+        300,
+        -484.1666564941406
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.2833333333333334
+    },
+    {
+      "tick": 35,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -822.083251953125,
+        87.49996948242188,
+        134.0625457763672
+      ],
+      "vel": [
+        619.4447021484375,
+        300,
+        -489.5833435058594
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.29166666666666674
+    },
+    {
+      "tick": 36,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -816.9166259765625,
+        89.99996948242188,
+        129.9375457763672
+      ],
+      "vel": [
+        620.000244140625,
+        300,
+        -495.0000305175781
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3000000000000001
+    },
+    {
+      "tick": 37,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -811.745361328125,
+        92.49996185302734,
+        125.76739501953125
+      ],
+      "vel": [
+        620.5558471679688,
+        300,
+        -500.4167175292969
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.30833333333333346
+    },
+    {
+      "tick": 38,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -806.5693969726562,
+        94.99996185302734,
+        121.5521240234375
+      ],
+      "vel": [
+        621.1113891601562,
+        300,
+        -505.8333740234375
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3166666666666668
+    },
+    {
+      "tick": 39,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -801.3888549804688,
+        97.49996185302734,
+        117.29170227050781
+      ],
+      "vel": [
+        621.6669311523438,
+        300,
+        -511.25006103515625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3250000000000002
+    },
+    {
+      "tick": 40,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -796.2036743164062,
+        99.99996185302734,
+        112.98614501953125
+      ],
+      "vel": [
+        622.2225341796875,
+        300,
+        -516.666748046875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.33333333333333354
+    },
+    {
+      "tick": 41,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -791.0138549804688,
+        102.49996185302734,
+        108.63545227050781
+      ],
+      "vel": [
+        622.778076171875,
+        300,
+        -522.0834350585938
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3416666666666669
+    },
+    {
+      "tick": 42,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -785.8194580078125,
+        104.99996185302734,
+        104.23961639404297
+      ],
+      "vel": [
+        623.3336181640625,
+        300,
+        -527.5001220703125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.35000000000000026
+    },
+    {
+      "tick": 43,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -780.620361328125,
+        107.49995422363281,
+        99.79864501953125
+      ],
+      "vel": [
+        623.8892211914062,
+        300,
+        -532.9168090820312
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3583333333333336
+    },
+    {
+      "tick": 44,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -775.4166259765625,
+        109.99995422363281,
+        95.31253051757812
+      ],
+      "vel": [
+        624.4447631835938,
+        300,
+        -538.3334350585938
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.366666666666667
+    },
+    {
+      "tick": 45,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -770.208251953125,
+        112.49995422363281,
+        90.78128051757812
+      ],
+      "vel": [
+        625.0003051757812,
+        300,
+        -543.7501220703125
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.37500000000000033
+    },
+    {
+      "tick": 46,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -764.9953002929688,
+        114.99994659423828,
+        86.20488739013672
+      ],
+      "vel": [
+        625.555908203125,
+        300,
+        -549.1668090820312
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.3833333333333337
+    },
+    {
+      "tick": 47,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -759.7777099609375,
+        117.49994659423828,
+        81.58335876464844
+      ],
+      "vel": [
+        626.1114501953125,
+        300,
+        -554.58349609375
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.39166666666666705
+    },
+    {
+      "tick": 48,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -754.5554809570312,
+        119.99994659423828,
+        76.91668701171875
+      ],
+      "vel": [
+        626.6669921875,
+        300,
+        -560.0001831054688
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.4000000000000004
+    },
+    {
+      "tick": 49,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -749.32861328125,
+        122.49993896484375,
+        72.20487976074219
+      ],
+      "vel": [
+        627.2225952148438,
+        300,
+        -565.4168701171875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.40833333333333377
+    },
+    {
+      "tick": 50,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -744.09716796875,
+        124.99993896484375,
+        67.44793701171875
+      ],
+      "vel": [
+        627.7781372070312,
+        300,
+        -570.8335571289062
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.41666666666666713
+    },
+    {
+      "tick": 51,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -738.8610229492188,
+        127.49993896484375,
+        62.645851135253906
+      ],
+      "vel": [
+        628.333740234375,
+        300,
+        -576.250244140625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.4250000000000005
+    },
+    {
+      "tick": 52,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -733.6203002929688,
+        129.99993896484375,
+        57.79862976074219
+      ],
+      "vel": [
+        628.8892822265625,
+        300,
+        -581.6668701171875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.43333333333333385
+    },
+    {
+      "tick": 53,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -728.3749389648438,
+        132.49993896484375,
+        52.90626907348633
+      ],
+      "vel": [
+        629.44482421875,
+        300,
+        -587.0835571289062
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.4416666666666672
+    },
+    {
+      "tick": 54,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -723.1249389648438,
+        134.9999237060547,
+        47.96876525878906
+      ],
+      "vel": [
+        630.0004272460938,
+        300,
+        -592.500244140625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.45000000000000057
+    },
+    {
+      "tick": 55,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -717.8703002929688,
+        137.4999237060547,
+        42.98612594604492
+      ],
+      "vel": [
+        630.5559692382812,
+        300,
+        -597.9169311523438
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.4583333333333339
+    },
+    {
+      "tick": 56,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -712.6110229492188,
+        139.9999237060547,
+        37.958343505859375
+      ],
+      "vel": [
+        631.1115112304688,
+        300,
+        -603.3336181640625
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.4666666666666673
+    },
+    {
+      "tick": 57,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -707.3471069335938,
+        142.4999237060547,
+        32.88542556762695
+      ],
+      "vel": [
+        631.6671142578125,
+        300,
+        -608.7503051757812
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.47500000000000064
+    },
+    {
+      "tick": 58,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -702.0785522460938,
+        144.9999237060547,
+        27.76736831665039
+      ],
+      "vel": [
+        632.22265625,
+        300,
+        -614.1669921875
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.483333333333334
+    },
+    {
+      "tick": 59,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -696.805419921875,
+        147.4999237060547,
+        23.046566009521484
+      ],
+      "vel": [
+        632.7781982421875,
+        300,
+        -566.496337890625
+      ],
+      "ang_vel": [
+        0,
+        1.3155019283294678,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01096251603310582,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999399122230811,
+          0,
+          -0.010962296461152876
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.010962296461152876,
+          0,
+          0.9999399122230811
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.49166666666666736
+    },
+    {
+      "tick": 60,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -691.527099609375,
+        149.98439025878906,
+        19.099552154541016
+      ],
+      "vel": [
+        633.4002075195312,
+        298.1357116699219,
+        -473.6416320800781
+      ],
+      "ang_vel": [
+        0.00035359326284378767,
+        1.1074509620666504,
+        0.03225327283143997
+      ],
+      "angle": [
+        0.0002688444349034233,
+        -0.020191274616252104,
+        -0.000004186800662035007
+      ],
+      "rot": {
+        "forward": [
+          0.9997961270117636,
+          0.0002687896312609078,
+          -0.02018990268893559
+        ],
+        "right": [
+          -0.0002687598833340023,
+          0.9999999638752978,
+          0.000004186800662022763
+        ],
+        "up": [
+          0.02018990308494997,
+          0.0000012402887225263846,
+          0.9997961631342951
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 61,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -686.207763671875,
+        152.4380645751953,
+        15.902070999145508
+      ],
+      "vel": [
+        638.3184204101562,
+        294.4422607421875,
+        -383.69781494140625
+      ],
+      "ang_vel": [
+        0.00007555785123258829,
+        0.9106073975563049,
+        0.026645904406905174
+      ],
+      "angle": [
+        0.0004909790486940567,
+        -0.027779673716020335,
+        -0.000007698255206095973
+      ],
+      "rot": {
+        "forward": [
+          0.9996140492339769,
+          0.0004907895943907622,
+          -0.027776100877290766
+        ],
+        "right": [
+          -0.0004907651189357423,
+          0.9999998795451728,
+          0.000007698255206019857
+        ],
+        "up": [
+          0.027776101309748835,
+          0.000005936255973370842,
+          0.9996141696880279
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 62,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -680.84765625,
+        154.85919189453125,
+        14.318381309509277
+      ],
+      "vel": [
+        643.2149658203125,
+        290.5338134765625,
+        -190.04275512695312
+      ],
+      "ang_vel": [
+        -0.0001395826693624258,
+        0.07846149057149887,
+        0.02129296213388443
+      ],
+      "angle": [
+        0.0006683982914377032,
+        -0.028433515085406317,
+        -0.0000069139567943046015
+      ],
+      "rot": {
+        "forward": [
+          0.9995955715737422,
+          0.0006681280716653897,
+          -0.028429683991021283
+        ],
+        "right": [
+          -0.0006682016006036535,
+          0.9999997767293943,
+          0.000006913956794249454
+        ],
+        "up": [
+          0.02842968226291722,
+          0.000012085598889795453,
+          0.9995957948376601
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 63,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -675.4470825195312,
+        157.2470245361328,
+        13.711370468139648
+      ],
+      "vel": [
+        648.0696411132812,
+        286.54180908203125,
+        -72.84133911132812
+      ],
+      "ang_vel": [
+        -0.0001158365048468113,
+        -0.22173243761062622,
+        0.016345620155334473
+      ],
+      "angle": [
+        0.0008045478118374718,
+        -0.026585746594347162,
+        -0.000004588112954938164
+      ],
+      "rot": {
+        "forward": [
+          0.9996462963452636,
+          0.0008042634138685025,
+          -0.026582614895558725
+        ],
+        "right": [
+          -0.0008044257179051693,
+          0.9999996764390778,
+          0.00000458811295492214
+        ],
+        "up": [
+          0.026582609984515077,
+          0.000016797247402955146,
+          0.9996466198689133
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 64,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -670.0060424804688,
+        159.6016845703125,
+        13.664918899536133
+      ],
+      "vel": [
+        652.9255981445312,
+        282.55908203125,
+        -5.57418966293335
+      ],
+      "ang_vel": [
+        -0.00004731444641947746,
+        -0.282740980386734,
+        0.0117361880838871
+      ],
+      "angle": [
+        0.0009022882659816179,
+        -0.024229572462380243,
+        -0.0000021832288402485844
+      ],
+      "rot": {
+        "forward": [
+          0.9997060713574332,
+          0.0009020233024027148,
+          -0.024227201780641482
+        ],
+        "right": [
+          -0.0009022352344943151,
+          0.999999592983367,
+          0.000002183228840246939
+        ],
+        "up": [
+          0.024227193889091492,
+          0.00001967604568202261,
+          0.9997064782975553
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 65,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -664.524658203125,
+        161.92349243164062,
+        13.910222053527832
+      ],
+      "vel": [
+        657.7643432617188,
+        278.61590576171875,
+        29.436418533325195
+      ],
+      "ang_vel": [
+        0.000007434631697833538,
+        -0.23488342761993408,
+        0.0073631517589092255
+      ],
+      "angle": [
+        0.0009636069033108134,
+        -0.022272211124783583,
+        -4.191286327617988e-7
+      ],
+      "rot": {
+        "forward": [
+          0.9997515204409599,
+          0.0009633677648670199,
+          -0.022270369810245026
+        ],
+        "right": [
+          -0.0009635974176918675,
+          0.9999995357398809,
+          4.191286327618151e-7
+        ],
+        "up": [
+          0.02227035987477696,
+          0.00002104064320234371,
+          0.9997519845947541
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 66,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -659.0032348632812,
+        164.212890625,
+        14.258792877197266
+      ],
+      "vel": [
+        662.5731811523438,
+        274.7281188964844,
+        41.82851028442383
+      ],
+      "ang_vel": [
+        0.00002574268728494644,
+        -0.1534823328256607,
+        0.003137648105621338
+      ],
+      "angle": [
+        0.0009897315564148764,
+        -0.02099319119188791,
+        6.155292416705161e-7
+      ],
+      "rot": {
+        "forward": [
+          0.9997791613858674,
+          0.0009895133085683224,
+          -0.020991649226722052
+        ],
+        "right": [
+          -0.0009897443186370884,
+          0.9999995102027994,
+          -6.155292416704875e-7
+        ],
+        "up": [
+          0.020991638335997022,
+          0.000021391758151541708,
+          0.9997796510619744
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 67,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -653.4420166015625,
+        166.47039794921875,
+        14.617406845092773
+      ],
+      "vel": [
+        667.345458984375,
+        270.9007568359375,
+        43.033653259277344
+      ],
+      "ang_vel": [
+        0.000014351913705468178,
+        -0.1051810160279274,
+        -0.0010017044842243195
+      ],
+      "angle": [
+        0.0009813689513835746,
+        -0.020116686547515458,
+        0.000001359790483854536
+      ],
+      "rot": {
+        "forward": [
+          0.999797184880528,
+          0.0009811702299059237,
+          -0.020115329767903766
+        ],
+        "right": [
+          -0.0009813961519699256,
+          0.999999518429853,
+          -0.0000013597904838542484
+        ],
+        "up": [
+          0.020115318746777733,
+          0.000021100617950521128,
+          0.9997976663245448
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 68,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -647.8413696289062,
+        168.69651794433594,
+        14.948196411132812
+      ],
+      "vel": [
+        672.0781860351562,
+        267.1334228515625,
+        39.69466781616211
+      ],
+      "ang_vel": [
+        0.000004591187462210655,
+        -0.07541010528802872,
+        -0.005080442875623703
+      ],
+      "angle": [
+        0.0009390205065304012,
+        -0.019488262774662382,
+        0.0000019249559178177843
+      ],
+      "rot": {
+        "forward": [
+          0.9998096690284058,
+          0.0009388420577893675,
+          -0.01948702921578448
+        ],
+        "right": [
+          -0.0009390578873020566,
+          0.9999995590832094,
+          -0.0000019249559178166273
+        ],
+        "up": [
+          0.019487018816396928,
+          0.000020224037314876342,
+          0.9998101098225404
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 69,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -642.2015991210938,
+        170.89170837402344,
+        15.242748260498047
+      ],
+      "vel": [
+        676.7711791992188,
+        263.42431640625,
+        35.34622573852539
+      ],
+      "ang_vel": [
+        -0.00004497729241847992,
+        -0.058195941150188446,
+        -0.009106095880270004
+      ],
+      "angle": [
+        0.000863120710754986,
+        -0.019003294464908366,
+        0.000002736777147213553
+      ],
+      "rot": {
+        "forward": [
+          0.9998190704097325,
+          0.0008629647609748518,
+          -0.019002150724139546
+        ],
+        "right": [
+          -0.0008631726176108691,
+          0.9999996274626969,
+          -0.0000027367771472101192
+        ],
+        "up": [
+          0.019002141283387206,
+          0.00001913841837691214,
+          0.9998194428273938
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 70,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -636.5230712890625,
+        173.0564727783203,
+        15.502873420715332
+      ],
+      "vel": [
+        681.4249267578125,
+        259.7704162597656,
+        31.215038299560547
+      ],
+      "ang_vel": [
+        -0.0000675317132845521,
+        -0.04509369283914566,
+        -0.013079974800348282
+      ],
+      "angle": [
+        0.000754104545489731,
+        -0.018627513097588005,
+        0.0000036034258608126403
+      ],
+      "rot": {
+        "forward": [
+          0.9998262286041636,
+          0.0007539736466119125,
+          -0.018626435874018236
+        ],
+        "right": [
+          -0.0007541716046226925,
+          0.999999715606058,
+          -0.000003603425860804817
+        ],
+        "up": [
+          0.01862642785988445,
+          0.000017650328944131884,
+          0.9998265128851652
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 71,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -630.8060913085938,
+        175.1912078857422,
+        15.730984687805176
+      ],
+      "vel": [
+        686.0400390625,
+        256.1688232421875,
+        27.37340545654297
+      ],
+      "ang_vel": [
+        -0.00007554481271654367,
+        -0.03498286381363869,
+        -0.017001092433929443
+      ],
+      "angle": [
+        0.0006124136660753779,
+        -0.018335993584463094,
+        0.000004432172642846669
+      ],
+      "rot": {
+        "forward": [
+          0.9998317129030075,
+          0.0006123106813064996,
+          -0.018334966148427195
+        ],
+        "right": [
+          -0.0006124949051522524,
+          0.9999998124151751,
+          -0.000004432172642832228
+        ],
+        "up": [
+          0.018334959995199768,
+          0.00001566149896314867,
+          0.999831900386885
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 72,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -625.0509033203125,
+        177.29635620117188,
+        15.9298095703125
+      ],
+      "vel": [
+        690.617431640625,
+        252.61663818359375,
+        23.859045028686523
+      ],
+      "ang_vel": [
+        -0.00007599941454827785,
+        -0.02708343043923378,
+        -0.020867817103862762
+      ],
+      "angle": [
+        0.00043850158508972585,
+        -0.018110298417803754,
+        0.000005184114549471748
+      ],
+      "rot": {
+        "forward": [
+          0.9998359169257414,
+          0.0004384296625025279,
+          -0.018109308455979425
+        ],
+        "right": [
+          -0.0004385954671249302,
+          0.9999999038035801,
+          -0.000005184114549448577
+        ],
+        "up": [
+          0.01810930444105978,
+          0.000013125923362454538,
+          0.9998360130383401
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 73,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -619.2579345703125,
+        179.3722686767578,
+        16.102188110351562
+      ],
+      "vel": [
+        695.1574096679688,
+        249.1111297607422,
+        20.685518264770508
+      ],
+      "ang_vel": [
+        -0.00007298152195289731,
+        -0.02084888145327568,
+        -0.024678412824869156
+      ],
+      "angle": [
+        0.00023283612982635018,
+        -0.01793655935273357,
+        0.000005850630788405011
+      ],
+      "rot": {
+        "forward": [
+          0.9998391171453828,
+          0.00023279867469200443,
+          -0.01793559760940928
+        ],
+        "right": [
+          -0.00023294107914369403,
+          0.9999999728521141,
+          -0.000005850630788371616
+        ],
+        "up": [
+          0.01793559576047681,
+          0.000010027626583437781,
+          0.9998391442302338
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 74,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -613.4274291992188,
+        181.4193572998047,
+        16.250938415527344
+      ],
+      "vel": [
+        699.6607055664062,
+        245.64976501464844,
+        17.849864959716797
+      ],
+      "ang_vel": [
+        -0.00006719306111335754,
+        -0.015889644622802734,
+        -0.02843109890818596
+      ],
+      "angle": [
+        -0.000004100011736800385,
+        -0.01780414521079786,
+        0.000006425731026825478
+      ],
+      "rot": {
+        "forward": [
+          0.9998415103994118,
+          -0.000004099361927600783,
+          -0.017803204610202017
+        ],
+        "right": [
+          0.0000039855950090040425,
+          0.9999999999714125,
+          -0.000006425731026781217
+        ],
+        "up": [
+          0.017803204636034464,
+          0.00000635375625837771,
+          0.9998415103871673
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 75,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -607.5596923828125,
+        183.4379425048828,
+        16.37875747680664
+      ],
+      "vel": [
+        704.1279296875,
+        242.23031616210938,
+        15.3382568359375
+      ],
+      "ang_vel": [
+        -0.000060740450862795115,
+        -0.01192418485879898,
+        -0.03212415426969528
+      ],
+      "angle": [
+        -0.00027181009754562396,
+        -0.017704777463484814,
+        0.000006918205281765681
+      ],
+      "rot": {
+        "forward": [
+          0.9998432375966511,
+          -0.00027176749463427176,
+          -0.017703852523913693
+        ],
+        "right": [
+          0.00027168759611708777,
+          0.9999999630689959,
+          -0.0000069182052817104574
+        ],
+        "up": [
+          0.017703853750235882,
+          0.0000021072039324126492,
+          0.999843274507289
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 76,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -601.655029296875,
+        185.42837524414062,
+        16.488174438476562
+      ],
+      "vel": [
+        708.5596313476562,
+        238.85069274902344,
+        13.130128860473633
+      ],
+      "ang_vel": [
+        -0.00005387241253629327,
+        -0.00874626450240612,
+        -0.03575609624385834
+      ],
+      "angle": [
+        -0.0005697850268572523,
+        -0.017631894433654847,
+        0.000007336481860339021
+      ],
+      "rot": {
+        "forward": [
+          0.999844399886075,
+          -0.0005696964298937556,
+          -0.0176309808697551
+        ],
+        "right": [
+          0.0005696556265552389,
+          0.999999837719321,
+          -0.000007336481860273239
+        ],
+        "up": [
+          0.017630982188154974,
+          -0.0000027082463767168544,
+          0.9998445621613985
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 77,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -595.7136840820312,
+        187.3909454345703,
+        16.581518173217773
+      ],
+      "vel": [
+        712.956298828125,
+        235.5091094970703,
+        11.201194763183594
+      ],
+      "ang_vel": [
+        -0.00004710961366072297,
+        -0.006200434174388647,
+        -0.039325591176748276
+      ],
+      "angle": [
+        -0.0008975046569422404,
+        -0.01758022441097514,
+        0.000007691161944763597
+      ],
+      "rot": {
+        "forward": [
+          0.9998450691552887,
+          -0.0008973658467347208,
+          -0.017579318855038738
+        ],
+        "right": [
+          0.0008973693101932,
+          0.9999995973345428,
+          -0.00000769116194468801
+        ],
+        "up": [
+          0.017579318678240342,
+          -0.000008085169309090636,
+          0.999845471820707
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 78,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -589.736083984375,
+        189.3259735107422,
+        16.660898208618164
+      ],
+      "vel": [
+        717.318359375,
+        232.20388793945312,
+        9.525532722473145
+      ],
+      "ang_vel": [
+        -0.00004007713869214058,
+        -0.0041667502373456955,
+        -0.04283151030540466
+      ],
+      "angle": [
+        -0.0012544391152239395,
+        -0.017545501679766852,
+        0.000007987781382769677
+      ],
+      "rot": {
+        "forward": [
+          0.9998452949629646,
+          -0.0012542457050752234,
+          -0.017544601478879956
+        ],
+        "right": [
+          0.0012542986222725935,
+          0.999999213335355,
+          -0.000007987781382685325
+        ],
+        "up": [
+          0.01754459769580316,
+          -0.000014019621489177385,
+          0.9998460816185131
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 79,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -583.7223510742188,
+        191.23374938964844,
+        16.728206634521484
+      ],
+      "vel": [
+        721.6463623046875,
+        228.9335479736328,
+        8.077006340026855
+      ],
+      "ang_vel": [
+        -0.00003328948514536023,
+        -0.0025512096472084522,
+        -0.04627297818660736
+      ],
+      "angle": [
+        -0.0016400513653799644,
+        -0.01752423818742293,
+        0.000008234426713285139
+      ],
+      "rot": {
+        "forward": [
+          0.999845109783963,
+          -0.0016397988076963152,
+          -0.01752334125541336
+        ],
+        "right": [
+          0.0016399063134677296,
+          0.9999986553187815,
+          -0.000008234426713191558
+        ],
+        "up": [
+          0.0175233311949082,
+          -0.00002050348780958456,
+          0.999846454427546
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 80,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -577.6728515625,
+        193.1145477294922,
+        16.785127639770508
+      ],
+      "vel": [
+        725.9407958984375,
+        225.69677734375,
+        6.830330848693848
+      ],
+      "ang_vel": [
+        -0.000026604568120092154,
+        -0.001278629875741899,
+        -0.04964921250939369
+      ],
+      "angle": [
+        -0.0020537986746658916,
+        -0.01751358532034895,
+        0.000008436455758392526
+      ],
+      "rot": {
+        "forward": [
+          0.9998445323659777,
+          -0.002053482262702974,
+          -0.017512690023045424
+        ],
+        "right": [
+          0.002053649463355947,
+          0.9999978912241535,
+          -0.000008436455758292554
+        ],
+        "up": [
+          0.01751267041682017,
+          -0.00002752978191347959,
+          0.9998466410506784
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 81,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -571.5878295898438,
+        194.96865844726562,
+        16.833139419555664
+      ],
+      "vel": [
+        730.2020263671875,
+        222.49240112304688,
+        5.76157808303833
+      ],
+      "ang_vel": [
+        -0.000020313600543886423,
+        -0.00028841214952990413,
+        -0.052959706634283066
+      ],
+      "angle": [
+        -0.0024951326384302264,
+        -0.017511182915141376,
+        0.000008600271328810115
+      ],
+      "rot": {
+        "forward": [
+          0.9998435707920451,
+          -0.0024947475039822737,
+          -0.01751028798621757
+        ],
+        "right": [
+          0.0024949794334987356,
+          0.9999968874970334,
+          -0.000008600271328704397
+        ],
+        "up": [
+          0.01751025494090019,
+          -0.00003508888175496588,
+          0.9998466831195865
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 82,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -565.4675903320312,
+        196.7963104248047,
+        16.873546600341797
+      ],
+      "vel": [
+        734.4306030273438,
+        219.3193359375,
+        4.848637580871582
+      ],
+      "ang_vel": [
+        -0.00001422001514583826,
+        0.0004697282565757632,
+        -0.05620410665869713
+      ],
+      "angle": [
+        -0.002963502593842035,
+        -0.017515098692411843,
+        0.000008729454750569946
+      ],
+      "rot": {
+        "forward": [
+          0.9998422240977375,
+          -0.0029630436987114414,
+          -0.017514203162999162
+        ],
+        "right": [
+          0.002963345343725561,
+          0.9999956092448508,
+          -0.00000872945475046251
+        ],
+        "up": [
+          0.01751415212818204,
+          -0.00004317255015198133,
+          0.9998466145562815
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 83,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -559.3123779296875,
+        198.5977783203125,
+        16.907472610473633
+      ],
+      "vel": [
+        738.6268310546875,
+        216.17665100097656,
+        4.071323394775391
+      ],
+      "ang_vel": [
+        -0.000008631788659840822,
+        0.001037763780914247,
+        -0.05938217043876648
+      ],
+      "angle": [
+        -0.0034583553026525673,
+        -0.017523743741326845,
+        0.000008829146596508038
+      ],
+      "rot": {
+        "forward": [
+          0.9998404839465512,
+          -0.00345781742489491,
+          -0.017522846885235123
+        ],
+        "right": [
+          0.003458193674120025,
+          0.9999940203914535,
+          -0.000008829146596393681
+        ],
+        "up": [
+          0.01752277263504772,
+          -0.0000517696595170612,
+          0.999846463094089
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 84,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -553.1224975585938,
+        200.37332153320312,
+        16.935901641845703
+      ],
+      "vel": [
+        742.7911987304688,
+        213.0634765625,
+        3.4114928245544434
+      ],
+      "ang_vel": [
+        -0.0000032371608540415764,
+        0.0014507074374705553,
+        -0.06249382346868515
+      ],
+      "angle": [
+        -0.003979138917814843,
+        -0.01753583326245351,
+        0.00000890108163220579
+      ],
+      "rot": {
+        "forward": [
+          0.9998383356718413,
+          -0.003978516631026605,
+          -0.01753493454889374
+        ],
+        "right": [
+          0.003978972314365561,
+          0.9999920838187928,
+          -0.000008901081632088853
+        ],
+        "up": [
+          0.017534831152276744,
+          -0.00006087137575710457,
+          0.999846251177766
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 85,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -546.8981323242188,
+        202.12313842773438,
+        16.95967674255371
+      ],
+      "vel": [
+        746.9241943359375,
+        209.97900390625,
+        2.8529279232025146
+      ],
+      "ang_vel": [
+        0.0000019145081751048565,
+        0.0017376303439959884,
+        -0.06553909182548523
+      ],
+      "angle": [
+        -0.004525298254837269,
+        -0.017550312190308545,
+        0.000008946693082315944
+      ],
+      "rot": {
+        "forward": [
+          0.9998357596540127,
+          -0.004524585903640844,
+          -0.01754941124879271
+        ],
+        "right": [
+          0.0045251257778189495,
+          0.9999897615257785,
+          -0.000008946693082195279
+        ],
+        "up": [
+          0.017549272049677614,
+          -0.00007046807059391132,
+          0.9998459971819366
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 86,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -540.6395874023438,
+        203.84750366210938,
+        16.979520797729492
+      ],
+      "vel": [
+        751.026123046875,
+        206.92250061035156,
+        2.381317377090454
+      ],
+      "ang_vel": [
+        0.000006544985808432102,
+        0.0019235293148085475,
+        -0.06851807981729507
+      ],
+      "angle": [
+        -0.005096283538611875,
+        -0.017566341782364884,
+        0.000008969263651882232
+      ],
+      "rot": {
+        "forward": [
+          0.9998327317761059,
+          -0.00509547520579952,
+          -0.017565438369992047
+        ],
+        "right": [
+          0.0050961039068804625,
+          0.9999870147388678,
+          -0.000008969263651770068
+        ],
+        "up": [
+          0.017565255980861318,
+          -0.00008054752941652281,
+          0.999845715756269
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 87,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -534.3471069335938,
+        205.54661560058594,
+        16.99605369567871
+      ],
+      "vel": [
+        755.0972900390625,
+        203.89328002929688,
+        1.9840635061264038
+      ],
+      "ang_vel": [
+        0.000010724645107984543,
+        0.002029306720942259,
+        -0.07143107801675797
+      ],
+      "angle": [
+        -0.00569154297310014,
+        -0.01758325340799399,
+        0.000008971108920219431
+      ],
+      "rot": {
+        "forward": [
+          0.9998292243054557,
+          -0.005690632442835443,
+          -0.017582347383911585
+        ],
+        "right": [
+          0.005691354489593979,
+          0.9999838040712293,
+          -0.000008971108920104252
+        ],
+        "up": [
+          0.017582113672757676,
+          -0.00009109779122189578,
+          0.9998454185478844
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 88,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -528.0209350585938,
+        207.220703125,
+        17.009807586669922
+      ],
+      "vel": [
+        759.1382446289062,
+        200.89073181152344,
+        1.6502119302749634
+      ],
+      "ang_vel": [
+        0.000014600285794585943,
+        0.0020716278813779354,
+        -0.07427841424942017
+      ],
+      "angle": [
+        -0.006310529347948056,
+        -0.017600515710215068,
+        0.000008953035707561113
+      ],
+      "rot": {
+        "forward": [
+          0.9998252066847512,
+          -0.00630951006390314,
+          -0.017599607015081006
+        ],
+        "right": [
+          0.006310329872780002,
+          0.9999800896305308,
+          -0.000008953035707444726
+        ],
+        "up": [
+          0.01759931308967722,
+          -0.00010210785304300488,
+          0.9998451148845757
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 89,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -521.661376953125,
+        208.86997985839844,
+        17.021224975585938
+      ],
+      "vel": [
+        763.1492919921875,
+        197.9142608642578,
+        1.3702564239501953
+      ],
+      "ang_vel": [
+        0.000017936283256858587,
+        0.0020653503015637398,
+        -0.07706046849489212
+      ],
+      "angle": [
+        -0.006952699893145325,
+        -0.017617726683695024,
+        0.00000891770743743813
+      ],
+      "rot": {
+        "forward": [
+          0.9998206457038363,
+          -0.00695156490987608,
+          -0.017616815320230482
+        ],
+        "right": [
+          0.006952486755159863,
+          0.9999758311329626,
+          -0.000008917707437327248
+        ],
+        "up": [
+          0.017616451533798018,
+          -0.00011356456295357528,
+          0.9998448118328872
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 90,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -515.2686157226562,
+        210.49468994140625,
+        17.03069305419922
+      ],
+      "vel": [
+        767.1307373046875,
+        194.96331787109375,
+        1.1359586715698242
+      ],
+      "ang_vel": [
+        0.000020699517335742712,
+        0.002021803753450513,
+        -0.07977773994207382
+      ],
+      "angle": [
+        -0.0076175137426970725,
+        -0.017634575602842425,
+        0.000008867949477754664
+      ],
+      "rot": {
+        "forward": [
+          0.9998155063133248,
+          -0.007616255674999562,
+          -0.0176336616221242
+        ],
+        "right": [
+          0.007617283678699193,
+          0.9999709880374431,
+          -0.00000886794947766432
+        ],
+        "up": [
+          0.01763321757560888,
+          -0.00012545427590169764,
+          0.9998445148774757
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 91,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -508.8428955078125,
+        212.09500122070312,
+        17.03852653503418
+      ],
+      "vel": [
+        771.0830078125,
+        192.037353515625,
+        0.9402528405189514
+      ],
+      "ang_vel": [
+        0.00002307636896148324,
+        0.0019515673629939556,
+        -0.08243077993392944
+      ],
+      "angle": [
+        -0.008304435125708911,
+        -0.017650837197117332,
+        0.000008805118130328928
+      ],
+      "rot": {
+        "forward": [
+          0.9998097517651948,
+          -0.008303046091897559,
+          -0.017649920685631277
+        ],
+        "right": [
+          0.008304184246545243,
+          0.9999655196287318,
+          -0.000008805118130214562
+        ],
+        "up": [
+          0.017649385219114005,
+          -0.0001377647505719573,
+          0.9998442279784209
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 92,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -502.384521484375,
+        213.671142578125,
+        17.04500389099121
+      ],
+      "vel": [
+        775.0064086914062,
+        189.13589477539062,
+        0.7770687341690063
+      ],
+      "ang_vel": [
+        0.000025199668016284704,
+        0.001861931523308158,
+        -0.08502018451690674
+      ],
+      "angle": [
+        -0.009012935707723586,
+        -0.017666351880036183,
+        0.000008729468618505412
+      ],
+      "rot": {
+        "forward": [
+          0.999803344168933,
+          -0.009011407270595597,
+          -0.017665432949672374
+        ],
+        "right": [
+          0.009012659455594683,
+          0.99995938512123,
+          -0.00000872946861838874
+        ],
+        "up": [
+          0.01766479413504141,
+          -0.0001504847819528048,
+          0.9998439540235668
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 93,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -495.8936767578125,
+        215.22328186035156,
+        17.05034637451172
+      ],
+      "vel": [
+        778.9013671875,
+        186.25843811035156,
+        0.6412721872329712
+      ],
+      "ang_vel": [
+        0.000026890193112194538,
+        0.0017594525124877691,
+        -0.08754665404558182
+      ],
+      "angle": [
+        -0.00974249058138186,
+        -0.01768101756841111,
+        0.000008642880921048235
+      ],
+      "rot": {
+        "forward": [
+          0.999796244628516,
+          -0.009740813685300158,
+          -0.017680096347625948
+        ],
+        "right": [
+          0.009742183638171427,
+          0.9999525437692397,
+          -0.00000864288092097213
+        ],
+        "up": [
+          0.01767934150564472,
+          -0.0001636016122010973,
+          0.999843694855613
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 94,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -489.3705749511719,
+        216.75167846679688,
+        17.054750442504883
+      ],
+      "vel": [
+        782.7681274414062,
+        183.40451049804688,
+        0.5284428596496582
+      ],
+      "ang_vel": [
+        0.00002827885327860713,
+        0.0016496615717187524,
+        -0.0900108590722084
+      ],
+      "angle": [
+        -0.01049258077724186,
+        -0.017694766520167764,
+        0.000008546317047564642
+      ],
+      "rot": {
+        "forward": [
+          0.999788413738153,
+          -0.01049074568438792,
+          -0.01769384314867956
+        ],
+        "right": [
+          0.010492237016406652,
+          0.9999449549395092,
+          -0.000008546317047544369
+        ],
+        "up": [
+          0.017692958847409453,
+          -0.00017710345418791608,
+          0.9998434516950163
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 95,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -482.81549072265625,
+        218.25645446777344,
+        17.058374404907227
+      ],
+      "vel": [
+        786.6070556640625,
+        180.57369995117188,
+        0.434846431016922
+      ],
+      "ang_vel": [
+        0.000029329094104468822,
+        0.0015362976118922234,
+        -0.0924135074019432
+      ],
+      "angle": [
+        -0.01126269118664059,
+        -0.01770756904933594,
+        0.000008441179085264953
+      ],
+      "rot": {
+        "forward": [
+          0.9997798116182237,
+          -0.011260687409611054,
+          -0.017706643672183203
+        ],
+        "right": [
+          0.011262303600073858,
+          0.9999365782164059,
+          -0.00000844117908520162
+        ],
+        "up": [
+          0.01770561573881015,
+          -0.0001909782625537453,
+          0.9998432250709545
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 96,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -476.2286682128906,
+        219.7378387451172,
+        17.061351776123047
+      ],
+      "vel": [
+        790.41845703125,
+        177.76553344726562,
+        0.3573469817638397
+      ],
+      "ang_vel": [
+        0.000030471128411591053,
+        0.0014217579737305641,
+        -0.09475543349981308
+      ],
+      "angle": [
+        -0.012052318316803546,
+        -0.01771941939121671,
+        0.000008325388204070715
+      ],
+      "rot": {
+        "forward": [
+          0.9997703983172723,
+          -0.012050134550882555,
+          -0.017718492154984205
+        ],
+        "right": [
+          0.01205187900925719,
+          0.999927373443448,
+          -0.000008325388204051369
+        ],
+        "up": [
+          0.017717305644110688,
+          -0.00020521761983137866,
+          0.9998430151810751
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 97,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -469.6103210449219,
+        221.19601440429688,
+        17.06379508972168
+      ],
+      "vel": [
+        794.2026977539062,
+        174.97958374023438,
+        0.2932541072368622
+      ],
+      "ang_vel": [
+        0.000030953786335885525,
+        0.0013095741160213947,
+        -0.09703736752271652
+      ],
+      "angle": [
+        -0.012860960173209871,
+        -0.017730336269480822,
+        0.00000820339359674136
+      ],
+      "rot": {
+        "forward": [
+          0.9997601337281998,
+          -0.012858584225485352,
+          -0.017729407318408275
+        ],
+        "right": [
+          0.01286046018044807,
+          0.9999173008398473,
+          -0.0000082033935967403
+        ],
+        "up": [
+          0.017728046595523128,
+          -0.0002198068803660018,
+          0.9998428216930023
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 98,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -462.96063232421875,
+        222.6311492919922,
+        17.065797805786133
+      ],
+      "vel": [
+        797.9601440429688,
+        172.21543884277344,
+        0.24034902453422546
+      ],
+      "ang_vel": [
+        0.00003097497392445803,
+        0.001201034290716052,
+        -0.09926015138626099
+      ],
+      "angle": [
+        -0.013688124542228898,
+        -0.017740346911390373,
+        0.00000807816406932569
+      ],
+      "rot": {
+        "forward": [
+          0.9997489779976152,
+          -0.013685543261953871,
+          -0.017739416385973678
+        ],
+        "right": [
+          0.013687553789404281,
+          0.9999063210142618,
+          -0.000008078164069230762
+        ],
+        "up": [
+          0.017737865129488578,
+          -0.00023473308194455053,
+          0.9998426441386281
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 99,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -456.27984619140625,
+        224.0434112548828,
+        17.06743621826172
+      ],
+      "vel": [
+        801.6909790039062,
+        169.47267150878906,
+        0.1967199146747589
+      ],
+      "ang_vel": [
+        0.00003147270763292909,
+        0.0010971194133162498,
+        -0.1014246940612793
+      ],
+      "angle": [
+        -0.014533329903343287,
+        -0.01774949213608855,
+        0.000007944917326784189
+      ],
+      "rot": {
+        "forward": [
+          0.9997368915743471,
+          -0.014530529111072119,
+          -0.017748560170875508
+        ],
+        "right": [
+          0.014532677274044717,
+          0.9998943950457121,
+          -0.000007944917326762908
+        ],
+        "up": [
+          0.017746801278973264,
+          -0.0002499912509124516,
+          0.9998424818801022
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 100,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -449.5682373046875,
+        225.43301391601562,
+        17.068777084350586
+      ],
+      "vel": [
+        805.3955078125,
+        166.75088500976562,
+        0.16081035137176514
+      ],
+      "ang_vel": [
+        0.000031389587093144655,
+        0.0009992063278332353,
+        -0.10353179275989532
+      ],
+      "angle": [
+        -0.01539609647701731,
+        -0.01775782603865483,
+        0.000007807986371161476
+      ],
+      "rot": {
+        "forward": [
+          0.9997238351303329,
+          -0.01539306089121778,
+          -0.017756892760084842
+        ],
+        "right": [
+          0.015395349584770124,
+          0.9998814845718424,
+          -0.000007807986371235857
+        ],
+        "up": [
+          0.01775490848347606,
+          -0.0002655676960672095,
+          0.9998423339461823
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 101,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -442.825927734375,
+        226.80010986328125,
+        17.069869995117188
+      ],
+      "vel": [
+        809.0740356445312,
+        164.0496826171875,
+        0.1312844455242157
+      ],
+      "ang_vel": [
+        0.000031509262043982744,
+        0.0009069598163478076,
+        -0.10558237135410309
+      ],
+      "angle": [
+        -0.016275946897046957,
+        -0.017765387042972012,
+        0.000007665134434797062
+      ],
+      "rot": {
+        "forward": [
+          0.9997097703111565,
+          -0.016272660070276796,
+          -0.0177644525717807
+        ],
+        "right": [
+          0.01627509213512616,
+          0.9998675519093956,
+          -0.000007665134434890752
+        ],
+        "up": [
+          0.017762224436454498,
+          -0.0002814551444734678,
+          0.9998421996588017
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 102,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -436.05322265625,
+        228.14483642578125,
+        17.070762634277344
+      ],
+      "vel": [
+        812.7268676757812,
+        161.36866760253906,
+        0.10704696178436279
+      ],
+      "ang_vel": [
+        0.000031373638194054365,
+        0.0008215414127334952,
+        -0.10757730156183243
+      ],
+      "angle": [
+        -0.017172416710952796,
+        -0.017772232164762685,
+        0.000007518184868697653
+      ],
+      "rot": {
+        "forward": [
+          0.9996946589907688,
+          -0.017168860953733794,
+          -0.017771296612992604
+        ],
+        "right": [
+          0.017171439112532966,
+          0.9998525599380945,
+          -0.000007518184868598489
+        ],
+        "up": [
+          0.01776880549052694,
+          -0.0002976428562651073,
+          0.9998420780063794
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 103,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -429.2502746582031,
+        229.46739196777344,
+        17.071489334106445
+      ],
+      "vel": [
+        816.3543701171875,
+        158.7074432373047,
+        0.08715465664863586
+      ],
+      "ang_vel": [
+        0.000030815775971859694,
+        0.0007421543123200536,
+        -0.10951752960681915
+      ],
+      "angle": [
+        -0.018085058657479423,
+        -0.017778420772945523,
+        0.000007370431682486755
+      ],
+      "rot": {
+        "forward": [
+          0.9996784636562798,
+          -0.0180812149672155,
+          -0.017777484243517952
+        ],
+        "right": [
+          0.01808394180136995,
+          0.9998364721212514,
+          -0.000007370431682380413
+        ],
+        "up": [
+          0.017774710395498758,
+          -0.00031411893916274275,
+          0.9998419680075833
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 104,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -422.41729736328125,
+        230.7679443359375,
+        17.072078704833984
+      ],
+      "vel": [
+        819.9568481445312,
+        156.0656280517578,
+        0.07089227437973022
+      ],
+      "ang_vel": [
+        0.00003028823994100094,
+        0.000669613596983254,
+        -0.1114039421081543
+      ],
+      "angle": [
+        -0.01901342161191546,
+        -0.01778400429559515,
+        0.0000072215625141706405
+      ],
+      "rot": {
+        "forward": [
+          0.9996611477048991,
+          -0.019009269607201434,
+          -0.01778306688351541
+        ],
+        "right": [
+          0.0190121476225474,
+          0.9998192527683898,
+          -0.000007221562514164552
+        ],
+        "up": [
+          0.017779989920169246,
+          -0.0003308751626031796,
+          0.9998418687441595
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 105,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -415.5545349121094,
+        232.046630859375,
+        17.072559356689453
+      ],
+      "vel": [
+        823.5344848632812,
+        153.44284057617188,
+        0.057587772607803345
+      ],
+      "ang_vel": [
+        0.000029920891392976046,
+        0.0006031296798028052,
+        -0.11323745548725128
+      ],
+      "angle": [
+        -0.01995706239484404,
+        -0.01778903124135189,
+        0.000007070152128308536
+      ],
+      "rot": {
+        "forward": [
+          0.9996426752972517,
+          -0.01995258024720856,
+          -0.017788093034130287
+        ],
+        "right": [
+          0.019955611897097516,
+          0.9998008669215103,
+          -0.000007070152128225461
+        ],
+        "up": [
+          0.01778469190412338,
+          -0.0003479046612706793,
+          0.9998417793285104
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 106,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -408.6621398925781,
+        233.30361938476562,
+        17.072946548461914
+      ],
+      "vel": [
+        827.0875854492188,
+        150.83872985839844,
+        0.04673078656196594
+      ],
+      "ang_vel": [
+        0.00002966210013255477,
+        0.0005428730510175228,
+        -0.11501903831958771
+      ],
+      "angle": [
+        -0.020915556701502833,
+        -0.017793564723813774,
+        0.000006915483567860312
+      ],
+      "rot": {
+        "forward": [
+          0.9996230111061589,
+          -0.020910721062763753,
+          -0.017792625799118847
+        ],
+        "right": [
+          0.020913908742380367,
+          0.9997812803026328,
+          -0.00000691548356804815
+        ],
+        "up": [
+          0.017788878809738604,
+          -0.00036520041595731155,
+          0.9998416987054575
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 107,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -401.7403259277344,
+        234.5390625,
+        17.07326316833496
+      ],
+      "vel": [
+        830.616455078125,
+        148.25291442871094,
+        0.037867575883865356
+      ],
+      "ang_vel": [
+        0.000029041257221251726,
+        0.00048810834414325655,
+        -0.11674957722425461
+      ],
+      "angle": [
+        -0.02188846813217734,
+        -0.017797636166997744,
+        0.00000676057150248312
+      ],
+      "rot": {
+        "forward": [
+          0.9996021212833366,
+          -0.021883254080617042,
+          -0.0177966965976406
+        ],
+        "right": [
+          0.021886600055139028,
+          0.9997604596844017,
+          -0.000006760571502621021
+        ],
+        "up": [
+          0.017792581515106324,
+          -0.000382751253553016,
+          0.999841626249658
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 108,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -394.7892761230469,
+        235.75311279296875,
+        17.073518753051758
+      ],
+      "vel": [
+        834.121337890625,
+        145.6850128173828,
+        0.030650943517684937
+      ],
+      "ang_vel": [
+        0.00002846872666850686,
+        0.0004386092477943748,
+        -0.11843005567789078
+      ],
+      "angle": [
+        -0.022875384320674187,
+        -0.017801294560360725,
+        0.000006605212737863905
+      ],
+      "rot": {
+        "forward": [
+          0.9995799724425587,
+          -0.022869765289422965,
+          -0.01780035441149102
+        ],
+        "right": [
+          0.022873271758897314,
+          0.9997383725012114,
+          -0.000006605212738000632
+        ],
+        "up": [
+          0.017795848409435662,
+          -0.00040054986195142694,
+          0.9998415611351046
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 109,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -387.80926513671875,
+        236.94589233398438,
+        17.0737247467041
+      ],
+      "vel": [
+        837.6025390625,
+        143.13467407226562,
+        0.024774670600891113
+      ],
+      "ang_vel": [
+        0.000027800386305898428,
+        0.00039392642793245614,
+        -0.12006136775016785
+      ],
+      "angle": [
+        -0.02387589287712627,
+        -0.017804580101129258,
+        0.000006450350507381064
+      ],
+      "rot": {
+        "forward": [
+          0.9995565322468727,
+          -0.0238698405942136,
+          -0.017803639431606136
+        ],
+        "right": [
+          0.02387350967452806,
+          0.999714987138781,
+          -0.000006450350507386862
+        ],
+        "up": [
+          0.017798719134365357,
+          -0.00041858785653562,
+          0.9998415026343436
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 110,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -380.8004455566406,
+        238.11756896972656,
+        17.07389259338379
+      ],
+      "vel": [
+        841.0602416992188,
+        140.60153198242188,
+        0.019996613264083862
+      ],
+      "ang_vel": [
+        0.000027065281756222248,
+        0.0003539197496138513,
+        -0.12164445221424103
+      ],
+      "angle": [
+        -0.024889593492643875,
+        -0.017807533238338766,
+        0.0000062967657436253385
+      ],
+      "rot": {
+        "forward": [
+          0.9995317692418594,
+          -0.024883077919743455,
+          -0.017806592100673587
+        ],
+        "right": [
+          0.02488691164803666,
+          0.9996902728332486,
+          -0.000006296765743610266
+        ],
+        "up": [
+          0.01780123359833841,
+          -0.0004368572609188548,
+          0.9998414500521732
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 111,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -373.76300048828125,
+        239.26828002929688,
+        17.074026107788086
+      ],
+      "vel": [
+        844.4945068359375,
+        138.08526611328125,
+        0.016123801469802856
+      ],
+      "ang_vel": [
+        0.000026360561605542898,
+        0.0003182972432114184,
+        -0.12318025529384613
+      ],
+      "angle": [
+        -0.02591609390420544,
+        -0.017810191497424792,
+        0.000006144528501595292
+      ],
+      "rot": {
+        "forward": [
+          0.9995056528630892,
+          -0.02590908317655215,
+          -0.017809249938229903
+        ],
+        "right": [
+          0.02591308352697087,
+          0.9996641996783197,
+          -0.000006144528501722882
+        ],
+        "up": [
+          0.01780342878594094,
+          -0.0004553510530370102,
+          0.9998414027256753
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 112,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -366.69708251953125,
+        240.39816284179688,
+        17.074134826660156
+      ],
+      "vel": [
+        847.9059448242188,
+        135.58551025390625,
+        0.012978166341781616
+      ],
+      "ang_vel": [
+        0.000026395078748464584,
+        0.0002868453739210963,
+        -0.12466970831155777
+      ],
+      "angle": [
+        -0.026955006077690646,
+        -0.017812590350953186,
+        0.000005987899977160434
+      ],
+      "rot": {
+        "forward": [
+          0.9994781534571587,
+          -0.026947466445137742,
+          -0.01781164841125544
+        ],
+        "right": [
+          0.026951635436241954,
+          0.999636738678099,
+          -0.000005987899977135183
+        ],
+        "up": [
+          0.017805339487072684,
+          -0.0004740682769545767,
+          0.9998413599899536
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 113,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -359.60296630859375,
+        241.50733947753906,
+        17.074220657348633
+      ],
+      "vel": [
+        851.2946166992188,
+        133.10189819335938,
+        0.010372698307037354
+      ],
+      "ang_vel": [
+        0.00002675055293366313,
+        0.00026032954338006675,
+        -0.12611369788646698
+      ],
+      "angle": [
+        -0.02800595381436466,
+        -0.017814767608104118,
+        0.0000058247126387645275
+      ],
+      "rot": {
+        "forward": [
+          0.9994492423774894,
+          -0.027997849587914046,
+          -0.01781382532296409
+        ],
+        "right": [
+          0.028002189220475395,
+          0.9996078618116389,
+          -0.000005824712638820978
+        ],
+        "up": [
+          0.017807002921469597,
+          -0.0004930045832719672,
+          0.9998413212134512
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 114,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -352.4808044433594,
+        242.59596252441406,
+        17.074289321899414
+      ],
+      "vel": [
+        854.6605834960938,
+        130.63412475585938,
+        0.008203834295272827
+      ],
+      "ang_vel": [
+        0.000026469584554433823,
+        0.00023840946960262954,
+        -0.12751314043998718
+      ],
+      "angle": [
+        -0.029068567377632012,
+        -0.017816764423173155,
+        0.0000056609680801419466
+      ],
+      "rot": {
+        "forward": [
+          0.9994188917608288,
+          -0.02905986087074666,
+          -0.017815821821145442
+        ],
+        "right": [
+          0.029064372989317386,
+          0.9995775419433383,
+          -0.000005660968080583792
+        ],
+        "up": [
+          0.017808459892079184,
+          -0.0005121479098548955,
+          0.9998412856666072
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 115,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -345.33074951171875,
+        243.6641387939453,
+        17.074342727661133
+      ],
+      "vel": [
+        858.00439453125,
+        128.18182373046875,
+        0.006418675184249878
+      ],
+      "ang_vel": [
+        0.000026217196136713028,
+        0.00021948656649328768,
+        -0.1288689821958542
+      ],
+      "angle": [
+        -0.030142475282165803,
+        -0.017818603126021047,
+        0.0000054967800133230785
+      ],
+      "rot": {
+        "forward": [
+          0.9993870751450384,
+          -0.03013312676913516,
+          -0.017817660232134692
+        ],
+        "right": [
+          0.0301378131616925,
+          0.9995457530392665,
+          -0.000005496780013930849
+        ],
+        "up": [
+          0.01780973225131357,
+          -0.0005314917674864635,
+          0.9998412529169028
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 116,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -338.1530456542969,
+        244.71202087402344,
+        17.074384689331055
+      ],
+      "vel": [
+        861.3261108398438,
+        125.74467468261719,
+        0.004956871271133423
+      ],
+      "ang_vel": [
+        0.00002568104537203908,
+        0.00020270375534892082,
+        -0.130182147026062
+      ],
+      "angle": [
+        -0.031227318620367473,
+        -0.017820295883414265,
+        0.00000533472312926176
+      ],
+      "rot": {
+        "forward": [
+          0.9993537671113367,
+          -0.031217286291109456,
+          -0.017819352720782042
+        ],
+        "right": [
+          0.031222148642226468,
+          0.9995124699107504,
+          -0.000005334723129506863
+        ],
+        "up": [
+          0.017810831786624917,
+          -0.0005510271458509276,
+          0.9998412227314755
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 117,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -330.94781494140625,
+        245.7397003173828,
+        17.074417114257812
+      ],
+      "vel": [
+        864.6260375976562,
+        123.32234191894531,
+        0.003781914710998535
+      ],
+      "ang_vel": [
+        0.000025209563318639994,
+        0.00018756152712740004,
+        -0.1314534842967987
+      ],
+      "angle": [
+        -0.03232275710862373,
+        -0.01782186473433223,
+        0.000005174405432626788
+      ],
+      "rot": {
+        "forward": [
+          0.9993189429654359,
+          -0.032311997018782374,
+          -0.01782092132258021
+        ],
+        "right": [
+          0.03231703696708779,
+          0.9994776681926554,
+          -0.000005174405432916557
+        ],
+        "up": [
+          0.017811780084968386,
+          -0.0005707484251306731,
+          0.9998411947770545
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 118,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -323.71527099609375,
+        246.74732971191406,
+        17.074440002441406
+      ],
+      "vel": [
+        867.904296875,
+        120.91452026367188,
+        0.002837926149368286
+      ],
+      "ang_vel": [
+        0.000024622422643005848,
+        0.00017362955259159207,
+        -0.1326838880777359
+      ],
+      "angle": [
+        -0.033428450642216744,
+        -0.017823315199757175,
+        0.000005016814420381596
+      ],
+      "rot": {
+        "forward": [
+          0.9992825790751957,
+          -0.033416916670156775,
+          -0.017822371557644913
+        ],
+        "right": [
+          0.0334221357813338,
+          0.9994413243834757,
+          -0.000005016814420538002
+        ],
+        "up": [
+          0.017812582280316312,
+          -0.0005906484691747642,
+          0.9998411689198475
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 119,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -316.4555969238281,
+        247.73500061035156,
+        17.074459075927734
+      ],
+      "vel": [
+        871.1611938476562,
+        118.52088165283203,
+        0.002101808786392212
+      ],
+      "ang_vel": [
+        0.00002397614298388362,
+        0.00016041292110458016,
+        -0.13387425243854523
+      ],
+      "angle": [
+        -0.03454405919519235,
+        -0.017824655980202057,
+        0.000004862471826361077
+      ],
+      "rot": {
+        "forward": [
+          0.9992446531703584,
+          -0.03453170301102759,
+          -0.017823712125116173
+        ],
+        "right": [
+          0.03453710278476663,
+          0.9994034163436978,
+          -0.00000486247182656524
+        ],
+        "up": [
+          0.01781324670000646,
+          -0.0006107205313026706,
+          0.9998411450259977
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    },
+    {
+      "tick": 120,
+      "controls": {
+        "throttle": 1,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": true
+      },
+      "pos": [
+        -309.1689453125,
+        248.7028350830078,
+        17.074472427368164
+      ],
+      "vel": [
+        874.3967895507812,
+        116.14111328125,
+        0.0015281140804290771
+      ],
+      "ang_vel": [
+        0.000023403146769851446,
+        0.00014816326438449323,
+        -0.13502547144889832
+      ],
+      "angle": [
+        -0.03566926486185832,
+        -0.017825895529519017,
+        0.000004710873670224619
+      ],
+      "rot": {
+        "forward": [
+          0.9992051432454016,
+          -0.03565603587121306,
+          -0.017824951477510866
+        ],
+        "right": [
+          0.035661617765878575,
+          0.9993639222315249,
+          -0.000004710873670352861
+        ],
+        "up": [
+          0.017813781393775516,
+          -0.0006309594461808531,
+          0.9998411229280783
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0
+    }
+  ],
+  "scenario_sha256": "23b05371f1a989b5a2640459fe0e8f5b231340022a80b8bab7bd0d62c1091bb2"
+}

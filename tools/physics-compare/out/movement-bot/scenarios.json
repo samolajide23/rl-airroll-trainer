@@ -1,0 +1,1934 @@
+{
+  "version": 2,
+  "notes": "Car-only deterministic movement bot plus existing isolated maneuvers. No adaptive decisions, ball contacts, reference seeding or relaxed budgets.",
+  "defaults": {
+    "tick_rate": 120,
+    "settle_ticks": 240,
+    "initial": {
+      "pos": [
+        0,
+        0,
+        800
+      ],
+      "vel": [
+        0,
+        0,
+        0
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "yaw": 0,
+      "pitch": 0,
+      "roll": 0,
+      "boost": 100,
+      "on_ground": false
+    },
+    "controls": {
+      "throttle": 0,
+      "steer": 0,
+      "pitch": 0,
+      "yaw": 0,
+      "roll": 0,
+      "boost": false,
+      "jump": false,
+      "handbrake": false
+    }
+  },
+  "scenarios": [
+    {
+      "id": "flip_cancel_sustained",
+      "ticks": 120,
+      "description": "Hold opposing pitch until the entire dodge torque window ends",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          1800,
+          0,
+          0
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_cancel_partial",
+      "ticks": 90,
+      "description": "Partial opposing pitch reduces rather than removes dodge torque",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "pitch": 0.5
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_stall",
+      "ticks": 90,
+      "description": "Opposing yaw and roll select a flip but cancel its direction",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "yaw": 1,
+            "roll": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_reset_jump",
+      "ticks": 90,
+      "description": "A car with a restored airborne flip uses a neutral second jump",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "air_time_since_jump": 0,
+        "has_jumped": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_window_last_tick",
+      "ticks": 30,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2000
+        ],
+        "air_time_since_jump": 1.2333333333333334
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 30,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_window_expired",
+      "ticks": 30,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2000
+        ],
+        "air_time_since_jump": 1.25
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 30,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "dominus_jump",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "dominus",
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "plank_jump",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "plank",
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "breakout_jump",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "breakout",
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "hybrid_jump",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "hybrid",
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "merc_jump",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "merc",
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "dominus_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "dominus",
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ]
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "plank_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "plank",
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ]
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "breakout_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "breakout",
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ]
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "hybrid_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "hybrid",
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ]
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "merc_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "hitbox": "merc",
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ]
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "double_jump_early",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {}
+        },
+        {
+          "until_tick": 61,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_window_before",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 24,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 151,
+          "controls": {}
+        },
+        {
+          "until_tick": 152,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "roof_recovery",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          80
+        ],
+        "roll": 3.141592653589793,
+        "vel": [
+          0,
+          0,
+          -100
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 60,
+          "controls": {}
+        },
+        {
+          "until_tick": 61,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ceiling_impact",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          1800
+        ],
+        "vel": [
+          600,
+          0,
+          800
+        ]
+      },
+      "car_only": true
+    },
+    {
+      "id": "freefall_1s",
+      "description": "No input mid-air for 1s — gravity only",
+      "ticks": 120,
+      "car_only": true
+    },
+    {
+      "id": "air_throttle_1s",
+      "description": "Full forward air throttle for 1s",
+      "ticks": 120,
+      "controls": {
+        "throttle": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "air_boost_1s",
+      "description": "Full boost mid-air for 1s",
+      "ticks": 120,
+      "controls": {
+        "boost": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "roll_right_1s",
+      "description": "Hold air-roll right for 1s from rest",
+      "ticks": 120,
+      "controls": {
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "roll_left_1s",
+      "description": "Hold air-roll left for 1s from rest",
+      "ticks": 120,
+      "controls": {
+        "roll": -1
+      },
+      "car_only": true
+    },
+    {
+      "id": "pitch_up_0_5s",
+      "description": "Hold pitch up for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "pitch": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "pitch_down_0_5s",
+      "description": "Hold pitch down for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "pitch": -1
+      },
+      "car_only": true
+    },
+    {
+      "id": "yaw_right_0_5s",
+      "description": "Hold yaw right for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "yaw": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "yaw_left_0_5s",
+      "description": "Hold yaw left for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "yaw": -1
+      },
+      "car_only": true
+    },
+    {
+      "id": "roll_then_release",
+      "description": "Roll right 0.5s then release 0.5s (coast angle)",
+      "ticks": 120,
+      "control_schedule": [
+        {
+          "until_tick": 60,
+          "controls": {
+            "roll": 1
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "roll": 0
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "combo_pitch_roll_1s",
+      "description": "Pitch up + roll right together for 1s",
+      "ticks": 120,
+      "controls": {
+        "pitch": 1,
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "roll_from_pitch45",
+      "description": "Start pitched +45°, hold air-roll right — must spin about nose",
+      "ticks": 90,
+      "initial": {
+        "pitch": 0.7853981633974483
+      },
+      "controls": {
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "roll_from_pitch90",
+      "description": "Start pitched +90° (nose up), hold air-roll right",
+      "ticks": 90,
+      "initial": {
+        "pitch": 1.5707963267948966
+      },
+      "controls": {
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "yaw_from_roll90",
+      "description": "Start rolled 90°, hold yaw right — body-up yaw",
+      "ticks": 60,
+      "initial": {
+        "roll": 1.5707963267948966
+      },
+      "controls": {
+        "yaw": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "combo_from_yaw90",
+      "description": "Start yawed 90°, pitch+roll together",
+      "ticks": 90,
+      "initial": {
+        "yaw": 1.5707963267948966
+      },
+      "controls": {
+        "pitch": 1,
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "partial_inputs_air",
+      "description": "Half pitch + half yaw + half roll for 1s",
+      "ticks": 120,
+      "controls": {
+        "pitch": 0.5,
+        "yaw": 0.5,
+        "roll": 0.5
+      },
+      "car_only": true
+    },
+    {
+      "id": "boost_and_pitch_1s",
+      "description": "Boost while pitching up for 1s",
+      "ticks": 120,
+      "controls": {
+        "boost": true,
+        "pitch": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "double_jump_air",
+      "description": "Second jump impulse while already airborne (tap jump 3 ticks)",
+      "ticks": 60,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {
+            "jump": false
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_forward_air",
+      "description": "Forward dodge from rest in air (pitch down + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "jump": false,
+            "pitch": 0
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_side_air",
+      "description": "Side dodge right from rest in air (yaw right + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "yaw": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "jump": false,
+            "yaw": 0
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "coast_from_spin",
+      "description": "Release inputs with initial roll rate 5.5 rad/s — damping coast",
+      "ticks": 120,
+      "initial": {
+        "ang_vel": [
+          -5.5,
+          0,
+          0
+        ]
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_rest_0_5s",
+      "description": "Settled Octane on floor, no input for 0.5s",
+      "game_mode": "soccar",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_throttle_2s",
+      "description": "Full throttle on open floor facing +Y for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_throttle_4s",
+      "description": "Full throttle on open floor to drive-speed cap",
+      "game_mode": "soccar",
+      "ticks": 480,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_boost_2s",
+      "description": "Throttle + boost on open floor for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "controls": {
+        "throttle": 1,
+        "boost": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_steer_right_1s",
+      "description": "Throttle 1s then throttle+steer right 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1,
+            "steer": 0
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_steer_left_1s",
+      "description": "Throttle 1s then throttle+steer left 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1,
+            "steer": 0
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": -1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_coast_1s",
+      "description": "Throttle to speed then coast 1s",
+      "game_mode": "soccar",
+      "ticks": 720,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 720,
+          "controls": {
+            "throttle": 0
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_brake_0_25s",
+      "description": "Throttle to speed then reverse-brake 0.25s",
+      "game_mode": "soccar",
+      "ticks": 630,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 630,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_powerslide_0_5s",
+      "description": "Throttle 2s then throttle+steer+handbrake 0.5s",
+      "game_mode": "soccar",
+      "ticks": 300,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 0,
+            "handbrake": false
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_jump_full_hold",
+      "description": "Full hold jump from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_jump_tap",
+      "description": "Single-tick jump tap from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "jump": false
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_flip_forward",
+      "description": "Jump then forward flip from ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 15,
+          "controls": {
+            "jump": false
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "wall_drive_throttle_3s",
+      "description": "Drive into +X wall and climb with throttle only",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": {
+        "pos": [
+          3000,
+          0,
+          17
+        ],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_reverse_2s",
+      "description": "Reverse acceleration from rest on open floor",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": -1
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_reverse_steer",
+      "description": "Reverse acceleration then steer while reversing",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": -1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": -1,
+            "steer": 1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_boost_depletion",
+      "description": "Hold boost past depletion of a five-unit tank",
+      "ticks": 120,
+      "initial": {
+        "boost": 5
+      },
+      "controls": {
+        "boost": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "air_reverse_throttle",
+      "description": "Reverse air throttle from rest",
+      "ticks": 120,
+      "controls": {
+        "throttle": -1
+      },
+      "car_only": true
+    },
+    {
+      "id": "flip_forward_cancel",
+      "description": "Forward dodge followed immediately by opposite pitch cancellation",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 45,
+          "controls": {
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "flip_diagonal_air",
+      "description": "Diagonal forward-right dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1,
+            "yaw": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_powerslide_release",
+      "description": "Accelerate, powerslide, then release handbrake while steering",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "steer": 1
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_backflip",
+      "description": "Backward dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_backflip_forward_speed",
+      "description": "Backward dodge while moving forward at 1800 uu/s",
+      "ticks": 90,
+      "initial": {
+        "vel": [
+          1800,
+          0,
+          0
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_forwardflip_reverse_speed",
+      "description": "Forward dodge while reversing at 1000 uu/s",
+      "ticks": 90,
+      "initial": {
+        "vel": [
+          -1000,
+          0,
+          0
+        ]
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "air_linear_speed_cap",
+      "description": "Boost with nonaxial velocity above the linear speed cap",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          2300,
+          800,
+          500
+        ]
+      },
+      "controls": {
+        "boost": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "air_angular_speed_cap",
+      "description": "Combined air controls from an over-cap angular velocity",
+      "ticks": 60,
+      "initial": {
+        "ang_vel": [
+          5,
+          4,
+          3
+        ]
+      },
+      "controls": {
+        "pitch": 1,
+        "yaw": -1,
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "air_boost_one_tick",
+      "description": "One-tick boost press checks minimum boost duration",
+      "ticks": 60,
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "boost": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {}
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "ground_analog_steer",
+      "description": "Half throttle and quarter steering from a moving start",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          1000,
+          0,
+          0
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 0.5,
+        "steer": 0.25
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_fast_steer",
+      "description": "Steering at near-supersonic speed",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          -2000,
+          0,
+          17
+        ],
+        "vel": [
+          2200,
+          0,
+          0
+        ],
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1,
+        "steer": 0.5
+      },
+      "car_only": true
+    },
+    {
+      "id": "landing_wheels",
+      "description": "Airborne downward and forward velocity landing on wheels",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          0,
+          -300
+        ],
+        "on_ground": false
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "landing_powerslide",
+      "description": "Sideways moving landing with powerslide held",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "on_ground": false
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "car_only": true
+    },
+    {
+      "id": "ceiling_fall_airroll",
+      "description": "Inverted airborne car falls from near the ceiling while rolling",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1950
+        ],
+        "roll": 3.141592653589793,
+        "vel": [
+          0,
+          0,
+          -1
+        ],
+        "on_ground": false
+      },
+      "controls": {
+        "roll": 1
+      },
+      "car_only": true
+    },
+    {
+      "id": "ground_jump_into_wall",
+      "description": "Jump + boost into +X wall curve and climb (wheels on wall)",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          3600,
+          0,
+          17
+        ],
+        "yaw": 0,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1,
+            "boost": true
+          }
+        }
+      ],
+      "car_only": true
+    },
+    {
+      "id": "movement_bot_straight",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "boost": true
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 660,
+          "controls": {}
+        },
+        {
+          "until_tick": 780,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "ticks": 780
+    },
+    {
+      "id": "movement_bot_slalom",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          -1800,
+          -3000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 420,
+          "controls": {
+            "throttle": 1,
+            "steer": -0.3
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.7
+          }
+        },
+        {
+          "until_tick": 660,
+          "controls": {
+            "throttle": 1,
+            "steer": -0.7
+          }
+        },
+        {
+          "until_tick": 780,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "ticks": 780
+    },
+    {
+      "id": "movement_bot_powerslide",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          -1800,
+          -3000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 450,
+          "controls": {
+            "throttle": -1,
+            "steer": -0.5
+          }
+        },
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "ticks": 600
+    },
+    {
+      "id": "movement_bot_jump_dodge",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "on_ground": true,
+        "boost": 100
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 144,
+          "controls": {
+            "throttle": 1,
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 156,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 159,
+          "controls": {
+            "throttle": 1,
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 204,
+          "controls": {
+            "throttle": 1,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 384,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 396,
+          "controls": {}
+        },
+        {
+          "until_tick": 399,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 600,
+          "controls": {}
+        }
+      ],
+      "ticks": 600
+    },
+    {
+      "id": "movement_bot_aerial",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          -1200,
+          -2000,
+          1200
+        ],
+        "vel": [
+          600,
+          100,
+          250
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 90,
+          "controls": {
+            "boost": true,
+            "pitch": 0.3,
+            "roll": -0.4
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "yaw": 0.5,
+            "roll": 0.3
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "pitch": -0.3
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "ticks": 540
+    },
+    {
+      "id": "movement_bot_goal_roof",
+      "game_mode": "soccar",
+      "car_only": true,
+      "initial": {
+        "pos": [
+          0,
+          5500,
+          610
+        ],
+        "vel": [
+          0,
+          300,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": -1,
+            "steer": -0.3
+          }
+        }
+      ],
+      "ticks": 360
+    }
+  ]
+}

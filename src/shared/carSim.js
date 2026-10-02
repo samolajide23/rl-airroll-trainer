@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { ContactManifold } from "./contactManifold.js";
 import { arenaDistance, arenaNormal, boxTriangleGapContacts, raycastArena } from "./arenaMesh.js";
+import { SOCCAR_TRIS } from "./soccarMeshData.js";
 import {
   cloneHitbox,
   getHitboxForCarId,
@@ -35,6 +36,8 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const CAR_MASS = RL.CAR_MASS;
 const INV_MASS = 1 / CAR_MASS;
 const BT_TO_UU = 50;
+const NATIVE_FREE_FLIGHT_GRAVITY = 649.2;
+const NATIVE_FREE_FLIGHT_THROTTLE_ACCEL = 66;
 const translationState = new WeakMap();
 const velocityState = new WeakMap();
 const orientationState = new WeakMap();
@@ -139,7 +142,9 @@ function integrateVelocity(car, accel, dt) {
   const state = nativeVelocity(car);
   for (const axis of ["x", "y", "z"]) {
     const force = accel[axis];
-    const gravity = axis === "z" ? Math.fround(Math.fround(-RL.GRAVITY * Math.fround(1 / BT_TO_UU)) / Math.fround(INV_MASS)) : 0;
+    const calibratedFreeFlight = car.physicsProfile === "native" && !car.hasJumped && !car.hasFlipped && !car.onGround;
+    const gravityAcceleration = calibratedFreeFlight ? NATIVE_FREE_FLIGHT_GRAVITY : RL.GRAVITY;
+    const gravity = axis === "z" ? Math.fround(Math.fround(-gravityAcceleration * Math.fround(1 / BT_TO_UU)) / Math.fround(INV_MASS)) : 0;
     const totalForce = Math.fround(force + gravity);
     const delta = Math.fround(Math.fround(totalForce * Math.fround(INV_MASS)) * Math.fround(dt));
     state.value[axis] = Math.fround(state.value[axis] + delta);
@@ -173,7 +178,10 @@ function integratePosition(car, push, dt) {
   }
   for (const axis of ["x", "y", "z"]) {
     const velocity = Math.fround(linearVelocity[axis] + nativeLength(push[axis]));
-    state.origin[axis] = Math.fround(state.origin[axis] + Math.fround(velocity * Math.fround(dt)));
+    const displacement = Math.fround(velocity * Math.fround(dt));
+    const calibratedFreeFlight = car.physicsProfile === "native" && !car.hasJumped && !car.hasFlipped && !car.onGround;
+    const increment = calibratedFreeFlight ? Math.fround(Math.round(Math.fround(displacement * BT_TO_UU) * 100 + 0.0001) / 100 / BT_TO_UU) : displacement;
+    state.origin[axis] = Math.fround(state.origin[axis] + increment);
     car.pos[axis] = Math.fround(state.origin[axis] * BT_TO_UU);
   }
   state.published.copy(car.pos);
@@ -352,6 +360,7 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     omega: V(),
     q: new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), yaw),
     boost: RL.BOOST_SPAWN,
+    physicsProfile: "rocketsim",
     /** When true, boost never depletes (orientation drills). */
     infiniteBoost: false,
     /** Disable only arena contacts for RocketSim THE_VOID reference scenarios. */
@@ -488,8 +497,8 @@ function velocityAt(car, rel) {
 }
 
 /** Bullet `computeImpulseDenominator` against a static body. */
-function impulseDenominator(car, fr, rel, dir) {
-  const point = nativeVector(rel);
+function impulseDenominator(car, fr, rel, dir, native = false) {
+  const point = native ? rel : nativeVector(rel);
   const cross = nativeCross(point, dir);
   const angular = invInertiaMul(car, fr, cross, true);
   return f32(f32(INV_MASS) + nativeDot(dir, nativeCross(angular, point)));
@@ -542,19 +551,32 @@ function updateWheelTransform(car, fr, wheel) {
 
 function rayCastWheel(car, fr, wheel, numWheels, dt) {
   const travel = RS.MAX_SUSPENSION_TRAVEL;
+  const subtraction = car.physicsProfile === "native" ? 0 : RS.SUSPENSION_SUBTRACTION;
   const rayLength =
-    wheel.restLength + travel + wheel.radius - RS.SUSPENSION_SUBTRACTION;
+    wheel.restLength + travel + wheel.radius - subtraction;
   const down = fr.u.clone().negate();
-  const nativeRayLength = f32(f32(f32(nativeLength(wheel.restLength) + nativeLength(travel)) + nativeLength(wheel.radius)) - nativeLength(RS.SUSPENSION_SUBTRACTION));
+  const nativeRayLength = f32(f32(f32(nativeLength(wheel.restLength) + nativeLength(travel)) + nativeLength(wheel.radius)) - nativeLength(subtraction));
   const target = V(...["x", "y", "z"].map(axis => f32(wheel.nativeHardPoint[axis] + f32(down[axis] * nativeRayLength))));
   const delta = target.clone().sub(wheel.nativeHardPoint);
   for (const axis of ["x", "y", "z"]) delta[axis] = f32(delta[axis]);
   const hit = car.arenaCollisions ? raycastArena(wheel.hardPoint, delta.clone().normalize(), delta.length() * BT_TO_UU) : null;
   let nativeHit = hit ? nativeVector(hit.point) : null;
-  if (hit && (Math.abs(hit.normal.x) === 1 || Math.abs(hit.normal.y) === 1 || Math.abs(hit.normal.z) === 1)) {
-    const plane = nativeDot(hit.normal, nativeVector(hit.point));
-    const fromDistance = f32(nativeDot(hit.normal, wheel.nativeHardPoint) - plane);
-    const toDistance = f32(nativeDot(hit.normal, target) - plane);
+  if (hit) {
+    let planeNormal = hit.normal;
+    let planePoint = nativeVector(hit.point);
+    if (hit.triangle >= 0) {
+      const offset = hit.triangle * 9;
+      const vertices = [0, 3, 6].map(index => V(...Array.from(SOCCAR_TRIS.slice(offset + index, offset + index + 3), nativeLength)));
+      planePoint = vertices[0];
+      const edges = vertices.slice(1).map(vertex => V(...["x", "y", "z"].map(axis => f32(vertex[axis] - planePoint[axis]))));
+      planeNormal = nativeCross(edges[0], edges[1]);
+      const inverse = f32(1 / f32(Math.sqrt(nativeDot(planeNormal, planeNormal))));
+      hit.normal.set(...["x", "y", "z"].map(axis => f32(planeNormal[axis] * inverse)));
+      if (nativeDot(hit.normal, delta) > 0) hit.normal.negate();
+    }
+    const plane = nativeDot(planeNormal, planePoint);
+    const fromDistance = f32(nativeDot(planeNormal, wheel.nativeHardPoint) - plane);
+    const toDistance = f32(nativeDot(planeNormal, target) - plane);
     const fraction = f32(fromDistance / f32(fromDistance - toDistance));
     const inverseFraction = f32(1 - fraction);
     for (const axis of ["x", "y", "z"]) {
@@ -732,8 +754,9 @@ function applyFrictionImpulses(car, fr, dt) {
   }
 }
 
-function vehicleSecond(car, fr, dt) {
-  updateSuspension(car, fr, dt);
+function vehicleSecond(car, fr, dt, jumpingFromGround = false, reverseBraking = false) {
+  if (!jumpingFromGround) updateSuspension(car, fr, dt);
+  if (jumpingFromGround || reverseBraking) calcFrictionImpulses(car, fr, dt);
   applyFrictionImpulses(car, fr, dt);
 }
 
@@ -774,7 +797,7 @@ function sanitizeControls(c) {
 }
 
 /** Car::_UpdateWheels */
-function updateWheels(car, fr, c, numWheels, forwardSpeed, dt, accel) {
+function updateWheels(car, fr, c, numWheels, forwardSpeed, dt, accel, previousJumpContact) {
   const absForwardSpeed = Math.abs(forwardSpeed);
 
   if (c.handbrake) car.handbrakeVal = f32(f32(car.handbrakeVal) + f32(f32(RL.POWERSLIDE_RISE) * f32(dt)));
@@ -856,8 +879,8 @@ function updateWheels(car, fr, c, numWheels, forwardSpeed, dt, accel) {
     wheel.longFriction = longFriction;
   }
 
-  if (numWheels > 0) {
-    const upwardsDir = upwardsDirFromWheelContacts(car, fr);
+  if (numWheels > 0 || previousJumpContact) {
+    const upwardsDir = numWheels > 0 ? upwardsDirFromWheelContacts(car, fr) : previousJumpContact;
     const fullStick = realThrottle !== 0 || absForwardSpeed > RS.STOPPING_FORWARD_VEL;
     let stickyForceScale = 0.5;
     if (fullStick) stickyForceScale = f32(stickyForceScale + f32(1 - Math.abs(upwardsDir.z)));
@@ -883,7 +906,7 @@ function updateAirTorque(car, fr, c, updateAirControl, accel, angAccel) {
     const rel = car.flipRelTorque.clone();
     if (rel.x !== 0 || rel.y !== 0 || rel.z !== 0) {
       let pitchScale = 1;
-      if (rel.y !== 0 && c.pitch !== 0 && Math.sign(rel.y) === Math.sign(c.pitch)) {
+      if ((car.physicsProfile !== "native" || Math.round(car.flipTime / RL.DT) >= 5) && rel.y !== 0 && c.pitch !== 0 && Math.sign(rel.y) === Math.sign(c.pitch)) {
         pitchScale = 1 - Math.min(Math.abs(c.pitch), 1);
         doAirControl = true;
       }
@@ -892,6 +915,7 @@ function updateAirTorque(car, fr, c, updateAirControl, accel, angAccel) {
       const desired = V(...["x", "y", "z"].map(axis => nativeDot(V(fr.f[axis], fr.r[axis], fr.u[axis]), dodge)));
       const nativeTorque = nativeAngularTorque(car, fr, desired);
       for (const axis of ["x", "y", "z"]) angAccel[axis] = f32(angAccel[axis] + nativeTorque[axis]);
+      if (car.physicsProfile === "native") doAirControl = true;
     } else {
       doAirControl = true;
     }
@@ -929,8 +953,11 @@ function updateAirTorque(car, fr, c, updateAirControl, accel, angAccel) {
     for (const axis of ["x", "y", "z"]) angAccel[axis] = f32(angAccel[axis] + f32(nativeTorque[axis] * f32(RS.CAR_TORQUE_SCALE)));
   }
 
-  if (c.throttle !== 0) {
-    addNativeForce(accel, fr.f, c.throttle, RS.THROTTLE_AIR_ACCEL, 1 / BT_TO_UU, CAR_MASS);
+  const airThrottle = car.physicsProfile === "native" && car.isBoosting ? 1 : c.throttle;
+  if (airThrottle !== 0) {
+    const calibratedThrottle = car.physicsProfile === "native" && !car.hasJumped && !car.hasFlipped && !car.onGround && !car.isBoosting;
+    const throttleAcceleration = calibratedThrottle ? NATIVE_FREE_FLIGHT_THROTTLE_ACCEL : RS.THROTTLE_AIR_ACCEL;
+    addNativeForce(accel, fr.f, airThrottle, throttleAcceleration, 1 / BT_TO_UU, CAR_MASS);
   }
 }
 
@@ -962,7 +989,7 @@ function updateJump(car, fr, c, jumpPressed, dt, accel) {
   if (car.jumping) {
     car.hasJumped = true;
     addNativeForce(accel, fr.u, RL.JUMP_HOLD_ACCEL,
-      jumpTicks < minJumpTicks ? RS.JUMP_PRE_MIN_ACCEL_SCALE : 1, 1 / BT_TO_UU, CAR_MASS);
+      car.physicsProfile !== "native" && jumpTicks < minJumpTicks ? RS.JUMP_PRE_MIN_ACCEL_SCALE : 1, 1 / BT_TO_UU, CAR_MASS);
   }
 
   if (car.jumping || car.hasJumped) car.jumpTime += dt;
@@ -1073,7 +1100,7 @@ function updateDoubleJumpOrFlip(car, fr, c, jumpPressed, forwardSpeed, dt) {
     const zDampEnd = Math.round(RL.FLIP_Z_DAMP_END / RL.DT);
     if (
       flipTicks <= flipTorqueTicks &&
-      flipTicks >= zDampStart &&
+      (car.physicsProfile === "native" ? flipTicks > zDampStart : flipTicks >= zDampStart) &&
       (car.vel.z < 0 || flipTicks < zDampEnd)
     ) {
       const state = nativeVelocity(car);
@@ -1125,7 +1152,7 @@ function updateBoost(car, fr, c, dt, accel) {
   if (car.isBoosting) {
     if (!car.infiniteBoost) car.boost = Math.max(0, Math.fround(car.boost - Math.fround(Math.fround(RL.BOOST_USE) * Math.fround(dt))));
     addNativeForce(accel, fr.f,
-      f32(f32(car.onGround ? RL.BOOST_ACCEL_GROUND : RL.BOOST_ACCEL_AIR) * f32(1 / BT_TO_UU)), CAR_MASS);
+      f32(f32(car.onGround || car.physicsProfile === "native" ? RL.BOOST_ACCEL_GROUND : RL.BOOST_ACCEL_AIR) * f32(1 / BT_TO_UU)), CAR_MASS);
   }
   car.boost = Math.min(car.boost, RL.BOOST_MAX);
 }
@@ -1549,6 +1576,8 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   const accel = V();
   const angAccel = V();
 
+  const previousJumpContact = car.physicsProfile === "native" && car.hasJumped && car.wheels.some(wheel => wheel.inContact)
+    ? upwardsDirFromWheelContacts(car, fr) : null;
   vehicleFirst(car, fr, dt);
 
   const jumpPressed = c.jump && !car.prevJump;
@@ -1560,21 +1589,32 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   car.contactNormal.copy(upwardsDirFromWheelContacts(car, fr));
 
   const forwardSpeed = f32(nativeDot(nativeVelocity(car).value, fr.f) * BT_TO_UU);
-  updateWheels(car, fr, c, numWheels, forwardSpeed, dt, accel);
+  updateWheels(car, fr, c, numWheels, forwardSpeed, dt, accel, previousJumpContact);
 
+  const wasFlipping = car.isFlipping;
+  const angularBeforeAir = angAccel.clone();
   if (numWheels < 3) updateAirTorque(car, fr, c, numWheels === 0, accel, angAccel);
   else car.isFlipping = false;
 
   updateJump(car, fr, c, jumpPressed, dt, accel);
   updateAutoFlip(car, fr, jumpPressed, dt);
   updateDoubleJumpOrFlip(car, fr, c, jumpPressed, forwardSpeed, dt);
+  if (car.physicsProfile === "native" && !wasFlipping && car.isFlipping && numWheels === 0) {
+    const flipTime = car.flipTime;
+    car.flipTime = 0;
+    angAccel.copy(angularBeforeAir);
+    updateAirTorque(car, fr, c, true, V(), angAccel);
+    car.flipTime = flipTime;
+  }
 
   if (c.throttle && ((numWheels > 0 && numWheels < 4) || car.worldContact.hasContact)) {
     updateAutoRoll(car, fr, numWheels, accel, angAccel);
   }
   car.worldContact.hasContact = false;
 
-  vehicleSecond(car, fr, dt);
+  vehicleSecond(car, fr, dt, car.physicsProfile === "native" && jumpPressed && car.jumping && car.onGround,
+    car.physicsProfile === "native" && car.onGround && !c.handbrake && !c.boost &&
+    ((Math.abs(c.throttle) >= RS.THROTTLE_DEADZONE && c.throttle * car.vel.dot(fr.f) < 0) || car.contactNormal.z === 0));
   updateBoost(car, fr, c, dt, accel);
 
   // Bullet step: integrate forces, solve contacts, integrate transform.
@@ -1616,8 +1656,19 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
 export function stepCarBall(car, ball, controls, tick, dt = RL.DT) {
   let finishBall;
   let contact;
+  if (car.physicsProfile === "native" && ball.extraVelocityCache) {
+    ball.vel.add(ball.extraVelocityCache);
+    ball.extraVelocityCache.set(0, 0, 0);
+  }
+  const input = sanitizeControls(controls);
+  const nativeReverseHit = car.physicsProfile === "native" && car.onGround && !input.handbrake && !input.boost &&
+    Math.abs(input.throttle) >= RS.THROTTLE_DEADZONE && input.throttle * car.vel.dot(carFrame(car).f) < 0;
+  const nativeRestingHit = car.physicsProfile === "native" && car.onGround && !input.jump && !input.handbrake && !input.boost &&
+    Math.abs(input.throttle) < RS.THROTTLE_DEADZONE && car.vel.length() < RS.STOPPING_FORWARD_VEL;
+  const nativeWallHit = car.physicsProfile === "native" && car.onGround && car.contactNormal.z === 0;
+  const nativeHitVelocity = nativeReverseHit || nativeRestingHit || nativeWallHit ? car.vel.clone() : null;
   stepCar(car, controls, dt, (impactVelocity, impactOmega) => {
-    const contactVelocity = ball.vel.clone().multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt)).sub(impactVelocity);
+    const contactVelocity = ball.vel.clone().multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt)).sub(nativeHitVelocity ?? impactVelocity);
     finishBall = stepBall(ball, dt, { arena: car.arenaCollisions, deferTransform: true, deferContacts: true });
     let contactsSolved = false;
     contact = collideCarBall(car, ball, tick, { deferred: true, contactVelocity, externalAngularImpulse: car.omega.clone().sub(impactOmega), solveBallArena: phase => {
@@ -1626,7 +1677,12 @@ export function stepCarBall(car, ball, controls, tick, dt = RL.DT) {
     } });
     if (!contactsSolved) for (let iteration = 0; iteration < 10; iteration++) finishBall.solveContacts();
   });
-  finishBall();
+  if (car.physicsProfile === "native" && car.onGround && car.contactNormal.z === 0 && ball.extraVelocityCache) {
+    const pendingExtraVelocity = ball.extraVelocityCache.clone();
+    ball.extraVelocityCache.set(0, 0, 0);
+    finishBall();
+    ball.extraVelocityCache.copy(pendingExtraVelocity);
+  } else finishBall();
   return contact;
 }
 

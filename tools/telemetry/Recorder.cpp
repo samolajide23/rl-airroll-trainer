@@ -5,6 +5,10 @@
 #include "bakkesmod/wrappers/GameObject/BallWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CameraWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CarComponent/BoostWrapper.h"
+#include "bakkesmod/wrappers/GameObject/CarComponent/JumpComponentWrapper.h"
+#include "bakkesmod/wrappers/GameObject/CarComponent/VehicleSimWrapper.h"
+#include "bakkesmod/wrappers/GameObject/CarComponent/WheelWrapper.h"
+#include "bakkesmod/wrappers/arraywrapper.h"
 #include "bakkesmod/wrappers/GameEvent/ServerWrapper.h"
 #include <chrono>
 #include <filesystem>
@@ -132,6 +136,71 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
             out << "null";
         else
             out << boost.GetCurrentBoostAmount();
+        const auto sticky = car.GetStickyForce();
+        out << ",\"contact_state\":{\"time_on_ground\":" << car.GetTimeOnGround()
+            << ",\"time_off_ground\":" << car.GetTimeOffGround()
+            << ",\"sticky_ground\":" << sticky.Ground
+            << ",\"sticky_wall\":" << sticky.Wall << ",\"ground_normal\":";
+        vector(out, car.GetGroundNormal());
+        out << "},\"jump_component\":";
+        auto jump = car.GetJumpComponent();
+        if (jump.IsNull())
+            out << "null";
+        else
+            out << "{\"min_time\":" << jump.GetMinJumpTime()
+                << ",\"active\":" << (jump.GetbActive() ? "true" : "false")
+                << ",\"activity_time\":" << jump.GetActivityTime()
+                << ",\"active_time\":" << jump.GetActiveTime()
+                << ",\"force_time\":" << jump.GetJumpForceTime()
+                << ",\"impulse\":" << jump.GetJumpImpulse()
+                << ",\"force\":" << jump.GetJumpForce()
+                << ",\"impulse_speed\":" << jump.GetJumpImpulseSpeed()
+                << ",\"accel\":" << jump.GetJumpAccel()
+                << ",\"deactivate\":" << (jump.GetbDeactivate() ? "true" : "false") << '}';
+        out << ",\"wheels\":";
+        auto vehicle = car.GetVehicleSim();
+        if (vehicle.IsNull())
+            out << "null";
+        else
+        {
+            auto wheels = vehicle.GetWheels();
+            out << '[';
+            for (int index = 0; index < wheels.Count(); index++)
+            {
+                if (index != 0)
+                    out << ',';
+                auto wheel = wheels.Get(index);
+                if (wheel.IsNull())
+                {
+                    out << "null";
+                    continue;
+                }
+                const auto contact = wheel.GetContact();
+                out << "{\"index\":" << wheel.GetWheelIndex()
+                    << ",\"has_contact\":" << (contact.bHasContact ? "true" : "false")
+                    << ",\"world_contact\":" << (contact.bHasContactWithWorldGeometry ? "true" : "false")
+                    << ",\"had_contact\":" << (wheel.GetbHadContact() ? "true" : "false")
+                    << ",\"contact_change_time\":" << contact.HasContactChangeTime
+                    << ",\"radius\":" << wheel.GetWheelRadius()
+                    << ",\"suspension_distance\":" << wheel.GetSuspensionDistance()
+                    << ",\"suspension_travel\":" << wheel.GetSuspensionTravel()
+                    << ",\"suspension_max_raise\":" << wheel.GetSuspensionMaxRaise()
+                    << ",\"contact_force_distance\":" << wheel.GetContactForceDistance()
+                    << ",\"stiffness\":" << wheel.GetSuspensionStiffness()
+                    << ",\"damping_compression\":" << wheel.GetSuspensionDampingCompression()
+                    << ",\"damping_relaxation\":" << wheel.GetSuspensionDampingRelaxation()
+                    << ",\"ray_start_local\":";
+                vector(out, wheel.GetLocalSuspensionRayStart());
+                out << ",\"rest_position_local\":";
+                vector(out, wheel.GetLocalRestPosition());
+                out << ",\"contact_location\":";
+                vector(out, contact.Location);
+                out << ",\"contact_normal\":";
+                vector(out, contact.Normal);
+                out << '}';
+            }
+            out << ']';
+        }
         out << '}';
         append(out.str());
         inputCount++;
@@ -208,7 +277,7 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
             inputCount = 0;
             cameraCount = 0;
             started = std::chrono::steady_clock::now();
-            append("{\"type\":\"header\",\"version\":1,\"recorder\":\"0.2.0\",\"bakkesmod_version\":" + std::to_string(gameWrapper->GetBakkesModVersion()) + ",\"body_id\":" + std::to_string(car.GetLoadoutBody()) + ",\"position_units\":\"uu\",\"rotation_units\":\"unreal_rotator\","
+            append("{\"type\":\"header\",\"version\":1,\"recorder\":\"0.3.0\",\"bakkesmod_version\":" + std::to_string(gameWrapper->GetBakkesModVersion()) + ",\"body_id\":" + std::to_string(car.GetLoadoutBody()) + ",\"position_units\":\"uu\",\"rotation_units\":\"unreal_rotator\","
                                                                                                                                                                                                                       "\"input_phase\":\"post_SetVehicleInput_not_post_physics\","
                                                                                                                                                                                                                       "\"camera_phase\":\"drawable\",\"sample_rate_assumed\":false}");
             recording = true;
@@ -334,4 +403,4 @@ public:
     }
 };
 
-BAKKESMOD_PLUGIN(AirrollRecorder, "Airroll telemetry recorder", "0.2.0", PLUGINTYPE_FREEPLAY)
+BAKKESMOD_PLUGIN(AirrollRecorder, "Airroll telemetry recorder", "0.3.0", PLUGINTYPE_FREEPLAY)

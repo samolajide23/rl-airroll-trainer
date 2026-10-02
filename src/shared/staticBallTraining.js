@@ -37,7 +37,7 @@ export function generateStaticBallSetup(step, varied, index = 0, random = Math.r
   const [minimum, maximum, lateral, heading] = ranges[Math.min(step, 2)];
   const distance = varied ? minimum + random() * (maximum - minimum) : step === 0 ? 900 : 1000;
   const offset = varied ? (random() * 2 - 1) * lateral : 0;
-  const angle = varied && step >= 2 ? [0, -20, 20][index % 3] * Math.PI / 180 : 0;
+  const angle = varied ? [0, -20, 20, -35, 35, -50, 50, -65, 65][index % 9] * Math.PI / 180 : 0;
   const direction = new THREE.Vector3(Math.sin(angle), Math.cos(angle), 0);
   const position = direction.clone().multiplyScalar(-distance).add(new THREE.Vector3(direction.y, -direction.x, 0).multiplyScalar(offset));
   const yaw = Math.atan2(-position.y, -position.x) + (varied ? (random() * 2 - 1) * heading * Math.PI / 180 : 0);
@@ -58,5 +58,5 @@ export function staticGateCrossing(previous, current, direction) {
   if (before >= 0 || after < 0) return null;
   const point = previous.clone().lerp(current, before / (before - after));
   const lateral = point.x * direction.y - point.y * direction.x;
-  return { hit: Math.abs(lateral) <= 300 && point.z <= 200, label: point.z > 200 ? "Too high" : lateral < -300 ? "Missed left" : lateral > 300 ? "Missed right" : "Target hit" };
+  return { hit: Math.abs(lateral) <= 300 && point.z <= 200, label: point.z > 200 ? "Too high" : lateral < -300 ? "Missed right" : lateral > 300 ? "Missed left" : "Target hit" };
 }

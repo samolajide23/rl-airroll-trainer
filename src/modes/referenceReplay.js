@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { formatSpeed } from "../shared/rl-units.js";
 import { createIcons, icons } from "lucide";
 import { FreePlayMode } from "./freePlay.js";
 import "./referenceReplay.css";
@@ -119,7 +120,7 @@ export class ReferenceReplayMode extends FreePlayMode {
     } else this.updateCamera(Math.max(dt, 1 / 120), {});
     this.seek.value = String(index);
     this.panel.querySelector("[data-time]").textContent = `${this.playhead.toFixed(2)} / ${this.duration.toFixed(2)} s`;
-    this.panel.querySelector("[data-state]").textContent = `Tick ${index} / ${recording.ticks} | Car ${this.physCar.vel.length().toFixed(0)} uu/s | Ball ${new THREE.Vector3(...frame.ball.vel).length().toFixed(0)} uu/s`;
+    this.panel.querySelector("[data-state]").textContent = `Tick ${index} / ${recording.ticks} | Car ${formatSpeed(this.physCar.vel.length())} | Ball ${formatSpeed(new THREE.Vector3(...frame.ball.vel).length())}`;
     this.ctx.hud.status.textContent = "RocketSim reference";
   }
 

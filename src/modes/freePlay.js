@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import { formatSpeed } from "../shared/rl-units.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { cloneBallMesh, preloadBall } from "../shared/ball.js";
 import { preloadCars, isCarReady } from "../shared/carAssets.js";
-import { syncCarWheels, syncCarExhaust } from "../shared/carVisualCalibration.js";
+import { syncCarWheels, syncCarExhaust, syncCarJump } from "../shared/carVisualCalibration.js";
 import { SkybotDiagnostic } from "../shared/skybot.js";
+import { KamaelBot } from "../shared/kamaelBot.js";
 import { applyFreePlayBallControl } from "../shared/freePlayBallControls.js";
 import { disposeCarVisual, makeCar } from "../shared/car.js";
 import {
@@ -229,10 +231,16 @@ export class FreePlayMode {
     if (this.diagnostics) {
     this.botPanel = document.createElement("div");
     this.botPanel.className = "bot-diagnostic";
-    this.botPanel.innerHTML = '<label><input type="checkbox"> Skybot diagnostic</label><div class="bot-actions"><button type="button" class="btn-ghost" data-bot-reset>Restart run</button><button type="button" class="btn-ghost" data-bot-export disabled>Export replay</button></div><output aria-live="off"></output><small><span style="color:#39ff14">Predicted</span> / <span style="color:#83cdec">observed</span> · approximate model</small>';
+    this.botPanel.innerHTML = '<label><input type="checkbox"> Bot control</label><select data-bot-mode aria-label="Bot mode"><option value="skybot">Skybot ground intercept</option><option value="kamael">Kamael</option><option value="wyrm">Kamael / Wyrm dribbler</option></select><div class="bot-actions"><button type="button" class="btn-ghost" data-bot-reset>Restart run</button><button type="button" class="btn-ghost" data-bot-export disabled>Export replay</button></div><output aria-live="off"></output><small><span style="color:#39ff14">Predicted</span> / <span style="color:#83cdec">observed</span></small>';
     hud.root.append(this.botPanel);
     this.botPanel.querySelector("input").addEventListener("change", event => {
       this.botEnabled = event.target.checked;
+      this.resetState();
+    });
+    this.botPanel.querySelector("[data-bot-mode]").addEventListener("change", event => {
+      this.bot.dispose?.();
+      this.bot = event.target.value === "skybot" ? new SkybotDiagnostic() : new KamaelBot(this.pads);
+      if (this.bot instanceof KamaelBot) this.bot.mode = event.target.value;
       this.resetState();
     });
     this.botPanel.querySelector("[data-bot-reset]").addEventListener("click", () => this.resetState());
@@ -241,7 +249,7 @@ export class FreePlayMode {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "skybot-recording.json";
+      anchor.download = `${this.bot.recording.scenarios[0].id}.json`;
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
@@ -259,6 +267,7 @@ export class FreePlayMode {
     const { hud, scene, arena, camera } = this.ctx;
     this._stopped = true;
     this.botPanel?.remove();
+    this.bot.dispose?.();
     for (const visual of [...this.botLines, this.botTarget]) {
       visual.geometry.dispose();
       visual.material.dispose();
@@ -324,6 +333,7 @@ export class FreePlayMode {
     this.clock.reset();
     this.chase.invalidate();
     this.syncMeshes();
+    syncCarJump(this.carMesh, this.physCar);
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     this.chase.snap(this.ctx.camera, this.carMesh.position, this.forward);
     this.updateBoostMeter();
@@ -482,9 +492,13 @@ export class FreePlayMode {
   update(dt, _now) {
     this.pollUtilityKeys();
     const input = readControls();
-    this.clock.advance(dt, (tickDt) => {
-      this._stepOnce(tickDt, readPhysicsControls());
-    });
+    if (this.botEnabled && this.bot instanceof KamaelBot) {
+      this.bot.advance(this.clock, dt, this.physCar, this.physBall, tickDt => this._stepOnce(tickDt));
+    } else {
+      this.clock.advance(dt, (tickDt) => {
+        this._stepOnce(tickDt, readPhysicsControls());
+      });
+    }
     const { hud } = this.ctx;
     const source = inputSourceLabel(input);
     if (hud.padStatus.textContent !== source) hud.padStatus.textContent = source;
@@ -495,6 +509,7 @@ export class FreePlayMode {
     this.syncMeshes(false);
     this.updateBoostMeter();
     this.trail.update(this.carMesh, this.boosting, dt);
+    syncCarJump(this.carMesh, this.physCar, dt);
     this.updateCamera(dt, input);
     this.updateBotDiagnostic();
 
@@ -508,7 +523,7 @@ export class FreePlayMode {
           : "Air";
     const flip = canFlipOrJump(this.physCar) ? "flip✓" : "flip✗";
     const ss = this.physCar.isSupersonic ? " · SS" : "";
-    const status = `${state} · ${speed.toFixed(0)} uu/s · ${this.hitbox.label} · ${flip}${ss}`;
+    const status = `${state} · ${formatSpeed(speed)} · ${this.hitbox.label} · ${flip}${ss}`;
     if (this.training) this.updateDrillStatus?.();
     else if (hud.status.textContent !== status) hud.status.textContent = status;
   }
@@ -518,6 +533,12 @@ export class FreePlayMode {
     this.botPanel.querySelector("[data-bot-export]").disabled = !this.bot.recording?.scenarios[0].ticks;
     if (!this.botEnabled) {
       this.botPanel.querySelector("output").textContent = "Manual control";
+      return;
+    }
+    if (this.bot instanceof KamaelBot) {
+      this.botPanel.querySelector("output").textContent = this.bot.errorMessage
+        ? `Kamael stopped: ${this.bot.errorMessage.split("\n")[0]}`
+        : `${this.bot.action} · Run ${(this.bot.tick / 120).toFixed(1)} s`;
       return;
     }
     const paths = [this.bot.prediction, this.bot.actual];
@@ -536,6 +557,6 @@ export class FreePlayMode {
     const error = this.bot.error == null ? "—" : `${this.bot.error.toFixed(1)} uu`;
     const timing = contact?.timingError == null ? "—" : `${(contact.timingError * 1000).toFixed(0)} ms`;
     const miss = contact?.positionError == null ? "—" : `${contact.positionError.toFixed(1)} uu`;
-    this.botPanel.querySelector("output").textContent = `Ball error ${error} · Run ${(this.bot.tick / 120).toFixed(1)} s\nFirst contact ${contact ? `${contact.time.toFixed(2)} s` : "pending"} · Timing Δ ${timing} · Position Δ ${miss}${this.bot.tick >= 7200 ? "\nRecording full (60 s)" : ""}`;
+    this.botPanel.querySelector("output").textContent = `${this.bot.action ? `${this.bot.action} · ` : ""}Ball error ${error} · Run ${(this.bot.tick / 120).toFixed(1)} s\nFirst contact ${contact ? `${contact.time.toFixed(2)} s` : "pending"} · Timing Δ ${timing} · Position Δ ${miss}${this.bot.tick >= 7200 ? "\nRecording full (60 s)" : ""}`;
   }
 }

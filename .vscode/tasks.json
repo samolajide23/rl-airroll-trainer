@@ -17,6 +17,857 @@
 			],
 			"isBackground": true,
 			"problemMatcher": []
+		},
+		{
+			"label": "Kamael native verification",
+			"type": "shell",
+			"command": "${workspaceFolder}\\.venv-kamael\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\kamael_native.py",
+				"--seconds",
+				"120"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Coconut policy trial",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"E:\\Code\\rl-airroll-trainer\\tools\\physics-compare\\coconut_trial.py",
+				"--seconds",
+				"30"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Coconut trial dependencies",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"pip",
+				"install",
+				"numpy",
+				"torch",
+				"rlgym[rl-sim]"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Coconut native dependencies",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"pip",
+				"install",
+				"--pre",
+				"rlbot==2.0.0b55",
+				"git+https://github.com/JPK314/rlgym-compat.git@50b70c87b9af7bbce46f4d939d85e9117d2dc3c0"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Coconut native configuration",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"E:\\Code\\rl-airroll-trainer\\tools\\physics-compare\\coconut_trial.py",
+				"--check-native"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Coconut native trial",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"E:\\Code\\rl-airroll-trainer\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--seconds",
+				"90"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Coconut native launch trial",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--launch-game",
+				"D:\\Games\\rocketleague\\Binaries\\Win64\\RocketLeague.exe",
+				"--seconds",
+				"90"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Coconut launch diagnostics",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import psutil,json; print(json.dumps([{'pid':p.pid,'name':p.info['name'],'exe':p.info['exe'],'created':p.create_time(),'flags':[arg for arg in p.cmdline() if 'rlbot' in arg.lower() or 'controller' in arg.lower()]} for p in psutil.process_iter(['name','exe']) if (p.info['name'] or '').lower() in ['rocketleague.exe','launcher.exe','rlbotserver.exe']],indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Coconut Epic native trial",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--launcher",
+				"Epic",
+				"--seconds",
+				"90"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native airborne physics probe",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--air-probe",
+				"--seconds",
+				"30"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native mechanics parity capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--mechanics-probe",
+				"--seconds",
+				"75"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native air parity capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"E:\\Code\\rl-airroll-trainer\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--air-probe",
+				"--seconds",
+				"30"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native comprehensive parity batch",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--batch-probe",
+				"--seconds",
+				"450"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit comprehensive native capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--audit-batch",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790883556833241900.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check native batch recorder",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--check-batch"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Stop native batch processes",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'python.exe' -and $_.CommandLine -like '*coconut_trial.py*--batch-probe*') -or ($_.Name -eq 'RLBotServer.exe') } | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native optimized parity batch",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--batch-probe",
+				"--seconds",
+				"450"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit optimized native capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--audit-batch",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884013599786700.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check native telemetry tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"${workspaceFolder}\\tools\\physics-compare\\telemetry.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect completed native batch outcomes",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import json,pathlib; report=json.loads(pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884013599786700.coverage.json').read_text()); print(json.dumps({'completed':report['completed'],'two_clean_passes':sum(count>=2 for count in report['coverage'].values()),'accepted_segments':sum(report['coverage'].values()),'rejected_segments':len(report['rejected']),'outcomes':[row for row in report['outcomes'] if row['case'] in ['wall_drive','wall_jump','carry_flick','car_ball_nose','car_ball_offset','car_ball_boost','boost_exhaustion']]},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit every-packet native capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--audit-batch",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check missing-case retry",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--check-batch",
+				"--retry-batch",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.coverage.json"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native missing-case parity retry",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--native",
+				"--retry-batch",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.coverage.json",
+				"--seconds",
+				"600"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check native batch diff whitespace",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"diff",
+				"--check"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect every-packet batch gaps",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import json,pathlib; report=json.loads(pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.coverage.json').read_text()); print(json.dumps({'completed':report['completed'],'accepted_segments':sum(report['coverage'].values()),'two_clean_passes':sum(count>=2 for count in report['coverage'].values()),'gaps':[{'case':row['case'],'index':row['index'],'gap_count':len(row['gaps']),'first_gap':row['gaps'][:1]} for row in report['rejected']]},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Merge native comprehensive batch coverage",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-u",
+				"${workspaceFolder}\\tools\\physics-compare\\coconut_trial.py",
+				"--merge-batches",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885122776277000.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect stalled retry tail",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import pathlib,json,collections; path=pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885122776277000.ndjson'); tail=collections.deque(path.open(),maxlen=1); row=json.loads(tail[0]); print(json.dumps({'type':row['type'],'case':row.get('probe_case'),'tick':row.get('probe_tick'),'phase':row.get('packet',{}).get('match_info',{}).get('match_phase'),'frame':row.get('frame')},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect native batch event evidence",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import json,pathlib; names=['boost_exhaustion','wall_jump','carry_flick','double_jump_delay_180']; result=[]; path=pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson'); records=(json.loads(line) for line in path.open()); result=[{'case':row['probe_case'],'index':row['probe_index'],'tick':row['probe_tick'],'seconds':row['packet']['match_info']['seconds_elapsed'],'car':{key:row['packet']['players'][0][key] for key in ['physics','boost','last_input','air_state','has_jumped','has_double_jumped','has_dodged','latest_touch']},'ball':row['packet']['balls'][0]['physics']} for row in records if row['type']=='physics' and row.get('probe_case') in names and row.get('probe_index',999)<64 and row.get('probe_tick') in [40,59,61,100,102,180,242]]; print(json.dumps(result,indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Summarize longer native retry",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import sys,json,pathlib; sys.path.insert(0,r'E:\\Code\\rl-airroll-trainer\\tools\\physics-compare'); import coconut_trial as trial; paths=[pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson'),pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson')]; report=trial.audit_native_batches(paths); print(json.dumps({'completed':report['completed'],'sources':report['sources'],'missing':{name:count for name,count in report['coverage'].items() if count<2},'coverage_passed':report['coverage_passed']},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect short native capture status",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import pathlib,json,collections,psutil; directory=pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native'); path=max(directory.glob('capture-*.ndjson'),key=lambda item:item.stat().st_mtime); tail=[json.loads(line) for line in collections.deque(path.open(),maxlen=3)]; print(json.dumps({'capture':str(path),'tail':[{'type':row['type'],'case':row.get('probe_case'),'tick':row.get('probe_tick')} for row in tail],'server_pids':[process.pid for process in psutil.process_iter(['name']) if (process.info['name'] or '').lower()=='rlbotserver.exe']},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit short native yaw capture",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import sys,json,pathlib; sys.path.insert(0,r'E:\\Code\\rl-airroll-trainer\\tools\\physics-compare'); import coconut_trial as trial; path=pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790886255122888000.ndjson'); report=trial.audit_native_batch(path); print(json.dumps({key:report[key] for key in ['completed','coverage','coverage_passed','rejected']},indent=2))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify completed short-batch coverage",
+			"type": "shell",
+			"command": "C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import sys,json,pathlib; sys.path.insert(0,r'E:\\Code\\rl-airroll-trainer\\tools\\physics-compare'); import coconut_trial as trial; directory=pathlib.Path(r'C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native'); paths=[directory/name for name in ['capture-1790884511770340000.ndjson','capture-1790885512287299100.ndjson','capture-1790886255122888000.ndjson']]; report=trial.audit_native_batches(paths); print(json.dumps({'completed':report['completed'],'cases':len(report['coverage']),'minimum_clean_repeats':min(report['coverage'].values()),'coverage_passed':report['coverage_passed'],'parity_certified':report['parity_certified'],'sources':report['sources']},indent=2)); assert report['coverage_passed']"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compare native batch jump holds",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {readFile,writeFile} from 'node:fs/promises'; import {compareNativeJumpBatch} from './tools/telemetry/native-air-replay.mjs'; const root='C:/Users/samto/AppData/Local/AIRLAB/coconut/native/'; const names=['capture-1790884511770340000.ndjson','capture-1790885512287299100.ndjson']; const trials=[]; for(const name of names){const records=(await readFile(root+name,'utf8')).trim().split(/\\r?\\n/).map(JSON.parse); trials.push(...compareNativeJumpBatch(records).trials.map(trial=>({...trial,capture:name})));} await writeFile(root+'batch-jump-baseline.json',JSON.stringify({trials,parity_certified:false},null,2)); console.log(JSON.stringify(trials.map(trial=>({case:trial.case,index:trial.probe_index,max:trial.phases.later.max,early:trial.phases.later.checkpoints.filter(row=>row.tick>=61&&row.tick<=70).map(row=>({tick:row.tick,native:row.expected_velocity_gain[2],js:row.simulated_velocity_gain[2],state:row.air_state,input:row.input.jump}))})),null,2));"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native jump hold baseline",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-jump-baseline.json",
+				"--summary"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build contact telemetry recorder",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"call \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat\" & powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"E:\\Code\\rl-airroll-trainer\\tools\\telemetry\\build.ps1\""
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Install contact telemetry recorder",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"copy /Y \"E:\\Code\\rl-airroll-trainer\\tools\\telemetry\\build\\airroll_recorder.dll\" \"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\plugins\\airroll_recorder.dll\""
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Replay original native aerial batch",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-original.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Replay retry native aerial batch",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-retry.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Replay final native aerial retry",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790886255122888000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-final-retry.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Drill variation regression tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/drills.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build drill variations",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"node_modules/vite/bin/vite.js",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Diagnose original native aerial timing",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-original-timing.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Diagnose retry native aerial timing",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-retry-timing.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Probe native aerial velocity precision",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-precision-probe.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Probe native jump velocity precision",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-jump-precision-probe.json",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Probe native mechanics velocity precision",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790882172459527500.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\mechanics-precision-probe.json",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Check native precision physics tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/physics.test.mjs",
+				"tools/physics-compare/telemetry.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Camera airborne regression tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/camera.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Measure original native position acceleration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-original-position.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Measure retry native position acceleration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-retry-position.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native gravity aerial calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-gravity-calibration.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native gravity jump calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-jump-gravity-calibration.json",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate original native free flight calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-original-gravity-calibration.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Native calibration full regression tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Native calibration reference trajectories",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/physics-compare/run_js.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Native calibration cached reference gate",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/physics-compare/compare.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native coast translation original",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790884511770340000.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-original-translation.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native coast translation retry",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-retry-translation.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect native throttle increments",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"const fs=require('node:fs');const rl=require('node:readline').createInterface({input:fs.createReadStream('C:/Users/samto/AppData/Local/AIRLAB/coconut/native/capture-1790885512287299100.ndjson')});let prev;rl.on('line',line=>{const row=JSON.parse(line);if(row.probe_index!==19)return;if([40,59,60,61,62,70,100,119,120,121,220].includes(row.probe_tick)){const p=row.packet.players[0].physics;console.log(JSON.stringify({tick:row.probe_tick,case:row.probe_case,physics:p,inputs:row.inputs,gain:prev?p.velocity.x-prev.packet.players[0].physics.velocity.x:null}));}prev=row;});"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native throttle calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-throttle-calibration.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Summarize native throttle calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"const fs=require('node:fs');const root='C:/Users/samto/AppData/Local/AIRLAB/coconut/native/';for(const name of ['batch-air-retry-translation.json','batch-air-throttle-calibration.json']){const report=JSON.parse(fs.readFileSync(root+name,'utf8'));console.log(name);for(const trial of report.trials.filter(trial=>trial.case==='air_throttle'))console.log(JSON.stringify({index:trial.probe_index,max:trial.phases.later.max}));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate native throttle rounding calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"tools/telemetry/native-air-replay.mjs",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\capture-1790885512287299100.ndjson",
+				"C:\\Users\\samto\\AppData\\Local\\AIRLAB\\coconut\\native\\batch-air-throttle-rounding-calibration.json",
+				"--air-batch",
+				"--summary"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Summarize final native throttle calibration",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"-e",
+				"const fs=require('node:fs');const root='C:/Users/samto/AppData/Local/AIRLAB/coconut/native/';const old=JSON.parse(fs.readFileSync(root+'batch-air-retry-translation.json','utf8'));const next=JSON.parse(fs.readFileSync(root+'batch-air-throttle-rounding-calibration.json','utf8'));next.trials.forEach((trial,index)=>console.log(JSON.stringify({case:trial.case,index:trial.probe_index,before:old.trials[index].phases.later.max,after:trial.phases.later.max})));"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Check mechanics flick timing",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/skybot.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Trace mechanics flick contact",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {Vector3} from 'three';import {MechanicsBot} from './src/shared/mechanicsBot.js';import {makePhysCar,makeBall,RL} from './src/shared/carPhysics.js';import {stepCarBall} from './src/shared/carSim.js';const car=makePhysCar(new Vector3(0,0,17),0,'octane');car.vel.x=700;const ball=makeBall(new Vector3(15,0,145));ball.vel.x=700;const bot=new MechanicsBot();bot.begin(car,ball);bot.startManeuver('Flick');for(let tick=0;tick<24;tick++){const input=bot.maneuverControls(car);const contact=stepCarBall(car,ball,input,tick,RL.DT);bot.observe(car,ball,input);console.log(JSON.stringify({tick,input,contact,car:car.pos.toArray(),ball:ball.pos.toArray(),velocity:ball.vel.toArray(),flip:car.hasFlipped}));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate new jump contact captures",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"\"import {validateCapture} from './tools/telemetry/validate.mjs'; for (const name of ['capture-1790892617426791.ndjson','capture-1790892643590640.ndjson']) { const file='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'+name; try { console.log(JSON.stringify({file,...await validateCapture(file)},null,2)); } catch(error) { console.error(name+': '+error.message); process.exitCode=1; } }\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate jump contact recordings",
+			"type": "shell",
+			"command": "C:\\Progra~1\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"\"import {validateCapture} from './tools/telemetry/validate.mjs'; for (const name of ['capture-1790892617426791.ndjson','capture-1790892643590640.ndjson']) { const file='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'+name; try { console.log(JSON.stringify({file,...await validateCapture(file)},null,2)); } catch(error) { console.error(name+': '+error.message); process.exitCode=1; } }\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect recorded jump contact edges",
+			"type": "shell",
+			"command": "C:\\Progra~1\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"\"import {readFileSync} from 'node:fs'; for(const name of ['capture-1790892617426791.ndjson','capture-1790892643590640.ndjson']) { const all=readFileSync('C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'+name,'utf8').trim().split('\\n').map(JSON.parse); const rows=all.filter(r=>r.type==='input_state'); console.log(JSON.stringify({name,header:all[0]})); for(let index=1;index<rows.length;index++) { if(!rows[index].input.jump || rows[index-1].input.jump) continue; let end=index; while(end<rows.length && rows[end].input.jump) end++; const samples=rows.slice(Math.max(0,index-2),index+10).map((r,offset)=>({tick:offset-2,t:r.physics_time,z:r.car.pos[2],vz:r.car.vel[2],jump:r.input.jump,flags:r.flags,component:r.jump_component,contacts:r.wheels.map(w=>({contact:w.has_contact,distance:w.suspension_distance,change:w.contact_change_time})),state:r.contact_state})); console.log(JSON.stringify({index,held:end-index,input:rows[index].input,samples})); } }\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Summarize recorded takeoff contacts",
+			"type": "shell",
+			"command": "C:\\Progra~1\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"\"import {readFileSync} from 'node:fs'; for(const name of ['capture-1790892617426791.ndjson','capture-1790892643590640.ndjson']) { const all=readFileSync('C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'+name,'utf8').trim().split('\\n').map(JSON.parse); const rows=all.filter(r=>r.type==='input_state'); console.log(JSON.stringify({name,recorder:all[0].recorder,body:all[0].body_id,wheel:rows[0].wheels[0],jump:rows[0].jump_component})); for(let index=1;index<rows.length;index++) { if(!rows[index].input.jump || rows[index-1].input.jump) continue; let end=index; while(end<rows.length && rows[end].input.jump) end++; const samples=rows.slice(index-1,index+9).map((r,offset)=>({tick:offset-1,dt:offset?+(r.physics_time-rows[index+offset-2].physics_time).toFixed(6):0,z:+r.car.pos[2].toFixed(3),vz:+r.car.vel[2].toFixed(3),gain:offset?+(r.car.vel[2]-rows[index+offset-2].car.vel[2]).toFixed(3):0,jump:r.input.jump,wheels:r.flags.wheel_contacts,contacts:r.wheels.map(w=>+w.has_contact).join(''),active:r.jump_component.active,activeTime:r.jump_component.active_time,ground:r.flags.on_ground})); console.log(JSON.stringify({index,held:end-index,cleanInput:!rows[index].input.activate_boost&&rows[index].input.throttle===0&&rows[index].input.pitch===0,samples})); } }\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

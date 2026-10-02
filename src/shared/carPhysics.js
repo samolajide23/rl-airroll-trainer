@@ -3,16 +3,28 @@
  *
  * Modes should import from this file (not from `carSim.js` / `rl-physics.js` /
  * `aerial.js` directly) so drive, air control, hitbox, and boost stay one
- * shared model.
+ * shared native profile; direct simulator imports retain RocketSim references.
  *
  * Frame: Z-up physics (uu/cm), fixed 120 Hz. Visual cars are Y-up Three.js.
  */
 
+import { makeCar, makeSoccarKickoffCar as makeReferenceKickoffCar } from "./carSim.js";
+
+export function makePhysCar(pos, yaw, hitboxOrCarId) {
+  const car = makeCar(pos, yaw, hitboxOrCarId);
+  car.physicsProfile = "native";
+  return car;
+}
+
+export function makeSoccarKickoffCar(hitboxOrCarId) {
+  const car = makeReferenceKickoffCar(hitboxOrCarId);
+  car.physicsProfile = "native";
+  return car;
+}
+
 export {
   RS,
   RS_CURVES,
-  makeCar as makePhysCar,
-  makeSoccarKickoffCar,
   makeWorld,
   carRestZ,
   canFlipOrJump,

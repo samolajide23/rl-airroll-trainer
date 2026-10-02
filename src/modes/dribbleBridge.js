@@ -9,6 +9,7 @@ export class DribbleBridgeMode extends ArenaDrillBase {
     const titles = { popChase: "Pop & Chase", boostTap: "Boost Tapping", hover: "Hover & Hold", wallAir: "Wall-to-Air", steerDribble: "Side-Steer Dribble" };
     super(ctx, titles[variant] ?? titles.popChase);
     this.variant = variant;
+    this.varied = options.varied !== false;
     this.modeId = `dribble-${variant}`;
     this.holdTime = 0;
     this.boostTime = 0;
@@ -44,6 +45,26 @@ export class DribbleBridgeMode extends ArenaDrillBase {
       this.physBall.vel.set(0, 0, 550);
       this.prompt = "Leave the wall and make an aerial touch";
     }
+    if (this.varied !== false) {
+      const index = Math.max(0, (this.round ?? 1) - 1);
+      const side = index % 2 ? -1 : 1;
+      if (this.variant === "wallAir" && side < 0) {
+        this.physCar.pos.x *= -1;
+        this.physBall.pos.x *= -1;
+        this.physCar.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0)));
+      }
+      const lateral = this.variant === "wallAir" ? 0 : [0, 250, -250, 500, -500, 750, -750][index % 7];
+      const depth = (Math.random() * 2 - 1) * 200;
+      const height = this.variant === "popChase" ? 0 : (Math.random() * 2 - 1) * 60;
+      const shift = new THREE.Vector3(lateral, depth, height);
+      this.physCar.pos.add(shift);
+      this.physBall.pos.add(shift);
+      if (this.variant !== "popChase") {
+        const pace = 0.9 + Math.random() * 0.2;
+        this.physCar.vel.multiplyScalar(pace);
+        this.physBall.vel.multiplyScalar(pace);
+      }
+    }
     this.startPosition.copy(this.physCar.pos);
   }
 
@@ -69,8 +90,8 @@ export class DribbleBridgeMode extends ArenaDrillBase {
       this.progress = lateral / 250;
       if (this.airTouches > 0 && airborne && close && matching && lateral >= 250) this.finishRound(true, "Sideways carry complete");
     } else if (this.variant === "wallAir") {
-      const offWall = this.physCar.pos.x < RL.HALF_W - 250;
-      this.progress = Math.max(0, (RL.HALF_W - this.physCar.pos.x) / 250);
+      const offWall = Math.abs(this.physCar.pos.x) < RL.HALF_W - 250;
+      this.progress = Math.max(0, (RL.HALF_W - Math.abs(this.physCar.pos.x)) / 250);
       if (newContact && airborne && offWall && !this.physCar.wheelsContact) this.finishRound(true, "Wall-to-air touch complete");
     }
   }

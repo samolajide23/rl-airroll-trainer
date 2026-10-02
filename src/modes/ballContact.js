@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { formatSpeed } from "../shared/rl-units.js";
 import { ArenaDrillBase } from "../shared/arenaDrill.js";
 import { RL } from "../shared/carPhysics.js";
 import { physToThree } from "../shared/carPhysics.js";
@@ -58,7 +59,16 @@ export class BallContactMode extends ArenaDrillBase {
   start() {
     super.start();
     if (!training[this.variant]) return;
-    this.coachView = new DrillCoachView(this.ctx.hud.root);
+    this.coachView = new DrillCoachView(this.ctx.hud.root, {
+      retry: () => this.result?.success ? this.resetState() : this.retrySameSetup(),
+      next: () => this.resetState(),
+      nextDrill: this.ctx.nextDrill,
+      previousDrill: this.ctx.previousDrill,
+      stages: training[this.variant].steps,
+      variant: this.variant,
+      currentStage: this.masteryStep,
+      selectStage: this.ctx.selectStage,
+    });
     this.refreshCoaching({}, 0);
     this.retryPanel = document.createElement("div");
     this.retryPanel.className = "static-ball-actions";
@@ -83,6 +93,7 @@ export class BallContactMode extends ArenaDrillBase {
   }
 
   resetState() {
+    this.coachView?.closeFailure();
     if (training[this.variant] && this.elapsed > 0 && !this.result) this.finishRound(false, "Skipped");
     if (training[this.variant] && !this.retrySetup) this.practiceRetry = false;
     super.resetState();
@@ -320,7 +331,7 @@ export class BallContactMode extends ArenaDrillBase {
         if (exit >= 150 && exit <= 450 && Math.abs(offset.forward) <= 450) return this.finishRound(true, "Requested exit reached");
       }
     }
-    this.prompt = this.masteryStep === 4 && this.receptionReady ? "Make a separate second touch" : this.masteryStep === 2 ? `${this.setup.exitSide > 0 ? "Right" : "Left"} exit, stay within 450 uu` : "Cushion and stay within 450 uu";
+    this.prompt = this.masteryStep === 4 && this.receptionReady ? "Make a separate second touch" : this.masteryStep === 2 ? `${this.setup.exitSide > 0 ? "Left" : "Right"} exit, stay within 450 uu` : "Cushion and stay within 450 uu";
     this.progress = this.closeHold / 0.5;
     if (sinceTouch >= 3 - 1e-9) this.finishRound(false, this.masteryStep === 4 ? "Second touch timeout" : "Exit missed");
   }
@@ -372,6 +383,7 @@ export class BallContactMode extends ArenaDrillBase {
     if (this.practiceRetry) {
       this.result = { success, message: `Practice: ${message}` };
       this.resultTime = 0;
+      this.stopRoundCar();
       return;
     }
     super.finishRound(success, message);
@@ -389,9 +401,9 @@ export class BallContactMode extends ArenaDrillBase {
     this.coachView?.render(this.coaching);
     const summary = training[this.variant].summary(this.masteryStep, this.varied);
     const score = this.setAttempts?.filter(attempt => attempt.success).length || 0;
-    const detail = MOVEMENT_TRAINING[this.variant] ? `${this.varied ? "Varied" : "Fixed"} setup` : this.variant === "recovery" ? `${this.varied ? "Varied" : "Fixed"} recovery / ${Math.round(Math.hypot(this.physCar.vel.x, this.physCar.vel.y))} uu/s` : this.variant === "rollTouch" ? `${this.varied ? "Varied" : "Fixed"} aerial approach` : this.variant === "soft" ? `${this.varied ? "Varied" : "Fixed"} arrival · ${this.receivedSpeed == null ? "Reduce speed 40%" : `${Math.round(this.incomingSpeed)} → ${Math.round(this.receivedSpeed)} uu/s`}` : this.result ? `${this.firstTouchTime?.toFixed(2) || "-"} s to touch${this.gateSpeed === null ? "" : ` / ${Math.round(this.gateSpeed)} uu/s at gate`}` : this.masteryStep === 3 ? "Gate pace 800-1,200 uu/s" : this.varied ? "Varied setup" : "Fixed setup";
+    const detail = MOVEMENT_TRAINING[this.variant] ? `${this.varied ? "Varied" : "Fixed"} setup` : this.variant === "recovery" ? `${this.varied ? "Varied" : "Fixed"} recovery / ${formatSpeed(Math.hypot(this.physCar.vel.x, this.physCar.vel.y))}` : this.variant === "rollTouch" ? `${this.varied ? "Varied" : "Fixed"} aerial approach` : this.variant === "soft" ? `${this.varied ? "Varied" : "Fixed"} arrival · ${this.receivedSpeed == null ? "Reduce speed 40%" : `${formatSpeed(this.incomingSpeed)} → ${formatSpeed(this.receivedSpeed)}`}` : this.result ? `${this.firstTouchTime?.toFixed(2) || "-"} s to touch${this.gateSpeed === null ? "" : ` / ${formatSpeed(this.gateSpeed)} at gate`}` : this.masteryStep === 3 ? "Gate pace 28.8-43.2 km/h" : this.varied ? "Varied setup" : "Fixed setup";
     this.ctx.hud.status.textContent += ` · ${this.practiceRetry ? "Unscored retry" : `Set ${this.setAttempts.length}/10, ${score} hits`} · ${detail}${summary.mastered ? " · Mastery milestone reached" : ""}`;
-    if (this.variant === "rollTouch") this.ctx.hud.status.textContent += ` · ${this.receivedSpeed == null ? "Roll, align, touch" : `${Math.round(this.receivedSpeed)} uu/s release`}`;
+    if (this.variant === "rollTouch") this.ctx.hud.status.textContent += ` · ${this.receivedSpeed == null ? "Roll, align, touch" : `${formatSpeed(this.receivedSpeed)} release`}`;
     if (this.retryButton) this.retryButton.disabled = !this.lastMissSetup;
   }
 

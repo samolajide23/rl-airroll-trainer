@@ -1,6 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PHASES, GAME_MODES, FREE_PLAY } from "../../src/modes/catalog.js";
+import { PHASES, GAME_MODES, FREE_PLAY, nextTrainingDrill, previousTrainingDrill } from "../../src/modes/catalog.js";
+
+test("previous drill moves backward through stages and wraps across drills", () => {
+  assert.equal(previousTrainingDrill("driving", 1).masteryStep, 0);
+  assert.equal(previousTrainingDrill("dodges", 0).def.id, "driving");
+  assert.equal(previousTrainingDrill("dodges", 0).masteryStep, 4);
+  assert.equal(previousTrainingDrill("driving", 0).def.id, "ball-recovery");
+  assert.equal(previousTrainingDrill("driving", 0).masteryStep, 4);
+  assert.equal(previousTrainingDrill("arena"), null);
+});
+
+test("training cycling advances stages and wraps playable Foundations drills", () => {
+  assert.equal(nextTrainingDrill("driving", 0).masteryStep, 1);
+  assert.equal(nextTrainingDrill("driving", 4).def.id, "dodges");
+  assert.equal(nextTrainingDrill("driving", 4).masteryStep, 0);
+  assert.equal(nextTrainingDrill("ball-recovery", 4).def.id, "driving");
+  assert.equal(nextTrainingDrill("arena"), null);
+});
 
 test("training curriculum preserves drill launchers and distinct ordered mechanics", () => {
   assert.equal(PHASES.length, 11);

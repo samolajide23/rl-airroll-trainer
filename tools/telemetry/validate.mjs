@@ -34,6 +34,8 @@ export function createCaptureValidator() {
     let previousPhysicsTime = -Infinity;
     let repeatedPhysicsTimes = 0;
     let backwardsPhysicsTimes = 0;
+    let contactSamples = 0;
+    let unavailableContactSamples = 0;
 
     return {
         accept(record) {
@@ -80,6 +82,29 @@ export function createCaptureValidator() {
                 if (record.boost_raw !== null) finite(record.boost_raw, "boost_raw");
                 body(record.car, "car");
                 body(record.ball, "ball");
+                if (header.recorder === "0.3.0") {
+                    requireCondition(record.contact_state, "contact_state missing");
+                    for (const key of ["time_on_ground", "time_off_ground", "sticky_ground", "sticky_wall"]) finite(record.contact_state[key], `contact_state.${key}`);
+                    vector(record.contact_state.ground_normal, 3, "contact_state.ground_normal");
+                    requireCondition(record.jump_component === null || typeof record.jump_component === "object", "jump_component missing");
+                    if (record.jump_component !== null) {
+                        for (const key of ["min_time", "activity_time", "active_time", "force_time", "impulse", "force", "impulse_speed", "accel"]) finite(record.jump_component[key], `jump_component.${key}`);
+                        for (const key of ["active", "deactivate"]) requireCondition(typeof record.jump_component[key] === "boolean", `jump_component.${key} must be boolean`);
+                    }
+                    requireCondition(record.wheels === null || (Array.isArray(record.wheels) && record.wheels.length === 4), "wheels must contain four entries or be null");
+                    const indices = new Set();
+                    for (const wheel of record.wheels ?? []) {
+                        if (wheel === null) continue;
+                        requireCondition(wheel && Number.isInteger(wheel.index) && wheel.index >= 0 && wheel.index < 4 && !indices.has(wheel.index), "wheel index invalid or duplicated");
+                        indices.add(wheel.index);
+                        for (const key of ["has_contact", "world_contact", "had_contact"]) requireCondition(typeof wheel[key] === "boolean", `wheel.${key} must be boolean`);
+                        requireCondition(!wheel.world_contact || wheel.has_contact, "world contact without wheel contact");
+                        for (const key of ["contact_change_time", "radius", "suspension_distance", "suspension_travel", "suspension_max_raise", "contact_force_distance", "stiffness", "damping_compression", "damping_relaxation"]) finite(wheel[key], `wheel.${key}`);
+                        for (const key of ["ray_start_local", "rest_position_local", "contact_location", "contact_normal"]) vector(wheel[key], 3, `wheel.${key}`);
+                    }
+                    if (indices.size === 4 && record.jump_component !== null) contactSamples++;
+                    else unavailableContactSamples++;
+                }
             } else {
                 vector(record.pos, 3, "camera.pos");
                 vector(record.rotator_unreal, 3, "camera.rotator_unreal");
@@ -113,6 +138,7 @@ export function createCaptureValidator() {
                 counts, elapsed_seconds: elapsed, stop_reason: footer.reason,
                 input_intervals: intervalStats(times.input_state), camera_intervals: intervalStats(times.camera),
                 repeated_physics_times: repeatedPhysicsTimes, backwards_physics_times: backwardsPhysicsTimes,
+                contact_samples: contactSamples, unavailable_contact_samples: unavailableContactSamples,
                 parity_certified: false,
             };
         },

@@ -10,8 +10,233 @@ import { applyToCarModel } from "../../src/shared/rl-physics.js";
 import { sphereArenaContacts } from "../../src/shared/arenaMesh.js";
 import { compareScenario, failuresFor } from "./trajectory.mjs";
 import { firstDivergence } from "./first-divergence.mjs";
+import { makePhysCar } from "../../src/shared/carPhysics.js";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
+
+test("native wall throttle rise applies current engine force", () => {
+  const car = makePhysCar(new THREE.Vector3(-4079.13989, -421.829987, 463.929993), 0);
+  const restore = () => {
+    car.pos.set(-4079.13989, -421.829987, 463.929993);
+    car.vel.set(3.98099995, -139.951004, 889.300964);
+    car.omega.set(1.76651001, -0.0345099978, -0.00420999993);
+    car.q.set(0.701749742, -0.0617679767, 0.707075596, -0.0614496842).normalize();
+  };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  stepCar(car, { throttle: 0.291338593, steer: 0.992125988 });
+  restore();
+  stepCar(car, { throttle: 0.472440958, steer: 0.992125988 });
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(3.3809998, -154.820999, 882.310974)) < 0.5,
+    `native wall throttle velocity ${car.vel.toArray()}`);
+});
+
+test("native wall touch applies the ball-only velocity on the following tick", () => {
+  const car = makePhysCar(new THREE.Vector3(-4078.97998, -482.809998, 619.929993), 0);
+  const restore = () => {
+    car.pos.set(-4078.97998, -482.809998, 619.929993);
+    car.vel.set(0.171000004, -479.730988, 733.64093);
+    car.omega.set(2.25741005, -0.000709999993, -0.00160999992);
+    car.q.set(0.672752559, -0.208528563, 0.679143012, -0.206602633).normalize();
+  };
+  const controls = { throttle: 1, steer: 0.905511796, pitch: -0.4140625, yaw: 0.905511796 };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  stepCar(car, controls);
+  restore();
+  const ball = makeBall(new THREE.Vector3(-3991.32983, -636.369995, 668.51001));
+  ball.vel.set(11.6210003, -47.8409996, 345.540985);
+  ball.omega.set(0.36601001, -5.98160982, -0.293909997);
+  assert.ok(stepCarBall(car, ball, controls, 755));
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(-20.6909981, -431.360992, 698.480957)) < 0.2);
+  assert.ok(ball.vel.distanceTo(new THREE.Vector3(136.831009, -422.931, 495.621002)) < 1);
+  assert.ok(ball.omega.distanceTo(new THREE.Vector3(2.64241004, -4.13491011, 2.32590985)) < 0.01);
+  stepCarBall(car, ball, controls, 756);
+  assert.ok(ball.vel.distanceTo(new THREE.Vector3(341.911011, -735.290955, 462.570984)) < 0.5);
+});
+
+test("native braking touch uses pre-wheel velocity for the ball-only hit", () => {
+  const car = makePhysCar(new THREE.Vector3(121.779999, -1548.46997, 17.0100002), 0);
+  const restore = () => {
+    car.pos.set(121.779999, -1548.46997, 17.0100002);
+    car.vel.set(230.811005, -921.550964, 0.270999968);
+    car.omega.set(0.00200999994, 0.000209999998, 0);
+    car.q.set(0.00301838876, 0.00387076661, -0.615216851, 0.788342655).normalize();
+  };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  const ball = makeBall(new THREE.Vector3(111.459999, -1454.55994, 136.449997));
+  ball.vel.set(188.841003, -1105.47095, -227.031006);
+  ball.omega.set(-3.65070987, -0.313710004, -0.00530999992);
+  assert.ok(stepCarBall(car, ball, { throttle: -1 }, 968));
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(227.001007, -930.490967, -27.6709995)) < 0.05);
+  assert.ok(ball.vel.distanceTo(new THREE.Vector3(163.151001, -722.280945, 42.0209999)) < 0.5,
+    `native braking hit velocity ${ball.vel.toArray()}`);
+});
+
+test("native stationary roof touch uses pre-wheel velocity for the ball-only hit", () => {
+  const car = makePhysCar(new THREE.Vector3(-2251.72998, -144.899994, 17.0100002), 0);
+  const restore = () => {
+    car.pos.set(-2251.72998, -144.899994, 17.0100002);
+    car.vel.set(0, 0, 0.270999968);
+    car.omega.set(0.000509999983, 0, 0);
+    car.q.set(-0.00123271102, 0.0046584066, 0.251848906, 0.967754602).normalize();
+  };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  const ball = makeBall(new THREE.Vector3(-2237.43994, -137.039993, 149.429993));
+  ball.vel.set(60.7809982, 33.9309998, -161.511002);
+  ball.omega.set(-1.03280997, 2.50400996, -0.188709989);
+  assert.ok(stepCarBall(car, ball, {}, 2574));
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(-7.79099989, -2.82099986, -23.3709984)) < 0.05);
+  assert.ok(ball.omega.distanceTo(new THREE.Vector3(-0.587610006, 1.25610995, -0.186509997)) < 0.001);
+  assert.ok(ball.vel.distanceTo(new THREE.Vector3(130.210999, 63.2409973, 86.5009995)) < 0.5,
+    `native stationary roof velocity ${ball.vel.toArray()}`);
+});
+
+test("native reverse throttle brakes on the recorded input tick", () => {
+  const car = makePhysCar(new THREE.Vector3(102.339996, -1470.85999, 17.0100002), 0);
+  const restore = () => {
+    car.pos.set(102.339996, -1470.85999, 17.0100002);
+    car.vel.set(294.561005, -1176.25098, 0.270999968);
+    car.omega.set(0.000109999994, -0.000509999983, 0.000209999998);
+    car.q.set(0.00294825621, 0.00381681859, -0.615216851, 0.788343191).normalize();
+  };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  stepCar(car, { throttle: -0.109375 });
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(287.480988, -1147.95093, 0.270999968)) < 0.5);
+});
+
+test("native grounded jump uses full force and retains sticky force through wheel release", () => {
+  const car = makePhysCar(new THREE.Vector3(0, 0, 17.01), 0);
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  car.pos.set(0, 0, 17.01);
+  car.vel.set(0, 0, 0.271);
+  car.omega.set(0, 0, 0);
+  car.q.identity();
+  const expected = [295.951, 299.971, 303.991, 308.011, 312.031, 316.051, 320.071, 326.801];
+  for (let tick = 0; tick < expected.length; tick++) {
+    const previousVelocity = car.vel.z;
+    stepCar(car, { jump: true });
+    if (tick === 0) close(car.vel.z, expected[tick], 0.03);
+    else close(car.vel.z - previousVelocity, expected[tick] - expected[tick - 1], 0.008);
+    assert.equal(car.numWheelsInContact, tick < 6 ? 4 : 0);
+  }
+});
+
+test("native tilted takeoff friction reacts to the jump impulse", () => {
+  const car = makePhysCar(new THREE.Vector3(256.070007, -3825, 17.0100002), 0);
+  const restore = () => {
+    car.pos.set(256.070007, -3825, 17.0100002);
+    car.vel.set(0, 0.0109999999, 0.270999968);
+    car.omega.set(-0.000609999988, 0, 0);
+    car.q.set(-0.00343378796, 0.00331510254, 0.719732881, 0.694234729).normalize();
+  };
+  restore();
+  for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+  restore();
+  stepCar(car, { jump: true });
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(0.0209999997, -0.600999951, 295.950989)) < 0.3);
+});
+
+test("native profile reproduces recorded dodge onset and five-tick cancel delay", () => {
+  const car = makePhysCar(new THREE.Vector3(0, 0, 1000), 0);
+  car.arenaCollisions = false;
+  assert.equal(car.physicsProfile, "native");
+  assert.equal(makeCar().physicsProfile, "rocketsim");
+  const samples = [1.86681, 3.68871, 5.46691, 5.49991, 5.50001, 5.36811];
+  for (let tick = 0; tick < samples.length; tick++) {
+    stepCar(car, { jump: tick < 2, pitch: tick < 2 ? -1 : 1 });
+    close(car.omega.y, samples[tick], 0.0002);
+  }
+});
+
+test("native boost edges retain the preceding tick's airborne throttle contribution", () => {
+  const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+  car.arenaCollisions = false;
+  stepCar(car, { boost: true });
+  close(car.vel.x, 8.261000633239746, 0.004);
+  const onset = car.vel.x;
+  for (let tick = 1; tick < 60; tick++) stepCar(car, { boost: true });
+  close((car.vel.x - onset) / 59, 8.82, 0.004);
+  const beforeRelease = car.vel.x;
+  stepCar(car, {});
+  close(car.vel.x - beforeRelease, 0.54998779296875, 0.007);
+  const afterRelease = car.vel.x;
+  stepCar(car, {});
+  close(car.vel.x, afterRelease);
+});
+
+test("native unboosted free-flight throttle matches recorded velocity gains", () => {
+  for (const throttle of [-1, -0.5, 0.5, 1]) {
+    const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+    car.arenaCollisions = false;
+    for (let tick = 0; tick < 60; tick++) stepCar(car, { throttle });
+    close(car.vel.x, 33 * throttle, 0.0011);
+    const beforeRelease = car.vel.x;
+    stepCar(car, {});
+    close(car.vel.x, beforeRelease);
+    if (throttle === 1) {
+      const beforeCoast = car.pos.x;
+      for (let tick = 0; tick < 99; tick++) stepCar(car, {});
+      close(car.pos.x - beforeCoast, 27.72, 0.001);
+    }
+  }
+  for (const excluded of ["reference", "hasJumped", "hasFlipped"]) {
+    const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+    car.arenaCollisions = false;
+    if (excluded === "reference") car.physicsProfile = "rocketsim";
+    else car[excluded] = true;
+    car.jumpTime = car.airTime = car.airTimeSinceJump = car.flipTime = 1;
+    stepCar(car, { throttle: 1 });
+    close(car.vel.x, (200 / 3) * RL.DT, 0.00001);
+  }
+});
+
+test("native coasting gravity matches independent recorded velocity gains without changing reference gravity", () => {
+  for (const [profile, gain] of [["native", -5.41], ["rocketsim", -RL.GRAVITY * RL.DT]]) {
+    const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+    car.physicsProfile = profile;
+    car.arenaCollisions = false;
+    car.vel.set(500.0010070800781, 200.00100708007812, -119.28099822998047);
+    const initial = car.vel.clone();
+    for (let tick = 0; tick < 180; tick++) stepCar(car, {});
+    close(car.vel.z, initial.z + gain * 180, 0.003);
+    close(car.vel.x, initial.x, 0.0001);
+    close(car.vel.y, initial.y, 0.0001);
+  }
+});
+
+test("native coast displacement matches recorded horizontal increments", () => {
+  const car = makePhysCar(new THREE.Vector3(166.8000030517578, 66.79999542236328, 1495.419921875), 0);
+  car.arenaCollisions = false;
+  car.vel.set(500.0010070800781, 200.00100708007812, -119.28099822998047);
+  for (let tick = 0; tick < 180; tick++) stepCar(car, {});
+  close(car.pos.x, 917.3999633789062, 0.003);
+  close(car.pos.y, 367.3999938964844, 0.003);
+  close(car.pos.z, 582.0800170898438, 0.05);
+});
+
+test("native gravity calibration excludes jump and dodge history", () => {
+  for (const history of ["hasJumped", "hasFlipped"]) {
+    const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+    car.arenaCollisions = false;
+    car[history] = true;
+    car.jumpTime = 1;
+    car.airTime = 1;
+    car.airTimeSinceJump = 1;
+    car.flipTime = 1;
+    stepCar(car, {});
+    close(car.vel.z, -RL.GRAVITY * RL.DT, 0.00001);
+    close(car.pos.z, 1500 - RL.GRAVITY * RL.DT * RL.DT, 0.0002);
+  }
+});
 
 test("native translation retains internal precision and resynchronizes after teleport", () => {
   const car = makeCar(new THREE.Vector3(-1000, 0, 800), 0);
@@ -35,6 +260,21 @@ test("airborne boost consumption matches native float32 endpoint", () => {
   car.boost = 100;
   for (let tick = 0; tick < 120; tick++) stepCar(car, { boost: true });
   assert.equal(car.boost, 66.66656494140625);
+});
+
+test("RocketSim flip vertical damping starts on the eighteenth flip tick", () => {
+  const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+  car.arenaCollisions = false;
+  car.vel.z = 300;
+  car.hasFlipped = true;
+  car.isFlipping = true;
+  car.flipTime = 16 * RL.DT;
+  const before = car.vel.z;
+  stepCar(car, {});
+  close(car.vel.z, before - RL.GRAVITY * RL.DT, 0.001);
+  const atBoundary = car.vel.z;
+  stepCar(car, {});
+  close(car.vel.z, atBoundary * (1 - RL.FLIP_Z_DAMP_120) - RL.GRAVITY * RL.DT, 0.001);
 });
 
 test("Free Play kickoff matches RocketSim raw spawn for every hitbox", () => {

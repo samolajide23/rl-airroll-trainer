@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS } from "./src/shared/soccarMeshData.js";
 
 export default defineConfig({
+  server: { hmr: false },
+  worker: { format: "es" },
   plugins: [{
     name: "compact-arena-data",
     apply: "build",

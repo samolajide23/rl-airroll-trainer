@@ -1,11 +1,43 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { prepareCarVisual, syncCarWheels, BODY_WHEEL_REFERENCE } from "../../src/shared/carVisualCalibration.js";
+import { prepareCarVisual, syncCarWheels, syncCarJump, BODY_WHEEL_REFERENCE } from "../../src/shared/carVisualCalibration.js";
 import { alignCarVisualToHitbox, applyToCarModel } from "../../src/shared/rl-physics.js";
 import { makeCar } from "../../src/shared/carSim.js";
 
 const near = (a, b) => assert(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
+test("jump burst follows accepted jumps, expires, and clears on reset without moving the car", () => {
+  const model = new THREE.Group();
+  model.position.set(2, 3, 4);
+  model.scale.setScalar(0.5);
+  const car = makeCar();
+  const before = JSON.stringify(car);
+  syncCarJump(model, car);
+  assert.equal(model.userData.jumpAnimation.burst.visible, false);
+  car.hasJumped = true;
+  syncCarJump(model, car, 1 / 60);
+  assert.equal(model.userData.jumpAnimation.burst.visible, true);
+  for (let frame = 0; frame < 12; frame++) syncCarJump(model, car, 1 / 60);
+  assert.equal(model.userData.jumpAnimation.burst.visible, false);
+  car.hasDoubleJumped = true;
+  syncCarJump(model, car, 1 / 60);
+  assert.equal(model.userData.jumpAnimation.burst.visible, true);
+  syncCarJump(model, car);
+  assert.equal(model.userData.jumpAnimation.burst.visible, false);
+  car.hasFlipped = true;
+  syncCarJump(model, car, 1 / 60);
+  assert.equal(model.userData.jumpAnimation.burst.visible, true);
+  const replacement = makeCar();
+  syncCarJump(model, replacement, 1 / 60);
+  assert.equal(model.userData.jumpAnimation.burst.visible, false);
+  car.hasJumped = false;
+  car.hasDoubleJumped = false;
+  car.hasFlipped = false;
+  assert.equal(JSON.stringify(car), before);
+  assert.deepEqual(model.position.toArray(), [2, 3, 4]);
+  near(model.scale.x, 0.5);
+});
+
 test("wheelbase calibration preserves geometry and matches independent tire radii", () => {
   for (const id of ["octane", "fennec", "dominus"]) {
     const car = new THREE.Group(), visual = new THREE.Group(); car.add(visual);

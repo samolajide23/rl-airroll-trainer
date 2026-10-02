@@ -23,6 +23,19 @@ test("physics input preserves short taps and separates swivel deadzone", async (
     assert.equal(input.readPhysicsControls().jump, true);
     send("blur");
     assert.equal(input.readPhysicsControls().jump, false);
+    settings.setBind("jumpAlternative", "KeyJ");
+    send("keydown", { code: "Space" });
+    send("keydown", { code: "KeyJ" });
+    send("keyup", { code: "Space" });
+    assert.equal(input.isActionDown("jump"), true);
+    assert.equal(input.readPhysicsControls().jump, true);
+    assert.equal(input.readPhysicsControls().jump, true);
+    send("keyup", { code: "KeyJ" });
+    assert.equal(input.readPhysicsControls().jump, false);
+    send("keydown", { code: "KeyJ" });
+    send("keyup", { code: "KeyJ" });
+    assert.equal(input.readPhysicsControls().jump, true);
+    assert.equal(input.readPhysicsControls().jump, false);
     settings.setBind("jump", "Mouse0");
     send("mousedown", { button: 0 });
     send("mouseup", { button: 0 });
@@ -34,6 +47,10 @@ test("physics input preserves short taps and separates swivel deadzone", async (
     const controls = input.readControls();
     assert.equal(controls.steer, 0);
     assert(Math.abs(controls.lookRight - 1 / 9) < 1e-10);
+    settings.setPad("jumpAlternative", 5);
+    navigator.getGamepads = () => [{ axes: [0, 0, 0, 0], buttons: Array.from({ length: 6 }, (_, index) => ({ pressed: index === 5, value: index === 5 ? 1 : 0 })) }];
+    assert.equal(input.readControls().jump, true);
+    assert.equal(input.isActionDown("jump"), true);
   } finally {
     delete globalThis.window;
     delete globalThis.localStorage;

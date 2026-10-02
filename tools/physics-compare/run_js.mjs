@@ -79,6 +79,7 @@ function idleControls() {
 
 function initCar(initial) {
   const car = makePhysCar(new THREE.Vector3(...initial.pos), 0, initial.hitbox ?? "octane");
+  car.physicsProfile = "rocketsim";
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   car.boost = initial.boost ?? RL.BOOST_MAX;

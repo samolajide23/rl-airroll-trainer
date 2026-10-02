@@ -18,6 +18,8 @@ import { GHOST_ALIGN_DIFFICULTIES } from '../modes/ghostDifficulties.js';
 import { createIcons, icons } from 'lucide';
 import { staticBallSummary } from '../shared/staticBallTraining.js';
 import { softBallSummary } from '../shared/softBallTraining.js';
+import { objectiveBriefings } from '../shared/drillBriefings.js';
+import { formatPadButton, onBindsChange } from '../shared/settings.js';
 
 export const themes = [
   ['Garage', 'Floodlit garage / cyan & orange', 'garage', '#28d9ff', '#ff9b36', '#081013'],
@@ -83,18 +85,36 @@ let selectedMechanic = PHASES[selectedBranch].modes.find(mode => mode.id === 'da
 if (live) {
   try {
     const selectedId = localStorage.getItem('rl-training-selected-drill');
-    selectedMechanic = PHASES.flatMap(phase => phase.modes).find(mode => mode.id === selectedId) || trainer.lastDrill() || selectedMechanic;
+    const catalogueModes = PHASES.flatMap(phase => phase.modes);
+    selectedMechanic = catalogueModes.find(mode => mode.id === selectedId) || catalogueModes.find(mode => mode.id === trainer.lastDrill()?.id) || selectedMechanic;
   } catch { }
   selectedBranch = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === selectedMechanic.id));
 }
 if (live) {
   menuRoot.querySelector('.preview-bar').remove();
   menuRoot.querySelector('nav').setAttribute('aria-label', 'Main menu');
+  const arenaTab = document.createElement('button');
+  arenaTab.type = 'button';
+  arenaTab.dataset.view = 'arena';
+  arenaTab.textContent = 'Arena';
+  menuRoot.querySelector('[data-view="training"]').before(arenaTab);
   const lockerTab = document.createElement('button');
   lockerTab.type = 'button';
   lockerTab.dataset.view = 'locker';
   lockerTab.textContent = 'Locker';
   menuRoot.querySelector('.site-header nav').append(lockerTab);
+  const previousPageHint = document.createElement('span');
+  previousPageHint.className = 'header-page-control';
+  previousPageHint.textContent = formatPadButton(4);
+  previousPageHint.setAttribute('aria-hidden', 'true');
+  const nextPageHint = previousPageHint.cloneNode(true);
+  nextPageHint.textContent = formatPadButton(5);
+  onBindsChange(() => {
+    previousPageHint.textContent = formatPadButton(4);
+    nextPageHint.textContent = formatPadButton(5);
+  });
+  menuRoot.querySelector('.site-header nav').prepend(previousPageHint);
+  menuRoot.querySelector('.site-header nav').append(nextPageHint);
   menuRoot.querySelector('.profile>span:last-child').firstChild.textContent = 'YOUR LOADOUT';
   const status = document.createElement('p');
   status.className = 'header-controller-status';
@@ -124,9 +144,9 @@ let selectedCategory = 0;
 let settingsObserver;
 let settingsGroup = 0;
 const settingsGroups = {
-  controls: ['Sensitivity', 'Deadzones', 'Camera Behaviour'],
+  controls: ['Sensitivity', 'Deadzones', 'Camera Behaviour', 'Controller'],
   bindings: ['Key Bindings', 'Controller Axes'],
-  camera: ['Presets', 'Framing', 'Position', 'Motion'],
+  camera: ['Camera Settings'],
   loadout: ['Car Body'],
 };
 
@@ -137,6 +157,7 @@ function showSettingsSection(tab) {
   trainer.settings(fields, tab);
   settingsGroup = 0;
   const groupNav = content.querySelector('.settings-group-nav');
+  groupNav.hidden = settingsGroups[tab].length === 1;
   groupNav.innerHTML = settingsGroups[tab].map((label, index) => `<button type="button" data-settings-group="${index}">${label}<span>&rarr;</span></button>`).join('');
   content.querySelector('.settings-section-heading').textContent = tab[0].toUpperCase() + tab.slice(1);
   const applyGroup = () => {
@@ -146,8 +167,8 @@ function showSettingsSection(tab) {
       const id = row.querySelector('input')?.id || '';
       const label = row.querySelector('.bind-label')?.textContent.toLowerCase() || '';
       let group;
-      if (tab === 'controls') group = label.includes('sensitivity') ? 0 : label.includes('deadzone') ? 1 : 2;
-      else group = row.querySelector('#camera-preset') ? 0 : /-(fov|distance)$/.test(id) ? 1 : /-(height|angle)$/.test(id) ? 2 : 3;
+      if (tab === 'controls') group = label.includes('controller layout') ? 3 : label.includes('sensitivity') ? 0 : label.includes('deadzone') ? 1 : 2;
+      else group = 0;
       row.hidden = group !== settingsGroup;
     });
     const entry = fields.querySelector('.bindings-entry');
@@ -218,6 +239,13 @@ try {
   recoveryVaried = localStorage.getItem('rl-recovery-varied') !== 'false';
 } catch { }
 
+function renderObjective(step, index, success = step.success) {
+  const briefing = objectiveBriefings[selectedMechanic.id]?.[index];
+  const goal = briefing?.[0] || step.goal;
+  const requirements = briefing?.[1] || step.requirements;
+  return `<h2>${step.title}</h2><p>${goal}</p><h2>To pass</h2>${requirements ? `<ul>${requirements.map(requirement => `<li>${requirement}</li>`).join('')}</ul>` : `<p>${success}</p>`}<details><summary>Full rules</summary><p>${success}</p></details>`;
+}
+
 function renderFocusRoom() {
   const car = trainer.car();
   const panels = {
@@ -238,7 +266,7 @@ function renderFocusRoom() {
     content.querySelector('.focus-visual>p').textContent = 'Illustrative setup / Car only';
     content.querySelector('.focus-difficulty').innerHTML = `<h2><i data-lucide="route"></i>Mastery steps</h2><div class="focus-mastery" role="group" aria-label="Mastery steps">${entry.steps.map((item, index) => `<button data-movement-step="${index}" aria-pressed="${index === choice.masteryStep}"><span>${index + 1}. ${item.title}</span><small>Playable</small></button>`).join('')}</div>`;
     const panel = content.querySelector('#focus-panel');
-    if (drillTab === 'Objective') panel.innerHTML = `<h2>${step.title}</h2><p>${step.goal}</p><h2>Success</h2><p>${step.success}</p>`;
+    if (drillTab === 'Objective') panel.innerHTML = renderObjective(step, choice.masteryStep);
     if (drillTab === 'Coaching') panel.innerHTML = `<h2>Focus</h2><p>${step.cue}</p>`;
     if (drillTab === 'Progress') panel.innerHTML = `<h2>${choice.varied ? 'Varied' : 'Fixed'} setup progress</h2><p>${summary.latest === null ? 'No recorded sets yet.' : `Latest set: ${summary.latest}/${summary.sets.at(-1).attempts.length} successes.`}</p><strong>${summary.mastered ? 'Mastery milestone reached' : 'Milestone: 8/10 in two consecutive sets'}</strong><p>${summary.commonMiss ? `Most common miss: ${summary.commonMiss}.` : 'All five stages remain accessible.'}</p><details><summary>Recent sets</summary>${summary.sets.slice(-6).map(set => `<p>${set.attempts.filter(attempt => attempt.success).length}/${set.attempts.length} successes${set.attempts.length < 10 ? ' · Partial' : ''}${set.attempts.some(attempt => attempt.skipped) ? ' · Includes skip' : ''}</p>`).join('') || '<p>No history yet.</p>'}</details><p>Each stage and variation has separate history. Same-setup retries are unscored.</p>`;
     if (drillTab === 'Session') panel.innerHTML = `<h2>Setup variation</h2><label class="focus-variation"><span>Vary Setup</span><input data-movement-varied type="checkbox" role="switch" ${choice.varied ? 'checked' : ''} aria-label="Vary Setup"></label><p>${entry.setup}</p><p>Ten scored attempts per set. Each attempt has a 15-second cap. Retry Same Setup repeats the last miss as unscored practice. Reset or Skip records a skip. Partial sets and sets containing skips cannot qualify for mastery.</p><p>Shared physics and finite boost, without movement assistance. Initial scoring bounds, pending playtesting.</p><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
@@ -254,7 +282,7 @@ function renderFocusRoom() {
     content.querySelector('.focus-visual>p').textContent = 'Illustrative setup / Shared car physics';
     content.querySelector('.focus-difficulty').innerHTML = `<h2><i data-lucide="route"></i>Mastery steps</h2><div class="focus-mastery" role="group" aria-label="Mastery steps">${STATIC_BALL_MASTERY.map((entry, index) => `<button data-mastery-step="${index}" aria-pressed="${index === staticMasteryStep}"><span>${index + 1}. ${entry.title}</span><small>Playable</small></button>`).join('')}</div>`;
     const panel = content.querySelector('#focus-panel');
-    if (drillTab === 'Objective') panel.innerHTML = `<h2>${step.title}</h2><p>${step.goal}</p><h2>Success</h2><p>${step.success}</p><details><summary>Match benefit</summary><p>${step.benefit}</p></details><details><summary>Attempt feedback</summary><p>${plan.feedback}</p></details>`;
+    if (drillTab === 'Objective') panel.innerHTML = renderObjective(step, staticMasteryStep);
     if (drillTab === 'Coaching') panel.innerHTML = `<h2>Focus</h2><p>${step.cue}</p><p>Ground touches first. Jumping and dodging are not prerequisites.</p>`;
     if (drillTab === 'Progress') panel.innerHTML = `<h2>${staticVaried ? 'Varied' : 'Fixed'} setup progress</h2><p>${summary.latest === null ? 'No recorded sets yet.' : `Latest set: ${summary.latest}/${summary.sets.at(-1).attempts.length} successes.`}</p><strong>${summary.mastered ? 'Mastery milestone reached' : 'Milestone: 8/10 in two consecutive sets'}</strong><p>${summary.commonMiss ? `Most common miss: ${summary.commonMiss}.` : 'Steps remain accessible at any time.'}</p><details><summary>Recent sets</summary>${summary.sets.slice(-6).map(set => `<p>${set.attempts.filter(attempt => attempt.success).length}/${set.attempts.length} successes${set.attempts.length < 10 ? ' · Partial' : ''}${set.attempts.some(attempt => attempt.skipped) ? ' · Includes skip' : ''}</p>`).join('') || '<p>No history yet.</p>'}</details><p>Same-setup retries are unscored practice. Fixed and varied histories are separate.</p>`;
     if (drillTab === 'Session') panel.innerHTML = `<h2>Setup variation</h2><label class="focus-variation"><span>Vary Setup</span><input data-static-varied type="checkbox" role="switch" ${staticVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Bounded distance, lateral position and approach-angle changes each scored attempt. Target directions alternate straight, left and right in later steps. The ball starts stationary.</p><details><summary>Repetition and retries</summary><p>Off repeats the fixed setup. Retry Same Setup repeats the last miss as unscored practice; the original miss remains recorded. Reset or Skip abandons the current attempt. Returning here starts a fresh set.</p></details><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
@@ -273,10 +301,10 @@ function renderFocusRoom() {
     content.querySelector('.focus-visual>p').textContent = 'Illustrative setup / Incoming ground ball';
     content.querySelector('.focus-difficulty').innerHTML = `<h2><i data-lucide="route"></i>Mastery steps</h2><div class="focus-mastery" role="group" aria-label="Mastery steps">${SOFT_TOUCH_MASTERY.map((entry, index) => `<button data-soft-step="${index}" aria-pressed="${index === softMasteryStep}"><span>${index + 1}. ${entry.title}</span><small>Playable</small></button>`).join('')}</div>`;
     const panel = content.querySelector('#focus-panel');
-    if (drillTab === 'Objective') panel.innerHTML = `<h2>${step.title}</h2><p>${step.goal}</p><h2>Success</h2><p>${success}</p><details><summary>Match benefit</summary><p>${step.benefit}</p></details><details><summary>Attempt feedback</summary><p>No contact, insufficient cushioning, too high, too far away, wrong exit or late second touch. Extra contacts before completing reception do not qualify.</p></details>`;
+    if (drillTab === 'Objective') panel.innerHTML = renderObjective(step, softMasteryStep, success);
     if (drillTab === 'Coaching') panel.innerHTML = `<h2>Focus</h2><p>${step.cue}</p><p>Ground receptions first; bounces and aerial catches belong to later drills.</p>`;
     if (drillTab === 'Progress') panel.innerHTML = `<h2>${softVaried ? 'Varied' : 'Fixed'} reception progress</h2><p>${summary.latest === null ? 'No recorded sets yet.' : `Latest set: ${summary.latest}/${summary.sets.at(-1).attempts.length} successes.`}</p><strong>${summary.mastered ? 'Mastery milestone reached' : 'Milestone: 8/10 in two consecutive sets'}</strong><p>${summary.commonMiss ? `Most common miss: ${summary.commonMiss}.` : 'All five steps are accessible.'}</p><details><summary>Recent sets</summary>${summary.sets.slice(-6).map(set => `<p>${set.attempts.filter(attempt => attempt.success).length}/${set.attempts.length} successes${set.attempts.length < 10 ? ' · Partial' : ''}${set.attempts.some(attempt => attempt.skipped) ? ' · Includes skip' : ''}</p>`).join('') || '<p>No history yet.</p>'}</details><p>Same-setup retries are unscored. Each step and fixed/varied setup has separate history.</p>`;
-    if (drillTab === 'Session') panel.innerHTML = `<h2>Incoming ground balls</h2><label class="focus-variation"><span>Vary Setup</span><input data-soft-varied type="checkbox" role="switch" ${softVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 500 uu/s straight arrival from 1,200 uu. Varied: 1,000–1,400 uu distance and up to 80 uu car offset. Later steps add 400–800 uu/s arrivals at 0 or ±20°. Exit requests alternate right and left; fixed requests right.</p><p>The car starts moving with the arrival at 180 uu/s. All movement after spawning uses shared physics. Keep the ball below 200 uu. Each attempt has a 15-second cap.</p><details><summary>Sets and retries</summary><p>Ten scored attempts per set. Retry Same Setup repeats the complete last miss as unscored practice. Reset or Skip records a skip. Partial sets and sets with skips do not qualify for mastery.</p></details><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
+    if (drillTab === 'Session') panel.innerHTML = `<h2>Incoming ground balls</h2><label class="focus-variation"><span>Vary Setup</span><input data-soft-varied type="checkbox" role="switch" ${softVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 18.0 km/h straight arrival from 1,200 uu. Varied: 1,000–1,400 uu distance and up to 80 uu car offset. Later steps add 14.4–28.8 km/h arrivals at 0 or ±20°. Exit requests alternate right and left; fixed requests left.</p><p>The car starts moving with the arrival at 6.5 km/h. All movement after spawning uses shared physics. Keep the ball below 200 uu. Each attempt has a 15-second cap.</p><details><summary>Sets and retries</summary><p>Ten scored attempts per set. Retry Same Setup repeats the complete last miss as unscored practice. Reset or Skip records a skip. Partial sets and sets with skips do not qualify for mastery.</p></details><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
     content.querySelector('.focus-launch strong').textContent = `${step.title} / ${softVaried ? 'Varied' : 'Fixed'} arrival`;
     content.querySelector('.focus-launch [data-action="practice"]').innerHTML = `<i data-lucide="play"></i>Start ${step.title}`;
   }
@@ -288,10 +316,10 @@ function renderFocusRoom() {
     content.querySelector('.focus-visual>p').textContent = 'Illustrative setup / Airborne roll and contact';
     content.querySelector('.focus-difficulty').innerHTML = `<h2><i data-lucide="route"></i>Mastery steps</h2><div class="focus-mastery" role="group" aria-label="Mastery steps">${ROLL_TOUCH_MASTERY.map((entry, index) => `<button data-roll-step="${index}" aria-pressed="${index === rollMasteryStep}"><span>${index + 1}. ${entry.title}</span><small>Playable</small></button>`).join('')}</div>`;
     const panel = content.querySelector('#focus-panel');
-    if (drillTab === 'Objective') panel.innerHTML = `<h2>${step.title}</h2><p>${step.goal}</p><h2>Success</h2><p>${step.success}</p><details><summary>Attempt feedback</summary><p>No contact, grounded contact, no deliberate roll, touch before alignment, side/roof/rear contact, too soft, too hard, extra touch or recovery timeout.</p></details>`;
+    if (drillTab === 'Objective') panel.innerHTML = renderObjective(step, rollMasteryStep);
     if (drillTab === 'Coaching') panel.innerHTML = `<h2>Focus</h2><p>${step.cue}</p><p>The airborne start isolates the approach. Car and ball fall normally; there is no hover assistance.</p>`;
     if (drillTab === 'Progress') panel.innerHTML = `<h2>${rollVaried ? 'Varied' : 'Fixed'} approach progress</h2><p>${summary.latest === null ? 'No recorded sets yet.' : `Latest set: ${summary.latest}/${summary.sets.at(-1).attempts.length} successes.`}</p><strong>${summary.mastered ? 'Mastery milestone reached' : 'Milestone: 8/10 in two consecutive sets'}</strong><p>${summary.commonMiss ? `Most common miss: ${summary.commonMiss}.` : 'All five stages remain accessible.'}</p><details><summary>Recent sets</summary>${summary.sets.slice(-6).map(set => `<p>${set.attempts.filter(attempt => attempt.success).length}/${set.attempts.length} successes${set.attempts.length < 10 ? ' · Partial' : ''}${set.attempts.some(attempt => attempt.skipped) ? ' · Includes skip' : ''}</p>`).join('') || '<p>No history yet.</p>'}</details><p>Each stage and variation has separate history. Same-setup retries are unscored.</p>`;
-    if (drillTab === 'Session') panel.innerHTML = `<h2>Airborne approach</h2><label class="focus-variation"><span>Vary Setup</span><input data-roll-varied type="checkbox" role="switch" ${rollVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 400 uu separation, 600 uu height and 450 uu/s approach. The car starts tilted 45 degrees in stage one, 90 degrees thereafter. Varied: 350–450 uu separation, 550–650 uu height, 400–500 uu/s approach, alternating roll sides and later headings of 0 or ±15 degrees.</p><p>Before contact, accumulate at least 0.05 seconds of full-strength-equivalent roll input and 0.15 radians of actual axial rotation. Ten scored attempts per set; skips and partial sets cannot qualify for mastery. Retry Same Setup repeats the complete last miss as unscored practice. Attempts end after 15 seconds.</p><p>Initial scoring and setup bounds, pending playtesting.</p><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
+    if (drillTab === 'Session') panel.innerHTML = `<h2>Airborne approach</h2><label class="focus-variation"><span>Vary Setup</span><input data-roll-varied type="checkbox" role="switch" ${rollVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 400 uu separation, 600 uu height and 16.2 km/h approach. The car starts tilted 45 degrees in stage one, 90 degrees thereafter. Varied: 350–450 uu separation, 550–650 uu height, 14.4–18.0 km/h approach, alternating roll sides and later headings of 0 or ±15 degrees.</p><p>Before contact, accumulate at least 0.05 seconds of full-strength-equivalent roll input and 0.15 radians of actual axial rotation. Ten scored attempts per set; skips and partial sets cannot qualify for mastery. Retry Same Setup repeats the complete last miss as unscored practice. Attempts end after 15 seconds.</p><p>Initial scoring and setup bounds, pending playtesting.</p><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
     content.querySelector('.focus-launch strong').textContent = `${step.title} / ${rollVaried ? 'Varied' : 'Fixed'} approach`;
     content.querySelector('.focus-launch [data-action="practice"]').innerHTML = `<i data-lucide="play"></i>Start ${step.title}`;
   }
@@ -303,20 +331,82 @@ function renderFocusRoom() {
     content.querySelector('.focus-visual>p').textContent = 'Illustrative setup / Floor recovery';
     content.querySelector('.focus-difficulty').innerHTML = `<h2><i data-lucide="route"></i>Mastery steps</h2><div class="focus-mastery" role="group" aria-label="Mastery steps">${RECOVERY_MASTERY.map((entry, index) => `<button data-recovery-step="${index}" aria-pressed="${index === recoveryMasteryStep}"><span>${index + 1}. ${entry.title}</span><small>Playable</small></button>`).join('')}</div>`;
     const panel = content.querySelector('#focus-panel');
-    if (drillTab === 'Objective') panel.innerHTML = `<h2>${step.title}</h2><p>${step.goal}</p><h2>Success</h2><p>${step.success}</p><details><summary>Attempt feedback</summary><p>Unstable or misaligned landings reset the hold. No contact, grounded contact, extra touch, landing timeout and exit timeout end the attempt.</p></details>`;
+    if (drillTab === 'Objective') panel.innerHTML = renderObjective(step, recoveryMasteryStep);
     if (drillTab === 'Coaching') panel.innerHTML = `<h2>Focus</h2><p>${step.cue}</p><p>Floor recoveries first. Wall landings and advanced movement belong to later drills. The airborne start falls normally; no landing assistance is applied.</p>`;
     if (drillTab === 'Progress') panel.innerHTML = `<h2>${recoveryVaried ? 'Varied' : 'Fixed'} recovery progress</h2><p>${summary.latest === null ? 'No recorded sets yet.' : `Latest set: ${summary.latest}/${summary.sets.at(-1).attempts.length} successes.`}</p><strong>${summary.mastered ? 'Mastery milestone reached' : 'Milestone: 8/10 in two consecutive sets'}</strong><p>${summary.commonMiss ? `Most common miss: ${summary.commonMiss}.` : 'All five stages remain accessible.'}</p><details><summary>Recent sets</summary>${summary.sets.slice(-6).map(set => `<p>${set.attempts.filter(attempt => attempt.success).length}/${set.attempts.length} successes${set.attempts.length < 10 ? ' / Partial' : ''}${set.attempts.some(attempt => attempt.skipped) ? ' / Includes skip' : ''}</p>`).join('') || '<p>No history yet.</p>'}</details><p>Stage and fixed/varied histories are separate. Same-setup retries are unscored.</p>`;
-    if (drillTab === 'Session') panel.innerHTML = `<h2>Recovery setup</h2><label class="focus-variation"><span>Vary Setup</span><input data-recovery-varied type="checkbox" role="switch" ${recoveryVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 600 uu height, 450 uu/s travel, 90-degree roll and 400 uu approach distance. Varied: 550-650 uu height, 400-500 uu/s, 350-450 uu distance, alternating roll sides and headings of 0 or +/-15 degrees.</p><p>The first three stages isolate landing without a ball in play. Stages four and five add an airborne ball. Upright means the up axis is within approximately 23 degrees of vertical. Alignment means facing within 30 degrees of horizontal velocity.</p><p>Ten attempts per set. Retry Same Setup repeats the last miss as unscored practice. Reset and Skip record a skip; incomplete sets and sets containing skips cannot qualify for mastery. Initial tuning values, pending playtesting.</p><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
+    if (drillTab === 'Session') panel.innerHTML = `<h2>Recovery setup</h2><label class="focus-variation"><span>Vary Setup</span><input data-recovery-varied type="checkbox" role="switch" ${recoveryVaried ? 'checked' : ''} aria-label="Vary Setup"></label><p>Fixed: 600 uu height, 16.2 km/h travel, 90-degree roll and 400 uu approach distance. Varied: 550-650 uu height, 14.4-18.0 km/h, 350-450 uu distance, alternating roll sides and headings of 0 or +/-15 degrees.</p><p>The first three stages isolate landing without a ball in play. Stages four and five add an airborne ball. Upright means the up axis is within approximately 23 degrees of vertical. Alignment means facing within 30 degrees of horizontal velocity.</p><p>Ten attempts per set. Retry Same Setup repeats the last miss as unscored practice. Reset and Skip record a skip; incomplete sets and sets containing skips cannot qualify for mastery. Initial tuning values, pending playtesting.</p><button class="secondary" data-view="settings"><i data-lucide="settings-2"></i>Shared settings</button>`;
     content.querySelector('.focus-launch strong').textContent = `${step.title} / ${recoveryVaried ? 'Varied' : 'Fixed'} recovery`;
     content.querySelector('.focus-launch [data-action="practice"]').innerHTML = `<i data-lucide="play"></i>Start ${step.title}`;
   }
+  content.querySelectorAll('.focus-room [data-view="training"], .focus-room [data-view="settings"]').forEach(button => button.remove());
+  createIcons({ icons, root: content });
+}
+
+const arenaFormats = [
+  { id: 'duel', label: '1v1', name: 'Duel', players: '2 players' },
+  { id: 'doubles', label: '2v2', name: 'Doubles', players: '4 players' },
+  { id: 'standard', label: '3v3', name: 'Standard', players: '6 players' },
+  { id: 'chaos', label: '4v4', name: 'Chaos', players: '8 players' },
+  { id: 'solo', label: 'Solo', name: 'Open Arena', players: '1 player' },
+];
+const arenaModes = [
+  { id: 'soccar', name: 'Soccar', icon: 'goal', summary: 'The original. Two goals. Every touch matters.', rule: 'Standard ball / Standard gravity' },
+  { id: 'hoops', name: 'Hoops', icon: 'circle-dot', summary: 'Take it above the rim. Own the aerial game.', rule: 'Basket goals / Hoops court' },
+  { id: 'dropshot', name: 'Dropshot', icon: 'hexagon', summary: 'Charge the ball. Break the floor. Find the opening.', rule: 'Damage tiles / Charged ball' },
+  { id: 'snowday', name: 'Snow Day', icon: 'snowflake', summary: 'A fast puck and a frozen pitch. Keep it low.', rule: 'Hockey puck / Ice arena' },
+  { id: 'rumble', name: 'Rumble', icon: 'zap', summary: 'Wild power-ups. Unpredictable plays.', rule: 'Random power-ups / Standard arena' },
+  { id: 'heatseeker', name: 'Heatseeker', icon: 'flame', summary: 'Return the shot. Survive the rally.', rule: 'Goal-seeking ball / Rising speed' },
+  { id: 'boost-heist', name: 'Boost Heist', icon: 'flag', summary: 'Steal the enemy battery. Bring it home before your boost runs dry.', rule: 'Capture the battery / Carrying drains boost' },
+  { id: 'airborne', name: 'Airborne', icon: 'wind', summary: 'The floor is dangerous. Stay flying and make every landing count.', rule: 'Hazardous floor after kickoff / Aerial survival' },
+  { id: 'hot-potato', name: 'Hot Potato', icon: 'timer', summary: 'Pass the ticking ball. Do not own the last touch when time runs out.', rule: 'Touch transfers ownership / Countdown elimination' },
+  { id: 'rift-rally', name: 'Rift Rally', icon: 'route', summary: 'Race through shifting aerial gates. Find the fastest line.', rule: 'Changing gates / Moving obstacles / Timed race' },
+  { id: 'bankshot', name: 'Bankshot', icon: 'goal', summary: 'Play the angles. Only wall and ceiling bank shots count.', rule: 'Wall or ceiling bounce required before scoring' },
+  { id: 'last-car-flying', name: 'Last Car Flying', icon: 'zap', summary: 'Platforms disappear. Knock rivals off and recover to survive.', rule: 'Disappearing platforms / Last car standing' },
+  { id: 'combo-rush', name: 'Combo Rush', icon: 'trophy', summary: 'Chain aerial touches, rolls and clean landings. Beat the clock.', rule: 'Timed score attack / Combo multipliers' },
+];
+const arenaSections = [
+  { id: 'originals', name: 'AIRLAB Originals', modes: ['boost-heist', 'airborne', 'hot-potato', 'bankshot', 'last-car-flying'] },
+  { id: 'classic', name: 'Classic', modes: ['soccar', 'hoops', 'dropshot', 'snowday', 'rumble', 'heatseeker'] },
+  { id: 'solo-challenges', name: 'Solo Challenges', modes: ['rift-rally', 'combo-rush'] },
+];
+let arenaFormatId = 'duel';
+let arenaModeId = 'soccar';
+let arenaSectionId = 'classic';
+
+function renderArena() {
+  const mode = arenaModes.find(entry => entry.id === arenaModeId);
+  const section = arenaSections.find(entry => entry.id === arenaSectionId);
+  const soloChallenge = arenaSections.find(section => section.id === 'solo-challenges').modes.includes(mode.id);
+  const format = arenaFormats.find(entry => entry.id === (soloChallenge ? 'solo' : arenaFormatId));
+  const playable = arenaFormatId === 'solo' && arenaModeId === 'soccar';
+  content.innerHTML = `
+    <section class="page-heading arena-heading"><div><p class="eyebrow">ARENA / MATCH LINEUP</p><h1>ARENA.</h1></div><span class="arena-session-label"><i data-lucide="flag"></i>${format.name} / ${mode.name}</span></section>
+    <div class="arena-workspace">
+      <section class="arena-lineup" aria-label="Match selection">
+        <nav class="arena-category-rail" aria-label="Mode category">${arenaSections.map((entry, index) => `<button type="button" data-arena-section="${entry.id}" aria-pressed="${entry.id === arenaSectionId}"><span>0${index + 1}</span><strong>${entry.name}</strong><small>${entry.modes.length}</small></button>`).join('')}</nav>
+        <section aria-labelledby="arena-section-${section.id}">
+          <header class="arena-mode-heading"><h2 id="arena-section-${section.id}">${section.name}</h2><span>${section.modes.length} MODES</span></header>
+          <div class="arena-mode-grid" role="group" aria-label="${section.name}">${section.modes.map(modeId => arenaModes.find(entry => entry.id === modeId)).map(entry => `<button type="button" class="arena-mode" data-arena-mode="${entry.id}" aria-pressed="${entry.id === arenaModeId}"><i data-lucide="${entry.icon}"></i><span class="arena-mode-name">${entry.name}</span><span class="arena-mode-description">${entry.summary}</span><small>${entry.id === 'soccar' ? 'Solo available' : 'Coming soon'}</small></button>`).join('')}</div>
+        </section>
+      </section>
+      <aside class="arena-session" aria-label="Selected match">
+        <p class="eyebrow">YOUR MATCH</p><h2>${mode.name}</h2>
+        ${soloChallenge ? '' : `<h3>Match format</h3><div class="arena-formats" role="group" aria-label="Match format">${arenaFormats.map(entry => `<button type="button" data-arena-format="${entry.id}" aria-pressed="${entry.id === arenaFormatId}"><strong>${entry.label}</strong></button>`).join('')}</div>`}
+        <dl><div><dt>Format</dt><dd>${soloChallenge ? 'Solo / Challenge' : `${format.label} / ${format.name}`}</dd></div><div><dt>Players</dt><dd>${format.players}</dd></div><div><dt>Arena</dt><dd>${mode.id === 'soccar' ? 'Standard soccar' : mode.name}</dd></div><div><dt>Status</dt><dd>${playable ? 'Ready to play' : 'Coming soon'}</dd></div></dl>
+        <p class="arena-rules">${mode.rule}</p>
+        <button type="button" class="primary arena-launch" data-action="arena-launch" ${playable ? '' : 'disabled'}><i data-lucide="play"></i>${playable ? 'Enter solo arena' : 'Match unavailable'}</button>
+        ${playable ? '' : '<p class="arena-availability">Team matches and extra modes are not playable yet.</p><button type="button" class="secondary arena-solo" data-action="arena-solo"><i data-lucide="car"></i>Play solo arena</button>'}
+      </aside>
+    </div>`;
   createIcons({ icons, root: content });
 }
 
 function render(view) {
   settingsObserver?.disconnect();
   if (selectedDesign && view === 'drill') {
-    selectedBranch = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === selectedMechanic.id));
+    const branch = PHASES.findIndex(phase => phase.modes.some(mode => mode.id === selectedMechanic.id));
+    if (branch >= 0) selectedBranch = branch;
+    else selectedMechanic = PHASES[selectedBranch].modes[0];
   }
   if (live) {
     trainer.prepare();
@@ -329,7 +419,7 @@ function render(view) {
   activeView = view;
   document.body.dataset.view = view;
   if (selectedDesign) {
-    const themeIndex = { home: 0, training: 3, drill: 2, settings: 13, locker: 13 }[view];
+    const themeIndex = { home: 0, arena: 3, training: 3, drill: 2, settings: 13, locker: 13 }[view];
     const theme = themes[themeIndex];
     document.body.dataset.layout = theme[2];
     document.body.classList.toggle('light', styleOption ? styleOption.light : view === 'drill');
@@ -422,6 +512,7 @@ function render(view) {
       }
       showSettingsSection('controls');
     }
+    if (view === 'arena') renderArena();
     if (view === 'locker') {
       lockerCarId = car.id;
       content.innerHTML = `<section class="page-heading master-settings-heading"><div><p class="eyebrow">YOUR LOADOUT</p><h1>LOCKER.</h1></div></section><section class="locker-preview"><div class="scene-slot" aria-label="Car preview"></div><div class="locker-preview-caption"><h2>${car.name}</h2><button type="button" class="secondary" data-action="equip-preview" disabled>Equipped</button></div></section><section class="settings-fields locker-fields" aria-label="Car bodies"></section>`;
@@ -459,9 +550,14 @@ window.addEventListener('gamepadconnected', updateControllerStatus);
 window.addEventListener('gamepaddisconnected', updateControllerStatus);
 if (live) trainer.connect({
   home: () => render('home'),
+  training: () => render('training'),
   hide: () => { menuRoot.hidden = true; document.body.classList.remove('live-menu-open'); document.querySelector('#scene').hidden = true; },
   active: () => menuRoot.hidden ? null : menuRoot,
-  back: () => render(activeView === 'drill' ? 'training' : 'home'),
+  back: () => {
+    const returningToLibrary = activeView === 'drill';
+    render(returningToLibrary ? 'training' : 'home');
+    if (returningToLibrary) content.querySelector(`[data-mechanic="${PHASES[selectedBranch].modes.findIndex(mode => mode.id === selectedMechanic.id)}"]`)?.focus({ preventScroll: true });
+  },
   drill: () => render('drill'),
 });
 document.addEventListener('click', event => {
@@ -469,6 +565,33 @@ document.addEventListener('click', event => {
   if (!button || button.disabled) return;
   if (live && (!menuRoot.contains(button) || button.closest('#panel-controls,#panel-camera,#locker-list'))) return;
   if (button.dataset.view) render(button.dataset.view);
+  if (live && button.dataset.arenaSection) {
+    arenaSectionId = button.dataset.arenaSection;
+    arenaModeId = arenaSections.find(entry => entry.id === arenaSectionId).modes[0];
+    render('arena');
+    content.querySelector(`[data-arena-section="${arenaSectionId}"]`).focus({ preventScroll: true });
+    return;
+  }
+  if (live && (button.dataset.arenaFormat || button.dataset.arenaMode)) {
+    if (button.dataset.arenaFormat) arenaFormatId = button.dataset.arenaFormat;
+    if (button.dataset.arenaMode) arenaModeId = button.dataset.arenaMode;
+    const selector = button.dataset.arenaFormat ? `[data-arena-format="${arenaFormatId}"]` : `[data-arena-mode="${arenaModeId}"]`;
+    render('arena');
+    content.querySelector(selector).focus({ preventScroll: true });
+    return;
+  }
+  if (live && button.dataset.action === 'arena-solo') {
+    arenaFormatId = 'solo';
+    arenaModeId = 'soccar';
+    arenaSectionId = 'classic';
+    render('arena');
+    content.querySelector('[data-action="arena-launch"]').focus({ preventScroll: true });
+    return;
+  }
+  if (live && button.dataset.action === 'arena-launch') {
+    if (arenaFormatId === 'solo' && arenaModeId === 'soccar') trainer.launch(trainer.freeplay);
+    return;
+  }
   if (live && button.dataset.movementStep !== undefined) {
     movementChoices[selectedMechanic.id].masteryStep = Number(button.dataset.movementStep);
     try { localStorage.setItem(`rl-${selectedMechanic.id}-step`, button.dataset.movementStep); } catch { }
@@ -519,6 +642,7 @@ document.addEventListener('click', event => {
   if (selectedDesign && button.dataset.branch !== undefined) {
     selectedBranch = Number(button.dataset.branch);
     render('training');
+    content.querySelector(`[data-branch="${selectedBranch}"]`).focus({ preventScroll: true });
     return;
   }
   if (selectedDesign && button.dataset.mechanic !== undefined) {

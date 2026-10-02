@@ -4,9 +4,18 @@ import { isTouchActionDown, readTouchControls } from "./touchControls.js";
 /** @type {Set<string>} */
 export const keys = new Set();
 const jumpTransitions = [];
+const consumedPadButtons = new Set();
+
+export function consumePadButtonUntilRelease(index) {
+  consumedPadButtons.add(index);
+}
 
 function captureJumpTransition(code, down) {
-  if (code === getBind("jump") && keys.has(code) !== down) jumpTransitions.push(down);
+  const jumpCodes = [getBind("jump"), getBind("jumpAlternative")].filter(Boolean);
+  if (!jumpCodes.includes(code)) return;
+  const wasDown = jumpCodes.some(jumpCode => keys.has(jumpCode));
+  const isDown = jumpCodes.some(jumpCode => jumpCode === code ? down : keys.has(jumpCode));
+  if (wasDown !== isDown) jumpTransitions.push(isDown);
 }
 
 export function resetJumpTransitions() {
@@ -81,6 +90,7 @@ export function getActiveGamepad() {
  */
 function buttonPressed(pad, buttonIndex) {
   if (buttonIndex === null || buttonIndex === undefined) return false;
+  if (consumedPadButtons.has(buttonIndex)) return false;
   return Boolean(pad.buttons[buttonIndex]?.pressed);
 }
 
@@ -90,6 +100,7 @@ function buttonPressed(pad, buttonIndex) {
  */
 function buttonValue(pad, buttonIndex) {
   if (buttonIndex === null || buttonIndex === undefined) return 0;
+  if (consumedPadButtons.has(buttonIndex)) return 0;
   return pad.buttons[buttonIndex]?.value ?? 0;
 }
 
@@ -148,7 +159,7 @@ export function readControls() {
   let airLeft = keyHeld("airRollLeft");
   let airRight = keyHeld("airRollRight");
   let boost = keyHeld("boost");
-  let jump = keyHeld("jump");
+  let jump = keyHeld("jump") || keyHeld("jumpAlternative");
   let powerslide = keyHeld("powerslide");
   let airRoll = keyHeld("airRoll");
   let lookBehind = keyHeld("lookBehind");
@@ -183,6 +194,9 @@ export function readControls() {
 
   const pad = getActiveGamepad();
   if (pad) {
+    for (const index of consumedPadButtons) {
+      if (!pad.buttons[index]?.pressed && !(pad.buttons[index]?.value > 0)) consumedPadButtons.delete(index);
+    }
     const pitchRaw = applyDeadzone(pad.axes[cfg.pitchAxis] ?? 0, cfg.deadzone);
     const yawRaw = applyDeadzone(pad.axes[cfg.yawAxis] ?? 0, cfg.deadzone);
 
@@ -218,7 +232,7 @@ export function readControls() {
     airLeft = airLeft || buttonPressed(pad, cfg.airRollLeft);
     airRight = airRight || buttonPressed(pad, cfg.airRollRight);
     boost = boost || buttonPressed(pad, cfg.boost);
-    jump = jump || buttonPressed(pad, cfg.jump);
+    jump = jump || buttonPressed(pad, cfg.jump) || buttonPressed(pad, cfg.jumpAlternative);
     powerslide = powerslide || buttonPressed(pad, cfg.powerslide);
     airRoll = airRoll || buttonPressed(pad, cfg.airRoll);
     lookBehind = lookBehind || buttonPressed(pad, cfg.lookBehind);
@@ -305,6 +319,7 @@ export function inputSourceLabel(controls) {
  */
 export function isActionDown(action) {
   if (keyHeld(action)) return true;
+  if (action === "jump" && keyHeld("jumpAlternative")) return true;
   if (isTouchActionDown(action)) return true;
 
   const cfg = getPad();
@@ -320,7 +335,8 @@ export function isActionDown(action) {
   if (action === "toggleBallCam") return buttonPressed(pad, cfg.toggleBallCam);
   if (action === "lookBehind") return buttonPressed(pad, cfg.lookBehind);
   if (action === "boost") return buttonPressed(pad, cfg.boost);
-  if (action === "jump") return buttonPressed(pad, cfg.jump);
+  if (action === "jump") return keyHeld("jumpAlternative") || buttonPressed(pad, cfg.jump) || buttonPressed(pad, cfg.jumpAlternative);
+  if (action === "jumpAlternative") return buttonPressed(pad, cfg.jumpAlternative);
   if (action === "powerslide") return buttonPressed(pad, cfg.powerslide);
   if (action === "airRoll") return buttonPressed(pad, cfg.airRoll);
   if (action === "throttle") return buttonValue(pad, cfg.throttle) > 0.3;

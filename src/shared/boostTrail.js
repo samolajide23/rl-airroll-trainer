@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 /**
- * World-space boost exhaust trail (orange → white sparks).
+ * Soft gold exhaust plumes and world-space embers.
  */
 export class BoostTrail {
   /**
@@ -10,12 +10,13 @@ export class BoostTrail {
    */
   constructor(parent, opts = {}) {
     this.parent = parent;
-    this.max = opts.max ?? 96;
+    this.max = opts.max ?? 160;
     this.exhaustLocal = (opts.exhaustLocal ?? new THREE.Vector3(0, 0.15, -1.45)).clone();
     this._world = new THREE.Vector3();
     this._fwd = new THREE.Vector3();
     this._q = new THREE.Quaternion();
     this._emitAccumulator = 0;
+    this._time = 0;
 
     /** @type {{ pos: THREE.Vector3, velocity: THREE.Vector3, life: number, maxLife: number, size: number }[]} */
     this.particles = [];
@@ -65,24 +66,24 @@ export class BoostTrail {
     this.points.frustumCulled = false;
     parent.add(this.points);
 
-    // Twin exhaust flame cones (local to car — caller parents to car)
     this.flames = new THREE.Group();
-    const flameMat = new THREE.MeshBasicMaterial({
-      color: 0xffaa44,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
     for (const x of [-0.22, 0.22]) {
-      const geo = new THREE.ConeGeometry(0.12, 0.85, 8, 1, true);
-      geo.translate(0, 0.42, 0);
-      geo.rotateX(-Math.PI / 2);
-      const mesh = new THREE.Mesh(geo, flameMat.clone());
-      mesh.position.set(x, 0.2, -1.35);
-      mesh.visible = false;
-      this.flames.add(mesh);
+      const jet = new THREE.Group();
+      jet.position.set(x, 0.2, -1.35);
+      jet.visible = false;
+      for (let segment = 0; segment < 14; segment++) {
+        const progress = segment / 13;
+        const material = new THREE.SpriteMaterial({
+          map: this.mat.map, color: progress < 0.25 ? 0xfff4bd : 0xffb51b,
+          transparent: true, blending: THREE.AdditiveBlending,
+          depthWrite: false, toneMapped: false,
+        });
+        const puff = new THREE.Sprite(material);
+        puff.userData.progress = progress;
+        puff.position.z = -progress * 2.1;
+        jet.add(puff);
+      }
+      this.flames.add(jet);
     }
   }
 
@@ -100,14 +101,23 @@ export class BoostTrail {
    * @param {number} dt
    */
   update(car, boosting, dt) {
+    this._time += Math.min(dt, 0.1);
     for (const flame of this.flames.children) {
       flame.visible = boosting;
       if (boosting) {
-        flame.scale.z = 0.75 + Math.random() * 0.55;
-        flame.scale.x = 0.85 + Math.random() * 0.3;
-        const m = /** @type {THREE.Mesh} */ (flame);
-        const mat = /** @type {THREE.MeshBasicMaterial} */ (m.material);
-        mat.color.setHSL(0.08 + Math.random() * 0.06, 1, 0.55 + Math.random() * 0.15);
+        const pulse = Math.sin(this._time * 47 + flame.position.x * 9);
+        flame.scale.z = 0.95 + pulse * 0.12;
+        flame.scale.x = flame.scale.y = 0.95 + pulse * 0.06;
+        for (const puff of flame.children) {
+          const progress = puff.userData.progress;
+          const flutter = Math.sin(this._time * 31 - progress * 15 + flame.position.x * 7);
+          const width = (0.23 + progress * 0.62) * (1 + flutter * 0.12);
+          puff.scale.set(width, width, 1);
+          puff.position.x = flutter * progress * 0.09;
+          puff.position.y = Math.cos(this._time * 23 - progress * 11) * progress * 0.07;
+          puff.material.opacity = (1 - progress) ** 0.8 * (0.28 + flutter * 0.04);
+          puff.material.rotation = this._time * 0.7 + progress * 4;
+        }
       }
     }
 
@@ -121,20 +131,20 @@ export class BoostTrail {
       car.updateWorldMatrix(true, false);
       car.matrixWorld.decompose(this._world, this._q, this._fwd);
       this._fwd.set(0, 0, 1).applyQuaternion(this._q);
-      this._emitAccumulator += Math.min(dt, 0.1) * 160;
+      this._emitAccumulator += Math.min(dt, 0.1) * 320;
       const emit = Math.floor(this._emitAccumulator);
       this._emitAccumulator -= emit;
       for (let i = 0; i < emit; i++) {
         const particle = this._pool.pop() ?? this.particles.shift();
         particle.pos.set(
-          this.exhaustLocal.x + (Math.random() - 0.5) * 0.35,
-          this.exhaustLocal.y + (Math.random() - 0.5) * 0.2,
-          this.exhaustLocal.z - Math.random() * 0.4,
+          this.exhaustLocal.x + (Math.random() - 0.5) * 0.3,
+          this.exhaustLocal.y + (Math.random() - 0.5) * 0.14,
+          this.exhaustLocal.z - Math.random() * 0.6,
         ).applyMatrix4(car.matrixWorld).addScaledVector(this._fwd, -0.15 * Math.random());
-        particle.velocity.copy(this._fwd).multiplyScalar(-6);
+        particle.velocity.set((Math.random() - 0.5) * 2.2, (Math.random() - 0.5) * 2.2, -6 - Math.random() * 5).applyQuaternion(this._q);
         particle.life = 0;
-        particle.maxLife = 0.28 + Math.random() * 0.35;
-        particle.size = 0.2 + Math.random() * 0.35;
+        particle.maxLife = 0.2 + Math.random() * 0.3;
+        particle.size = Math.random() < 0.25 ? 0.06 + Math.random() * 0.09 : 0.28 + Math.random() * 0.4;
         this.particles.push(particle);
       }
     } else this._emitAccumulator = 0;
@@ -161,16 +171,17 @@ export class BoostTrail {
       const t = p.life / p.maxLife;
       posAttr.setXYZ(i, p.pos.x, p.pos.y, p.pos.z);
       const r = 1;
-      const g = 0.45 + t * 0.5;
-      const b = 0.15 + t * 0.7;
-      colAttr.setXYZ(i, r, g, b);
-      sizeAttr.setX(i, p.size * (1 - t));
+      const g = 0.85 - t * 0.45;
+      const b = 0.38 * (1 - t);
+      const fade = (1 - t) ** 1.5;
+      colAttr.setXYZ(i, r * fade, g * fade, b * fade);
+      sizeAttr.setX(i, p.size * (1 + t * 0.5));
     }
     posAttr.needsUpdate = true;
     colAttr.needsUpdate = true;
     sizeAttr.needsUpdate = true;
     this.geo.setDrawRange(0, this.particles.length);
-    this.mat.opacity = boosting || this.particles.length ? 0.95 : 0;
+    this.mat.opacity = boosting || this.particles.length ? 0.45 : 0;
   }
 
   dispose() {
@@ -179,9 +190,12 @@ export class BoostTrail {
     this.geo.dispose();
     this.mat.map?.dispose();
     this.mat.dispose();
-    for (const f of this.flames.children) {
-      /** @type {THREE.Mesh} */ (f).geometry.dispose();
-      /** @type {THREE.Mesh} */ (f).material.dispose();
-    }
+    const geometries = new Set();
+    this.flames.traverse(flame => {
+      if (!flame.material) return;
+      if (flame.isMesh) geometries.add(flame.geometry);
+      flame.material.dispose();
+    });
+    for (const geometry of geometries) geometry.dispose();
   }
 }
