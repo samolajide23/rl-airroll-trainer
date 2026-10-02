@@ -444,7 +444,7 @@ function render(view) {
   if (view === 'training' && !selectedDesign) arrangeCatalogue(layout, content);
   if (selectedDesign && view === 'training') {
     const phase = PHASES[selectedBranch];
-    content.innerHTML = `<section class="page-heading"><div><p class="eyebrow">TRAINING / ESPORTS</p><h1>FIND YOUR EDGE.</h1></div><label class="filter">Availability<select aria-label="Filter drills"><option value="all">All drills</option><option value="ready">Playable now</option><option value="planned">Curriculum previews</option></select></label></section><div class="selected-training"><aside class="selected-categories" aria-label="Training categories"><h2>CATEGORIES</h2>${PHASES.map((branch,index)=>`<button data-branch="${index}" class="${index===selectedBranch?'active':''}" aria-pressed="${index===selectedBranch}"><span>${String(index+1).padStart(2,'0')}</span><strong>${branch.title}</strong><small>${branch.modes.length}</small></button>`).join('')}</aside><section class="selected-drills"><header><p class="eyebrow">${String(selectedBranch+1).padStart(2,'0')} / ${phase.modes.length} DRILLS</p><h2>${phase.title}</h2><p>${phase.blurb}</p></header>${drillGroups(phase)}</section></div>`;
+    content.innerHTML = `<section class="page-heading"><div><p class="eyebrow">TRAINING / ESPORTS</p><h1>FIND YOUR EDGE.</h1></div><label class="filter">Availability<select aria-label="Filter drills"><option value="all">All drills</option><option value="ready">Playable now</option><option value="planned">Curriculum previews</option></select></label></section><div class="selected-training"><aside class="selected-categories" aria-label="Training categories"><h2>CATEGORIES</h2>${PHASES.map((branch, index) => `<button data-branch="${index}" class="${index === selectedBranch ? 'active' : ''}" aria-pressed="${index === selectedBranch}"><span>${String(index + 1).padStart(2, '0')}</span><strong>${branch.title}</strong><small>${branch.modes.length}</small></button>`).join('')}</aside><section class="selected-drills"><header><p class="eyebrow">${String(selectedBranch + 1).padStart(2, '0')} / ${phase.modes.length} DRILLS</p><h2>${phase.title}</h2><p>${phase.blurb}</p></header>${drillGroups(phase)}</section></div>`;
   }
   if (selectedDesign && view === 'drill') {
     content.querySelector('.drill-copy h1').textContent = selectedMechanic.title.toUpperCase();
@@ -453,9 +453,9 @@ function render(view) {
     content.querySelector('.drill-copy .eyebrow').textContent = `${PHASES[selectedBranch].title.toUpperCase()} / ${selectedMechanic.level.toUpperCase()}`;
     content.querySelector('.drill-copy h2').textContent = 'Session goals';
     content.querySelector('.drill-copy h2').before(content.querySelector('[data-action="practice"]'));
-    content.querySelector('.drill-copy ol').innerHTML = selectedMechanic.steps.map(step=>`<li>${step}</li>`).join('');
-    content.querySelector('.drill-tags').innerHTML = `<span>${selectedMechanic.steps.length} learning goals</span><span>Solo practice</span><span>${selectedMechanic.available?'Playable drill':'Curriculum preview'}</span>`;
-    content.querySelector('.session-art strong').textContent = selectedMechanic.id==='half-flip'?'180°':selectedMechanic.title.split(' ').map(word=>word[0]).join('');
+    content.querySelector('.drill-copy ol').innerHTML = selectedMechanic.steps.map(step => `<li>${step}</li>`).join('');
+    content.querySelector('.drill-tags').innerHTML = `<span>${selectedMechanic.steps.length} learning goals</span><span>Solo practice</span><span>${selectedMechanic.available ? 'Playable drill' : 'Curriculum preview'}</span>`;
+    content.querySelector('.session-art strong').textContent = selectedMechanic.id === 'half-flip' ? '180°' : selectedMechanic.title.split(' ').map(word => word[0]).join('');
   }
   if (selectedDesign && view === 'training') {
     const tags = [...new Set(PHASES[selectedBranch].modes.flatMap(mode => mode.tags))].sort();
@@ -783,7 +783,7 @@ rim.position.set(-3, 2, -2); scene.add(rim);
 const grid = new THREE.GridHelper(16, 24, styleOption?.tokens.accent ?? accent, document.body.classList.contains('light') ? 0xbabdb4 : 0x48504a);
 grid.position.y = -0.65;
 scene.add(grid);
-const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.46, 2), new THREE.MeshStandardMaterial({color:0xf1f1e8, roughness:0.4, metalness:0.2}));
+const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.46, 2), new THREE.MeshStandardMaterial({ color: 0xf1f1e8, roughness: 0.4, metalness: 0.2 }));
 ball.position.set(2.1, -0.15, -1.2); scene.add(ball);
 let car;
 let carRequest = 0;

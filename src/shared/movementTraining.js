@@ -50,7 +50,7 @@ export function generateMovementSetup(variant, step, varied, index = 0, random =
   const targets = variant === "driving" && step === 2
     ? [0, 1, 2, 3, 4].map(checkpoint => [0, distance + checkpoint * 350, 0])
     : step === 4 ? routes[varied ? routeIndex % routes.length : 0].map(([horizontal, forward, height]) => [horizontal * side * widthScale, forward * spacingScale, height])
-    : variant === "driving" && step === 1 ? [[0, 700, 0], [650, 1300, 0], [1200, 1500, 0], [1700, 1900, 0], [1600, 2800, 0]].map(([horizontal, forward, height]) => [horizontal * side * widthScale, forward * spacingScale, height]) : [[0, distance, 0]];
+      : variant === "driving" && step === 1 ? [[0, 700, 0], [650, 1300, 0], [1200, 1500, 0], [1700, 1900, 0], [1600, 2800, 0]].map(([horizontal, forward, height]) => [horizontal * side * widthScale, forward * spacingScale, height]) : [[0, distance, 0]];
   const offsetLimit = step === 0 ? 40 : step === 2 ? 60 : 100;
   const offset = drivingVariation ? [-1, 0, 1][routeIndex % 3] * offsetLimit + (random() - 0.5) * offsetLimit * 0.4 : 0;
   const dodge = step === 4 ? (varied ? ["backward", "left", "right"][(index + Math.floor(index / 9)) % 3] : "right") : "forward";

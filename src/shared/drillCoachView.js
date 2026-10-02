@@ -25,7 +25,7 @@ const quickTips = {
 };
 
 export class DrillCoachView {
-  constructor(root, { retry = () => {}, nextDrill, previousDrill, stages = [], currentStage = 0, selectStage, variant } = {}) {
+  constructor(root, { retry = () => { }, nextDrill, previousDrill, stages = [], currentStage = 0, selectStage, variant } = {}) {
     this.hud = root;
     this.briefing = stages[currentStage] ? drillBriefing(variant, currentStage, stages[currentStage]) : null;
     root.classList.add("coached-hud");

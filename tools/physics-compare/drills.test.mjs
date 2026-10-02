@@ -10,8 +10,8 @@ import { generateRecoverySetup, recordRecoverySet, recoverySummary } from "../..
 import { DrillCoach, coachingFault, resultCoaching } from "../../src/shared/drillCoach.js";
 import { formatSpeed } from "../../src/shared/rl-units.js";
 
-globalThis.window = { addEventListener() {}, innerWidth: 1024, innerHeight: 768 };
-globalThis.document = { addEventListener() {} };
+globalThis.window = { addEventListener() { }, innerWidth: 1024, innerHeight: 768 };
+globalThis.document = { addEventListener() { } };
 Object.defineProperty(globalThis, "navigator", { configurable: true, value: { getGamepads: () => [] } });
 const { FreePlayMode } = await import("../../src/modes/freePlay.js");
 const { ArenaDrillBase } = await import("../../src/shared/arenaDrill.js");
@@ -116,7 +116,7 @@ test("drill countdown follows attempt time, warns near timeout and clamps at zer
   mode.countdown = { dataset: {} };
   mode.countdownValue = {};
   mode.ctx = { hud: { status: {} } };
-  mode.setScoreRow = () => {};
+  mode.setScoreRow = () => { };
   for (const [elapsed, result, value, state] of [
     [0, null, "15.0 s", "running"],
     [10, null, "5.0 s", "urgent"],
@@ -805,7 +805,7 @@ test("rings vary across six course shapes and fixed practice repeats", () => {
   Object.assign(mode, {
     hitbox: { restZ: 17 }, varied: true, previousPosition: new THREE.Vector3(),
     rings: Array.from({ length: 7 }, () => ({ center: new THREE.Vector3(), normal: new THREE.Vector3(), mesh: new THREE.Object3D() })),
-    spawn(position) { this.physCar = { pos: new THREE.Vector3(...position) }; }, refreshRings() {},
+    spawn(position) { this.physCar = { pos: new THREE.Vector3(...position) }; }, refreshRings() { },
   });
   const courses = [];
   for (let round = 1; round <= 6; round++) {
@@ -833,7 +833,7 @@ test("rings score forward swept crossings inside the hoop, not near misses or re
     crossing: new THREE.Vector3(), offset: new THREE.Vector3(),
     physCar: { pos: new THREE.Vector3(0, 10, 500) },
     rings: [{ center: new THREE.Vector3(0, 0, 500), normal: new THREE.Vector3(0, 1, 0) }],
-    refreshRings() {}, finishRound(success) { this.completed = success; },
+    refreshRings() { }, finishRound(success) { this.completed = success; },
   });
   mode.physCar.pos.x = 300;
   mode.previousPosition.x = 300;
@@ -1093,7 +1093,7 @@ test("soft setups repeat when fixed and bound incoming variation and separate hi
     assert(speed >= 400 - 1e-9 && speed <= 800 + 1e-9);
     assert(setup.ballPosition.every(Number.isFinite));
   }
-  const attempts = Array.from({length: 10}, () => ({success: true}));
+  const attempts = Array.from({ length: 10 }, () => ({ success: true }));
   recordSoftBallSet(102, true, attempts); recordSoftBallSet(102, true, attempts);
   assert.equal(softBallSummary(102, true).mastered, true);
   assert.equal(softBallSummary(102, false).latest, null);
@@ -1180,7 +1180,7 @@ test("result dialog controller navigation supports vertical input, reversal and 
 test("top banner uses the drill-page summary while preserving urgent warnings", () => {
   const view = Object.create(DrillCoachView.prototype);
   view.briefing = { title: MOVEMENT_TRAINING.driving.steps[1].goal, detail: MOVEMENT_TRAINING.driving.steps[1].requirements.join(' / ') };
-  view.failure = { open: false, close() {} };
+  view.failure = { open: false, close() { } };
   view.root = { dataset: {} };
   view.title = {};
   view.detail = {};

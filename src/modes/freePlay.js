@@ -229,30 +229,30 @@ export class FreePlayMode {
 
     scene.add(this.root);
     if (this.diagnostics) {
-    this.botPanel = document.createElement("div");
-    this.botPanel.className = "bot-diagnostic";
-    this.botPanel.innerHTML = '<label><input type="checkbox"> Bot control</label><select data-bot-mode aria-label="Bot mode"><option value="skybot">Skybot ground intercept</option><option value="kamael">Kamael</option><option value="wyrm">Kamael / Wyrm dribbler</option></select><div class="bot-actions"><button type="button" class="btn-ghost" data-bot-reset>Restart run</button><button type="button" class="btn-ghost" data-bot-export disabled>Export replay</button></div><output aria-live="off"></output><small><span style="color:#39ff14">Predicted</span> / <span style="color:#83cdec">observed</span></small>';
-    hud.root.append(this.botPanel);
-    this.botPanel.querySelector("input").addEventListener("change", event => {
-      this.botEnabled = event.target.checked;
-      this.resetState();
-    });
-    this.botPanel.querySelector("[data-bot-mode]").addEventListener("change", event => {
-      this.bot.dispose?.();
-      this.bot = event.target.value === "skybot" ? new SkybotDiagnostic() : new KamaelBot(this.pads);
-      if (this.bot instanceof KamaelBot) this.bot.mode = event.target.value;
-      this.resetState();
-    });
-    this.botPanel.querySelector("[data-bot-reset]").addEventListener("click", () => this.resetState());
-    this.botPanel.querySelector("[data-bot-export]").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(this.bot.recording, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `${this.bot.recording.scenarios[0].id}.json`;
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
+      this.botPanel = document.createElement("div");
+      this.botPanel.className = "bot-diagnostic";
+      this.botPanel.innerHTML = '<label><input type="checkbox"> Bot control</label><select data-bot-mode aria-label="Bot mode"><option value="skybot">Skybot ground intercept</option><option value="kamael">Kamael</option><option value="wyrm">Kamael / Wyrm dribbler</option></select><div class="bot-actions"><button type="button" class="btn-ghost" data-bot-reset>Restart run</button><button type="button" class="btn-ghost" data-bot-export disabled>Export replay</button></div><output aria-live="off"></output><small><span style="color:#39ff14">Predicted</span> / <span style="color:#83cdec">observed</span></small>';
+      hud.root.append(this.botPanel);
+      this.botPanel.querySelector("input").addEventListener("change", event => {
+        this.botEnabled = event.target.checked;
+        this.resetState();
+      });
+      this.botPanel.querySelector("[data-bot-mode]").addEventListener("change", event => {
+        this.bot.dispose?.();
+        this.bot = event.target.value === "skybot" ? new SkybotDiagnostic() : new KamaelBot(this.pads);
+        if (this.bot instanceof KamaelBot) this.bot.mode = event.target.value;
+        this.resetState();
+      });
+      this.botPanel.querySelector("[data-bot-reset]").addEventListener("click", () => this.resetState());
+      this.botPanel.querySelector("[data-bot-export]").addEventListener("click", () => {
+        const blob = new Blob([JSON.stringify(this.bot.recording, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `${this.bot.recording.scenarios[0].id}.json`;
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
     }
     this._unbindHelp = onBindsChange(() => {
       if (hud.help) {

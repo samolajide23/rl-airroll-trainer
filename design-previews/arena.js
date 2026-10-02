@@ -124,7 +124,7 @@ document.addEventListener('click', event => {
   else if (button.id === 'previous') concept = concept === 1 ? 10 : concept - 1;
   else if (button.id === 'next') concept = concept === 10 ? 1 : concept + 1;
   else if (button.id === 'overview') { document.querySelector('#comparison').hidden = !document.querySelector('#comparison').hidden; return; }
-  else if (button.id === 'shortlist') { shortlist = shortlist.includes(concept) ? shortlist.filter(value => value !== concept) : [...shortlist, concept]; try { localStorage.setItem('airlab-arena-concepts', JSON.stringify(shortlist)); } catch {} }
+  else if (button.id === 'shortlist') { shortlist = shortlist.includes(concept) ? shortlist.filter(value => value !== concept) : [...shortlist, concept]; try { localStorage.setItem('airlab-arena-concepts', JSON.stringify(shortlist)); } catch { } }
   else return;
   const focusSelector = button.dataset.mode ? `[data-mode="${selected}"]` : button.dataset.format ? `[data-format="${format}"]` : button.id ? `#${button.id}` : null;
   render();

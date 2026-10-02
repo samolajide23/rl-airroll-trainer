@@ -191,17 +191,19 @@ for (const [rx, ry] of [
   arena.add(ring);
 }
 
-const modeCtx = { scene, camera, hud, arena, nextDrill: () => {
-  const next = nextTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
-  if (next) startMode(next.def, { masteryStep: next.masteryStep, varied: activeMode.varied });
-}, previousDrill: () => {
-  const previous = previousTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
-  if (previous) startMode(previous.def, { masteryStep: previous.masteryStep, varied: activeMode.varied });
-}, selectStage: stage => {
-  if (pauseMenu.open || pauseSettings) return;
-  const def = GAME_MODES.find(mode => mode.id === activeMode?.catalogId);
-  if (def && stage !== activeMode.masteryStep) startMode(def, { masteryStep: stage, varied: activeMode.varied });
-} };
+const modeCtx = {
+  scene, camera, hud, arena, nextDrill: () => {
+    const next = nextTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
+    if (next) startMode(next.def, { masteryStep: next.masteryStep, varied: activeMode.varied });
+  }, previousDrill: () => {
+    const previous = previousTrainingDrill(activeMode?.catalogId, activeMode?.masteryStep);
+    if (previous) startMode(previous.def, { masteryStep: previous.masteryStep, varied: activeMode.varied });
+  }, selectStage: stage => {
+    if (pauseMenu.open || pauseSettings) return;
+    const def = GAME_MODES.find(mode => mode.id === activeMode?.catalogId);
+    if (def && stage !== activeMode.masteryStep) startMode(def, { masteryStep: stage, varied: activeMode.varied });
+  }
+};
 
 /** @type {null | { start(): void, stop(): void, update(dt: number, now: number): void }} */
 let activeMode = null;

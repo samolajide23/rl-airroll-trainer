@@ -1,18 +1,23 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stage Selector Studies | AIRLAB</title>
   <link rel="stylesheet" href="./stages.css">
 </head>
+
 <body>
   <header class="study-toolbar">
     <a href="/">AIRLAB</a>
     <label>Layout <select id="layout"></select></label>
-    <button id="previous" class="icon" title="Previous layout" aria-label="Previous layout"><i data-lucide="chevron-left"></i></button>
-    <button id="next" class="icon" title="Next layout" aria-label="Next layout"><i data-lucide="chevron-right"></i></button>
-    <button id="compare" title="Compare layouts" aria-expanded="false"><i data-lucide="layout-grid"></i><span>Compare</span></button>
+    <button id="previous" class="icon" title="Previous layout" aria-label="Previous layout"><i
+        data-lucide="chevron-left"></i></button>
+    <button id="next" class="icon" title="Next layout" aria-label="Next layout"><i
+        data-lucide="chevron-right"></i></button>
+    <button id="compare" title="Compare layouts" aria-expanded="false"><i
+        data-lucide="layout-grid"></i><span>Compare</span></button>
     <button id="choose"><i data-lucide="check"></i><span>Choose layout</span></button>
   </header>
   <section id="comparison" hidden aria-label="Layout options"></section>
@@ -26,4 +31,5 @@
   </main>
   <script type="module" src="./stages.js"></script>
 </body>
+
 </html>

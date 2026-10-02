@@ -90,8 +90,10 @@ export function syncCarJump(carMesh, car, dt = 0) {
       burst.add(jet);
     }
     carMesh.add(burst);
-    animation = { burst, flash, material, car, first: car.hasJumped,
-      second: car.hasDoubleJumped, flip: car.hasFlipped, age: 1 };
+    animation = {
+      burst, flash, material, car, first: car.hasJumped,
+      second: car.hasDoubleJumped, flip: car.hasFlipped, age: 1
+    };
     carMesh.userData.jumpAnimation = animation;
   }
   if (animation.car !== car || dt <= 0) {
