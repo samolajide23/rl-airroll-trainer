@@ -2,21 +2,307 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { initSync, get_replay_frames_data, parse_replay } from "@rlrml/subtr-actor";
-import { normalizeReplay, prepareReplayMotion, frameAt, samplePose, sampleBoostTrail, createWheelTrack, formatMatchClock, exportSettings } from "../../src/replay/timeline.js";
-import { PerspectiveCamera, Quaternion } from "three";
+import { normalizeReplay, resolveReplayPadLocations, prepareReplayMotion, frameAt, samplePose, sampleBoostTrail, createWheelTrack, formatMatchClock, exportSettings } from "../../src/replay/timeline.js";
+import { PerspectiveCamera, Quaternion, Group } from "three";
+import { groundReplayWheels, ReplayWheels, ReplayBoost } from "../../src/replay/renderEffects.js";
+import { frameReplayGoal } from "../../src/replay/goalCamera.js";
+import { replayGoalCuts, skipReplayGoalPause, replayClipSegments, replayClipTime, replayKickoffs,
+  replayPlaybackSegments, replayPlaybackSample, replayPlaybackOffset } from "../../src/replay/goalCuts.js";
 import { createPlayerCameraTrack, playerCameraSettings, constrainReplayCamera } from "../../src/replay/playerCamera.js";
 import { analyzeReplayBall, compareBallWindow } from "../../src/replay/ballComparison.js";
 import { makeBall, stepBall, RL } from "../../src/shared/rl-physics.js";
 import { Vector3 } from "three";
-import { sampleEventEffects, synthesizeReplayAudio } from "../../src/replay/matchEffects.js";
+import { ReplayMatchEffects, sampleEventEffects, synthesizeReplayAudio } from "../../src/replay/matchEffects.js";
+
+test("replay boost length follows recorded speed and remains stable across seeks", context => {
+  const previous = globalThis.document;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    createRadialGradient: () => ({ addColorStop() {} }), fillRect() {},
+  }) }) };
+  context.after(() => { globalThis.document = previous; });
+  const scene = new Group(), car = new Group();
+  scene.add(car);
+  const effect = new ReplayBoost(scene, car);
+  const frames = [0, 2300].map(speed => ({ Data: { boost_active: true, rigid_body: {
+    location: { x: 0, y: 0, z: 17 }, rotation: { x: 0, y: 0, z: 0, w: 1 },
+    linear_velocity: { x: speed, y: 0, z: 0 },
+  } } }));
+  const replay = { times: [0, 1], players: [{ frames }] };
+  effect.render(replay, 0, 0, car, true);
+  const short = effect.trail.flames.children[0].scale.z;
+  effect.render(replay, 0, 1, car, true);
+  const long = effect.trail.flames.children[0].scale.z;
+  assert(long > short * 1.4);
+  effect.render(replay, 0, 0, car, true);
+  assert.equal(effect.trail.flames.children[0].scale.z, short);
+  effect.dispose();
+});
+
+test("goal cuts preserve unverified pauses and handle clips starting or ending inside a cut", () => {
+  const times = Array.from({ length: 31 }, (_, index) => index);
+  const frame = (centered, moving = false) => ({ Data: { rigid_body: {
+    location: { x: centered ? 0 : 1000, y: 0, z: 93 },
+    rotation: { x: 0, y: 0, z: 0, w: 1 },
+    linear_velocity: { x: moving ? 200 : 0, y: 0, z: 0 },
+  } } });
+  const replay = { times, events: [{ type: "goal", time: 1 }],
+    ball: times.map(time => frame(time >= 8)),
+    players: [{ frames: times.map(time => frame(false, time >= 10)) }] };
+  assert.deepEqual(replayGoalCuts(replay), [{ start: 3, end: 9.75 }]);
+  assert.deepEqual(replayClipSegments(replay, 5, 12), [{ start: 9.75, end: 12 }]);
+  assert.deepEqual(replayClipSegments(replay, 0, 5), [{ start: 0, end: 3 }]);
+  assert.equal(replayClipTime(replayClipSegments(replay, 5, 12), 0), 9.75);
+  const noReset = { ...replay, ball: times.map(() => frame(false)) };
+  assert.deepEqual(replayGoalCuts(noReset), []);
+  assert.deepEqual(replayClipSegments(noReset, 0, 30), [{ start: 0, end: 30 }]);
+  const nextGoal = { ...replay, events: [{ type: "goal", time: 1 }, { type: "goal", time: 7 }] };
+  assert.deepEqual(replayGoalCuts(nextGoal), [{ start: 9, end: 9.75 }]);
+});
+
+test("countdown resume preserves elapsed time while explicit seeking resets it", () => {
+  const segments = [{ start: 6, end: 6, duration: 3, countdown: true }, { start: 6, end: 10, duration: 4 }];
+  for (const elapsed of [1.5, 2.5]) {
+    const paused = replayPlaybackSample(segments, elapsed);
+    const resumed = replayPlaybackOffset(segments, paused.time, elapsed);
+    assert.equal(resumed, elapsed);
+    assert.deepEqual(replayPlaybackSample(segments, resumed), paused);
+    assert.equal(replayPlaybackSample(segments, resumed + 0.5).countdown, elapsed === 1.5 ? 1 : null);
+  }
+  assert.equal(replayPlaybackOffset(segments, 6), 0);
+  assert.equal(replayPlaybackOffset(segments, 8, 1.5), 5);
+});
+
+test("replay boost pads remain visible without telemetry and preserve bases during pickups", () => {
+  const effects = new ReplayMatchEffects(new Group());
+  effects.render({ events: [] }, 0);
+  assert.equal(effects.pads.length, 34);
+  assert.equal(effects.pads.filter(pad => pad.big).length, 6);
+  assert.ok(effects.pads.every(pad => pad.mesh.visible && pad.active));
+  const pad = effects.pads[0];
+  const replay = { events: [{ type: "pad", actor: 10, time: 1, active: false,
+    position: [pad.x * 0.01, 0.7, pad.y * 0.01] },
+  { type: "pad", actor: 10, time: 5, active: true, position: [pad.x * 0.01, 0.7, pad.y * 0.01] }] };
+  effects.render(replay, 2);
+  assert.equal(pad.active, false);
+  assert.equal(pad.mesh.visible, true);
+  assert.ok(pad.mesh.children.every(child => !child.visible));
+  effects.render(replay, 6);
+  assert.equal(pad.active, true);
+  effects.render(replay, 2);
+  assert.equal(pad.active, false);
+  effects.render(replay, 0);
+  assert.ok(effects.pads.every(candidate => candidate.active));
+  effects.dispose();
+});
+
+test("contact flashes fade deterministically and restore wireframes for goal effects", () => {
+  const effects = new ReplayMatchEffects(new Group());
+  const replay = { events: [{ type: "hit", time: 1, position: [0, 1, 0], team: 1 },
+    { type: "goal", time: 2, position: [0, 1, 5], team: 0 }] };
+  effects.render(replay, 1.05);
+  const initial = effects.rings[0].material.opacity;
+  assert.equal(effects.rings[0].material.wireframe, false);
+  effects.render(replay, 1.2);
+  assert(effects.rings[0].material.opacity < initial);
+  effects.render(replay, 2.1);
+  assert.equal(effects.rings[0].material.wireframe, true);
+  effects.render(replay, 1.05);
+  assert.equal(effects.rings[0].material.opacity, initial);
+  assert.equal(effects.rings[0].material.wireframe, false);
+  effects.render(replay, 5);
+  assert(effects.rings.every(mesh => !mesh.visible));
+  effects.dispose();
+});
+
+test("skid marks stay bounded and deterministic across replay seeks", context => {
+  const originalDocument = globalThis.document;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    createRadialGradient: () => ({ addColorStop() {} }), fillRect() {},
+  }) }) };
+  context.after(() => { globalThis.document = originalDocument; });
+  const scene = new Group();
+  const car = new Group();
+  const times = [0, 0.5, 1];
+  const frames = times.map(time => ({ Data: { powerslide_active: true, rigid_body: {
+    location: { x: time * 500, y: 0, z: 17 },
+    rotation: { x: 0, y: 0, z: 0, w: 1 },
+    linear_velocity: { x: 500, y: 0, z: 0 },
+  } } }));
+  const replay = { times, players: [{ frames }] };
+  const effects = new ReplayWheels(scene, replay, 0, car);
+  effects.render(replay, 0, 0.5);
+  assert(effects.marks.count > 0 && effects.marks.count <= 64);
+  const matrices = Array.from(effects.marks.instanceMatrix.array);
+  effects.render(replay, 0, 0.8);
+  effects.render(replay, 0, 0.5);
+  assert.deepEqual(Array.from(effects.marks.instanceMatrix.array), matrices);
+  car.visible = false;
+  effects.render(replay, 0, 0.5);
+  assert.equal(effects.marks.count, 0);
+  effects.dispose();
+  assert.equal(effects.marks.parent, null);
+});
+
+test("pad location consensus rejects sparse, contradictory and colliding identities", () => {
+  const makeEvent = (object, time, pickupPosition, active = false) => ({ type: "pad", object, time, active, position: null, pickupPosition });
+  const first = [0, 0.17, -42.4];
+  const second = [-17.92, 0.17, -41.84];
+  const events = [makeEvent("valid", 1, first), makeEvent("valid", 5, first), makeEvent("valid", 9, null, true),
+    makeEvent("sparse", 2, second), makeEvent("conflict", 3, first), makeEvent("conflict", 7, second)];
+  resolveReplayPadLocations(events);
+  assert.ok(events.filter(event => event.object === "valid").every(event => event.positionSource === "pickup-consensus"));
+  assert.ok(events.filter(event => event.object !== "valid").every(event => event.position === null));
+  const collision = [makeEvent("one", 1, first), makeEvent("one", 5, first), makeEvent("two", 2, first), makeEvent("two", 6, first)];
+  resolveReplayPadLocations(collision);
+  assert.ok(collision.every(event => event.position === null));
+  const confirmed = makeEvent("confirmed", 1, [-10.48, 0.62, -31.1]);
+  confirmed.smallPickupConfirmed = true;
+  confirmed.pickupPath = [[-10.4, 0.9, -32.53]];
+  const returned = makeEvent("confirmed", 5, null, true);
+  resolveReplayPadLocations([confirmed, returned]);
+  assert.deepEqual(confirmed.position, [-9.4, 0.7000000000000001, -33.08]);
+  assert.deepEqual(returned.position, confirmed.position);
+  const ambiguous = makeEvent("ambiguous", 1, first);
+  ambiguous.smallPickupConfirmed = true;
+  ambiguous.pickupPath = [second];
+  resolveReplayPadLocations([ambiguous]);
+  assert.equal(ambiguous.position, null);
+});
+
+test("new 2v2 and 3v3 replays preserve rosters, countdowns and resolved pad returns", () => {
+  initSync({ module: readFileSync(new URL("../../node_modules/@rlrml/subtr-actor/rl_replay_subtr_actor_bg.wasm", import.meta.url)) });
+  for (const [file, teamSize, goals, kickoffs] of [
+    ["001964e4-15bf-4cd7-b715-30fa77bc84c3.replay", 3, 2, 3],
+    ["001e6892-e801-4815-952e-732ff39531a3.replay", 2, 8, 8],
+  ]) {
+    const bytes = readFileSync(new URL(`../../public/replays/${file}`, import.meta.url));
+    const replay = normalizeReplay(get_replay_frames_data(bytes), parse_replay(bytes));
+    assert.equal(replay.players.filter(player => player.blue).length, teamSize);
+    assert.equal(replay.players.filter(player => !player.blue).length, teamSize);
+    assert.ok(replay.players.every(player => player.frames.length === replay.times.length && player.ballCam.length === replay.times.length));
+    assert.equal(replay.events.filter(event => event.type === "goal").length, goals);
+    assert.equal(replayKickoffs(replay).length, kickoffs);
+    assert.equal(replayPlaybackSegments(replay, 0, replay.duration).filter(segment => segment.countdown).length, kickoffs);
+    const padEvents = replay.events.filter(event => event.type === "pad");
+    assert.ok(padEvents.every(event => event.position));
+    assert.equal(new Set(padEvents.map(event => event.object)).size, 34);
+    assert.equal(new Set(padEvents.map(event => JSON.stringify(event.position))).size, 34);
+    const pickups = replay.events.filter(event => event.type === "pad" && event.position && !event.active);
+    assert.equal(new Set(pickups.map(event => event.object)).size, 34);
+    const effects = new ReplayMatchEffects(new Group());
+    let checked = 0;
+    for (const pickup of pickups) {
+      const next = replay.events.find(event => event.type === "pad" && event.object === pickup.object && event.time > pickup.time);
+      if (!next?.active) continue;
+      const pad = effects.pads.find(pad => Math.hypot(pad.x * 0.01 - pickup.position[0], pad.y * 0.01 - pickup.position[2]) < 0.01);
+      assert.ok(pad);
+      effects.render(replay, pickup.time);
+      assert.equal(pad.active, false);
+      effects.render(replay, next.time);
+      assert.equal(pad.active, true);
+      effects.render(replay, pickup.time);
+      assert.equal(pad.active, false);
+      checked++;
+      if (checked === 10) break;
+    }
+    assert.equal(checked, 10);
+    effects.dispose();
+  }
+});
+
+test("replay wheel grounding is bounded, surface-relative and independent of seek order", () => {
+  const car = new Group();
+  const visual = new Group();
+  car.add(visual);
+  car.userData.visual = visual;
+  const pivot = new Group();
+  visual.add(pivot);
+  const center = new Vector3(0, -0.05, 0);
+  visual.userData.calibratedWheels = [{ center, pivot, radius: 0.12 }];
+  car.position.y = 0.21;
+  const bodyPosition = car.position.clone();
+  groundReplayWheels(car);
+  assert.ok(Math.abs(pivot.getWorldPosition(new Vector3()).y - 0.12) < 1e-9);
+  assert.deepEqual(car.position, bodyPosition);
+  const grounded = pivot.position.clone();
+  car.position.y = 3;
+  groundReplayWheels(car);
+  assert.deepEqual(pivot.position, center);
+  car.position.copy(bodyPosition);
+  groundReplayWheels(car);
+  assert.ok(pivot.position.distanceTo(grounded) < 1e-9);
+  car.quaternion.setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2);
+  groundReplayWheels(car, (origin, direction) => {
+    assert.ok(direction.x > 0.99);
+    assert.ok(Math.abs(direction.z) < 1e-9);
+    return { dist: 1 };
+  });
+  assert.ok(pivot.position.distanceTo(center) <= 0.080000001);
+});
 
 test("supplied Rocket League replay decodes into playable tracks", () => {
   initSync({ module: readFileSync(new URL("../../node_modules/@rlrml/subtr-actor/rl_replay_subtr_actor_bg.wasm", import.meta.url)) });
   const bytes = readFileSync(new URL("../../public/replays/0000a984-75af-4b24-b5a6-cb3663fc4efa.replay", import.meta.url));
   const replay = normalizeReplay(get_replay_frames_data(bytes), parse_replay(bytes));
   assert.ok(replay.players.every(player => player.carId === "octane" && player.bodyId === 23));
+  const padEvents = replay.events.filter(event => event.type === "pad");
+  assert.ok(padEvents.every(event => event.position));
+  assert.equal(new Set(padEvents.map(event => event.object)).size, 33);
+  assert.equal(new Set(padEvents.map(event => JSON.stringify(event.position))).size, 33);
   assert.equal(replay.events.filter(event => event.type === "demo").length, 8);
   assert.equal(replay.events.filter(event => event.type === "goal").length, 9);
+  const cuts = replayGoalCuts(replay);
+  assert.equal(cuts.length, 9);
+  const kickoffs = replayKickoffs(replay);
+  assert.equal(kickoffs.length, 10);
+  const playback = replayPlaybackSegments(replay, 0, replay.duration);
+  assert.equal(playback.filter(segment => segment.countdown).length, 10);
+  let outputTime = 0;
+  for (const segment of playback) {
+    if (segment.countdown) {
+      for (const [elapsed, digit] of [[0, 3], [0.99, 3], [1, 2], [2, 1], [2.99, 1]]) {
+        const sample = replayPlaybackSample(playback, outputTime + elapsed);
+        assert.equal(sample.countdown, digit);
+        assert.equal(sample.time, segment.start);
+      }
+      assert.equal(replayPlaybackSample(playback, outputTime + 3).countdown, null);
+      assert.equal(replayPlaybackOffset(playback, segment.start), outputTime);
+    }
+    outputTime += segment.duration;
+  }
+  assert.equal(replayPlaybackSegments(replay, 10, 20).some(segment => segment.countdown), false);
+  for (const cut of cuts) {
+    assert.equal(skipReplayGoalPause(replay, cut.start), cut.end);
+    assert.equal(skipReplayGoalPause(replay, cut.start - 0.01), cut.start - 0.01);
+    const segments = replayClipSegments(replay, cut.start - 1, cut.end + 1);
+    assert.deepEqual(segments, [{ start: cut.start - 1, end: cut.start }, { start: cut.end, end: cut.end + 1 }]);
+    assert.equal(replayClipTime(segments, 1), cut.end);
+    assert.equal(replayClipTime(segments, 1.5), cut.end + 0.5);
+    assert.deepEqual(replayClipSegments(replay, cut.start, cut.end), []);
+  }
+  for (const goal of replay.events.filter(event => event.type === "goal")) {
+    for (const aspect of [16 / 9, 9 / 16]) {
+      const shot = new PerspectiveCamera(65, aspect, 0.1, 1500);
+      const timestamp = goal.time - 1;
+      assert.equal(frameReplayGoal(shot, replay, timestamp), 1);
+      const position = shot.position.clone();
+      const rotation = shot.quaternion.clone();
+      shot.updateMatrixWorld(true);
+      const sign = goal.team === 0 ? 1 : -1;
+      const points = [-9.5, 9.5].flatMap(horizontal => [0, 7.5].map(height => new Vector3(horizontal, height, sign * 51.2)));
+      points.push(samplePose(replay.ball, frameAt(replay.times, timestamp)).position.clone());
+      for (const point of points) {
+        point.project(shot);
+        assert.ok(Math.abs(point.x) < 0.95 && Math.abs(point.y) < 0.95 && point.z < 1);
+      }
+      frameReplayGoal(shot, replay, goal.time + 1);
+      frameReplayGoal(shot, replay, timestamp);
+      assert.ok(shot.position.distanceTo(position) < 1e-9);
+      assert.ok(shot.quaternion.angleTo(rotation) < 1e-7);
+      assert.equal(frameReplayGoal(shot, replay, goal.time - 3), 0);
+      assert.equal(frameReplayGoal(shot, replay, goal.time + 3), 0);
+    }
+  }
   assert.ok(replay.events.some(event => event.type === "pad" && event.active));
   assert.ok(replay.events.some(event => event.type === "pad" && !event.active));
   const demo = replay.events.find(event => event.type === "demo");
@@ -115,6 +401,28 @@ test("supplied Rocket League replay decodes into playable tracks", () => {
   assert.ok(speedJumps(replay.ball) < 100);
   assert.ok(speedJumps(replay.ball.slice(), 1770, 1785) > 1400);
   assert.ok(speedJumps(replay.ball, 1770, 1785) < 100);
+  let contactCandidates = 0;
+  for (let index = 1; index < replay.times.length; index++) {
+    const first = replay.ball[index - 1]?.Data?.rigid_body;
+    const next = replay.ball[index]?.Data?.rigid_body;
+    const interval = replay.times[index] - replay.times[index - 1];
+    if (!first?.linear_velocity || !next?.linear_velocity || interval <= 0 || interval > 0.1) continue;
+    const velocity = value => new Vector3(value.x, value.y, value.z);
+    if (velocity(first.linear_velocity).distanceTo(velocity(next.linear_velocity)) <= 100) continue;
+    contactCandidates++;
+    for (const endpoint of [index - 1, index]) {
+      const location = replay.ball[endpoint].Data.rigid_body.location;
+      const expected = new Vector3(location.x, location.z, location.y).multiplyScalar(0.01);
+      assert.ok(samplePose(replay.ball, frameAt(replay.times, replay.times[endpoint])).position.distanceTo(expected) < 1e-9);
+    }
+    const start = new Vector3(first.location.x, first.location.z, first.location.y).multiplyScalar(0.01);
+    const finish = new Vector3(next.location.x, next.location.z, next.location.y).multiplyScalar(0.01);
+    for (const blend of [0.25, 0.5, 0.75]) {
+      const pose = samplePose(replay.ball, frameAt(replay.times, replay.times[index - 1] + interval * blend));
+      assert.ok(pose.position.distanceTo(start.clone().lerp(finish, blend)) < 1e-8);
+    }
+  }
+  assert.ok(contactCandidates > 400);
 });
 
 test("replay camera stays inside arena walls without moving an unobstructed camera", () => {

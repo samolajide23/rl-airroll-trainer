@@ -95,6 +95,23 @@ and angular velocity exactly. Required Clang flags are `-ffp-contract=off`,
 `-DBT_NO_SIMD_OPERATOR_OVERLOADS`, `-DBT_USE_SSE`, `-DBT_USE_SSE_IN_API`,
 `-DBT_USE_SIMD_VECTOR3` and `-include emmintrin.h`.
 
+`jump-wall-trace.mjs` runs the compiled `roof_trace.cpp` `jump-wall` mode,
+checks native fidelity against the immutable 180-tick wall-jump recording, and
+performs six process-only first-contact witness substitutions:
+
+```powershell
+node tools/physics-compare/jump-wall-trace.mjs --exe tools/physics-compare/out/native/jump_wall_trace.exe
+```
+
+Build this executable from the current tracer and pinned RocketSim sources with
+the SIMD flags above; the complete build requirements and measured results are
+in `docs/strict-fresh-parity.md`. Defaults use the immutable
+`out/edge-audit-20261002-v1` input and separate
+`out/jump-wall-followup/contact-diagnostic` output. Options `--root`, `--meshes`,
+and `--out` override those paths. Node 24 module load hooks modify only child
+process source in memory. Injected witnesses are diagnostic, not certification
+results; production physics, references, and audit tolerances are unchanged.
+
 `roof_trace_sse.exe MESH_DIRECTORY replay` reads 1200 whitespace-separated
 control rows from stdin: throttle, steer, pitch, yaw, roll, boost, jump,
 handbrake. Boolean fields use 0/1. It emits car and ball contacts around the

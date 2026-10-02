@@ -484,10 +484,10 @@ export function createCar({
   const paint = new THREE.MeshPhysicalMaterial({
     color,
     map: marble ? createMarbleTexture() : null,
-    roughness: 0.28,
-    metalness: 0.35,
+    roughness: 0.34,
+    metalness: 0.25,
     clearcoat: 1,
-    clearcoatRoughness: 0.06,
+    clearcoatRoughness: 0.16,
     ...o,
   });
   const glass = new THREE.MeshPhysicalMaterial({
@@ -501,8 +501,8 @@ export function createCar({
   });
   const dark = new THREE.MeshStandardMaterial({
     color: 0x111113,
-    roughness: 0.55,
-    metalness: 0.6,
+    roughness: 0.78,
+    metalness: 0.05,
     ...o,
   });
   const metal = new THREE.MeshStandardMaterial({

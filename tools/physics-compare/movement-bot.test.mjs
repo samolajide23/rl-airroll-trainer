@@ -6,6 +6,8 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { Vector3 } from "three";
 import { buildMovementScenarios, buildAuditScenarios } from "./movement-bot.mjs";
 import { auditLeaves, auditState, auditSetup, requestedRotation, validateAuditScenarios, stateSchema } from "./audit-state.mjs";
 import { makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
@@ -247,7 +249,102 @@ test("coupled floor rebound preserves immutable steering trajectory without rese
   }
 });
 
-test("goal-roof wheel normals preserve continuous native checkpoints through tick 122", async () => {
+test("coupled flips and ceiling contacts preserve immutable checkpoints without reseeding", async () => {
+  const expected = new Map([
+    ["movement_ceiling_impact", [
+      [37, [[-815.2799682617188, 0, 2013.793212890625], [566.31689453125, 0, 487.3059387207031], [-4.2632527351379395, 3.4353833198547363, 0.5223217606544495]]],
+      [38, [[-811.0400390625, -0.10359302163124084, 2014.451171875], [508.78997802734375, -12.43116283416748, 285.706787109375], [4.555018901824951, -3.055729389190674, -0.40535789728164673]]],
+      [40, [[-803.3538818359375, -0.05512020364403725, 2013.939453125], [446.0650329589844, 0.45176035165786743, 49.29803466796875], [2.6253371238708496, -1.543461561203003, 0.41175681352615356]]],
+      [70, [[-696.93115234375, 0.5838936567306519, 1983.5615234375], [425.058837890625, 2.5372796058654785, -184.42930603027344], [-0.3436069190502167, 0.07866617292165756, 0.4912218451499939]]],
+      [71, [[-693.3890380859375, 0.6050376892089844, 1981.9796142578125], [425.058837890625, 2.5372796058654785, -189.84596252441406], [-0.3300257623195648, 0.07824024558067322, 0.48322904109954834]]],
+      [119, [[-523.366455078125, 1.6199496984481812, 1852.9581298828125], [425.058837890625, 2.5372796058654785, -449.845703125], [-0.04878263548016548, 0.05055617168545723, 0.22000569105148315]]],
+      [120, [[-519.8243408203125, 1.6410937309265137, 1849.1641845703125], [425.058837890625, 2.5372796058654785, -455.26239013671875], [-0.046904198825359344, 0.04992206022143364, 0.2164486050605774]]],
+    ]],
+    ["movement_ground_flip_forward", [
+      [40, [[96.35972595214844, -1.508056879043579, 67.97015380859375], [356.670654296875, -25.38553810119629, 184.56178283691406], [0.7495425343513489, 4.866884708404541, -2.449820041656494]]],
+      [120, [[336.6070556640625, -19.935632705688477, 91.40010070800781], [360.86163330078125, -28.030317306518555, -160.50877380371094], [0.4611385464668274, 2.890158176422119, 0.04090286046266556]]],
+    ]],
+    ["movement_flip_window_before", [
+      [176, [[100.60098266601562, -2.4416706562042236, 65.91822052001953], [366.91888427734375, -53.86216735839844, 139.30215454101562], [0.8559075593948364, 4.904812335968018, -0.8320695161819458]]],
+      [180, [[112.38223266601562, -4.349844455718994, 72.51094818115234], [351.1024475097656, -57.25166320800781, 190.3797149658203], [-0.0119756069034338, 5.491665840148926, -0.3024269640445709]]],
+    ]],
+  ]);
+  const sources = await Promise.all(["scenarios.json", "ball-scenarios.json", "contact-scenarios.json"].map(async name => JSON.parse(await readFile(new URL(name, import.meta.url), "utf8"))));
+  const source = buildAuditScenarios(...sources);
+  source.scenarios = source.scenarios.filter(scenario => expected.has(scenario.id));
+  assert.equal(source.scenarios.length, expected.size);
+  const output = await mkdtemp(path.join(tmpdir(), "airlab-flip-damping-"));
+  try {
+    const manifest = path.join(output, "scenarios.json");
+    await writeFile(manifest, JSON.stringify(source));
+    await promisify(execFile)(process.execPath, [
+      fileURLToPath(new URL("./run_js.mjs", import.meta.url)), "--scenarios", manifest, "--out", output,
+    ]);
+    for (const [id, checkpoints] of expected) {
+      const replay = JSON.parse(await readFile(path.join(output, `${id}.json`), "utf8"));
+      assert.equal(replay.frames.length, checkpoints.at(-1)[0] + 1);
+      for (const [tick, vectors] of checkpoints) {
+        ["pos", "vel", "ang_vel"].forEach((field, index) => {
+          const error = Math.hypot(...replay.frames[tick][field].map((value, axis) => value - vectors[index][axis]));
+          assert(error <= [0.0002, 0.0005, 0.00001][index], `${id}.${field} at tick ${tick}: ${error}`);
+        });
+      }
+      if (id === "movement_ceiling_impact") {
+        const actual = new Vector3(...replay.frames[120].rot.up);
+        const reference = new Vector3(0.005631349980831146, 0.19987304508686066, 0.979805588722229);
+        const error = Math.atan2(actual.clone().cross(reference).length(), actual.dot(reference)) * 180 / Math.PI;
+        assert(error <= 0.00005, `${id}.up at tick 120: ${error}`);
+      }
+      if (id === "movement_ground_flip_forward") {
+        const orientations = new Map([
+          [107, [[0.24742740392684937, -0.053170040249824524, 0.9674464464187622], [0.15754662454128265, 0.987412691116333, 0.013974323868751526], [-0.9560118913650513, 0.14896029233932495, 0.2526897192001343]]],
+          [110, [[0.3375304937362671, -0.06714266538619995, 0.9389169216156006], [0.15754663944244385, 0.987412691116333, 0.013974320143461227], [-0.9280366897583008, 0.14320646226406097, 0.3438599705696106]]],
+          [120, [[0.5750201940536499, -0.10323340445756912, 0.8116000890731812], [0.15754659473896027, 0.987412691116333, 0.01397424191236496], [-0.8028267621994019, 0.11982935667037964, 0.5840462446212769]]],
+        ]);
+        for (const [tick, vectors] of orientations) {
+          ["forward", "right", "up"].forEach((field, index) => {
+            const actual = new Vector3(...replay.frames[tick].rot[field]);
+            const reference = new Vector3(...vectors[index]);
+            const error = Math.atan2(actual.clone().cross(reference).length(), actual.dot(reference)) * 180 / Math.PI;
+            assert(error <= 0.00005, `${id}.${field} at tick ${tick}: ${error}`);
+          });
+        }
+      }
+    }
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
+test("steering and yawed flight preserve every immutable rigid vector without reseeding", async () => {
+  const expected = new Map([
+    ["movement_ground_analog_steer", [121, "3d8ed78e8b87e951d6d724dab273bd6cb46b9a610d1e11d9bf5936c0a0de1cbe"]],
+    ["movement_ground_fast_steer", [91, "15b6f77850b12bc229b1709670c6e2e3c985072250ec3484cd0b30045dbb9ba3"]],
+    ["movement_combo_from_yaw90", [91, "81dd900ddd8170e80ff3b1a205139449cb853924846b5b68e6e648a3ed5b9220"]],
+  ]);
+  const sources = await Promise.all(["scenarios.json", "ball-scenarios.json", "contact-scenarios.json"].map(async name => JSON.parse(await readFile(new URL(name, import.meta.url), "utf8"))));
+  const source = buildAuditScenarios(...sources);
+  source.scenarios = source.scenarios.filter(scenario => expected.has(scenario.id));
+  assert.equal(source.scenarios.length, expected.size);
+  const output = await mkdtemp(path.join(tmpdir(), "airlab-native-steering-"));
+  try {
+    const manifest = path.join(output, "scenarios.json");
+    await writeFile(manifest, JSON.stringify(source));
+    await promisify(execFile)(process.execPath, [
+      fileURLToPath(new URL("./run_js.mjs", import.meta.url)), "--scenarios", manifest, "--out", output,
+    ]);
+    for (const [id, [count, digest]] of expected) {
+      const replay = JSON.parse(await readFile(path.join(output, `${id}.json`), "utf8"));
+      assert.equal(replay.frames.length, count);
+      const vectors = replay.frames.map(frame => ["pos", "vel", "ang_vel"].map(field => frame[field]));
+      assert.equal(createHash("sha256").update(JSON.stringify(vectors)).digest("hex"), digest, id);
+    }
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
+test("goal-roof motion preserves native checkpoints through landing and tick 360", async () => {
   const sources = await Promise.all(["scenarios.json", "ball-scenarios.json", "contact-scenarios.json"].map(async name => JSON.parse(await readFile(new URL(name, import.meta.url), "utf8"))));
   const source = buildAuditScenarios(...sources);
   source.scenarios = source.scenarios.filter(scenario => scenario.id === "movement_movement_bot_goal_roof");
@@ -271,6 +368,12 @@ test("goal-roof wheel normals preserve continuous native checkpoints through tic
     [64, [[137.4456787109375, 5567.9619140625, 586.2538452148438], [569.7587280273438, 102.11902618408203, -32.553810119628906], [0.002737656468525529, 0.2012891173362732, 0.6268882751464844]]],
     [96, [[320.24114990234375, 5617.01171875, 570.5731201171875], [776.81591796875, 273.5215148925781, -87.46083068847656], [-0.0000718494993634522, 0.2232353836297989, 0.6978321075439453]]],
     [122, [[499.91387939453125, 5696.2578125, 545.2332763671875], [867.0465698242188, 454.6567077636719, -145.3819580078125], [-0.00004950509173795581, 0.217311292886734, 0.6795094609260559]]],
+    [123, [[507.15728759765625, 5700.107421875, 544.0023193359375], [869.208984375, 461.9664611816406, -147.71946716308594], [-0.0000521597103215754, 0.216812863945961, 0.6779232621192932]]],
+    [148, [[691.8447265625, 5816.4287109375, 506.7891540527344], [892.8975830078125, 647.85400390625, -209.30145263671875], [-0.09959772974252701, 0.23741261661052704, 0.6805659532546997]]],
+    [248, [[1417.9298095703125, 6431.623046875, 60.312713623046875], [879.821044921875, 751.9443359375, -820.9093017578125], [-0.1329265981912613, 0.08017779141664505, -0.02408086322247982]]],
+    [249, [[1424.654541015625, 6437.375, 56.237579345703125], [806.9559326171875, 690.1865844726562, -509.126220703125], [5.493149757385254, 0.1510753333568573, -0.2290775179862976]]],
+    [264, [[1516.0633544921875, 6512.13623046875, 15.265176773071289], [616.8436279296875, 496.28662109375, -103.66984558105469], [2.2607338428497314, -1.1428245306015015, -0.2669147849082947]]],
+    [360, [[1430.076171875, 6411.88720703125, 17.031917572021484], [-416.0600280761719, -551.8724975585938, 0.00009387731552124023], [0.000060323451180011034, -0.00007233105134218931, 0.6767318844795227]]],
   ]);
   const output = await mkdtemp(path.join(tmpdir(), "airlab-goal-roof-"));
   try {
@@ -281,6 +384,9 @@ test("goal-roof wheel normals preserve continuous native checkpoints through tic
     ]);
     const replay = JSON.parse(await readFile(path.join(output, `${scenario.id}.json`), "utf8"));
     assert.equal(replay.frames.length, 361);
+    const prefix = replay.frames.slice(0, 249).map(frame => ["pos", "vel", "ang_vel"].map(field => frame[field]));
+    assert.equal(createHash("sha256").update(JSON.stringify(prefix)).digest("hex"),
+      "31eb51bc2823a30325f1dd4b909589ec1d07a4cebf6d14b5cfd4e8d50f4c97a9");
     for (const [tick, expected] of checkpoints) {
       const actual = replay.frames[tick];
       ["pos", "vel", "ang_vel"].forEach((field, index) => {
@@ -288,7 +394,7 @@ test("goal-roof wheel normals preserve continuous native checkpoints through tic
         assert(error <= [0.0002, 0.0005, 0.00001][index], `${field} at tick ${tick}: ${error}`);
       });
       assert.equal(actual.boost, 100);
-      assert.equal(actual.on_ground, tick !== 1);
+      assert.equal(actual.on_ground, ![1, 248, 249].includes(tick));
     }
   } finally {
     await rm(output, { recursive: true, force: true });

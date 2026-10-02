@@ -98,6 +98,46 @@ export function formatMatchClock(match) {
   return `${match.overtime ? "+" : ""}${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+export function resolveReplayPadLocations(events) {
+  const pads = [[0, -4240], [-1792, -4184], [1792, -4184], [-940, -3308], [940, -3308],
+    [0, -2816], [-3584, -2484], [3584, -2484], [-1788, -2300], [1788, -2300],
+    [-2048, -1036], [0, -1024], [2048, -1036], [-1024, 0], [1024, 0],
+    [-2048, 1036], [0, 1024], [2048, 1036], [-1788, 2300], [1788, 2300],
+    [-3584, 2484], [3584, 2484], [0, 2816], [-940, 3308], [940, 3308],
+    [-1792, 4184], [1792, 4184], [0, 4240], [-3584, 0], [3584, 0],
+    [-3072, 4096], [3072, 4096], [-3072, -4096], [3072, -4096]]
+    .map(([x, y], index) => ({ x, y, z: index < 28 ? 70 : 73, big: index >= 28 }));
+  const evidence = new Map();
+  for (const event of events) {
+    if (event.type !== "pad" || event.active || event.position || !event.pickupPosition || !event.object) continue;
+    if (event.pickupPosition[1] > 1.4) continue;
+    const positions = [event.pickupPosition, ...(event.smallPickupConfirmed ? event.pickupPath ?? [] : [])];
+    const nearby = pads.filter(pad => (!event.smallPickupConfirmed || !pad.big) && positions.some(position =>
+      position[1] <= 1.4 && Math.hypot(pad.x * 0.01 - position[0],
+        pad.y * 0.01 - position[2]) < (pad.big ? 2.8 : 2.1)));
+    if (nearby.length !== 1) continue;
+    const votes = evidence.get(event.object) ?? [];
+    votes.push({ pad: nearby[0], confirmed: event.smallPickupConfirmed === true });
+    evidence.set(event.object, votes);
+  }
+  const resolved = new Map([...evidence].filter(([, votes]) => (votes.length >= 2 || votes.some(vote => vote.confirmed)) &&
+    votes.every(vote => vote.pad === votes[0].pad))
+    .map(([object, votes]) => [object, votes[0].pad]));
+  const owners = new Map();
+  for (const [object, pad] of resolved) {
+    const names = owners.get(pad) ?? [];
+    names.push(object);
+    owners.set(pad, names);
+  }
+  for (const event of events) {
+    if (event.type !== "pad" || event.position) continue;
+    const pad = resolved.get(event.object);
+    if (!pad || owners.get(pad).length !== 1) continue;
+    event.position = [pad.x * 0.01, pad.z * 0.01, pad.y * 0.01];
+    event.positionSource = "pickup-consensus";
+  }
+}
+
 function recordedEvents(raw, replay, origin) {
   const objects = field(raw, "objects") ?? [];
   const actors = new Map();
@@ -105,6 +145,7 @@ function recordedEvents(raw, replay, origin) {
   const events = [];
   for (const frame of field(field(raw, "network_frames"), "frames") ?? []) {
     const time = field(frame, "time") - origin;
+    const pickups = [];
     for (const actor of field(frame, "new_actors") ?? []) {
       const location = field(field(actor, "initial_trajectory"), "location");
       const actorId = field(actor, "actor_id");
@@ -131,7 +172,11 @@ function recordedEvents(raw, replay, origin) {
         const value = field(pickup, "picked_up");
         if (value === undefined || !/VehiclePickup_Boost/.test(state.name ?? "")) continue;
         const active = value === 255 || value === false;
-        if (state.active !== active) events.push({ type: "pad", time, actor, active, position: state.position });
+        if (state.active !== active) {
+          const event = { type: "pad", time, actor, active, position: state.position, object: state.name };
+          events.push(event);
+          if (!active && state.active !== undefined) pickups.push({ event, instigator: field(pickup, "instigator") });
+        }
         state.active = active;
       } else if (/Car_TA:ReplicatedDemolish/.test(name ?? "")) {
         const demo = field(attribute, "DemolishFx") ?? field(attribute, "Demolish");
@@ -147,6 +192,27 @@ function recordedEvents(raw, replay, origin) {
         if (team !== 0 && team !== 1) continue;
         const pose = samplePose(replay.ball, frameAt(replay.times, time));
         if (pose) events.push({ type: "hit", time, team, position: pose.position.toArray() });
+      }
+    }
+    for (const { event, instigator } of pickups) {
+      const collector = actors.get(instigator);
+      const id = actors.get(collector?.pri)?.id;
+      const player = replay.players.find(player => identity(player.id) === identity(id));
+      const pose = player ? samplePose(player.frames, frameAt(replay.times, time)) : null;
+      event.pickupPosition = pose?.position.toArray() ?? null;
+      if (player) {
+        const cursor = frameAt(replay.times, time);
+        const previous = player.frames[cursor.index - 1]?.Data;
+        const current = player.frames[cursor.index]?.Data;
+        const nextIndex = cursor.index + 1;
+        if (previous && current && replay.times[cursor.index] - replay.times[cursor.index - 1] <= 0.05 &&
+          Math.abs(current.boost_amount - previous.boost_amount - 31) < 0.5 && !current.boost_active) {
+          event.smallPickupConfirmed = true;
+          if (replay.times[nextIndex] - time <= 0.05) {
+            const next = samplePose(player.frames, { index: nextIndex, next: nextIndex, blend: 0 });
+            if (next) event.pickupPath = [next.position.toArray()];
+          }
+        }
       }
     }
     for (const event of events) {
@@ -179,6 +245,7 @@ function recordedEvents(raw, replay, origin) {
       if (frame?.Data && replay.times[index] >= event.time && replay.times[index] <= (event.end ?? replay.duration)) frame.Data.demolished = true;
     });
   }
+  resolveReplayPadLocations(events);
   return events.sort((first, next) => first.time - next.time);
 }
 
@@ -187,6 +254,7 @@ const motionTimelines = new WeakMap();
 export function prepareReplayMotion(replay) {
   for (const frames of [replay.ball, ...replay.players.map(player => player.frames)]) {
     const times = replay.times.slice();
+    const contactIntervals = new Set();
     let start = 0;
     let durations = [];
     const finish = end => {
@@ -214,8 +282,10 @@ export function prepareReplayMotion(replay) {
         const velocity = vector(bodies[0].linear_velocity).add(vector(bodies[1].linear_velocity)).multiplyScalar(0.5);
         const inferred = displacement.dot(velocity) / velocity.lengthSq();
         const residual = displacement.clone().addScaledVector(velocity, -inferred).length();
+        const velocityChange = vector(bodies[0].linear_velocity).distanceTo(vector(bodies[1].linear_velocity));
+        if (frames === replay.ball && velocityChange > 100) contactIntervals.add(index);
         if (velocity.length() > 100 && displacement.length() < 1500 &&
-            vector(bodies[0].linear_velocity).distanceTo(vector(bodies[1].linear_velocity)) / interval <= 5000 &&
+          !contactIntervals.has(index) && velocityChange / interval <= 5000 &&
             inferred >= interval * 0.2 && inferred <= interval * 2 &&
             residual <= Math.max(2, displacement.length() * 0.1)) duration = inferred;
       }
@@ -226,7 +296,7 @@ export function prepareReplayMotion(replay) {
       } else durations.push(duration);
     }
     finish(replay.times.length - 1);
-    motionTimelines.set(frames, { original: replay.times, times });
+    motionTimelines.set(frames, { original: replay.times, times, contactIntervals });
   }
 }
 
@@ -303,7 +373,8 @@ export function samplePose(frames, cursor) {
       const displacement = finish.clone().sub(start);
       const expected = position(velocity).add(finishVelocity).multiplyScalar(interval / 2);
       const acceleration = position(velocity).distanceTo(finishVelocity) / interval;
-      if (acceleration <= 50 && expected.distanceTo(displacement) <= Math.max(0.02, displacement.length() * 0.25)) {
+        if (!timeline?.contactIntervals.has(cursor.next) && acceleration <= 50 &&
+          expected.distanceTo(displacement) <= Math.max(0.02, displacement.length() * 0.25)) {
         const squared = blend * blend;
         const cubed = squared * blend;
         sampledPosition = start.clone().multiplyScalar(2 * cubed - 3 * squared + 1)

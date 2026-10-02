@@ -8,10 +8,10 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import * as THREE from "three";
-import { RL, axes, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
+import { RL, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
 import { auditState, auditPads, auditSetup, validateAuditScenarios } from "./audit-state.mjs";
 import { makeBall, stepBall, synchronizeBallBulletState } from "../../src/shared/rl-physics.js";
-import { RS, setCarOrientation } from "../../src/shared/carSim.js";
+import { RS, carFrame, setCarOrientation, setCarPosition } from "../../src/shared/carSim.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
 import { createSoccarBoostPads, stepBoostPads } from "../../src/shared/boostPads.js";
 import { validatePair } from "./trajectory.mjs";
@@ -123,14 +123,14 @@ function prepareGround(car, initial, settleTicks, pads) {
   }
 
   const settledZ = car.pos.z;
-  car.pos.set(initial.pos[0], initial.pos[1], settledZ);
+  setCarPosition(car, new THREE.Vector3(initial.pos[0], initial.pos[1], settledZ));
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
   stepCar(car, idle, RL.DT);
   stepBoostPads(pads, car, RL.DT);
-  car.pos.set(car.pos.x, car.pos.y, car.pos.z);
+  setCarPosition(car, car.pos);
   car.vel.set(...initial.vel);
   car.omega.set(...initial.ang_vel);
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
@@ -163,7 +163,7 @@ function prepareAirborne(car, initial) {
 }
 
 function rotPayload(car) {
-  const { f, l, u } = axes(car.q); // l = car right
+  const { f, r: l, u } = carFrame(car);
   return {
     forward: vecList(f),
     right: vecList(l),

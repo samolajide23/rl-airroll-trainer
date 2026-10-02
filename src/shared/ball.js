@@ -67,6 +67,10 @@ function normalizeBallModel(root) {
         for (const m of mats) {
           if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
           if ("envMapIntensity" in m) m.envMapIntensity = 0.85;
+          m.roughness = Math.max(m.roughness, 0.38);
+          m.metalness = Math.min(m.metalness, 0.35);
+          m.emissiveIntensity = 0.3;
+          if (m.map) m.map.anisotropy = 8;
         }
       }
     }
@@ -102,6 +106,7 @@ export function preloadBall() {
         skin[0].colorSpace = THREE.SRGBColorSpace;
         for (const texture of skin) {
           texture.flipY = false;
+          texture.anisotropy = 8;
           texture.repeat.set(0.32, -0.26);
           texture.offset.set(0.035, 0.025);
         }
@@ -141,12 +146,13 @@ export function cloneBallMesh(ballId = getSelectedBallId()) {
         for (const material of materials) {
           material.map = blossomTextures[0];
           material.normalMap = blossomTextures[1];
+          material.normalScale.set(0.65, 0.65);
+          material.roughnessMap = null;
           material.color?.setHex(0xffffff);
           material.emissive?.setHex(0x000000);
           material.emissiveMap = null;
           material.aoMap = null;
           material.metalnessMap = null;
-          material.roughnessMap = null;
           material.metalness = 0.15;
           material.roughness = 0.55;
           material.needsUpdate = true;

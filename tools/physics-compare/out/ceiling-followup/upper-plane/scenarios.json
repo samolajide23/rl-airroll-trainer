@@ -1,0 +1,5380 @@
+{
+  "version": 3,
+  "notes": "Independent unseeded every-tick state audit; unsupported fields fail coverage. Live balls in every car case.",
+  "defaults": {
+    "tick_rate": 120,
+    "settle_ticks": 240,
+    "initial": {
+      "pos": [
+        0,
+        0,
+        800
+      ],
+      "vel": [
+        0,
+        0,
+        0
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "yaw": 0,
+      "pitch": 0,
+      "roll": 0,
+      "boost": 100,
+      "on_ground": false
+    },
+    "controls": {
+      "throttle": 0,
+      "steer": 0,
+      "pitch": 0,
+      "yaw": 0,
+      "roll": 0,
+      "boost": false,
+      "jump": false,
+      "handbrake": false
+    }
+  },
+  "scenarios": [
+    {
+      "id": "basic_raw_spawn_octane",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "octane"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "basic_raw_spawn_dominus",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "dominus"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "basic_raw_spawn_plank",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "plank"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "basic_raw_spawn_breakout",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "breakout"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "basic_raw_spawn_hybrid",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "hybrid"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "basic_raw_spawn_merc",
+      "ticks": 120,
+      "preparation": "raw",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "merc"
+      },
+      "audit": true,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "ball_ball_sleep",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          93.15
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_freefall",
+      "entity": "ball",
+      "game_mode": "void",
+      "ticks": 120,
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "ball_ball_drag",
+      "entity": "ball",
+      "game_mode": "void",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          1000,
+          -500,
+          200
+        ],
+        "ang_vel": [
+          1,
+          2,
+          3
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_speed_cap",
+      "entity": "ball",
+      "game_mode": "void",
+      "ticks": 30,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          7000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          10,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_void_below_floor",
+      "entity": "ball",
+      "game_mode": "void",
+      "ticks": 240,
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "ball_ball_floor_drop",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "ball_ball_floor_spin",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          100
+        ],
+        "vel": [
+          1000,
+          400,
+          -1000
+        ],
+        "ang_vel": [
+          1,
+          2,
+          3
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_wall",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          3900,
+          0,
+          1000
+        ],
+        "vel": [
+          1500,
+          200,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_ceiling",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1850
+        ],
+        "vel": [
+          0,
+          0,
+          1500
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "ball_ball_goal",
+      "entity": "ball",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          4800,
+          300
+        ],
+        "vel": [
+          0,
+          1500,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "movement_flip_cancel_sustained",
+      "ticks": 120,
+      "description": "Hold opposing pitch until the entire dodge torque window ends",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          1800,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_cancel_partial",
+      "ticks": 90,
+      "description": "Partial opposing pitch reduces rather than removes dodge torque",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "pitch": 0.5
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_stall",
+      "ticks": 90,
+      "description": "Opposing yaw and roll select a flip but cancel its direction",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "yaw": 1,
+            "roll": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_reset_jump",
+      "ticks": 90,
+      "description": "A car with a restored airborne flip uses a neutral second jump",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "air_time_since_jump": 0,
+        "has_jumped": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_window_last_tick",
+      "ticks": 30,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2000
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "air_time_since_jump": 1.2333333333333334
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 30,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_window_expired",
+      "ticks": 30,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2000
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "air_time_since_jump": 1.25
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 30,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_dominus_jump",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "dominus"
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_plank_jump",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "plank"
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_breakout_jump",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "breakout"
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_hybrid_jump",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "hybrid"
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_merc_jump",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          19
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true,
+        "hitbox": "merc"
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_dominus_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "hitbox": "dominus"
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_plank_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "hitbox": "plank"
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_breakout_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "hitbox": "breakout"
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_hybrid_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "hitbox": "hybrid"
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_merc_landing",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false,
+        "hitbox": "merc"
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_double_jump_early",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {}
+        },
+        {
+          "until_tick": 61,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "soccar",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_window_before",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 24,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 151,
+          "controls": {}
+        },
+        {
+          "until_tick": 152,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roof_recovery",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          80
+        ],
+        "vel": [
+          0,
+          0,
+          -100
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 3.141592653589793,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 60,
+          "controls": {}
+        },
+        {
+          "until_tick": 61,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ceiling_impact",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          1800
+        ],
+        "vel": [
+          600,
+          0,
+          800
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_freefall_1s",
+      "description": "No input mid-air for 1s — gravity only",
+      "ticks": 120,
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_throttle_1s",
+      "description": "Full forward air throttle for 1s",
+      "ticks": 120,
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_boost_1s",
+      "description": "Full boost mid-air for 1s",
+      "ticks": 120,
+      "controls": {
+        "boost": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roll_right_1s",
+      "description": "Hold air-roll right for 1s from rest",
+      "ticks": 120,
+      "controls": {
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roll_left_1s",
+      "description": "Hold air-roll left for 1s from rest",
+      "ticks": 120,
+      "controls": {
+        "roll": -1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_pitch_up_0_5s",
+      "description": "Hold pitch up for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "pitch": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_pitch_down_0_5s",
+      "description": "Hold pitch down for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "pitch": -1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_yaw_right_0_5s",
+      "description": "Hold yaw right for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "yaw": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_yaw_left_0_5s",
+      "description": "Hold yaw left for 0.5s from rest",
+      "ticks": 60,
+      "controls": {
+        "yaw": -1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roll_then_release",
+      "description": "Roll right 0.5s then release 0.5s (coast angle)",
+      "ticks": 120,
+      "control_schedule": [
+        {
+          "until_tick": 60,
+          "controls": {
+            "roll": 1
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "roll": 0
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_combo_pitch_roll_1s",
+      "description": "Pitch up + roll right together for 1s",
+      "ticks": 120,
+      "controls": {
+        "pitch": 1,
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roll_from_pitch45",
+      "description": "Start pitched +45°, hold air-roll right — must spin about nose",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0.7853981633974483,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_roll_from_pitch90",
+      "description": "Start pitched +90° (nose up), hold air-roll right",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 1.5707963267948966,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_yaw_from_roll90",
+      "description": "Start rolled 90°, hold yaw right — body-up yaw",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 1.5707963267948966,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "yaw": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_combo_from_yaw90",
+      "description": "Start yawed 90°, pitch+roll together",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "pitch": 1,
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_partial_inputs_air",
+      "description": "Half pitch + half yaw + half roll for 1s",
+      "ticks": 120,
+      "controls": {
+        "pitch": 0.5,
+        "yaw": 0.5,
+        "roll": 0.5
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_boost_and_pitch_1s",
+      "description": "Boost while pitching up for 1s",
+      "ticks": 120,
+      "controls": {
+        "boost": true,
+        "pitch": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_double_jump_air",
+      "description": "Second jump impulse while already airborne (tap jump 3 ticks)",
+      "ticks": 60,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {
+            "jump": false
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_forward_air",
+      "description": "Forward dodge from rest in air (pitch down + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "jump": false,
+            "pitch": 0
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_side_air",
+      "description": "Side dodge right from rest in air (yaw right + jump)",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "yaw": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {
+            "jump": false,
+            "yaw": 0
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_coast_from_spin",
+      "description": "Release inputs with initial roll rate 5.5 rad/s — damping coast",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          -5.5,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_rest_0_5s",
+      "description": "Settled Octane on floor, no input for 0.5s",
+      "game_mode": "soccar",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_throttle_2s",
+      "description": "Full throttle on open floor facing +Y for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_throttle_4s",
+      "description": "Full throttle on open floor to drive-speed cap",
+      "game_mode": "soccar",
+      "ticks": 480,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_boost_2s",
+      "description": "Throttle + boost on open floor for 2s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1,
+        "boost": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_steer_right_1s",
+      "description": "Throttle 1s then throttle+steer right 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1,
+            "steer": 0
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_steer_left_1s",
+      "description": "Throttle 1s then throttle+steer left 1s",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1,
+            "steer": 0
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": -1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_coast_1s",
+      "description": "Throttle to speed then coast 1s",
+      "game_mode": "soccar",
+      "ticks": 720,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 720,
+          "controls": {
+            "throttle": 0
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_brake_0_25s",
+      "description": "Throttle to speed then reverse-brake 0.25s",
+      "game_mode": "soccar",
+      "ticks": 630,
+      "initial": {
+        "pos": [
+          0,
+          -4000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 630,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_powerslide_0_5s",
+      "description": "Throttle 2s then throttle+steer+handbrake 0.5s",
+      "game_mode": "soccar",
+      "ticks": 300,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 0,
+            "handbrake": false
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_jump_full_hold",
+      "description": "Full hold jump from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "jump": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_jump_tap",
+      "description": "Single-tick jump tap from settled ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "jump": false
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_flip_forward",
+      "description": "Jump then forward flip from ground",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 15,
+          "controls": {
+            "jump": false
+          }
+        },
+        {
+          "until_tick": 120,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_wall_drive_throttle_3s",
+      "description": "Drive into +X wall and climb with throttle only",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": {
+        "pos": [
+          3000,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_reverse_2s",
+      "description": "Reverse acceleration from rest on open floor",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": -1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_reverse_steer",
+      "description": "Reverse acceleration then steer while reversing",
+      "game_mode": "soccar",
+      "ticks": 240,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": -1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": -1,
+            "steer": 1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_boost_depletion",
+      "description": "Hold boost past depletion of a five-unit tank",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 5,
+        "on_ground": false
+      },
+      "controls": {
+        "boost": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_reverse_throttle",
+      "description": "Reverse air throttle from rest",
+      "ticks": 120,
+      "controls": {
+        "throttle": -1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_forward_cancel",
+      "description": "Forward dodge followed immediately by opposite pitch cancellation",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 45,
+          "controls": {
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_flip_diagonal_air",
+      "description": "Diagonal forward-right dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1,
+            "yaw": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_powerslide_release",
+      "description": "Accelerate, powerslide, then release handbrake while steering",
+      "game_mode": "soccar",
+      "ticks": 360,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "steer": 1
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_backflip",
+      "description": "Backward dodge from rest",
+      "ticks": 90,
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_backflip_forward_speed",
+      "description": "Backward dodge while moving forward at 1800 uu/s",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          1800,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_forwardflip_reverse_speed",
+      "description": "Forward dodge while reversing at 1000 uu/s",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          -1000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 90,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_linear_speed_cap",
+      "description": "Boost with nonaxial velocity above the linear speed cap",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          2500
+        ],
+        "vel": [
+          2300,
+          800,
+          500
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "boost": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_angular_speed_cap",
+      "description": "Combined air controls from an over-cap angular velocity",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          5,
+          4,
+          3
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "pitch": 1,
+        "yaw": -1,
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_air_boost_one_tick",
+      "description": "One-tick boost press checks minimum boost duration",
+      "ticks": 60,
+      "control_schedule": [
+        {
+          "until_tick": 1,
+          "controls": {
+            "boost": true
+          }
+        },
+        {
+          "until_tick": 60,
+          "controls": {}
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "game_mode": "void",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          800
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_analog_steer",
+      "description": "Half throttle and quarter steering from a moving start",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          17
+        ],
+        "vel": [
+          1000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 0.5,
+        "steer": 0.25
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_fast_steer",
+      "description": "Steering at near-supersonic speed",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          -2000,
+          0,
+          17
+        ],
+        "vel": [
+          2200,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "controls": {
+        "throttle": 1,
+        "steer": 0.5
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_landing_wheels",
+      "description": "Airborne downward and forward velocity landing on wheels",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          0,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_landing_powerslide",
+      "description": "Sideways moving landing with powerslide held",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "throttle": 1,
+        "handbrake": true
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ceiling_fall_airroll",
+      "description": "Inverted airborne car falls from near the ceiling while rolling",
+      "game_mode": "soccar",
+      "ticks": 120,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1950
+        ],
+        "vel": [
+          0,
+          0,
+          -1
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 3.141592653589793,
+        "boost": 100,
+        "on_ground": false
+      },
+      "controls": {
+        "roll": 1
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_ground_jump_into_wall",
+      "description": "Jump + boost into +X wall curve and climb (wheels on wall)",
+      "game_mode": "soccar",
+      "ticks": 180,
+      "initial": {
+        "pos": [
+          3600,
+          0,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "control_schedule": [
+        {
+          "until_tick": 3,
+          "controls": {
+            "jump": true,
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1,
+            "boost": true
+          }
+        }
+      ],
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_straight",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "boost": true
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 660,
+          "controls": {}
+        },
+        {
+          "until_tick": 780,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "ticks": 780,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_slalom",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          -1800,
+          -3000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 420,
+          "controls": {
+            "throttle": 1,
+            "steer": -0.3
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.7
+          }
+        },
+        {
+          "until_tick": 660,
+          "controls": {
+            "throttle": 1,
+            "steer": -0.7
+          }
+        },
+        {
+          "until_tick": 780,
+          "controls": {
+            "throttle": -1
+          }
+        }
+      ],
+      "ticks": 780,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_powerslide",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          -1800,
+          -3000,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 180,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 1,
+            "handbrake": true
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 450,
+          "controls": {
+            "throttle": -1,
+            "steer": -0.5
+          }
+        },
+        {
+          "until_tick": 600,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "ticks": 600,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_jump_dodge",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          -4608,
+          17
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 120,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 144,
+          "controls": {
+            "throttle": 1,
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 156,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 159,
+          "controls": {
+            "throttle": 1,
+            "jump": true,
+            "pitch": -1
+          }
+        },
+        {
+          "until_tick": 204,
+          "controls": {
+            "throttle": 1,
+            "pitch": 1
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": 1
+          }
+        },
+        {
+          "until_tick": 384,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 396,
+          "controls": {}
+        },
+        {
+          "until_tick": 399,
+          "controls": {
+            "jump": true
+          }
+        },
+        {
+          "until_tick": 600,
+          "controls": {}
+        }
+      ],
+      "ticks": 600,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_aerial",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          -1200,
+          -2000,
+          1200
+        ],
+        "vel": [
+          600,
+          100,
+          250
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 90,
+          "controls": {
+            "boost": true,
+            "pitch": 0.3,
+            "roll": -0.4
+          }
+        },
+        {
+          "until_tick": 180,
+          "controls": {
+            "yaw": 0.5,
+            "roll": 0.3
+          }
+        },
+        {
+          "until_tick": 300,
+          "controls": {
+            "pitch": -0.3
+          }
+        },
+        {
+          "until_tick": 540,
+          "controls": {
+            "throttle": 1
+          }
+        }
+      ],
+      "ticks": 540,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "movement_movement_bot_goal_roof",
+      "game_mode": "soccar",
+      "initial": {
+        "pos": [
+          0,
+          5500,
+          610
+        ],
+        "vel": [
+          0,
+          300,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "settle_ticks": 0,
+      "description": "Deterministic open-loop movement bot; identical inputs in both engines",
+      "control_schedule": [
+        {
+          "until_tick": 240,
+          "controls": {
+            "throttle": 1,
+            "steer": 0.3
+          }
+        },
+        {
+          "until_tick": 360,
+          "controls": {
+            "throttle": -1,
+            "steer": -0.3
+          }
+        }
+      ],
+      "ticks": 360,
+      "audit": true,
+      "preparation": "legacy",
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.75
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "contact_contact_nose",
+      "game_mode": "void",
+      "ticks": 60,
+      "ball": {
+        "pos": [
+          260,
+          0,
+          1020.755
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          1000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "contact_contact_side_offset",
+      "game_mode": "void",
+      "ticks": 60,
+      "ball": {
+        "pos": [
+          260,
+          60,
+          1035
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          1000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "contact_contact_roof",
+      "game_mode": "void",
+      "ticks": 60,
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          0,
+          0,
+          800
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      },
+      "ball": {
+        "pos": [
+          13.8757,
+          0,
+          1200
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": true,
+      "preparation": "legacy"
+    },
+    {
+      "id": "contact_contact_ball_spin",
+      "game_mode": "void",
+      "ticks": 60,
+      "ball": {
+        "pos": [
+          260,
+          0,
+          1020.755
+        ],
+        "vel": [
+          0,
+          0,
+          0.001
+        ],
+        "ang_vel": [
+          0,
+          4,
+          2
+        ]
+      },
+      "audit": true,
+      "preparation": "legacy",
+      "initial": {
+        "pos": [
+          0,
+          0,
+          1000
+        ],
+        "vel": [
+          1000,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": false
+      }
+    },
+    {
+      "id": "contact_contact_ground_approach",
+      "game_mode": "soccar",
+      "ticks": 90,
+      "initial": {
+        "pos": [
+          -600,
+          0,
+          17
+        ],
+        "vel": [
+          1400,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0,
+        "boost": 100,
+        "on_ground": true
+      },
+      "ball": {
+        "pos": [
+          0,
+          0,
+          93.15
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "controls": {
+        "throttle": 1
+      },
+      "audit": true,
+      "preparation": "legacy"
+    }
+  ]
+}

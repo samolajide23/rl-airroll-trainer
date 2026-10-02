@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RenderPose } from "../shared/renderPose.js";
 import { formatSpeed } from "../shared/rl-units.js";
 import { BoostTrail } from "../shared/boostTrail.js";
+import { SurfaceEffects, ContactEffects, updateGroundShadow } from "../shared/surfaceEffects.js";
 import { cloneBallMesh, preloadBall } from "../shared/ball.js";
 import { preloadCars, isCarReady } from "../shared/carAssets.js";
 import { syncCarWheels, syncCarExhaust, syncCarJump } from "../shared/carVisualCalibration.js";
@@ -112,7 +113,8 @@ export class FreePlayMode {
     shadowCanvas.width = shadowCanvas.height = 64;
     const shadowCtx = shadowCanvas.getContext("2d");
     const gradient = shadowCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(0, "rgba(0,0,0,.55)");
+    gradient.addColorStop(0, "rgba(0,0,0,.9)");
+    gradient.addColorStop(0.35, "rgba(0,0,0,.65)");
     gradient.addColorStop(1, "rgba(0,0,0,0)");
     shadowCtx.fillStyle = gradient; shadowCtx.fillRect(0, 0, 64, 64);
     this._shadowTexture = new THREE.CanvasTexture(shadowCanvas);
@@ -154,6 +156,10 @@ export class FreePlayMode {
     this.ballRenderPose = new RenderPose();
     this.chase = new ChaseCamera();
     this.trail = new BoostTrail(this.root, { exhaustLocal: new THREE.Vector3(0, 0.08, -0.65) });
+    this.surfaceEffects = new SurfaceEffects(this.root);
+    this.contactEffects = new ContactEffects(this.root);
+    this.sliding = false;
+    this.effectContactHeld = false;
     this.trail.attachFlames(this.carMesh);
     for (const flame of this.trail.flames.children) {
       flame.position.set(flame.position.x * 0.7, 0.08, -0.65);
@@ -299,6 +305,8 @@ export class FreePlayMode {
     this.chase.invalidate();
     this.arenaMesh.userData.dispose?.();
     this.trail.dispose();
+    this.surfaceEffects.dispose();
+    this.contactEffects.dispose();
     disposeCarVisual(this.carMesh);
     this._shadowTexture.dispose();
     for (const mesh of [this.carShadow, this.ballShadow, this.ballMesh, this.hitboxHelper]) {
@@ -315,6 +323,10 @@ export class FreePlayMode {
   }
 
   resetState() {
+    this.surfaceEffects.reset();
+    this.contactEffects.reset();
+    this.sliding = false;
+    this.effectContactHeld = false;
     resetJumpTransitions();
     this.hitbox = getHitboxForCarId(this.carId);
     // RocketSim center kickoff slot (CAR_SPAWN_LOCATIONS_SOCCAR[4]).
@@ -361,7 +373,7 @@ export class FreePlayMode {
     if (this.physBall) {
       physToThree(renderBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
       this.ballVisual.position.copy(this.ballMesh.position);
-      this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1);
+      this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1, BALL_VIS_R);
     }
     this.updateShadow(this.carShadow, this.carMesh.position, this.physCar.hitbox.size[1] * ARENA_UU * 1.2, this.physCar.hitbox.size[0] * ARENA_UU * 1.2);
     // Project the car-forward vector onto the ground for a correctly oriented
@@ -371,11 +383,8 @@ export class FreePlayMode {
     if (this.hitboxHelper.visible) syncHitboxHelper(this.hitboxHelper, renderCar, ARENA_UU);
   }
 
-  updateShadow(shadow, position, width, depth) {
-    const altitude = Math.max(0, position.y);
-    shadow.position.set(position.x, 0.025, position.z);
-    shadow.scale.set(width * (1 + altitude * 0.025), depth * (1 + altitude * 0.025), 1);
-    shadow.material.opacity = 0.6 / (1 + altitude * 0.18);
+  updateShadow(shadow, position, width, depth, restHeight = 0.17) {
+    updateGroundShadow(shadow, position, width, depth, restHeight);
   }
 
   updateBoostMeter() {
@@ -411,6 +420,11 @@ export class FreePlayMode {
     this.physCar.dodgeDeadzone = getPad().dodgeDeadzone;
     const controls = this.botEnabled ? this.bot.controls(this.physCar, this.physBall) : withFreeAirRoll(input, this.physCar);
     const contact = this.physBall ? stepCarBall(this.physCar, this.physBall, controls, this.tick, dt) : (stepCar(this.physCar, controls, dt), null);
+    this.sliding = Boolean(controls.handbrake ?? controls.powerslide) && this.physCar.onGround;
+    if (contact && !this.effectContactHeld) {
+      this.contactEffects.hit(physToThree(contact.point, new THREE.Vector3()).multiplyScalar(ARENA_UU));
+    }
+    this.effectContactHeld = Boolean(contact);
     stepBoostPads(this.pads, this.physCar, dt);
     if (this.botEnabled) this.bot.observe(this.physCar, this.physBall, controls, Boolean(contact));
     this.boosting = Boolean(this.physCar.isBoosting);
@@ -533,7 +547,9 @@ export class FreePlayMode {
     }
     this.syncMeshes(false, renderCar, renderBall);
     this.updateBoostMeter();
-    this.trail.update(this.carMesh, this.boosting, dt);
+    this.trail.update(this.carMesh, this.boosting, dt, this.physCar.vel.length() * 0.01);
+    this.surfaceEffects.update(this.carMesh, this.sliding && this.physCar.onGround, this.physCar.vel.length(), dt);
+    this.contactEffects.update(dt);
     syncCarJump(this.carMesh, this.physCar, dt);
     this.updateCamera(dt, input);
     this.updateBotDiagnostic();

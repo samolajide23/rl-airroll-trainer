@@ -6,6 +6,26 @@
 
 using namespace RocketSim;
 
+static btSingleConstraintRowSolver tracedNormalSolver;
+static btSingleConstraintRowSolver tracedFrictionSolver;
+
+static btScalar TraceConstraintRow(btSolverBody& bodyA, btSolverBody& bodyB, const btSolverConstraint& row, bool friction) {
+    const auto& component = row.m_angularComponentA;
+    const auto& cross = row.m_relpos1CrossNormal;
+    std::cout << "{\"stage\":\"ceilingRow\",\"friction\":" << friction
+        << ",\"inverse\":" << row.m_jacDiagABInv << ",\"rhs\":" << row.m_rhs
+        << ",\"component\":[" << component.x() << ',' << component.y() << ',' << component.z()
+        << "],\"cross\":[" << cross.x() << ',' << cross.y() << ',' << cross.z()
+        << "],\"before\":" << btScalar(row.m_appliedImpulse);
+    const auto residual = (friction ? tracedFrictionSolver : tracedNormalSolver)(bodyA, bodyB, row);
+    const auto& linear = bodyA.internalGetDeltaLinearVelocity();
+    const auto& angular = bodyA.internalGetDeltaAngularVelocity();
+    std::cout << ",\"after\":" << btScalar(row.m_appliedImpulse)
+        << ",\"linear\":[" << linear.x() << ',' << linear.y() << ',' << linear.z()
+        << "],\"angular\":[" << angular.x() << ',' << angular.y() << ',' << angular.z() << "]}\n";
+    return residual;
+}
+
 static void PrintVector(const btVector3& vector) {
     std::cout << '[' << vector.x() * 50 << ',' << vector.y() * 50 << ',' << vector.z() * 50 << ']';
 }
@@ -17,6 +37,9 @@ static void PrintSuspensionTerms(const btWheelInfoRL& wheel) {
     const float damping = wheel.m_suspensionRelativeVelocity < 0 ? wheel.m_wheelsDampingCompression : wheel.m_wheelsDampingRelaxation;
     const float dampingProduct = damping * wheel.m_suspensionRelativeVelocity;
     std::cout << ",\"nativePushback\":" << wheel.m_extraPushback
+        << ",\"steerAngle\":" << wheel.m_steerAngle
+        << ",\"axle\":[" << wheel.m_worldTransform.getBasis().getColumn(1).x() << ',' << wheel.m_worldTransform.getBasis().getColumn(1).y() << ',' << wheel.m_worldTransform.getBasis().getColumn(1).z() << ']'
+        << ",\"latFriction\":" << wheel.m_latFriction << ",\"longFriction\":" << wheel.m_longFriction
         << ",\"nativeImpulse\":[" << wheel.m_impulse.x() << ',' << wheel.m_impulse.y() << ',' << wheel.m_impulse.z() << ']'
         << ",\"terms\":{\"rest\":" << wheel.getSuspensionRestLength()
         << ",\"length\":" << wheel.m_raycastInfo.m_suspensionLength
@@ -61,6 +84,26 @@ static void PrintWheelState(Car* car, const char* stage) {
 
 int main(int argumentCount, char** arguments) {
     if (argumentCount != 2 && argumentCount != 3) return 2;
+    if (argumentCount == 2 && std::string(arguments[1]) == "angular-math") {
+        std::cout << std::setprecision(17);
+        float values[12];
+        while (std::cin >> values[0]) {
+            for (int index = 1; index < 12; ++index) if (!(std::cin >> values[index])) return 3;
+            btMatrix3x3 matrix(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]);
+            const btVector3 desired(values[9], values[10], values[11]);
+            const auto inverse = matrix.inverse();
+            const auto torque = inverse * desired;
+            const auto acceleration = matrix * torque;
+            std::cout << "{\"inverse\":[";
+            for (int row = 0; row < 3; ++row) {
+                if (row) std::cout << ',';
+                std::cout << '[' << inverse[row].x() << ',' << inverse[row].y() << ',' << inverse[row].z() << ']';
+            }
+            std::cout << "],\"torque\":[" << torque.x() << ',' << torque.y() << ',' << torque.z()
+                << "],\"acceleration\":[" << acceleration.x() << ',' << acceleration.y() << ',' << acceleration.z() << "]}\n";
+        }
+        return 0;
+    }
     if (argumentCount == 2 && std::string(arguments[1]) == "rsqrt-table") {
         for (int mantissaBits = 10; mantissaBits <= 13; ++mantissaBits) {
             const unsigned stride = 1u << (23 - mantissaBits);
@@ -228,15 +271,19 @@ int main(int argumentCount, char** arguments) {
         return 0;
     }
     auto car = arena->AddCar(Team::BLUE);
+    const bool ceiling = argumentCount == 3 && std::string(arguments[2]) == "ceiling";
+    const bool jumpWall = argumentCount == 3 && std::string(arguments[2]) == "jump-wall";
+    const bool groundFlip = argumentCount == 3 && std::string(arguments[2]) == "ground-flip";
     const bool replay = argumentCount == 3 && std::string(arguments[2]) == "replay";
     const bool goalRoof = argumentCount == 3 && std::string(arguments[2]) == "goal-roof";
-    const bool steeringTrace = argumentCount == 3 && std::string(arguments[2]) == "steering";
+    const bool fastSteering = argumentCount == 3 && std::string(arguments[2]) == "fast-steering";
+    const bool steeringTrace = fastSteering || (argumentCount == 3 && std::string(arguments[2]) == "steering");
     CarState state;
     state.pos = Vec(-1000, 0, 80);
     state.rotMat = Angle(0, 0, float(M_PI)).ToRotMat();
     state.boost = 100;
     car->SetState(state);
-    if (!goalRoof && !steeringTrace && !replay && (argumentCount != 3 || std::string(arguments[2]) != "drive")) arena->Step();
+    if (!ceiling && !groundFlip && !jumpWall && !goalRoof && !steeringTrace && !replay && (argumentCount != 3 || std::string(arguments[2]) != "drive")) arena->Step();
     state = CarState();
     state.pos = Vec(-1000, 0, 80);
     state.vel = Vec(0, 0, -100);
@@ -244,7 +291,23 @@ int main(int argumentCount, char** arguments) {
     state.boost = 100;
     car->SetState(state);
     const bool straightDrive = argumentCount == 3 && std::string(arguments[2]) == "drive";
-    const bool goalContact = argumentCount == 3 && !straightDrive && !replay && !goalRoof && !steeringTrace;
+    const bool goalContact = argumentCount == 3 && !ceiling && !groundFlip && !jumpWall && !straightDrive && !replay && !goalRoof && !steeringTrace;
+    if (ceiling) {
+        state = CarState();
+        state.pos = Vec(-1000, 0, 1800);
+        state.boost = 100;
+        car->SetState(state);
+        car->controls = CarControls();
+        arena->Step();
+        state = CarState();
+        state.pos = Vec(-1000, 0, 1800);
+        state.vel = Vec(600, 0, 800);
+        state.boost = 100;
+        car->SetState(state);
+        BallState ballState;
+        ballState.pos = Vec(0, 0, 92.75f);
+        arena->ball->SetState(ballState);
+    }
     if (straightDrive || replay) {
         state = CarState();
         state.pos = Vec(0, -4608, 17);
@@ -295,9 +358,9 @@ int main(int argumentCount, char** arguments) {
         ballState.pos = Vec(0, 0, 10000);
         arena->ball->SetState(ballState);
     }
-    if (steeringTrace) {
+    if (steeringTrace || jumpWall || groundFlip) {
         state = CarState();
-        state.pos = Vec(0, 0, 17);
+        state.pos = Vec(jumpWall ? 3600 : fastSteering ? -2000 : 0, 0, 17);
         state.rotMat = Angle(0, 0, 0).ToRotMat();
         state.boost = 100;
         car->SetState(state);
@@ -305,9 +368,13 @@ int main(int argumentCount, char** arguments) {
         BallState parkedBall;
         parkedBall.pos = Vec(0, 0, 3000);
         arena->ball->SetState(parkedBall);
-        for (int settle = 0; settle < 240; ++settle) arena->Step();
+        for (int settle = 0; settle < 240; ++settle) {
+            arena->Step();
+            PrintWheelState(car, ("settle-" + std::to_string(settle + 1)).c_str());
+        }
         PrintWheelState(car, "settled");
         state.pos.z = car->GetState().pos.z;
+        state.vel = Vec(fastSteering ? 2200 : 0, 0, 0);
         car->SetState(state);
         arena->Step();
         state.pos = car->GetState().pos;
@@ -318,9 +385,10 @@ int main(int argumentCount, char** arguments) {
         arena->ball->SetState(ballState);
     }
     std::cout << std::setprecision(17);
-    for (int tick = 0; tick < (goalRoof ? 360 : steeringTrace ? 240 : replay ? 1200 : straightDrive ? 4 : goalContact ? 1 : 180); ++tick) {
+    for (int tick = 0; tick < (ceiling || groundFlip ? 120 : goalRoof ? 360 : fastSteering ? 90 : steeringTrace ? 240 : replay ? 1200 : straightDrive ? 4 : goalContact ? 1 : 180); ++tick) {
         car->controls.jump = tick == 60;
         car->controls.throttle = tick > 60 ? 1 : 0;
+        if (ceiling) car->controls = CarControls();
         if (straightDrive) {
             car->controls.jump = false;
             car->controls.throttle = 1;
@@ -335,7 +403,18 @@ int main(int argumentCount, char** arguments) {
         if (steeringTrace) {
             car->controls = CarControls();
             car->controls.throttle = 1;
-            car->controls.steer = tick < 120 ? 0 : 1;
+            car->controls.steer = fastSteering ? 0.5f : tick < 120 ? 0 : 1;
+        }
+        if (jumpWall) {
+            car->controls = CarControls();
+            car->controls.throttle = 1;
+            car->controls.jump = tick < 3;
+            car->controls.boost = tick >= 3;
+        }
+        if (groundFlip) {
+            car->controls = CarControls();
+            car->controls.jump = tick < 3 || tick >= 15;
+            car->controls.pitch = tick >= 15 ? -1 : 0;
         }
         if (replay) {
             int boost, jump, handbrake;
@@ -346,15 +425,55 @@ int main(int argumentCount, char** arguments) {
             car->controls.jump = jump;
             car->controls.handbrake = handbrake;
         }
+        if (groundFlip && tick >= 37 && tick <= 39) {
+            static Car* tracedCar = nullptr;
+            tracedCar = car;
+            arena->_bulletWorld.setInternalTickCallback([](btDynamicsWorld* world, btScalar step) {
+                const auto& body = tracedCar->_rigidBody;
+                std::cout << "{\"stage\":\"preSolver\",\"vel\":";
+                PrintVector(body.getLinearVelocity());
+                const auto spin = body.getAngularVelocity();
+                const auto angularImpulse = body.getTotalTorque() * body.getInvInertiaTensorWorld() * step;
+                std::cout << ",\"omega\":[" << spin.x() << ',' << spin.y() << ',' << spin.z()
+                    << "],\"angularImpulse\":[" << angularImpulse.x() << ',' << angularImpulse.y() << ',' << angularImpulse.z() << "]}\n";
+            }, arena, true);
+        } else if (groundFlip) {
+            arena->_bulletWorld.setInternalTickCallback(nullptr, arena, true);
+        }
+        auto* solver = static_cast<btSequentialImpulseConstraintSolver*>(arena->_bulletWorld.getConstraintSolver());
+        if (ceiling && tick == 36) {
+            tracedNormalSolver = solver->getActiveConstraintRowSolverLowerLimit();
+            tracedFrictionSolver = solver->getActiveConstraintRowSolverGeneric();
+            solver->setConstraintRowSolverLowerLimit([](btSolverBody& bodyA, btSolverBody& bodyB, const btSolverConstraint& row) {
+                return TraceConstraintRow(bodyA, bodyB, row, false);
+            });
+            solver->setConstraintRowSolverGeneric([](btSolverBody& bodyA, btSolverBody& bodyB, const btSolverConstraint& row) {
+                return TraceConstraintRow(bodyA, bodyB, row, true);
+            });
+        }
         arena->Step();
+        if (ceiling && tick == 36) {
+            solver->setConstraintRowSolverLowerLimit(tracedNormalSolver);
+            solver->setConstraintRowSolverGeneric(tracedFrictionSolver);
+        }
         if (replay && tick > 3 && (tick < 738 || tick > 750) && (tick < 870 || tick > 886)) continue;
-        if (!goalRoof && !steeringTrace && !replay && !straightDrive && !goalContact && (tick < 27 || tick > 34) && (tick < 60 || tick > 74)) continue;
+        if (!ceiling && !groundFlip && !jumpWall && !goalRoof && !steeringTrace && !replay && !straightDrive && !goalContact && (tick < 27 || tick > 34) && (tick < 60 || tick > 74)) continue;
         state = car->GetState();
         std::cout << "{\"tick\":" << tick + 1 << ",\"pos\":";
         PrintVector(car->_rigidBody.getWorldTransform().getOrigin());
         std::cout << ",\"vel\":";
         PrintVector(car->_rigidBody.getLinearVelocity());
         std::cout << ",\"omega\":[" << state.angVel.x << ',' << state.angVel.y << ',' << state.angVel.z << ']';
+        if (ceiling || groundFlip) {
+            const auto& basis = car->_rigidBody.getWorldTransform().getBasis();
+            std::cout << ",\"axes\":[";
+            for (int axisIndex = 0; axisIndex < 3; ++axisIndex) {
+                const auto axis = basis.getColumn(axisIndex);
+                if (axisIndex) std::cout << ',';
+                std::cout << '[' << axis.x() << ',' << axis.y() << ',' << axis.z() << ']';
+            }
+            std::cout << ']';
+        }
         if (replay) {
             std::cout << ",\"ballPos\":";
             PrintVector(arena->ball->_rigidBody.getWorldTransform().getOrigin());
@@ -405,7 +524,19 @@ int main(int argumentCount, char** arguments) {
                     << ",\"triangleA\":" << point.m_index0 << ",\"triangleB\":" << point.m_index1
                     << ",\"friction\":" << point.m_appliedImpulseLateral1 * 50
                     << ",\"normal\":[" << point.m_normalWorldOnB.x() << ',' << point.m_normalWorldOnB.y() << ',' << point.m_normalWorldOnB.z() << ']'
-                    << ",\"lifetime\":" << point.getLifeTime() << '}';
+                    << ",\"lifetime\":" << point.getLifeTime();
+                if (ceiling) {
+                    const auto& world = bodyIsFirst ? point.getPositionWorldOnA() : point.getPositionWorldOnB();
+                    const auto& local = bodyIsFirst ? point.m_localPointA : point.m_localPointB;
+                    const auto& tangent = point.m_lateralFrictionDir1;
+                    std::cout << ",\"nativeWorld\":[" << world.x() << ',' << world.y() << ',' << world.z()
+                        << "],\"nativeLocal\":[" << local.x() << ',' << local.y() << ',' << local.z()
+                        << "],\"tangent\":[" << tangent.x() << ',' << tangent.y() << ',' << tangent.z()
+                        << "],\"nativeDepth\":" << point.getDistance()
+                        << ",\"nativeImpulse\":" << point.m_appliedImpulse
+                        << ",\"nativeFriction\":" << point.m_appliedImpulseLateral1;
+                }
+                std::cout << '}';
             }
         }
         std::cout << "]}\n";

@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { createSoccarBoostPads, createBoostPadMeshes, stepBoostPads, resetBoostPads, BOOST_PAD_VISUAL } from "../../src/shared/boostPads.js";
 import { RL } from "../../src/shared/rl-physics.js";
 import { makeCar } from "../../src/shared/carSim.js";
-import { createStadium } from "../../src/shared/stadium.js";
+import { createStadium, createStadiumReflectionScene } from "../../src/shared/stadium.js";
 import { BoostTrail } from "../../src/shared/boostTrail.js";
 import { disposeCarVisualMaterials } from "../../src/shared/car.js";
 import { disposeScene } from "../../src/shared/disposeScene.js";
@@ -12,6 +12,114 @@ import viteConfig from "../../vite.config.js";
 import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_BT_TRIS, SOCCAR_QUERY_ORDER, SOCCAR_MESH_ENDS } from "../../src/shared/soccarMeshData.js";
 import { RenderPose } from "../../src/shared/renderPose.js";
 import { FixedStepClock } from "../../src/shared/aerial.js";
+import { prepareCarVisual } from "../../src/shared/carVisualCalibration.js";
+import { SurfaceEffects, ContactEffects, updateGroundShadow } from "../../src/shared/surfaceEffects.js";
+
+test("stadium reflections match field orientation and release bake resources", () => {
+  const source = createStadiumReflectionScene();
+  const floor = source.getObjectByName("reflection-turf");
+  assert.equal(floor.geometry.parameters.width, RL.HALF_W * 0.02);
+  assert.equal(floor.geometry.parameters.depth, RL.HALF_L * 0.02);
+  assert(floor.position.y < 0);
+  const ends = source.children.filter(object => object.name === "reflection-team-end");
+  assert.deepEqual(ends.map(object => object.position.z), [-RL.HALF_L * 0.01, RL.HALF_L * 0.01]);
+  assert(ends[0].material.color.b > ends[0].material.color.r);
+  assert(ends[1].material.color.r > ends[1].material.color.b);
+  const lights = source.children.filter(object => object.name === "reflection-floodlight");
+  assert.equal(lights.length, 12);
+  assert(lights.every(object => object.material.color.r > 1 && object.position.y > 10));
+  let disposed = 0;
+  source.traverse(object => {
+    if (!object.isMesh) return;
+    object.geometry.addEventListener("dispose", () => disposed++);
+    object.material.addEventListener("dispose", () => disposed++);
+  });
+  source.userData.dispose();
+  assert.equal(disposed, source.children.length * 2);
+});
+
+test("contact shadows use surface clearance and fade as objects lift", () => {
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial());
+  const position = new THREE.Vector3(4, 0.9125, 8);
+  updateGroundShadow(shadow, position, 2, 2, 0.9125);
+  assert.deepEqual(shadow.position.toArray(), [4, 0.025, 8]);
+  assert.deepEqual(shadow.scale.toArray(), [2, 2, 1]);
+  assert.equal(shadow.material.opacity, 0.78);
+  position.y += 10;
+  updateGroundShadow(shadow, position, 2, 2, 0.9125);
+  assert(shadow.material.opacity < 0.25);
+  assert.deepEqual(shadow.scale.toArray(), [2.5, 2.5, 1]);
+  shadow.geometry.dispose(); shadow.material.dispose();
+});
+
+test("shared live effects gate ground trails, reset teleports and clean up", context => {
+  const previous = globalThis.document;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    createRadialGradient: () => ({ addColorStop() {} }), fillRect() {},
+  }) }) };
+  context.after(() => { globalThis.document = previous; });
+  const root = new THREE.Group();
+  const car = new THREE.Group();
+  car.position.y = 0.17;
+  const surface = new SurfaceEffects(root);
+  const contact = new ContactEffects(root);
+  surface.update(car, false, 500, 1 / 60);
+  assert.equal(surface.marks.count, 0);
+  for (let tick = 0; tick < 120; tick++) surface.update(car, true, 500, 1 / 60);
+  assert(surface.marks.count > 0 && surface.marks.count <= 64);
+  assert(surface.history.length <= 64);
+  assert([...surface.marks.instanceMatrix.array].every(Number.isFinite));
+  for (let tick = 0; tick < 60; tick++) surface.update(car, false, 500, 1 / 60);
+  assert.equal(surface.marks.count, 0);
+  contact.hit(new THREE.Vector3(1, 2, 3));
+  contact.update(0.05);
+  assert(contact.mesh.visible);
+  assert.equal(contact.mesh.material.wireframe, false);
+  contact.update(0.4);
+  assert.equal(contact.mesh.visible, false);
+  surface.update(car, true, 500, 1 / 60);
+  car.position.x = 20;
+  surface.update(car, false, 500, 1 / 60);
+  assert.equal(surface.history.length, 0);
+  surface.reset();
+  contact.reset();
+  surface.dispose();
+  contact.dispose();
+  assert.equal(root.children.length, 0);
+});
+
+test("wheel detailing shares geometry and preserves calibrated centers and radii", () => {
+  const build = () => {
+    const visual = new THREE.Group();
+    for (const corner of ["FR", "FL", "BR", "BL"]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.18, 32), new THREE.MeshStandardMaterial());
+      wheel.geometry.rotateZ(Math.PI / 2);
+      wheel.name = `${corner}_Wheel`;
+      wheel.position.set(corner.endsWith("R") ? -0.6 : 0.6, 0.3, corner.startsWith("F") ? 0.5 : -0.4);
+      visual.add(wheel);
+    }
+    const before = new THREE.Box3().setFromObject(visual);
+    prepareCarVisual(visual, "fennec");
+    return { visual, before };
+  };
+  const first = build(), second = build();
+  const after = new THREE.Box3().setFromObject(first.visual);
+  assert(after.min.distanceTo(first.before.min) < 0.002);
+  assert(after.max.distanceTo(first.before.max) < 0.002);
+  assert.equal(first.visual.userData.calibratedWheels.length, 4);
+  for (const wheel of first.visual.userData.calibratedWheels) {
+    assert(Math.abs(wheel.radius - 0.3) < 1e-6);
+    assert.deepEqual(wheel.pivot.position.toArray(), wheel.center.toArray());
+    assert.equal(wheel.pivot.children.filter(child => child.name.startsWith("wheel-detail-")).length, 2);
+  }
+  const detail = first.visual.getObjectByName("wheel-detail-rim");
+  assert.equal(detail.geometry, second.visual.getObjectByName("wheel-detail-rim").geometry);
+  assert.notEqual(detail.material, second.visual.getObjectByName("wheel-detail-rim").material);
+  for (const { visual } of [first, second]) {
+    disposeCarVisualMaterials({ userData: { visual } });
+    visual.traverse(object => { if (object.isMesh && !object.name.startsWith("wheel-detail-")) object.geometry.dispose(); });
+  }
+});
 
 test("render motion stays continuous at irregular display intervals", () => {
   const clock = new FixedStepClock();
@@ -130,6 +238,11 @@ test("boost trail reuses bounded particles and stops work when empty", () => {
     assert(trail.flames.children.every(flame => flame.children.length === 14));
     assert(trail.flames.children.every(flame => flame.children.every(puff => puff.isSprite && puff.position.z <= 0)));
     const identities = new Set(trail._pool);
+    trail.update(car, true, 0, 0);
+    const idleLength = trail.flames.children[0].scale.z;
+    trail.update(car, true, 0, 23);
+    assert(trail.flames.children[0].scale.z > idleLength * 1.5);
+    assert(trail.flames.children[0].children[0].material.opacity > trail.flames.children[0].children[8].material.opacity);
     for (let tick = 0; tick < 240; tick++) trail.update(car, true, 1 / 120);
     assert.equal(trail.particles.length + trail._pool.length, 8);
     assert([...trail.particles, ...trail._pool].every(particle => identities.has(particle)));
@@ -155,7 +268,9 @@ test("all 34 visible pads use standard coordinates, not pickup-volume sizing", (
     assert.equal(pad.mesh.position.x, pad.x * 0.01);
     assert.equal(pad.mesh.position.z, pad.y * 0.01);
     const radius = (pad.big ? BOOST_PAD_VISUAL.BIG_RADIUS : BOOST_PAD_VISUAL.SMALL_RADIUS) * 0.01;
-    assert.equal(pad.mesh.geometry.parameters.radiusTop, radius);
+    assert.equal(pad.mesh.geometry.parameters.radiusBottom, radius);
+    assert.equal(pad.mesh.geometry.parameters.radiusTop, radius * 0.94);
+    assert.equal(pad.mesh.material.metalness, 0.72);
     assert(radius < pad.radius * 0.01);
   }
 });
@@ -189,10 +304,35 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
       if (object.isMesh) meshes++;
     });
     assert(meshes < 70);
+    const nets = stadium.children.filter(object => object.name === "goal-net-panel");
+    assert.equal(nets.length, 8);
+    assert(nets.every(net => net.material.isMeshStandardMaterial && net.material.depthWrite === false));
+    const spectators = stadium.getObjectByName("stadium-spectators");
+    assert.equal(spectators.count, 2940);
+    assert([...spectators.instanceMatrix.array].every(Number.isFinite));
+    const enclosure = stadium.getObjectByName("stadium-hex-enclosure");
+    const edges = enclosure.geometry.attributes.position;
+    const edgeKeys = new Set();
+    let diagonalEdges = 0;
+    for (let vertex = 0; vertex < edges.count; vertex += 2) {
+      const endpoints = [vertex, vertex + 1].map(index => [edges.getX(index), edges.getY(index), edges.getZ(index)]);
+      for (const [across, up, along] of endpoints) {
+        assert(Math.abs(across) <= RL.HALF_W * 0.01 + 1e-5);
+        assert(Math.abs(along) <= RL.HALF_L * 0.01 + 1e-5);
+        assert(up >= 3.2 - 1e-5 && up <= RL.CEILING * 0.01 + 1e-5);
+      }
+      const key = endpoints.map(point => point.map(value => value.toFixed(4)).join(",")).sort().join(":");
+      assert(!edgeKeys.has(key)); edgeKeys.add(key);
+      if (Math.abs(endpoints[0][0] - endpoints[1][0]) > 0.1 && Math.abs(endpoints[0][2] - endpoints[1][2]) > 0.1) diagonalEdges++;
+    }
+    assert(diagonalEdges > 100);
+    assert(edges.count < 30000);
+    assert(enclosure.material.opacity < 0.1);
     assert.equal(stadium.getObjectByName("neon-city-backdrop").children.filter(object => object.name === "city-light-accents").length, 3);
     const floor = stadium.getObjectByName("standard-soccar-floor");
     assert.equal(floor.geometry.parameters.width, RL.HALF_W * 0.02);
     assert.equal(floor.geometry.parameters.height, RL.HALF_L * 0.02);
+    assert.equal(floor.receiveShadow, true);
     const city = stadium.getObjectByName("neon-city-backdrop");
     const towers = city.getObjectByName("city-towers");
     const matrix = new THREE.Matrix4(), center = new THREE.Vector3(), scale = new THREE.Vector3(), rotation = new THREE.Quaternion();
@@ -205,8 +345,23 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
       assert.equal(goal.geometry.parameters.width, RL.GOAL_HALF_W * 0.02);
       assert.equal(goal.geometry.parameters.height, RL.GOAL_DEPTH * 0.01);
       assert.equal(Math.abs(goal.position.z), (RL.HALF_L + RL.GOAL_DEPTH / 2) * 0.01);
+      assert.equal(goal.receiveShadow, true);
+      const positions = goal.geometry.attributes.position, uv = goal.geometry.attributes.uv;
+      for (let vertex = 0; vertex < positions.count; vertex++) {
+        assert(Math.abs(uv.getX(vertex) - (positions.getX(vertex) / floor.geometry.parameters.width + 0.5)) < 1e-6);
+        assert(Math.abs(uv.getY(vertex) - (0.5 - (goal.position.z - positions.getY(vertex)) / floor.geometry.parameters.height)) < 1e-6);
+      }
     }
     assert.equal(stadium.children.filter(o => o.name === "collision-matched-arena-surface").length, 3);
+    assert.equal(city.children.filter(object => object.name === "city-architectural-details").length, 2);
+    const turf = stadium.getObjectByName("standard-soccar-floor").material;
+    assert.notEqual(turf.map, turf.bumpMap);
+    assert.equal(turf.bumpMap.colorSpace, THREE.NoColorSpace);
+    assert.deepEqual(turf.map.repeat.toArray(), [1, 1]);
+    assert.deepEqual(turf.bumpMap.repeat.toArray(), [RL.HALF_W * 0.01, RL.HALF_L * 0.01]);
+    const fieldPaint = stadium.children.find(object => object.material?.name === "field-paint").material;
+    assert.equal(fieldPaint.isMeshStandardMaterial, true);
+    assert.equal(fieldPaint.transparent, false);
     stadium.userData.dispose();
   } finally { globalThis.document = previous; }
 });

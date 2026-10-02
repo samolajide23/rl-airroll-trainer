@@ -144,7 +144,8 @@ export function createBoostPadMeshes(parent, pads) {
     color: 0xd4a017,
     emissive: 0x5a3a00,
     emissiveIntensity: 0.4,
-    roughness: 0.45,
+    roughness: 0.28,
+    metalness: 0.72,
   });
   const bigMat = smallMat.clone();
   bigMat.color = new THREE.Color(0xffc94a);
@@ -155,7 +156,7 @@ export function createBoostPadMeshes(parent, pads) {
     const h = (pad.big ? BOOST_PAD_VISUAL.BIG_HEIGHT : BOOST_PAD_VISUAL.SMALL_HEIGHT) * UU;
     const mat = (pad.big ? bigMat : smallMat).clone();
     const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(r, r, h, pad.big ? 28 : 20),
+      new THREE.CylinderGeometry(r * 0.94, r, h, 48),
       mat,
     );
     // Same mapping as physToThree: physics (x, y, z) → Three (x, z, y)
@@ -169,10 +170,24 @@ export function createBoostPadMeshes(parent, pads) {
     halo.position.y = h * 0.52;
     halo.name = "boost-active-halo";
     mesh.add(halo);
+    const inset = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.65, r * 0.65, h * 0.12, 48),
+      new THREE.MeshStandardMaterial({ color: 0x292d32, roughness: 0.42, metalness: 0.8 }),
+    );
+    inset.position.y = h * 0.48;
+    inset.name = "boost-active-inset";
+    mesh.add(inset);
+    const bezel = new THREE.Mesh(new THREE.TorusGeometry(r * 0.91, h * 0.12, 8, 48),
+      new THREE.MeshStandardMaterial({ color: 0x737980, roughness: 0.28, metalness: 0.9 }));
+    bezel.rotation.x = -Math.PI / 2;
+    bezel.position.y = h * 0.48;
+    bezel.name = "boost-active-bezel";
+    mesh.add(bezel);
     if (pad.big) {
       const pickup = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.22, 0),
-        new THREE.MeshBasicMaterial({ color: 0xffce62, toneMapped: false }),
+        new THREE.SphereGeometry(0.15, 24, 16),
+        new THREE.MeshStandardMaterial({ color: 0xffdc96, emissive: 0xffa329, emissiveIntensity: 1.8,
+          roughness: 0.22, metalness: 0.35 }),
       );
       pickup.position.y = 0.48;
       pickup.name = "boost-active-pickup";

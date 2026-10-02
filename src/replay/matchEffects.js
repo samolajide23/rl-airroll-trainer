@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { frameAt, samplePose } from "./timeline.js";
+import { createSoccarBoostPads, createBoostPadMeshes } from "../shared/boostPads.js";
+import { styleContactEffect } from "../shared/surfaceEffects.js";
 
 export function sampleEventEffects(replay, time) {
   return (replay.events ?? []).filter(event => event.position && time >= event.time &&
@@ -16,7 +18,8 @@ export class ReplayMatchEffects {
       this.group.add(mesh);
       return mesh;
     });
-    this.pads = new Map();
+    this.pads = createSoccarBoostPads();
+    createBoostPadMeshes(this.group, this.pads);
   }
 
   render(replay, time) {
@@ -27,30 +30,22 @@ export class ReplayMatchEffects {
       if (!event) return;
       const age = time - event.time;
       const duration = event.type === "goal" ? 2 : event.type === "demo" ? 1 : 0.35;
-      mesh.position.fromArray(event.position);
-      mesh.scale.setScalar(0.2 + age * (event.type === "goal" ? 12 : event.type === "demo" ? 5 : 2));
-      mesh.rotation.set(age, age * 2, age * 0.7);
-      mesh.material.color.setHex(event.type === "demo" ? 0xffd17c : event.team === 1 ? 0xffa047 : 0x48aaff);
-      mesh.material.opacity = (1 - age / duration) * 0.8;
+      styleContactEffect(mesh, age, duration, event);
     });
-    const states = new Map();
+    for (const pad of this.pads) pad.active = true;
     for (const event of replay.events ?? []) {
       if (event.time > time) break;
-      if (event.type === "pad") states.set(event.actor, event);
+      if (event.type !== "pad" || !event.position) continue;
+      const pad = this.pads.find(candidate => Math.hypot(candidate.x * 0.01 - event.position[0],
+        candidate.y * 0.01 - event.position[2]) < 1);
+      if (pad) pad.active = event.active;
     }
-    for (const [actor, event] of states) {
-      if (!event.position) continue;
-      if (!this.pads.has(actor)) {
-        const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.3),
-          new THREE.MeshBasicMaterial({ color: 0xffce62, toneMapped: false }));
-        mesh.position.fromArray(event.position);
-        mesh.position.y = 0.4;
-        this.group.add(mesh);
-        this.pads.set(actor, mesh);
-      }
-      this.pads.get(actor).visible = event.active;
+    for (const pad of this.pads) {
+      pad.mesh.visible = true;
+      pad.mesh.material.color.setHex(pad.active ? (pad.big ? 0xffc94a : 0xd4a017) : 0x313947);
+      pad.mesh.material.emissiveIntensity = pad.active ? (pad.big ? 0.65 : 0.4) : 0;
+      for (const child of pad.mesh.children) child.visible = pad.active;
     }
-    for (const [actor, mesh] of this.pads) if (!states.has(actor)) mesh.visible = false;
   }
 
   dispose() {

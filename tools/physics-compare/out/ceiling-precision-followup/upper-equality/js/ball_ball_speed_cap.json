@@ -1,0 +1,1468 @@
+{
+  "id": "ball_ball_speed_cap",
+  "description": "",
+  "entity": "ball",
+  "engine": "rl-physics.js",
+  "game_mode": "void",
+  "tick_rate": 120,
+  "tick_time": 0.008333333333333333,
+  "ticks": 30,
+  "initial": {
+    "pos": [
+      0,
+      0,
+      1000
+    ],
+    "vel": [
+      7000,
+      0,
+      0
+    ],
+    "ang_vel": [
+      10,
+      0,
+      0
+    ],
+    "yaw": 0,
+    "pitch": 0,
+    "roll": 0,
+    "boost": 100,
+    "on_ground": false
+  },
+  "frames": [
+    {
+      "tick": 0,
+      "pos": [
+        0,
+        0,
+        1000
+      ],
+      "vel": [
+        7000,
+        0,
+        0
+      ],
+      "ang_vel": [
+        10,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            0,
+            0,
+            1000
+          ],
+          "vel": [
+            7000,
+            0,
+            0
+          ],
+          "ang_vel": [
+            10,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 1,
+      "pos": [
+        58.31853103637695,
+        0,
+        999.9548950195312
+      ],
+      "vel": [
+        5999.998046875,
+        0,
+        -4.6440348625183105
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            58.31853103637695,
+            0,
+            999.9548950195312
+          ],
+          "vel": [
+            5999.998046875,
+            0,
+            -4.6440348625183105
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 2,
+      "pos": [
+        108.30582427978516,
+        0,
+        999.87109375
+      ],
+      "vel": [
+        5998.47509765625,
+        0,
+        -10.059523582458496
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            108.30582427978516,
+            0,
+            999.87109375
+          ],
+          "vel": [
+            5998.47509765625,
+            0,
+            -10.059523582458496
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 3,
+      "pos": [
+        158.28042602539062,
+        0,
+        999.7421264648438
+      ],
+      "vel": [
+        5996.95263671875,
+        0,
+        -15.473636627197266
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            158.28042602539062,
+            0,
+            999.7421264648438
+          ],
+          "vel": [
+            5996.95263671875,
+            0,
+            -15.473636627197266
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 4,
+      "pos": [
+        208.24237060546875,
+        0,
+        999.5680541992188
+      ],
+      "vel": [
+        5995.4306640625,
+        0,
+        -20.886377334594727
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            208.24237060546875,
+            0,
+            999.5680541992188
+          ],
+          "vel": [
+            5995.4306640625,
+            0,
+            -20.886377334594727
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 5,
+      "pos": [
+        258.1916198730469,
+        0,
+        999.3489379882812
+      ],
+      "vel": [
+        5993.9091796875,
+        0,
+        -26.297744750976562
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            258.1916198730469,
+            0,
+            999.3489379882812
+          ],
+          "vel": [
+            5993.9091796875,
+            0,
+            -26.297744750976562
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 6,
+      "pos": [
+        308.128173828125,
+        0,
+        999.0846557617188
+      ],
+      "vel": [
+        5992.3876953125,
+        0,
+        -31.70773696899414
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            308.128173828125,
+            0,
+            999.0846557617188
+          ],
+          "vel": [
+            5992.3876953125,
+            0,
+            -31.70773696899414
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 7,
+      "pos": [
+        358.05206298828125,
+        0,
+        998.775390625
+      ],
+      "vel": [
+        5990.86669921875,
+        0,
+        -37.116355895996094
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            358.05206298828125,
+            0,
+            998.775390625
+          ],
+          "vel": [
+            5990.86669921875,
+            0,
+            -37.116355895996094
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 8,
+      "pos": [
+        407.9632873535156,
+        0,
+        998.4210205078125
+      ],
+      "vel": [
+        5989.34619140625,
+        0,
+        -42.52360534667969
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            407.9632873535156,
+            0,
+            998.4210205078125
+          ],
+          "vel": [
+            5989.34619140625,
+            0,
+            -42.52360534667969
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 9,
+      "pos": [
+        457.86181640625,
+        0,
+        998.0216064453125
+      ],
+      "vel": [
+        5987.826171875,
+        0,
+        -47.929481506347656
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            457.86181640625,
+            0,
+            998.0216064453125
+          ],
+          "vel": [
+            5987.826171875,
+            0,
+            -47.929481506347656
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 10,
+      "pos": [
+        507.7477111816406,
+        0,
+        997.5772094726562
+      ],
+      "vel": [
+        5986.30615234375,
+        0,
+        -53.333980560302734
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            507.7477111816406,
+            0,
+            997.5772094726562
+          ],
+          "vel": [
+            5986.30615234375,
+            0,
+            -53.333980560302734
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 11,
+      "pos": [
+        557.6209106445312,
+        0,
+        997.087646484375
+      ],
+      "vel": [
+        5984.787109375,
+        0,
+        -58.73711013793945
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            557.6209106445312,
+            0,
+            997.087646484375
+          ],
+          "vel": [
+            5984.787109375,
+            0,
+            -58.73711013793945
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 12,
+      "pos": [
+        607.4815063476562,
+        0,
+        996.5531616210938
+      ],
+      "vel": [
+        5983.26806640625,
+        0,
+        -64.13887023925781
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            607.4815063476562,
+            0,
+            996.5531616210938
+          ],
+          "vel": [
+            5983.26806640625,
+            0,
+            -64.13887023925781
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 13,
+      "pos": [
+        657.329345703125,
+        0,
+        995.9736938476562
+      ],
+      "vel": [
+        5981.74951171875,
+        0,
+        -69.53926086425781
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            657.329345703125,
+            0,
+            995.9736938476562
+          ],
+          "vel": [
+            5981.74951171875,
+            0,
+            -69.53926086425781
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 14,
+      "pos": [
+        707.1646118164062,
+        0,
+        995.3492431640625
+      ],
+      "vel": [
+        5980.23095703125,
+        0,
+        -74.93827819824219
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            707.1646118164062,
+            0,
+            995.3492431640625
+          ],
+          "vel": [
+            5980.23095703125,
+            0,
+            -74.93827819824219
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 15,
+      "pos": [
+        756.9872436523438,
+        0,
+        994.6797485351562
+      ],
+      "vel": [
+        5978.71337890625,
+        0,
+        -80.33592987060547
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            756.9872436523438,
+            0,
+            994.6797485351562
+          ],
+          "vel": [
+            5978.71337890625,
+            0,
+            -80.33592987060547
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 16,
+      "pos": [
+        806.7972412109375,
+        0,
+        993.96533203125
+      ],
+      "vel": [
+        5977.19580078125,
+        0,
+        -85.7322006225586
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            806.7972412109375,
+            0,
+            993.96533203125
+          ],
+          "vel": [
+            5977.19580078125,
+            0,
+            -85.7322006225586
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 17,
+      "pos": [
+        856.5945434570312,
+        0,
+        993.2059326171875
+      ],
+      "vel": [
+        5975.6787109375,
+        0,
+        -91.12711334228516
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            856.5945434570312,
+            0,
+            993.2059326171875
+          ],
+          "vel": [
+            5975.6787109375,
+            0,
+            -91.12711334228516
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 18,
+      "pos": [
+        906.3792114257812,
+        0,
+        992.401611328125
+      ],
+      "vel": [
+        5974.162109375,
+        0,
+        -96.5206527709961
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            906.3792114257812,
+            0,
+            992.401611328125
+          ],
+          "vel": [
+            5974.162109375,
+            0,
+            -96.5206527709961
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 19,
+      "pos": [
+        956.1513061523438,
+        0,
+        991.5523681640625
+      ],
+      "vel": [
+        5972.6455078125,
+        0,
+        -101.9128189086914
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            956.1513061523438,
+            0,
+            991.5523681640625
+          ],
+          "vel": [
+            5972.6455078125,
+            0,
+            -101.9128189086914
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 20,
+      "pos": [
+        1005.9107055664062,
+        0,
+        990.658203125
+      ],
+      "vel": [
+        5971.12939453125,
+        0,
+        -107.30361938476562
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1005.9107055664062,
+            0,
+            990.658203125
+          ],
+          "vel": [
+            5971.12939453125,
+            0,
+            -107.30361938476562
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 21,
+      "pos": [
+        1055.657470703125,
+        0,
+        989.7191162109375
+      ],
+      "vel": [
+        5969.6142578125,
+        0,
+        -112.69306182861328
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1055.657470703125,
+            0,
+            989.7191162109375
+          ],
+          "vel": [
+            5969.6142578125,
+            0,
+            -112.69306182861328
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 22,
+      "pos": [
+        1105.3916015625,
+        0,
+        988.735107421875
+      ],
+      "vel": [
+        5968.0986328125,
+        0,
+        -118.08113098144531
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1105.3916015625,
+            0,
+            988.735107421875
+          ],
+          "vel": [
+            5968.0986328125,
+            0,
+            -118.08113098144531
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 23,
+      "pos": [
+        1155.1131591796875,
+        0,
+        987.7061767578125
+      ],
+      "vel": [
+        5966.583984375,
+        0,
+        -123.46782684326172
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1155.1131591796875,
+            0,
+            987.7061767578125
+          ],
+          "vel": [
+            5966.583984375,
+            0,
+            -123.46782684326172
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 24,
+      "pos": [
+        1204.822021484375,
+        0,
+        986.6324462890625
+      ],
+      "vel": [
+        5965.0693359375,
+        0,
+        -128.8531494140625
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1204.822021484375,
+            0,
+            986.6324462890625
+          ],
+          "vel": [
+            5965.0693359375,
+            0,
+            -128.8531494140625
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 25,
+      "pos": [
+        1254.518310546875,
+        0,
+        985.5137939453125
+      ],
+      "vel": [
+        5963.5556640625,
+        0,
+        -134.23712158203125
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1254.518310546875,
+            0,
+            985.5137939453125
+          ],
+          "vel": [
+            5963.5556640625,
+            0,
+            -134.23712158203125
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 26,
+      "pos": [
+        1304.2020263671875,
+        0,
+        984.3502807617188
+      ],
+      "vel": [
+        5962.0419921875,
+        0,
+        -139.61972045898438
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1304.2020263671875,
+            0,
+            984.3502807617188
+          ],
+          "vel": [
+            5962.0419921875,
+            0,
+            -139.61972045898438
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 27,
+      "pos": [
+        1353.873046875,
+        0,
+        983.1419677734375
+      ],
+      "vel": [
+        5960.5283203125,
+        0,
+        -145.00094604492188
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1353.873046875,
+            0,
+            983.1419677734375
+          ],
+          "vel": [
+            5960.5283203125,
+            0,
+            -145.00094604492188
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 28,
+      "pos": [
+        1403.531494140625,
+        0,
+        981.8888549804688
+      ],
+      "vel": [
+        5959.015625,
+        0,
+        -150.3808135986328
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1403.531494140625,
+            0,
+            981.8888549804688
+          ],
+          "vel": [
+            5959.015625,
+            0,
+            -150.3808135986328
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 29,
+      "pos": [
+        1453.177490234375,
+        0,
+        980.5909423828125
+      ],
+      "vel": [
+        5957.5029296875,
+        0,
+        -155.75930786132812
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1453.177490234375,
+            0,
+            980.5909423828125
+          ],
+          "vel": [
+            5957.5029296875,
+            0,
+            -155.75930786132812
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 30,
+      "pos": [
+        1502.8106689453125,
+        0,
+        979.2481689453125
+      ],
+      "vel": [
+        5955.9912109375,
+        0,
+        -161.13644409179688
+      ],
+      "ang_vel": [
+        6,
+        0,
+        0
+      ],
+      "audit": {
+        "ball": {
+          "pos": [
+            1502.8106689453125,
+            0,
+            979.2481689453125
+          ],
+          "vel": [
+            5955.9912109375,
+            0,
+            -161.13644409179688
+          ],
+          "ang_vel": [
+            6,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    }
+  ],
+  "audit_setup": {
+    "preparation": "raw",
+    "mutators": {
+      "ball_drag": 0.029999999329447746,
+      "ball_hit_extra_force_scale": 1,
+      "ball_mass": 30,
+      "ball_max_speed": 6000,
+      "ball_radius": 91.25,
+      "ball_world_friction": 0.3499999940395355,
+      "ball_world_restitution": 0.6000000238418579,
+      "boost_accel_air": 1058.3333740234375,
+      "boost_accel_ground": 991.6666870117188,
+      "boost_pad_cooldown_big": 10,
+      "boost_pad_cooldown_small": 4,
+      "boost_used_per_second": 33.33333206176758,
+      "bump_cooldown_time": 0.25,
+      "bump_force_scale": 1,
+      "car_mass": 180,
+      "car_spawn_boost_amount": 33.33333206176758,
+      "car_world_friction": 0.30000001192092896,
+      "car_world_restitution": 0.30000001192092896,
+      "goal_base_threshold_y": 5124.25,
+      "gravity": [
+        0,
+        0,
+        -650
+      ],
+      "jump_accel": 1458.3333740234375,
+      "jump_immediate_force": 291.6666564941406,
+      "respawn_delay": 3,
+      "demo_mode": null,
+      "enable_car_ball_collision": null,
+      "enable_car_car_collision": null,
+      "enable_team_demos": null,
+      "unlimited_double_jumps": null,
+      "unlimited_flips": null
+    }
+  },
+  "scenario_sha256": "bfd23dae34ea6b8d19a8a22f210d26cc4d0449c2f201d4be642e83bd5eae7061"
+}

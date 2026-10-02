@@ -10,8 +10,7 @@ export const bulletSubtract = (first, second) => new Vector3(...["x", "y", "z"].
 export const bulletAdd = (first, second) => new Vector3(...["x", "y", "z"].map(axis => round(first[axis] + second[axis])));
 export const bulletScale = (vector, scalar) => new Vector3(...["x", "y", "z"].map(axis => round(vector[axis] * scalar)));
 
-export function normalizeSse(vector) {
-  const squared = bulletDot(vector, vector);
+export function normalizeSse(vector, squared = bulletDot(vector, vector)) {
   const exponent = Math.floor(Math.log2(squared));
   const parity = exponent - 2 * Math.floor(exponent / 2);
   const mantissa = squared / 2 ** exponent;

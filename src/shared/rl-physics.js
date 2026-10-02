@@ -627,7 +627,7 @@ export function collideCarBall(car, ball, tick, { deferred = false, bulletTransf
   const nearW = center.clone().addScaledVector(f, near.x).addScaledVector(l, near.y).addScaledVector(u, near.z);
   const n = V().addScaledVector(f, localNormal.x).addScaledVector(l, localNormal.y).addScaledVector(u, localNormal.z);
   let nativeWitness;
-  if (deferred && car.physicsProfile === "rocketsim" && !car.wheelsContact) {
+  if (deferred && car.physicsProfile === "rocketsim" && (!car.wheelsContact || car.jumping)) {
     const round = Math.fround, toBullet = value => round(round(value) * round(0.02));
     const hitbox = car.hitbox ?? getHitboxPreset("octane");
     const basis = bulletTransform?.basis ?? [f, l, u].map(vector => V(...vector.toArray().map(round)));

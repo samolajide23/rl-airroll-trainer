@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeCar, makeSoccarKickoffCar, stepCar } from "../../src/shared/carSim.js";
-import { RL, makeBall, stepBall, carHitbox, collideCarBall, alignCarVisualToHitbox } from "../../src/shared/rl-physics.js";
+import { RL, makeBall, stepBall, carHitbox, collideCarBall, extraImpulseScale, alignCarVisualToHitbox } from "../../src/shared/rl-physics.js";
 import { HITBOX_PRESETS } from "../../src/shared/hitboxPresets.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
 import { AerialBody, FixedStepClock, frameElapsed } from "../../src/shared/aerial.js";
@@ -13,6 +13,60 @@ import { firstDivergence } from "./first-divergence.mjs";
 import { makePhysCar } from "../../src/shared/carPhysics.js";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
+
+test("wheel lateral friction follows the GDC absolute side-speed ratio in both profiles", () => {
+  for (const profile of ["native", "rocketsim"]) {
+    for (const [forward, sideways, expected] of [
+      [1000, 0, 1], [-1000, 0, 1], [0, 1000, 0.2], [0, -1000, 0.2],
+      [1000, 1000, 0.6], [-1000, -1000, 0.6], [0, 0, 1],
+    ]) {
+      const car = makeCar(new THREE.Vector3(0, 0, 17), 0);
+      car.physicsProfile = profile;
+      car.vel.set(forward, sideways, 0);
+      stepCar(car, {});
+      assert.equal(car.numWheelsInContact, 4);
+      for (const wheel of car.wheels) {
+        close(wheel.latFriction, expected);
+        close(wheel.longFriction, 1);
+      }
+    }
+  }
+});
+
+test("body-only recovery retains RocketSim pitch and downward force despite GDC description", () => {
+  for (const profile of ["native", "rocketsim"]) {
+    const simulate = (hasContact, throttle) => {
+      const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+      car.physicsProfile = profile;
+      car.arenaCollisions = false;
+      car.q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.4);
+      car.worldContact.hasContact = hasContact;
+      car.worldContact.normal.set(0, 0, 1);
+      stepCar(car, { throttle });
+      assert.equal(car.numWheelsInContact, 0);
+      return car;
+    };
+    const free = simulate(false, 1);
+    const recovery = simulate(true, 1);
+    assert(Math.abs(recovery.omega.y - free.omega.y) > 0.01);
+    close(recovery.vel.z - free.vel.z, -100 * RL.DT, 0.00001);
+    const idle = simulate(false, 0);
+    const idleContact = simulate(true, 0);
+    close(idleContact.vel.distanceTo(idle.vel), 0);
+    close(idleContact.omega.distanceTo(idle.omega), 0);
+  }
+});
+
+test("RocketSim plane contact writeback preserves a queued upward bump", () => {
+  const car = makeCar(new THREE.Vector3(0, 0, 15), 0);
+  car.q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
+  car.captureArenaContacts = true;
+  car.velocityImpulseCache.set(0, 0, 1000);
+  stepCar(car, {});
+  assert(car.lastArenaContacts.length > 0);
+  assert(car.vel.z > 900, `queued bump lost: ${car.vel.z}`);
+  assert.deepEqual(car.velocityImpulseCache.toArray(), [0, 0, 0]);
+});
 
 test("RocketSim wall-curve margin contact does not invent corner roll", () => {
   const car = makePhysCar(new THREE.Vector3(3600, 0, 17), 0);
@@ -31,9 +85,9 @@ test("RocketSim wall-curve margin contact does not invent corner roll", () => {
   for (let tick = 1; tick <= 91; tick++) {
     stepCar(car, tick <= 3 ? { jump: true, throttle: 1 } : { throttle: 1, boost: true });
   }
-  assert.ok(car.pos.distanceTo(new THREE.Vector3(3941.53515625, 0.0022142711095511913, 62.186580657958984)) < 0.001);
-  assert.ok(car.vel.distanceTo(new THREE.Vector3(707.902587890625, 0.13005365431308746, 24.743669509887695)) < 0.07);
-  assert.ok(car.omega.distanceTo(new THREE.Vector3(0.10792434215545654, -5.498936653137207, 0.006831048987805843)) < 0.0001);
+  assert.ok(car.pos.distanceTo(new THREE.Vector3(3941.53515625, 0.0022142711095511913, 62.186580657958984)) < 0.0006);
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(707.902587890625, 0.13005365431308746, 24.743669509887695)) < 0.017);
+  assert.ok(car.omega.distanceTo(new THREE.Vector3(0.10792434215545654, -5.498936653137207, 0.006831048987805843)) < 0.000008);
 });
 
 test("RocketSim wheel pushback uses initial then previous solver timestep", () => {
@@ -355,6 +409,29 @@ test("RocketSim flip vertical damping starts on the eighteenth flip tick", () =>
   const atBoundary = car.vel.z;
   stepCar(car, {});
   close(car.vel.z, atBoundary * (1 - RL.FLIP_Z_DAMP_120) - RL.GRAVITY * RL.DT, 0.001);
+});
+
+test("RocketSim upward flip damping includes the float32 twenty-fifth tick", () => {
+  const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+  car.physicsProfile = "rocketsim";
+  car.arenaCollisions = false;
+  car.hasFlipped = true;
+  car.isFlipping = true;
+  car.vel.z = 3000;
+  let expectedTime = 0;
+  for (let tick = 1; tick <= 26; tick++) {
+    const before = car.vel.z;
+    stepCar(car, {});
+    expectedTime = Math.fround(expectedTime + Math.fround(RL.DT));
+    assert.equal(car.flipTime, expectedTime);
+    if (tick === 25) {
+      assert(car.flipTime < Math.fround(RL.FLIP_Z_DAMP_END));
+      close(car.vel.z, before * (1 - RL.FLIP_Z_DAMP_120) - RL.GRAVITY * RL.DT, 0.001);
+    } else if (tick === 26) {
+      assert(car.flipTime >= Math.fround(RL.FLIP_Z_DAMP_END));
+      close(car.vel.z, before - RL.GRAVITY * RL.DT, 0.001);
+    }
+  }
 });
 
 test("Free Play kickoff matches RocketSim raw spawn for every hitbox", () => {
@@ -1051,6 +1128,66 @@ test("coupled step preserves stationary ball sleep without contact", () => {
   for (let tick = 0; tick < 120; tick++) stepCarBall(car, ball, {}, tick);
   assert.equal(ball.pos.z, Math.fround(Math.fround(Math.fround(93.15) * Math.fround(0.02)) * 50));
   close(ball.vel.length(), 0);
+});
+
+test("car-ball physical impulses conserve linear momentum and obey Coulomb friction", () => {
+  for (const profile of ["native", "rocketsim"]) {
+    const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+    car.physicsProfile = profile;
+    car.arenaCollisions = false;
+    car.vel.set(1000, 0, 20);
+    car.omega.set(0.2, -0.3, 0.4);
+    car.lastExtraBallTick = 10;
+    const ball = makeBall(new THREE.Vector3(150, 60, 1035));
+    ball.vel.set(50, -30, 10);
+    ball.omega.set(0, 4, 2);
+    const carVelocity = car.vel.clone(), ballVelocity = ball.vel.clone();
+    const carSpin = car.omega.clone(), ballSpin = ball.omega.clone();
+    const contact = collideCarBall(car, ball, 10, { deferred: true });
+    assert(contact, `${profile}: expected contact`);
+    const ballImpulse = ball.vel.clone().sub(ballVelocity).multiplyScalar(RL.BALL_MASS);
+    const carImpulse = car.vel.clone().sub(carVelocity).multiplyScalar(RL.CAR_MASS);
+    assert(ballImpulse.clone().add(carImpulse).length() < 1e-7, `${profile}: momentum changed`);
+    const normalImpulse = ballImpulse.dot(contact.normal);
+    const frictionImpulse = ballImpulse.clone().addScaledVector(contact.normal, -normalImpulse);
+    assert(normalImpulse > 0);
+    assert(frictionImpulse.length() <= RL.CARBALL_FRICTION * normalImpulse + 1e-7);
+    assert(car.omega.distanceTo(carSpin) > 0.01);
+    assert(ball.omega.distanceTo(ballSpin) > 0.01);
+    assert.equal(ball.extraVelocityCache?.length() ?? 0, 0);
+  }
+});
+
+test("Psyonix extra impulse follows the biased direction without car recoil or added spin", () => {
+  for (const profile of ["native", "rocketsim"]) {
+    for (const spin of [[0, 0, 0], [0, 4, 2]]) {
+      const simulate = enabled => {
+        const car = makeCar(new THREE.Vector3(0, 0, 1000), 0);
+        car.physicsProfile = profile;
+        car.arenaCollisions = false;
+        car.vel.set(1000, 0, 20);
+        car.lastExtraBallTick = enabled ? -99 : 10;
+        const ball = makeBall(new THREE.Vector3(150, 60, 1035));
+        ball.vel.set(50, -30, 10);
+        ball.omega.set(...spin);
+        const direction = ball.pos.clone().sub(car.pos);
+        direction.z *= 0.35;
+        direction.x -= 0.35 * direction.x;
+        direction.normalize();
+        const speed = ball.vel.clone().sub(car.vel).length();
+        const expected = direction.multiplyScalar(speed * extraImpulseScale(speed));
+        assert(collideCarBall(car, ball, 10, { deferred: true }));
+        return { car, ball, expected };
+      };
+      const physical = simulate(false), extra = simulate(true);
+      assert.deepEqual(extra.car.vel.toArray(), physical.car.vel.toArray());
+      assert.deepEqual(extra.car.omega.toArray(), physical.car.omega.toArray());
+      assert.deepEqual(extra.ball.vel.toArray(), physical.ball.vel.toArray());
+      assert.deepEqual(extra.ball.omega.toArray(), physical.ball.omega.toArray());
+      assert(extra.ball.extraVelocityCache.distanceTo(extra.expected) < 0.0001);
+      assert.equal(physical.ball.extraVelocityCache?.length() ?? 0, 0);
+    }
+  }
 });
 
 test("nose contact matches measured first-hit car angular response", () => {

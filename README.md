@@ -40,6 +40,19 @@ render the full replay to a downloadable H.264 MP4 at 720p or 1080p,
 30, 60 or 120 fps. The added replay is available through **Open added replay**.
 Fixed close-up anchors near the ball when selected and retains that framing during
 playback and export. Orbit adjustments are included in the export framing.
+Playback and MP4 exports automatically skip detected post-goal dead time after
+a two-second celebration. Every detected kickoff, including the opening kickoff,
+gets a three-second 3, 2, 1 countdown over its recorded reset pose before action
+resumes. These countdowns are inserted visuals, not recovered native countdown
+telemetry; replay audio is silent during them and follows the same timeline cuts.
+Seek and clip inputs retain original replay timestamps. Pauses without a detectable
+centered-ball kickoff reset are left untouched.
+
+**Goal Director** follows the selected player's camera between goals, transitions
+to a field-side shot during the three seconds before a score, and holds through
+the explosion before returning over the next three seconds. The shot fits the ball
+and both goalposts to the viewport. Preview, seeking and MP4 export use the same
+deterministic framing. This is an edited view, not Rocket League's native camera.
 
 **Follow player** selects Player POV and applies that player's recorded FOV,
 distance, height, angle, stiffness, swivel speed and transition speed. Recorded
@@ -60,22 +73,47 @@ effects are included in the exported MP4; unavailable scores or clock show `--`.
 Wheel rotation is reconstructed from recorded forward velocity, with recorded
 steering applied to the front tires. Wheel distance follows reconstructed pose
 timing; steering retains its original recorded timing. Powerslides produce deterministic rear-tire
-smoke near the floor; wall contacts and suspension travel are not reconstructed.
+smoke near the floor. Replay tires receive a bounded, deterministic surface-support
+adjustment (up to 8 cm) along car-down, including walls, without moving the recorded
+body pose. Airborne tires return to their neutral positions. Soft shadows ground
+cars and the ball visually. Suspension travel is cosmetic, not reconstructed telemetry.
 Wheel spin and the steering angle are visual approximations, not native telemetry.
+
+Live play and Replay Studio share depth-netted goals, rounded team trim,
+instanced spectators, arena signs and segmented floodlight fixtures. Car finishes
+separate coated paint, glass, rubber and metal. Boost has a bright core and a soft
+plume whose length follows speed (recorded velocity in replays). Arena reflections
+are a static, once-baked approximation of turf, team ends and floodlights, not
+per-object live reflections. These details do not change collision geometry.
 
 Recorded demolition events, ball hit-team changes and score increases drive
 repeatable procedural bursts. Missing/demolished car frames remain hidden until
 the recorded car track returns; respawns are not simulated. Supported body IDs
 select Octane, Fennec or Dominus, with Classic used for unsupported bodies.
 Team colours are approximations, not recorded decals or paint palettes.
-Recorded boost-pad pickup/return events are retained. Pads can render when their
-coordinates are recorded; the added replay omits those coordinates, so its pads
-are not placed using guesses. Hit-team changes do not identify every same-team touch.
+All 34 standard Soccar boost pads render, including permanent depleted bases.
+Recorded pickup/return events update pads when their coordinates identify a location.
+When fixed-object coordinates are omitted, repeated pickups by an identified car
+can resolve the object's location against the standard pad layout. Initial actor
+snapshots are excluded from location evidence because they can describe historical
+pickups, but their recorded active/depleted states are retained. Both supplied
+multiplayer replays resolve all 34 locations and every pad event. This is a
+location reconstruction from recorded evidence. A small-pad boost gain can also
+corroborate a single pickup using car samples within 50 ms; this resolves all 33
+observed pad identities in the supplied 1v1 replay. The remaining standard pad
+has no recorded identity or state changes in that file. This remains a
+conservative location inference, not recovered map data: sparse, conflicting or
+colliding identities remain unresolved and their pads stay lit. Pickup and return
+times remain recorded, not simulated cooldowns. The supplied 1v1, 2v2 and 3v3
+replays exercise this path. Hit-team changes do not identify every same-team touch.
 
 Rendering uses this trainer's standard stadium and available car/ball models, not
 Rocket League's original renderer, map, cosmetics, effects or audio. Network
 poses are interpolated with bounded per-object timing reconstruction in consistent
 free-flight segments. Contact discontinuities remain anchored to recorded samples;
+ball velocity changes above 100 uu/s conservatively mark candidate contact intervals
+that retain original timing and use straight interpolation. This can also exclude
+non-contact velocity changes; exact impact time between observations is unavailable.
 this is not recovered native per-object timing or trainer physics simulation.
 Replay files do not contain video or game audio.
 Engine, boost, skid, hit, demolition and goal sounds are synthesized from replay

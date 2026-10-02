@@ -1,5 +1,564 @@
 # Fresh Strict RocketSim Baseline
 
+## Ceiling Restitution Precision Correction
+
+The complete ceiling trajectory now passes at unchanged strict limits.
+RocketSim restitution was reconstructing Bullet-unit velocity from the
+published game-unit velocity. That float32 round trip loses information.
+The retained correction uses `external.base`, the preserved native velocity
+before external forces, for the RocketSim contact row's restitution calculation.
+The calibrated native profile keeps its existing calculation.
+
+First-impact native row tracing isolated the error: contact geometry, effective
+mass, angular response and friction RHS matched, but the normal RHS was
+368.788330078125 in JS versus 368.7883605957031 in native Bullet. Using the
+preserved velocity makes all 120 subsequent JS position, velocity and angular
+velocity frames bit-identical to this native diagnostic. The diagnostic itself
+still differs slightly from the immutable recording; it is not replacement
+truth or evidence of bit-identical Rocket League physics.
+
+| Ceiling metric | Before | After | Unchanged strict limit |
+|---|---:|---:|---:|
+| First failing tick | 71 | None | No failing ticks |
+| Maximum position error (UU) | 0.000244249 | 0.000061065 | 0.0002 |
+| Mean position error (UU) | 0.000083101 | 0.000029501 | - |
+| Maximum velocity error (UU/s) | 0.000092295 | 0.000076491 | 0.0005 |
+| Maximum angular velocity error (rad/s) | 0.000002458 | 0.000001937 | 0.00001 |
+| Maximum forward-axis error (degrees) | 0.000006723 | 0.000013282 | 0.00005 |
+| Maximum right-axis error (degrees) | 0.000015789 | 0.000004598 | 0.00005 |
+| Maximum up-axis error (degrees) | 0.000015510 | 0.000013309 | 0.00005 |
+
+The immutable audit now has **91/100 trajectory passes**, up from 90, with
+no lost passes across 16,810 paired frames. Results are separate in
+`out/ceiling-precision-followup/native-restitution`. The other 98 trajectories
+have identical metrics; jump-into-wall's velocity maximum improves from
+0.016000474 to 0.015999507 UU/s and its mean also improves slightly, but it
+still fails. Ceiling forward-axis maximum and mean, up-axis mean, and mean
+angular velocity error increase while remaining within every applicable limit.
+
+The ceiling-only `roof_trace.cpp` diagnostic logs raw contact data and wraps
+the existing solver callbacks for the first impact's 20 normal/friction rows.
+From `tools/physics-compare`, run the compiled diagnostic with
+`out/native/ceiling_row_trace.exe collision_meshes ceiling`.
+Additional JSON records have `stage: "ceilingRow"`; filter by `tick` for
+trajectory frames. Saved evidence is in
+`out/ceiling-precision-followup/{native-trace,native-rows,js-rows}.json`.
+The saved JS rows show the pre-fix discrepancy. Adding tracing leaves every
+previous native ceiling trajectory frame and the ground-flip output unchanged.
+Row-speed, denominator-grouping and upper-bound-equality probes did not fix
+the ceiling and were removed. Bullet vector dot products use `(x+y)+z`, while
+its solver SIMD dot uses `x+(y+z)`; that difference is intentional here.
+
+The existing coupled regression adds immutable ticks 71 and 119. It passes
+with the fix; a process-only old-restitution negative control fails position
+at tick 71. All 266 repository tests, native diagnostic compilation, production
+build, editor diagnostics and scoped whitespace checks pass. The build still
+reports Browserslist age, Tailwind content and bundle-size warnings. All 103
+original input hashes are unchanged, and all 101 copied audit inputs are
+byte-identical to the originals. No recordings or tolerances were changed.
+
+Nine trajectory failures remain. Full-state passes remain **0/100** because
+required fields are unavailable. This is a strict ceiling trajectory pass,
+not complete RocketSim parity or native Rocket League certification. Sections
+below are historical snapshots, including the now-resolved ceiling failure.
+
+## Ceiling Split-Integration Correction
+
+The first ceiling-impact position mismatch is corrected, but the complete
+ceiling trajectory still fails. Bullet's `btSolverBody::writebackVelocityAndTransform`
+applies split-push translation before ordinary velocity integration. Combining
+both velocities before float32 integration, as the JS car path did, loses a
+rounding step. Separating these operations restores the ceiling impact height
+at tick 37 and reduces the subsequent orientation error.
+
+The retained change enables split-first position integration only for
+RocketSim upper-plane contacts identified by their native plane normals.
+Other surfaces and the calibrated native profile keep their existing path.
+This boundary reflects the portion verified here, not a claim that Bullet
+uses a different integration order on other surfaces. Extending the change to
+all contacts regressed the forward flip; excluding simultaneous car-ball
+contacts did not recover it. Both broad variants were rejected. An SSE
+angular-normalization experiment additionally regressed the diagonal flip
+and was removed. A plane-distance arithmetic probe did not fix the ceiling.
+
+| Ceiling metric | Before | After | Unchanged strict limit |
+|---|---:|---:|---:|
+| First failing tick | 37 | 71 | No failing ticks |
+| Maximum position error (UU) | 0.000371263 | 0.000244249 | 0.0002 |
+| Mean position error (UU) | 0.000153912 | 0.000083101 | - |
+| Maximum velocity error (UU/s) | 0.000086343 | 0.000092295 | 0.0005 |
+| Maximum angular velocity error (rad/s) | 0.000001836 | 0.000002458 | 0.00001 |
+| Maximum forward-axis error (degrees) | 0.000042569 | 0.000006723 | 0.00005 |
+| Maximum right-axis error (degrees) | 0.000113388 | 0.000015789 | 0.00005 |
+| Maximum up-axis error (degrees) | 0.000107195 | 0.000015510 | 0.00005 |
+
+The immutable audit remains **90/100 trajectory passes**, with no lost passes
+and identical metrics for all other 99 trajectories across 16,810 paired
+frames. Results are in `out/ceiling-followup/upper-plane`. All 103 original
+input hashes are unchanged. Neither recordings nor tolerances were modified.
+The remaining ceiling failure is position, not an orientation pass being
+counted as a complete trajectory pass. Velocity and spin maxima increased
+slightly while remaining below their unchanged limits.
+
+The existing native tracer now accepts `ceiling`, reproducing the recording's
+airborne warmup/reset, live ball and 120 neutral-input ticks. Its maximum
+position/velocity/spin differences from the immutable recording are
+0.000061065 UU, 0.000076491 UU/s and 0.000001937 rad/s. It is diagnostic evidence,
+not bit-identical replacement truth. Its output is retained separately as
+`out/ceiling-followup/upper-plane/native-trace.json`; the previous native
+ground-flip trace is unchanged. Run the compiled diagnostic with
+`out/native/ceiling_trace.exe collision_meshes ceiling` from this tools folder.
+
+The existing coupled regression now includes continuous ceiling checkpoints
+at ticks 37, 38, 40, 70 and 120, plus the final up axis. These selected checks
+do not assert that every ceiling frame passes. A process-only old-integration
+negative control fails at tick 37's position. All 265 repository tests, the
+native diagnostic compile, production build and editor checks pass.
+
+Ten trajectory failures remain; full-state passes remain **0/100** because
+required fields are unavailable. The residual ceiling velocity differences
+and later float32 position drift still require investigation. This correction
+does not establish full RocketSim parity or native Rocket League certification.
+
+## Jump-Launch Contact Correction
+
+The forward flip now passes the complete strict trajectory gate. The residual
+orientation error traced back to its first car-ball contact, not an identified
+rotation-integrator defect. Wheel contacts are sampled before the jump update;
+the sphere/box witness gate excluded the Bullet-compatible calculation while
+those wheel flags remained set during launch. The RocketSim deferred-contact
+path now uses that calculation when `car.jumping` is true as well as when no
+wheels touch. Other wheel-supported contacts and the native profile retain
+their existing paths. This is a scoped correction, not a complete port of the
+coupled Bullet solver.
+
+Enabling the witness for every grounded contact was tested and rejected: it
+fixed the flip but lost both powerslide cases and `contact_ground_approach`.
+The retained jump-state gate has **90/100 strict trajectory passes**, up from
+89, with **zero lost passes** across all 16,810 paired frames. Four trajectories
+change: forward flip, flip-window-before, jump-tap and jump-full-hold. Some
+velocity/spin errors increase, but all four pass every strict trajectory limit.
+
+| Forward flip maximum | Before | After | Unchanged limit |
+|---|---:|---:|---:|
+| Position (UU) | 0.000049774 | 0.000030518 | 0.0002 |
+| Velocity (UU/s) | 0.000082172 | 0.000209012 | 0.0005 |
+| Angular velocity (rad/s) | 0.000002661 | 0.000005182 | 0.00001 |
+| Forward-axis angle (degrees) | 0.000054139 | 0.000025212 | 0.00005 |
+| Up-axis angle (degrees) | 0.000054675 | 0.000025798 | 0.00005 |
+
+Results are separate from immutable inputs in
+`out/flip-orientation-followup/launch`; the rejected broad experiment is in
+`out/flip-orientation-followup/witness`. The added native `ground-flip` axis
+logging leaves all 120 previous native output frames unchanged. Its orientation
+trace is diagnostic evidence, not replacement recording truth.
+
+The coupled regression now checks immutable forward/right/up axes at ticks
+107, 110 and 120 using the audit's atan2 angle calculation. It passes with the
+fix and fails at tick 107's up axis when a process-only negative control restores
+the old witness gate. All 265 repository tests, the native diagnostic compile,
+and the production build pass. All 103 original input hashes and all original
+79 trajectory passes are preserved; neither recordings nor limits changed.
+
+Ten strict trajectory failures remain. Full-state passes remain **0/100**
+because required fields are unavailable. This is not full physics parity or
+certification against native Rocket League telemetry. The sections below
+record earlier snapshots, including the now-resolved flip orientation failure.
+
+## Flip Damping Cutoff Correction
+
+The two large flip errors identified below shared a timer-boundary bug, not a
+floor-contact manifold bug. RocketSim accumulates `flipTime` in float32. On the
+twenty-fifth flip tick it remains below `FLIP_Z_DAMP_END`, so upward vertical
+velocity is still damped. JS rounded the timer to ticks and stopped one tick
+early. The RocketSim profile now accumulates float32 time and compares the
+upward-damping endpoint directly; the calibrated native profile is unchanged.
+
+The pinned native source and `roof_trace.cpp`'s `ground-flip` mode establish the
+cause. Its 120-tick trace stays within the immutable reference's strict rigid
+vector limits (maximum position 0.00001630 UU, velocity 0.00006248 UU/s,
+spin 0.000001265 rad/s); it is not bit-exact replacement truth. At tick 40 there
+is one fresh floor contact. Native pre-solver vertical velocity is 121.408 UU/s,
+while old JS skipped damping of 186.782 UU/s. The pre-solver diagnostic leaves
+all 120 native output frames unchanged. A car-only probe is insufficient here:
+the audited scenario has a live ball affecting the launch.
+
+| Scenario | Old maximum position error (UU) | Corrected maximum (UU) | Strict result |
+|---|---:|---:|---|
+| `movement_ground_flip_forward` | 16.736309 | 0.000049774 | Orientation failure at tick 107 |
+| `movement_flip_window_before` | 0.781330 | 0.000011445 | Pass |
+
+Corrected forward-flip velocity/spin maxima are 0.00008218 UU/s and
+0.000002661 rad/s. Its tick-107 up-axis error is 0.0000504513 degrees against
+the unchanged 0.00005-degree limit. This residual has not been fixed or waived.
+
+The separate `out/flip-followup/audit` run grades all 16,810 paired frames:
+**89/100 trajectory passes, zero lost passes, 0/100 full-state passes**.
+Only the two flip trajectories changed; all original 79 passes and all 103
+original input hashes remain intact. Official thresholds and recordings were
+not modified. Regressions cover natural timer accumulation at ticks 25/26 and
+unseeded coupled checkpoints at the former failure ticks and route endpoints.
+The repository's 261-test suite and production build passed before the added
+coupled regression, which also passed independently. Full-state coverage and
+the remaining strict trajectory failures are still unresolved.
+
+## Threshold Sensitivity Experiment
+
+Run `node tools/physics-compare/threshold-sensitivity.mjs` to recompute all
+16,810 paired frames in the saved 100-case scoped audit. This read-only diagnostic
+reproduces every strict first-failure tick and the 88/100 baseline before grading
+alternative limits. All 204 consumed inputs were hash-checked unchanged during
+the run. It uses the audit's uniform defaults, not the scenario exceptions used
+by other comparison commands. Angles use the audit's atan2-based calculation.
+
+| Physics limit multiplier | Trajectory passes |
+|---|---:|
+| 1x (official) | 88/100 |
+| 2x | 89/100 |
+| 5x | 94/100 |
+| 10x | 95/100 |
+| 20x | 96/100 |
+| 50x | 97/100 |
+| 100x | 98/100 |
+| 1000x | 98/100 |
+
+Only car/ball position, velocity, angular velocity and orientation limits are
+scaled. Boost, air-time and zero ground-state mismatch requirements stay fixed.
+At 100x, the limits are 0.02 UU (0.2 mm) position, 0.05 UU/s velocity,
+0.001 rad/s angular velocity and 0.005 degrees orientation. A separately stated
+candidate practical profile (0.1 UU, 0.1 UU/s, 0.001 rad/s, 0.01 degrees) also
+passes 98/100. Neither profile is an approved replacement gate or a measured
+human-perception threshold.
+
+The remaining failures are `movement_flip_window_before` (maximum velocity
+47.3137 UU/s, spin 0.82328 rad/s, position 0.78133 UU) and
+`movement_ground_flip_forward` (47.4158 UU/s, 1.09754 rad/s, 16.73631 UU).
+These are substantial discrepancies, not near-threshold failures. The straight
+movement bot's ball drift of 0.014978 UU requires about 74.9x the position
+limit; the wall jump requires about 32x the velocity limit. Both remain useful
+diagnostics even when a practical accuracy gate accepts them.
+
+The official 0.0002 UU position limit is 2 micrometres, smaller than a float32
+coordinate step of 0.00048828125 UU at +4096 UU. That makes it sensitive to
+rounding-level differences but does not prove those differences unavoidable.
+In particular, the independent native jump-wall control has zero position/spin
+error and only 0.000001907349 UU/s velocity error, already below the official
+velocity limit. The known JS contact-normal mismatch is real, not explained
+away by the threshold experiment.
+
+Conclusion: the current limits are overly restrictive as a sole practical
+trainer-accuracy gate, but remain valuable for numerical regression and parity
+diagnosis. Keep the strict result separate from a provisional practical grade;
+prioritize the two large flip errors. Longer routes and gameplay outcome tests
+are still needed before adopting a practical gate: these recorded scenarios
+do not establish long-run stability or perceptual equivalence. All 100 cases
+also have unavailable full-state fields; relaxing trajectory thresholds does
+not repair that coverage or turn 0/100 full-state passes into certification.
+No physics code, official tolerance, recording or saved audit was changed.
+
+## Independent Jump-Wall Contact Trace
+
+The `jump-wall` mode in `roof_trace.cpp` now reproduces the immutable scenario's
+240-tick settle, one idle refresh, reset, and 180-tick control schedule. The
+rebuilt Zig 0.14.1 SIMD executable matches recorded position and angular velocity
+exactly over all 180 ticks; maximum velocity difference is
+0.000001907349 UU/s. Reset and ticks 1-90 match all three rigid vectors exactly.
+This small compiler residual is reported, not substituted into the reference.
+
+Run `node tools/physics-compare/jump-wall-trace.mjs` after building the tracer as
+`tools/physics-compare/out/native/jump_wall_trace.exe`. See the native build flags
+below. Options `--exe`, `--root`, `--meshes`, and `--out` select existing inputs
+and a separate diagnostic output directory. The script checks the scenario and
+native pre-impact fidelity, requires a one-to-one witness pairing, and verifies
+that every JS probe remains identical to the recording through tick 90. It
+refuses output within the immutable input directory.
+
+Six separate Node processes test tick-91 witness substitutions through an
+in-memory module load hook. No production source is patched and no recorded
+rigid state is injected into the running car. The substitutions use native
+contact data, so their results are diagnostic only, never parity passes.
+
+| Tick-91 substitution | Velocity error (UU/s) | Angular velocity error (rad/s) |
+|---|---:|---:|
+| None | 0.016000473904 | 0.000006781565 |
+| Normal only | 0.000419239404 | 0.000000156531 |
+| Point only | 0.016664507712 | 0.000007049561 |
+| Depth only | 0.016000473904 | 0.000006781565 |
+| Normal, point, depth | 0.000300660126 | 0.000000134176 |
+| All, in native contact order | 0.000300660126 | 0.000000141931 |
+
+The loaded native contact normal is
+`[-0.6365377306938171, 0.0005081333802081645, 0.7712453603744507]`, versus JS
+`[-0.6365086107705719, 0.000507610608450549, 0.7712694281160036]`.
+Replacing only the normal removes about 97.4% of the velocity discrepancy.
+Thus normal generation is the dominant measured cause at this impact. Point
+replacement alone worsens the result. Even complete witness replacement leaves
+velocity and split-position differences, so it does not prove the solver exact
+or establish that float32 conversion alone will fix the normal.
+
+The next production target is Bullet-compatible curved box-triangle normal
+generation, followed by the remaining contact/split-impulse arithmetic. Do not
+hardcode these measured normals. Results and executable/reference SHA-256 hashes
+are saved under `out/jump-wall-followup/contact-diagnostic/` in
+`witness-report.json` and `native-trace.json`. All 103 immutable input hashes were
+rechecked unchanged. This investigation changes no production physics or audit
+tolerances and claims no new trajectory passes; the last full gate remains
+88/100 trajectories and 0/100 full-state passes.
+
+## Jump-Wall Solver Follow-Up
+
+The RocketSim profile now uses the existing float32 native-unit contact rows
+when every chassis-arena contact is penetrating, in addition to the existing
+horizontal-plane path. The calibrated native profile is unchanged. Extending
+the rows to all curved contacts failed the positive-gap goal-wall angular
+regression, so that broader candidate was rejected. Positive-gap curved contacts
+retain their existing solver; this is a bounded correction, not a complete
+Bullet contact implementation.
+
+The immutable jump-into-wall recording matches car position, velocity, and spin
+exactly through tick 90. The first rigid-state discrepancy remains tick 91.
+
+| Full-route maximum error | Before | After |
+|---|---:|---:|
+| Position (UU) | 0.011111657559 | 0.004536556288 |
+| Velocity (UU/s) | 0.062408525110 | 0.016000473904 |
+| Angular velocity (rad/s) | 0.000274842289 | 0.000163165196 |
+
+The final separate audit is
+`tools/physics-compare/out/jump-wall-followup/scoped-audit/audit-report.json`;
+`metric-changes.json` records the before/after comparison. All **88/100** existing
+trajectory passes, including all original 79 passes, are preserved. Only the
+jump-wall trajectory metrics change, with no increased tracked maximum or mean.
+There are **0/100 full-state passes** across 16,810 paired frames. All 103 input
+hashes match the saved manifest; recordings, controls, and audit tolerances were
+not changed. The existing tick-91 regression now has tighter bounds that reject
+the previous error. All 98 physics, movement, and calibration tests pass.
+
+The wall case still fails its strict gate at tick 91. The curved contact witness
+uses a double-precision triangle query, unlike the native-unit float32 plane
+witness. This was a residual hypothesis at this stage; the subsequent independent
+trace above identifies the normal as the dominant error at tick 91. Remaining
+contact geometry, positive-gap solving, and unavailable audited state still
+prevent full parity; RocketSim agreement would not certify native Rocket League.
+
+## Developer Talk Transcript Check
+
+The supplied transcript of *It IS Rocket Science! The Physics of Rocket League*
+is useful architectural evidence, not a complete numerical specification of the
+current game. This check used the supplied text; its networking demonstrations
+and native-game behavior were not independently reproduced.
+
+| Claim | Evidence and result |
+|---|---|
+| Lateral grip uses absolute sideways speed divided by sideways plus forward speed | New public `stepCar` regression passes in both profiles: forward/reverse grip 1, sideways grip 0.2, diagonal grip 0.6, and stationary grip 1. Both signs are covered. The implementation also has a 5 UU/s lateral deadband. |
+| Apply tire friction at center-of-mass height | Source inspection: `applyFrictionImpulses` removes the contact offset's car-up component before applying the impulse. Suspension impulses remain separate. This was not an isolated torque measurement. |
+| Direct acceleration curve rather than transmission or longitudinal tire-spin dynamics | Source inspection: `updateWheels` selects speed-dependent drive torque and sets engine/brake force directly; normal driving uses longitudinal friction 1. The new wheel test checks that coefficient, not a complete acceleration curve. |
+| Surface orientation affects grip | Source inspection: the non-sticky curve scales friction by contact-normal Z when throttle is zero. Sloped-surface behavior was not separately measured in this check. |
+| Fixed 120 Hz and visuals separate from physical wheel configuration | Existing render-rate trajectory and wheel calibration/suspension tests pass. This does not establish cross-platform bit-exactness or certify all art assets. |
+
+Recovery has concrete differences from the transcript's roll-only, no-body-only
+downforce, and disable-at-three-wheels description. Our `stepCar` calls
+`updateAutoRoll` when throttle is nonzero and either 1-3 wheels touch or a prior
+body contact exists. The helper includes pitch and roll torque and applies a
+downward force even with zero wheel contacts. The local RocketSim source agrees:
+`tools/physics-compare/out/native/RocketSim/src/Sim/Car/Car.cpp`, call at line 137
+and helper at line 837. This is source corroboration, not native-game proof.
+
+A new isolated test supplies a previous body-contact normal to a pitched car
+away from geometry. Both profiles produce pitch correction and an additional
+downward velocity of approximately `100 / 120` UU/s with throttle. Without
+throttle, the supplied contact has no effect on velocity or spin. This tests the
+recovery branch, not natural contact generation; the three-wheel activation
+condition was inspected, not separately exercised. No recovery constants or
+gates were changed based solely on the transcript.
+
+Server authority, input buffering, whole-scene prediction/rollback, input decay,
+event deduplication and matched state quantization are networking references.
+These local tests do not validate packet loss, latency, reconciliation, remote
+clients, cross-platform determinism, or collision-order fixes. No multiplayer
+implementation or new quantization was introduced.
+
+Validation: **98/98 tests passed** across `physics.test.mjs`,
+`movement-bot.test.mjs`, and `car-calibration.test.mjs`. Two regression tests were
+added; production physics, reference recordings, scenarios and tolerances were
+not edited. The full 100-scenario audit was not rerun and no additional parity
+passes are claimed. The recovery discrepancy needs independent native-game
+measurements before it can justify a change to the RocketSim parity target.
+
+## Sim-to-Sim Transfer Paper Check
+
+[Pleines et al., arXiv:2205.05061v2](https://arxiv.org/html/2205.05061v2)
+studies transferring PPO policies from an approximate Unity simulation to Rocket
+League. Its nearly 100% goalie saves and roughly 75% striker success concern
+isolated tasks, not complete matches or exact physics. Its physics comparison
+uses interpolated position traces; that is not our tick-aligned full-state gate.
+
+Table I increases the Unity dodge angular limit from 5.5 to 7.3 rad/s. We tested
+that particular substitution using four existing immutable audited scenarios.
+Two separate Node processes ran the unchanged runner and a process-local
+`RL.MAX_ANG_VEL = Math.fround(7.3)` override. Source files, controls, scenario
+inputs and reference recordings were not changed. Both generated complete
+90-tick trajectories; the measurements below cover ticks 0 through 60 (the
+first half-second). The override applied throughout the candidate run, not only
+during dodges; this is a cap sensitivity test, not a port of Unity's full dodge
+implementation. The existing `validatePair` checked metadata and controls.
+
+| Flip | Current max spin error (rad/s) | Raised-cap max spin error (rad/s) | Raised-cap max basis-vector error |
+|---|---:|---:|---:|
+| Forward | 0 | 1.800001 | 0.803357 |
+| Side | 0.000000954 | 1.800011 | 0.809430 |
+| Diagonal | 0.000001923 | 1.800028 | 0.806645 |
+| Backward | 0 | 1.800001 | 0.803357 |
+
+All four reference peak spin magnitudes are approximately 5.5 rad/s; candidates
+reach approximately 7.3. Position error is zero for both variants over this
+interval, despite the candidate's incorrect orientation. All three orientation
+axes were measured. This rejects adopting the raised cap for RocketSim parity.
+Local outputs are in `tools/physics-compare/out/paper-2205-cap-baseline` and
+`tools/physics-compare/out/paper-2205-cap-candidate`.
+
+Other relevant distinctions:
+
+- The paper uses 93.15 UU for its Unity ball size but 91.25 UU in bounce
+	computation. Our 91.25 UU collision radius already agrees with the latter;
+	our 93.15 UU resting height is a separate quantity, not the collision radius.
+- The physical-plus-Psyonix impulse concept is already implemented; the prior
+	Smish experiment below tested a related solver replacement independently.
+- The paper's damping, sticky forces and suspension values are Unity-specific
+	adjustments. They were reviewed, not substituted or validated in this check.
+- Its ablation and held-out-shot methodology is useful for future bot evaluation.
+	Task success must remain separate from physics parity. Its PPO training and
+	native-game transfer results were not reproduced here.
+
+The existing physics and movement suites passed **91/91 tests** during this
+check. No production physics changes were made, and no additional full-suite
+trajectory passes or native Rocket League certification are claimed.
+
+## Smish Car-Ball Impulse Experiment
+
+The [Smish collision article](https://www.smish.dev/rocket_league/ball_simulation_3/)
+was tested as a possible improvement, not adopted on the strength of its equations
+alone. A temporary isolated-airborne branch replaced the ten normal/friction
+iterations with a coupled 3x3 effective-mass solve followed by a Coulomb clamp.
+Contact detection, witnesses, penetration correction and the extra Psyonix
+impulse were unchanged. Grounded and simultaneous arena contacts were excluded.
+This tests the physical solver substitution, not a complete recreation of the
+article's collision pipeline.
+
+Four continuous 60-tick runs were compared with the existing immutable RocketSim
+recordings. Car and ball position, velocity and spin, all three car orientation
+axes, actual initial rigid vectors, declared setup, controls and tick alignment
+were checked. Signed zero is numerically equivalent; timestep metadata uses the
+existing validator's float32-compatible bounds. No recording was reseeded.
+
+| Airborne contact | Current ball velocity max error (UU/s) | Article-solver candidate |
+|---|---:|---:|
+| Nose | 0.000130371 | 0.002378041 |
+| Side offset | 0.000137329 | 60.049687833 |
+| Roof | 0.000123020 | 12.109880111 |
+| Spinning ball | 0.000126058 | 16.895043642 |
+
+The existing offset first-hit regression failed. The candidate was removed and
+both recorded nose/offset checks passed again. **No production physics change
+is retained from this experiment.** These results are against RocketSim, not
+new native Rocket League measurements. They do not establish that the article
+is generally inaccurate or resolve wheel hits and pinches, which it excludes.
+
+Useful article concepts are retained as two regression tests in
+`tools/physics-compare/physics.test.mjs`, covering both `native` and `rocketsim`:
+
+- Physical contact impulses conserve linear momentum and satisfy the Coulomb
+	bound while changing both bodies' spin on an off-centre spinning hit.
+- Enabling the Psyonix extra impulse leaves the physical car/ball response
+	unchanged and queues only ball linear velocity, with the article's biased
+	direction and the existing speed curve. It adds no car recoil or ball spin.
+
+All **91 physics and movement tests pass**. All **103 immutable input hashes**
+remain unchanged. Stored baseline/candidate outputs are under
+`tools/physics-compare/out/smish-impulse-before` and `smish-impulse-candidate`.
+To compare those local artifacts again, run:
+
+```sh
+node tools/physics-compare/compare-smish-experiment.mjs
+```
+
+This diagnostic reports car/ball vector and orientation errors plus reference
+hashes; it does not generate recordings or certify full-state parity. Its saved
+candidate artifacts are required because the rejected solver is not shipped.
+
+## Inertia, Steering And Full Roof Correction
+
+This result supersedes the historical wheel-normal section below. The verified
+inertia correction is now retained together with its dependent arithmetic fixes.
+The full 360-tick goal-roof trajectory passes the unchanged strict tolerances.
+The immutable audit improves **79 -> 88/100 trajectory passes**, preserving every
+original pass across **16,810 paired frames**. All **103** input SHA256 hashes
+match the saved manifest in `out/inertia-followup/input-hashes.json`.
+References, scenarios and tolerances were not regenerated or relaxed.
+
+Retained RocketSim-profile corrections:
+
+- Round source hitbox dimensions to float32 before native-unit inertia and
+	plane-support calculations.
+- Reproduce Bullet static-plane wheel-ray triangles, use original Bullet-unit
+	mesh vertices, and preserve native steering-quaternion and curve operation order.
+- Use row-vector multiplication for external torque and the rigid-body impulse
+	denominator, while retaining column-vector constraint angular components.
+- Match native SSE angular-speed normalization.
+- Refresh plane witnesses through body-local coordinates with the native normal.
+- Write back contact deltas before external-force impulses; queued bump impulses
+	remain in the pre-force base velocity.
+- Reset grounded replay positions through the native transform, including resets
+	to an unchanged displayed position. Audit rotation uses the actual physics basis,
+	not a basis reconstructed from the rendering quaternion.
+
+Calibrated native-profile arithmetic is preserved. Diagnostic native traces are
+not replacement recordings: roof position, velocity and spin match the immutable
+reference through tick 248, but compiled native spin first differs at tick 249.
+
+| Full roof vector error | Before | Retained |
+|---|---:|---:|
+| Position maximum (UU) | 0.00109183673 | 0 |
+| Velocity maximum (UU/s) | 0.00253222362 | 0.000086742433 |
+| Spin maximum (rad/s) | 0.0000361359642 | 0.000002150935 |
+
+Analog steering, fast steering and yaw-90 combined aerial control match every
+recorded car position, velocity and spin vector exactly. Regression digests are
+derived from the immutable recordings, not candidate output. Roof regression
+coverage locks every rigid vector through tick 248 and checks original native
+checkpoints through landing and tick 360, with explicit spawn, ball, preparation,
+controls and ground-state assertions. The full audit checks all 361 roof frames,
+including ball vectors and all three orientation axes, without reseeding.
+
+The nine new passes are roof recovery, combined pitch/roll, partial aerial input,
+side flip, diagonal flip, powerslide release, powerslide bot, goal-roof bot, and
+grounded car-ball approach.
+
+This is not a uniform reduction in every error. All increased maxima and means
+across **31 cases** are saved in
+`out/edge-audit-20261002-v1/inertia-followup-metric-changes.json`, relative to
+`audit-report-before-plane-inertia.json`. Neither baseline is overwritten.
+Notable retained tradeoffs include:
+
+| Case / metric | Before | Retained | Trajectory |
+|---|---:|---:|---|
+| Right steer car velocity maximum | 0.0000852998 | 0.0004300330 | Pass |
+| Left steer car position maximum | 0.0000611542 | 0.0001831055 | Pass |
+| Left steer car velocity maximum | 0.0001934755 | 0.0004404359 | Pass |
+| Ground rest ball position maximum | 0.0000467233 | 0.0001681243 | Pass |
+| Coast/brake ball position maximum | 0.0005117837 | 0.0005330428 | Still fails |
+| Jump into wall car position maximum | 0.0103762072 | 0.0111116576 | Still fails |
+| Jump into wall car velocity maximum | 0.0617909498 | 0.0624085251 | Still fails |
+| Straight bot ball velocity maximum | 0.0005762260 | 0.0010845872 | Still fails |
+| Straight bot ball spin maximum | 0.0000051611 | 0.0000214898 | Still fails |
+
+Verification: **89 focused tests**, **251 repository tests**, production build,
+and touched-code editor diagnostics pass. Existing Browserslist, Tailwind and
+bundle-size warnings remain. The full-state audit still fails **0/100** because
+unavailable state is not treated as verified. Twelve trajectories still fail.
+This completes the inertia/steering/full-roof target, not complete RocketSim
+parity or native Rocket League certification.
+
 ## Goal-Roof Wheel-Normal Follow-Up
 
 Retained: RocketSim wheel-contact normals are accumulated and normalized with

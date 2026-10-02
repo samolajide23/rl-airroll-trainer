@@ -51,7 +51,35 @@ function normalizeModel(root, targetLength = 3.2) {
           : [obj.material];
         for (const m of mats) {
           if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
-          if ("envMapIntensity" in m) m.envMapIntensity = 0.85;
+          if ("envMapIntensity" in m) m.envMapIntensity = 1;
+          const name = m.name.toLowerCase();
+          if (name.includes("chassis")) {
+            m.emissive?.setHex(0x000000);
+            m.emissiveMap = null;
+            m.metalness = 0.7;
+            m.roughness = 0.42;
+          } else if (name.includes("body")) {
+            m.metalness = 0.25;
+            m.roughness = 0.34;
+            if ("clearcoat" in m) {
+              m.clearcoat = 0.85;
+              m.clearcoatRoughness = 0.18;
+            }
+          } else if (/tread|tire|tyre|rubber/.test(name)) {
+            m.color.setHex(0x161719);
+            m.metalness = 0;
+            m.roughness = 0.9;
+          } else if (/window|glass/.test(name)) {
+            m.color.setHex(0x121a20);
+            m.metalness = 0;
+            m.roughness = 0.09;
+          } else if (/rim|chrome|metal/.test(name)) {
+            m.metalness = 0.9;
+            m.roughness = 0.24;
+          }
+          for (const texture of [m.map, m.normalMap, m.roughnessMap, m.metalnessMap]) {
+            if (texture) texture.anisotropy = 8;
+          }
         }
       }
     }

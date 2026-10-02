@@ -74,13 +74,13 @@ export class BoostTrail {
       for (let segment = 0; segment < 14; segment++) {
         const progress = segment / 13;
         const material = new THREE.SpriteMaterial({
-          map: this.mat.map, color: progress < 0.25 ? 0xfff4bd : 0xffb51b,
+          map: this.mat.map, color: progress < 0.25 ? 0xe9f3ff : 0xffa342,
           transparent: true, blending: THREE.AdditiveBlending,
           depthWrite: false, toneMapped: false,
         });
         const puff = new THREE.Sprite(material);
         puff.userData.progress = progress;
-        puff.position.z = -progress * 2.1;
+        puff.position.z = -progress * 1.6;
         jet.add(puff);
       }
       this.flames.add(jet);
@@ -100,22 +100,23 @@ export class BoostTrail {
    * @param {boolean} boosting
    * @param {number} dt
    */
-  update(car, boosting, dt) {
+  update(car, boosting, dt, speed = 0) {
     this._time += Math.min(dt, 0.1);
+    const stretch = THREE.MathUtils.clamp(speed / 23, 0, 1);
     for (const flame of this.flames.children) {
       flame.visible = boosting;
       if (boosting) {
         const pulse = Math.sin(this._time * 47 + flame.position.x * 9);
-        flame.scale.z = 0.95 + pulse * 0.12;
+        flame.scale.z = 0.85 + stretch * 0.7 + pulse * 0.08;
         flame.scale.x = flame.scale.y = 0.95 + pulse * 0.06;
         for (const puff of flame.children) {
           const progress = puff.userData.progress;
           const flutter = Math.sin(this._time * 31 - progress * 15 + flame.position.x * 7);
-          const width = (0.23 + progress * 0.62) * (1 + flutter * 0.12);
+          const width = (0.12 + Math.sin(progress * Math.PI) * 0.23) * (1 + flutter * 0.06);
           puff.scale.set(width, width, 1);
           puff.position.x = flutter * progress * 0.09;
           puff.position.y = Math.cos(this._time * 23 - progress * 11) * progress * 0.07;
-          puff.material.opacity = (1 - progress) ** 0.8 * (0.28 + flutter * 0.04);
+          puff.material.opacity = (1 - progress) ** 1.4 * (progress < 0.25 ? 0.85 : 0.42 + flutter * 0.04);
           puff.material.rotation = this._time * 0.7 + progress * 4;
         }
       }
@@ -143,8 +144,8 @@ export class BoostTrail {
         ).applyMatrix4(car.matrixWorld).addScaledVector(this._fwd, -0.15 * Math.random());
         particle.velocity.set((Math.random() - 0.5) * 2.2, (Math.random() - 0.5) * 2.2, -6 - Math.random() * 5).applyQuaternion(this._q);
         particle.life = 0;
-        particle.maxLife = 0.2 + Math.random() * 0.3;
-        particle.size = Math.random() < 0.25 ? 0.06 + Math.random() * 0.09 : 0.28 + Math.random() * 0.4;
+        particle.maxLife = 0.18 + stretch * 0.12 + Math.random() * 0.18;
+        particle.size = 0.04 + Math.random() * 0.12;
         this.particles.push(particle);
       }
     } else this._emitAccumulator = 0;

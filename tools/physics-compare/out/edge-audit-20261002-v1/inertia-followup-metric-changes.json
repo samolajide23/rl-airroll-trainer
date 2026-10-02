@@ -1,0 +1,859 @@
+[
+  {
+    "id": "basic_raw_spawn_hybrid",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 3.0566188397903403e-7,
+        "after": 3.898770338325568e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_air_stall",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 2.850738600159744e-7,
+        "after": 3.1161052528467175e-7
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 3.8093417816790276e-7,
+        "after": 3.980887154558135e-7
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      }
+    ]
+  },
+  {
+    "id": "movement_flip_window_expired",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 1.994701854171607e-7,
+        "after": 3.438582001084121e-7
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 1.994701854171607e-7,
+        "after": 3.438582001084121e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_hybrid_jump",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 2.6670893726189226e-7,
+        "after": 3.1763429274181554e-7
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000012074182697257333,
+        "after": 0.0000017075472925031877
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 2.6670893726189226e-7,
+        "after": 3.1763429274181554e-7
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000012074182697257333,
+        "after": 0.0000017075472925031877
+      }
+    ]
+  },
+  {
+    "id": "movement_merc_jump",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 2.2077034171881395e-7,
+        "after": 3.5067154206010147e-7
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 2.2077034171881395e-7,
+        "after": 3.5067154206010147e-7
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      }
+    ]
+  },
+  {
+    "id": "movement_dominus_landing",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      }
+    ]
+  },
+  {
+    "id": "movement_plank_landing",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000012074182697257333,
+        "after": 0.0000014787793334710982
+      }
+    ]
+  },
+  {
+    "id": "movement_breakout_landing",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 1.913358046584032e-7,
+        "after": 2.500263024580571e-7
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 1.9892237065696636e-7,
+        "after": 2.2832777536442633e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_flip_window_before",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "vel_max",
+        "before": 47.313732723946345,
+        "after": 47.313736228452974
+      },
+      {
+        "metric": "omega_max",
+        "before": 0.8232793568723348,
+        "after": 0.8232798637423585
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 0.010750526029902925,
+        "after": 0.010750598730949558
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.7517239818794572,
+        "after": 0.7517277815654986
+      }
+    ]
+  },
+  {
+    "id": "movement_roof_recovery",
+    "previouslyPassed": false,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "vel_max",
+        "before": 0.00009003008820500143,
+        "after": 0.00011844005352981586
+      }
+    ]
+  },
+  {
+    "id": "movement_ceiling_impact",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "pos_mean",
+        "before": 0.00014934086332974605,
+        "after": 0.00015391236115741528
+      },
+      {
+        "metric": "pos_max",
+        "before": 0.0003662119928154984,
+        "after": 0.00037126244789095173
+      },
+      {
+        "metric": "vel_mean",
+        "before": 0.00002215321563719202,
+        "after": 0.000044676088660701275
+      },
+      {
+        "metric": "omega_mean",
+        "before": 4.599882299053609e-7,
+        "after": 4.963583940198468e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_flip_side_air",
+    "previouslyPassed": false,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "omega_max",
+        "before": 9.482073400005068e-7,
+        "after": 9.536779543781182e-7
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 3.6951301184305517e-7,
+        "after": 3.9903166682324006e-7
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000012074182697257333,
+        "after": 0.0000014787793334710982
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_rest_0_5s",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "ball_pos_max",
+        "before": 0.000046723257127571154,
+        "after": 0.00016812425249553134
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.000020647501636702386,
+        "after": 0.0000860487974355386
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00010062669725166584,
+        "after": 0.00026751704207605954
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.00008849374317643168,
+        "after": 0.00023386499905167594
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_throttle_4s",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.000012622401164624745,
+        "after": 0.000013750906580232077
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00027308663880212173,
+        "after": 0.0003052167887250792
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.000029086562955916678,
+        "after": 0.00003261831411955347
+      },
+      {
+        "metric": "ball_omega_max",
+        "before": 0.0000021692789089110367,
+        "after": 0.000002876821408069066
+      },
+      {
+        "metric": "ball_omega_mean",
+        "before": 2.9314579850149147e-7,
+        "after": 3.8875964973906324e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_steer_right_1s",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "pos_mean",
+        "before": 0.000007209912353157418,
+        "after": 0.000012812487634322492
+      },
+      {
+        "metric": "pos_max",
+        "before": 0.00003104939333151426,
+        "after": 0.00006106495129998063
+      },
+      {
+        "metric": "vel_mean",
+        "before": 0.000018828396663268048,
+        "after": 0.00004247804725591062
+      },
+      {
+        "metric": "vel_max",
+        "before": 0.00008529975588364402,
+        "after": 0.0004300329689774169
+      },
+      {
+        "metric": "omega_max",
+        "before": 0.0000012117073617160305,
+        "after": 0.0000013604895711412708
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.000017559531676877806,
+        "after": 0.00003378614363207013
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.00001805080217741265,
+        "after": 0.000033764561934797926
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000024148365394514667,
+        "after": 0.000003818191820832846
+      },
+      {
+        "metric": "ball_pos_max",
+        "before": 0.00003478458260339076,
+        "after": 0.0000764747823950205
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.00002007463331456825,
+        "after": 0.000024027812513500633
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00005516800293225837,
+        "after": 0.00012211658685214912
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.000027734356497777278,
+        "after": 0.00010145357164656254
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_steer_left_1s",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "pos_mean",
+        "before": 0.000015755126019958646,
+        "after": 0.000035863801502507876
+      },
+      {
+        "metric": "pos_max",
+        "before": 0.00006115424935104904,
+        "after": 0.00018310546875
+      },
+      {
+        "metric": "vel_mean",
+        "before": 0.00004448094959195442,
+        "after": 0.00010779192199075281
+      },
+      {
+        "metric": "vel_max",
+        "before": 0.00019347547419403942,
+        "after": 0.00044043588579040514
+      },
+      {
+        "metric": "omega_max",
+        "before": 0.0000014412218017611898,
+        "after": 0.0000018609288404861032
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.0000033217533141858902,
+        "after": 0.000005223801866795705
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.00002209938289076446,
+        "after": 0.000029003182112398563
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 0.0000031095119368270897,
+        "after": 0.000004994263620686901
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.000026398040527968538,
+        "after": 0.00003148561635232688
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000024148365394514667,
+        "after": 0.000003818191820832846
+      },
+      {
+        "metric": "ball_pos_max",
+        "before": 0.00003478458260339076,
+        "after": 0.0000764747823950205
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.00002007463331456825,
+        "after": 0.000024027812513500633
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00005516800293225837,
+        "after": 0.00012211658685214912
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.000027734356497777278,
+        "after": 0.00010145357164656254
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_coast_1s",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "ball_pos_max",
+        "before": 0.0005117837231063808,
+        "after": 0.0005330428304876059
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.00010708508388322869,
+        "after": 0.0001120544388848519
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00027308663880212173,
+        "after": 0.0003052167887250792
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.00008873977839992783,
+        "after": 0.00009491705563176903
+      },
+      {
+        "metric": "ball_omega_max",
+        "before": 0.000004303499606408671,
+        "after": 0.0000047779095146765125
+      },
+      {
+        "metric": "ball_omega_mean",
+        "before": 0.0000011899838715501357,
+        "after": 0.0000014595431834520835
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_brake_0_25s",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "ball_pos_max",
+        "before": 0.0005117837231063808,
+        "after": 0.0005330428304876059
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.00006603548597578601,
+        "after": 0.00007142562602403573
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00027308663880212173,
+        "after": 0.0003052167887250792
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.00007208401090872753,
+        "after": 0.00008092360866913347
+      },
+      {
+        "metric": "ball_omega_max",
+        "before": 0.000004303499606408671,
+        "after": 0.0000047779095146765125
+      },
+      {
+        "metric": "ball_omega_mean",
+        "before": 7.459008031867986e-7,
+        "after": 9.862421219462177e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_powerslide_0_5s",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000024148365394514667,
+        "after": 0.000003818191820832846
+      },
+      {
+        "metric": "ball_pos_max",
+        "before": 0.00003478458260339076,
+        "after": 0.0000764747823950205
+      },
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.000020654590951371445,
+        "after": 0.000024169710088109798
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.00005516800293225837,
+        "after": 0.00012211658685214912
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.000023665852968803825,
+        "after": 0.00008436287391722628
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_jump_full_hold",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "pos_mean",
+        "before": 0.000002248097730262498,
+        "after": 0.0000022657033120254884
+      },
+      {
+        "metric": "pos_max",
+        "before": 0.00000765150879473689,
+        "after": 0.000007656266548805064
+      },
+      {
+        "metric": "vel_mean",
+        "before": 0.000004178971032538729,
+        "after": 0.0000043966918114646
+      },
+      {
+        "metric": "vel_max",
+        "before": 0.000004530151860007062,
+        "after": 0.000004768560496659024
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.0000012320380284532693,
+        "after": 0.0000012397724641318445
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 0.0000012320380284532693,
+        "after": 0.0000012397724641318445
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_jump_tap",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "pos_max",
+        "before": 0.000005727336958121483,
+        "after": 0.00000572749809058394
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 8.576665183401028e-7,
+        "after": 8.688266982736903e-7
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 8.576665183401028e-7,
+        "after": 8.688266982736903e-7
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_flip_forward",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "omega_mean",
+        "before": 0.15021228824062602,
+        "after": 0.1502124469959206
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 1.3463663479295744,
+        "after": 1.3463735483357753
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 2.5484908857784414,
+        "after": 2.5485107452065714
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 1.318330867944118,
+        "after": 1.318334210548828
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 1.2775739732735976,
+        "after": 1.2775810136738035
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 2.5488772286566426,
+        "after": 2.54888120847173
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_reverse_2s",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "pos_max",
+        "before": 0.00000786438551011655,
+        "after": 0.000007864416535050243
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_powerslide_release",
+    "previouslyPassed": false,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "ball_pos_mean",
+        "before": 0.000026095276724268524,
+        "after": 0.000026100601475710198
+      }
+    ]
+  },
+  {
+    "id": "movement_ground_jump_into_wall",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "pos_mean",
+        "before": 0.0029898596008868165,
+        "after": 0.003125151811131978
+      },
+      {
+        "metric": "pos_max",
+        "before": 0.010376207210877245,
+        "after": 0.011111657558680665
+      },
+      {
+        "metric": "vel_mean",
+        "before": 0.008342597584738265,
+        "after": 0.008802647799756142
+      },
+      {
+        "metric": "vel_max",
+        "before": 0.061790949840481106,
+        "after": 0.06240852510968428
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.0002071563078765923,
+        "after": 0.00021527172232838548
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 0.00021146721270837477,
+        "after": 0.0002154743336739
+      }
+    ]
+  },
+  {
+    "id": "movement_movement_bot_straight",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "ball_pos_max",
+        "before": 0.014928065106229925,
+        "after": 0.014977601479257675
+      },
+      {
+        "metric": "ball_vel_max",
+        "before": 0.0005762259815798352,
+        "after": 0.0010845872181898056
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.0002597852730687006,
+        "after": 0.00039210854115438406
+      },
+      {
+        "metric": "ball_omega_max",
+        "before": 0.000005161063789943352,
+        "after": 0.000021489849330187727
+      },
+      {
+        "metric": "ball_omega_mean",
+        "before": 0.0000012177564765536435,
+        "after": 0.000003835990123529499
+      }
+    ]
+  },
+  {
+    "id": "movement_movement_bot_jump_dodge",
+    "previouslyPassed": false,
+    "passed": false,
+    "increases": [
+      {
+        "metric": "vel_max",
+        "before": 0.0006381385396217799,
+        "after": 0.0007547710161729896
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.00003639283900852845,
+        "after": 0.00003681680001799103
+      },
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.00012030334164943325,
+        "after": 0.00016741367008362042
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 0.000023574454520884253,
+        "after": 0.00003684530821393383
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.00011781148266890783,
+        "after": 0.00016767905749505378
+      }
+    ]
+  },
+  {
+    "id": "contact_contact_nose",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "omega_mean",
+        "before": 7.937741650886369e-7,
+        "after": 8.651043110585794e-7
+      },
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.000013531686160746633,
+        "after": 0.000013726325041528761
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 3.958748425330273e-8,
+        "after": 5.93812263799541e-8
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 0.000013526131750628913,
+        "after": 0.000013725317436539589
+      }
+    ]
+  },
+  {
+    "id": "contact_contact_side_offset",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_mean_deg",
+        "before": 0.000012544621521458733,
+        "after": 0.000012825440142460618
+      },
+      {
+        "metric": "right_mean_deg",
+        "before": 0.000003549016244244299,
+        "after": 0.000003910656942748905
+      },
+      {
+        "metric": "up_mean_deg",
+        "before": 0.000012014547193903953,
+        "after": 0.00001283521745315753
+      }
+    ]
+  },
+  {
+    "id": "contact_contact_ball_spin",
+    "previouslyPassed": true,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "omega_mean",
+        "before": 5.242065661796844e-7,
+        "after": 5.24270821552228e-7
+      },
+      {
+        "metric": "right_max_deg",
+        "before": 0.0000017075472925031877,
+        "after": 0.000002091309789151873
+      }
+    ]
+  },
+  {
+    "id": "contact_contact_ground_approach",
+    "previouslyPassed": false,
+    "passed": true,
+    "increases": [
+      {
+        "metric": "fwd_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      },
+      {
+        "metric": "up_max_deg",
+        "before": 0.0000014787793334710982,
+        "after": 0.0000017075472925031877
+      },
+      {
+        "metric": "ball_vel_mean",
+        "before": 0.00011774836433544751,
+        "after": 0.00011802327620785927
+      }
+    ]
+  }
+]

@@ -1,4 +1,52 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+
+let wheelDetailGeometry;
+
+function addWheelDetail(pivot) {
+  const inverse = pivot.matrixWorld.clone().invert();
+  const bounds = new THREE.Box3();
+  pivot.traverse(object => {
+    if (!object.isMesh) return;
+    object.geometry.computeBoundingBox();
+    bounds.union(object.geometry.boundingBox.clone().applyMatrix4(inverse.clone().multiply(object.matrixWorld)));
+  });
+  const dimensions = bounds.getSize(new THREE.Vector3());
+  const radius = Math.max(dimensions.y, dimensions.z) / 2;
+  if (!radius || !dimensions.x) return;
+  if (!wheelDetailGeometry) {
+    const rims = [], tread = [];
+    for (const side of [-1, 1]) {
+      for (const ringRadius of [0.72, 0.88]) {
+        const ring = new THREE.TorusGeometry(ringRadius, 0.012, 6, 48);
+        ring.rotateY(Math.PI / 2); ring.translate(side * 0.5, 0, 0); rims.push(ring);
+      }
+      for (let index = 0; index < 10; index++) {
+        const angle = index * Math.PI / 5;
+        const spoke = new THREE.BoxGeometry(0.018, 0.035, 0.36);
+        spoke.translate(side * 0.501, 0, 0.5); spoke.rotateX(angle); rims.push(spoke);
+      }
+    }
+    for (let index = 0; index < 48; index++) {
+      const angle = index * Math.PI / 24;
+      const rib = new THREE.BoxGeometry(0.8, 0.013, 0.028);
+      rib.translate(0, 0.987, 0); rib.rotateX(angle); tread.push(rib);
+    }
+    wheelDetailGeometry = { rim: mergeGeometries(rims), tread: mergeGeometries(tread) };
+    [...rims, ...tread].forEach(geometry => geometry.dispose());
+  }
+  for (const kind of ["rim", "tread"]) {
+    const material = new THREE.MeshStandardMaterial(kind === "rim"
+      ? { color: 0x7b848c, metalness: 0.85, roughness: 0.32 }
+      : { color: 0x222426, metalness: 0, roughness: 0.95 });
+    const detail = new THREE.Mesh(wheelDetailGeometry[kind], material);
+    detail.name = `wheel-detail-${kind}`;
+    detail.scale.set(dimensions.x, radius, radius);
+    detail.position.copy(bounds.getCenter(new THREE.Vector3()));
+    detail.castShadow = detail.receiveShadow = true;
+    pivot.add(detail);
+  }
+}
 
 /** Dimensional facts only; no exported artwork is bundled. PSK root-space uu.
  * Fennec Body_Grain_SK: FL/BL_WheelTranslation_jnt.
@@ -55,6 +103,8 @@ export function prepareCarVisual(visual, carId) {
     pivot.position.copy(center);
     visual.add(pivot);
     for (const mesh of meshes) pivot.attach(mesh);
+    pivot.updateWorldMatrix(true, true);
+    addWheelDetail(pivot);
     wheels.push({ corner, pivot, center: center.clone(), radius: Math.max(diameter.y, diameter.z) / 2, meshes });
   }
   const average = (front) => wheels.filter(w => w.corner.startsWith(front ? "F" : "B")).reduce((sum, w) => sum + w.center.z, 0) / 2;

@@ -1,15 +1,16 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { createIcons, icons } from "lucide";
 import { Output, Mp4OutputFormat, BufferTarget, CanvasSource, AudioBufferSource, canEncodeVideo, canEncodeAudio } from "mediabunny";
-import { createStadium } from "../shared/stadium.js";
+import { createStadium, createStadiumEnvironment } from "../shared/stadium.js";
 import { makeCar, disposeCarVisual } from "../shared/car.js";
 import { alignCarVisualToHitbox } from "../shared/rl-physics.js";
 import { preloadCars } from "../shared/carAssets.js";
 import { preloadBall, cloneBallMesh } from "../shared/ball.js";
 import { frameAt, samplePose, exportSettings, prepareReplayMotion } from "./timeline.js";
 import { createPlayerCameraTrack } from "./playerCamera.js";
+import { frameReplayGoal } from "./goalCamera.js";
+import { replayPlaybackSegments, replayPlaybackSample, replayPlaybackOffset } from "./goalCuts.js";
 import { analyzeReplayBall } from "./ballComparison.js";
 import { ReplayBoost, ReplayHud, ReplayWheels } from "./renderEffects.js";
 import { ReplayMatchEffects, ReplayAudio, synthesizeReplayAudio } from "./matchEffects.js";
@@ -19,18 +20,29 @@ const elements = Object.fromEntries([...document.querySelectorAll("[id]")].map(e
 createIcons({ icons });
 const renderer = new THREE.WebGLRenderer({ canvas: elements.preview, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x202b25);
-const pmrem = new THREE.PMREMGenerator(renderer);
-const room = new RoomEnvironment();
-scene.environment = pmrem.fromScene(room).texture;
-room.dispose();
-pmrem.dispose();
-scene.add(new THREE.HemisphereLight(0xdcebdc, 0x45503b, 2));
-const sunlight = new THREE.DirectionalLight(0xffeed6, 3);
+const environmentTarget = createStadiumEnvironment(renderer);
+scene.environment = environmentTarget.texture;
+scene.environmentIntensity = 0.65;
+scene.add(new THREE.HemisphereLight(0xd6e2ed, 0x293329, 0.65));
+const sunlight = new THREE.DirectionalLight(0xffffff, 0.75);
 sunlight.position.set(20, 65, -20);
-scene.add(sunlight, createStadium());
+sunlight.castShadow = true;
+sunlight.shadow.mapSize.set(4096, 4096);
+Object.assign(sunlight.shadow.camera, { left: -70, right: 70, top: 80, bottom: -80, near: 1, far: 180 });
+sunlight.shadow.camera.updateProjectionMatrix();
+sunlight.shadow.normalBias = 0.025;
+sunlight.shadow.bias = -0.00005;
+const stadium = createStadium();
+stadium.traverse(object => {
+  if (object.isMesh && !object.material.transparent) object.receiveShadow = true;
+});
+scene.add(sunlight, stadium);
 const camera = new THREE.PerspectiveCamera(65, 16 / 9, 0.1, 1500);
 camera.position.set(65, 58, 82);
 const orbit = new OrbitControls(camera, elements.preview);
@@ -49,6 +61,7 @@ comparisonBall.visible = false;
 scene.add(comparisonPaths, comparisonBall);
 let ballAnalysis, reportUrl;
 let replay, worker, cars = [], time = 0, playing = false, loading = false, exporting = false, canceled = false, downloadUrl;
+let playbackSegments = [], playbackTime = 0, countdown = null;
 const playerCameras = new Map();
 let preparedExport, preparation, preparationTimer, preparing = false;
 let preparationVersion = 0;
@@ -61,6 +74,7 @@ const assets = Promise.all([preloadCars(["octane"]), preloadBall()]).then(() => 
   const model = cloneBallMesh();
   if (model) { model.scale.setScalar(0.9275); ball.add(model); }
   else ball.add(new THREE.Mesh(new THREE.SphereGeometry(0.9275, 32, 24), new THREE.MeshStandardMaterial({ color: 0xe4e8e1 })));
+  ball.traverse(object => { if (object.isMesh) object.castShadow = object.receiveShadow = true; });
 });
 const carBasis = new THREE.Matrix4();
 const front = new THREE.Vector3();
@@ -73,9 +87,15 @@ function status(message, error = false) {
 }
 
 function setPlaying(value) {
+  if (value && replay && !playing) {
+    playbackTime = replayPlaybackOffset(playbackSegments, time, countdown === null ? undefined : playbackTime);
+    const sample = replayPlaybackSample(playbackSegments, playbackTime);
+    time = sample.time;
+    countdown = sample.countdown;
+  }
   playing = value;
   replayAudio.stop();
-  if (value && replay) replayAudio.play(replay, time, Number(elements.speed.value)).catch(error => status(`Audio unavailable: ${error.message}`, true));
+  if (value && replay && countdown === null) replayAudio.play(replay, time, Number(elements.speed.value)).catch(error => status(`Audio unavailable: ${error.message}`, true));
   elements.play.innerHTML = `<i data-lucide="${value ? "pause" : "play"}"></i>`;
   elements.play.title = value ? "Pause" : "Play";
   elements.play.setAttribute("aria-label", elements.play.title);
@@ -133,7 +153,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(elements.stage);
 
-function renderAt(playhead) {
+function renderAt(playhead, kickoffCountdown = null) {
   if (replay) {
     const cursor = frameAt(replay.times, playhead);
     const ballPose = samplePose(replay.ball, cursor);
@@ -170,13 +190,14 @@ function renderAt(playhead) {
       const target = ball.visible ? ball.position : new THREE.Vector3();
       camera.position.copy(target).add(new THREE.Vector3(14, 12, 20));
       camera.lookAt(target);
-    } else if (view === "player") {
+    } else if (view === "player" || view === "director") {
       const index = Number(elements["follow-player"].value);
       const key = `${index}:recorded`;
       if (!playerCameras.has(key)) playerCameras.set(key, createPlayerCameraTrack(replay, index));
       playerCameras.get(key)(camera, cursor);
+      if (view === "director") frameReplayGoal(camera, replay, playhead);
     }
-    if (view !== "player" && camera.fov !== 65) { camera.fov = 65; camera.updateProjectionMatrix(); }
+    if (!["player", "director"].includes(view) && camera.fov !== 65) { camera.fov = 65; camera.updateProjectionMatrix(); }
   }
   if (replay) matchEffects?.render(replay, playhead);
   renderer.render(scene, camera);
@@ -186,7 +207,7 @@ function renderAt(playhead) {
     const player = replay.players[index];
     const showPlayer = elements.camera.value === "player";
     replayHud.render(renderer, showPlayer ? player : null, showPlayer ? samplePose(player.frames, cursor) : null,
-      player.ballCam?.[cursor.index] ?? null, replay.match[cursor.index]);
+      player.ballCam?.[cursor.index] ?? null, replay.match[cursor.index], kickoffCountdown);
   }
 }
 
@@ -220,6 +241,8 @@ async function loadReplay(bytes, name) {
       if (worker !== currentWorker) return;
       replay = event.data.replay;
       prepareReplayMotion(replay);
+      playbackSegments = replayPlaybackSegments(replay, 0, replay.duration);
+      countdown = null;
       await preloadCars([...new Set(replay.players.map(player => player.carId))]);
       if (worker !== currentWorker) return;
       ballAnalysis = analyzeReplayBall(replay);
@@ -305,15 +328,16 @@ elements.sample.onclick = async () => {
     await loadReplay(await response.arrayBuffer(), "0000a984-75af-4b24-b5a6-cb3663fc4efa.replay");
   } catch (error) { loading = false; lockControls(); status(error.message, true); }
 };
-elements.play.onclick = () => { if (time >= replay.duration) time = 0; setPlaying(!playing); };
-elements.restart.onclick = () => { time = 0; setPlaying(false); updateTransport(); renderAt(time); };
-elements.seek.oninput = () => { time = Number(elements.seek.value); setPlaying(false); updateTransport(); renderAt(time); };
+elements.play.onclick = () => { if (time >= replay.duration) { time = 0; countdown = null; } setPlaying(!playing); };
+elements.restart.onclick = () => { time = 0; countdown = null; setPlaying(false); updateTransport(); renderAt(time); };
+elements.seek.oninput = () => { time = Number(elements.seek.value); countdown = null; setPlaying(false); updateTransport(); renderAt(time); };
 function stepFrame(direction) {
   if (!replay || loading || exporting) return;
   const index = direction > 0
     ? replay.times.findIndex(timestamp => timestamp > time + 0.000001)
     : replay.times.findLastIndex(timestamp => timestamp < time - 0.000001);
   time = index < 0 ? (direction > 0 ? replay.duration : 0) : replay.times[index];
+  countdown = null;
   setPlaying(false);
   updateTransport();
   renderAt(time);
@@ -333,12 +357,16 @@ elements.camera.onchange = () => {
   lockControls();
   renderAt(time);
 };
-elements["follow-player"].onchange = () => { elements.camera.value = "player"; elements.camera.onchange(); };
+elements["follow-player"].onchange = () => { if (elements.camera.value !== "director") elements.camera.value = "player"; elements.camera.onchange(); };
 function selectedExportSettings() {
   const [width, height] = elements.resolution.value.split(",").map(Number);
-  return exportSettings({ start: Number(elements["clip-start"].value),
+  const settings = exportSettings({ start: Number(elements["clip-start"].value),
     end: elements["clip-end"].value === "" ? replay.duration : Number(elements["clip-end"].value),
     fps: Number(elements.fps.value), width, height }, replay.duration);
+  const segments = replayPlaybackSegments(replay, settings.start, settings.end);
+  const duration = segments.reduce((total, segment) => total + segment.duration, 0);
+  if (!duration) throw new Error("This clip contains only a skipped goal pause. Extend the clip to include play.");
+  return { ...settings, segments, duration, frames: Math.ceil(duration * settings.fps) };
 }
 
 function exportKey(settings) {
@@ -374,8 +402,9 @@ async function prepareExport(settings) {
     renderer.setSize(settings.width, settings.height, false);
     camera.aspect = settings.width / settings.height;
     camera.updateProjectionMatrix();
-    renderAt(settings.start);
-    await source.add(0, Math.min(1 / settings.fps, settings.end - settings.start));
+    const sample = replayPlaybackSample(settings.segments, 0);
+    renderAt(sample.time, sample.countdown);
+    await source.add(0, Math.min(1 / settings.fps, settings.duration));
     return { output, target, source, audio, videoConfig, warmStartMs: performance.now() - started };
   } catch (error) {
     await output.cancel();
@@ -461,13 +490,19 @@ elements.export.onclick = async () => {
     const audioContext = new OfflineAudioContext(1, 48000, 48000);
     status("Preparing reconstructed audio...");
     const audioStarted = performance.now();
-    for (let start = settings.start; start < settings.end; start += 10) {
-      if (canceled) throw new Error("Render canceled.");
-      const samples = synthesizeReplayAudio(replay, start, Math.min(10, settings.end - start), 48000);
-      const buffer = audioContext.createBuffer(1, samples.length, 48000);
-      buffer.copyToChannel(samples, 0);
-      await audio.add(buffer);
-      await new Promise(resolve => setTimeout(resolve, 0));
+    for (const segment of settings.segments) {
+      if (segment.countdown) {
+        await audio.add(audioContext.createBuffer(1, 3 * 48000, 48000));
+        continue;
+      }
+      for (let start = segment.start; start < segment.end; start += 10) {
+        if (canceled) throw new Error("Render canceled.");
+        const samples = synthesizeReplayAudio(replay, start, Math.min(10, segment.end - start), 48000);
+        const buffer = audioContext.createBuffer(1, samples.length, 48000);
+        buffer.copyToChannel(samples, 0);
+        await audio.add(buffer);
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     }
     audio.close();
     timings.audioMs = performance.now() - audioStarted;
@@ -475,10 +510,11 @@ elements.export.onclick = async () => {
       if (canceled) throw new Error("Render canceled.");
       const timestamp = index / settings.fps;
       const renderStarted = performance.now();
-      renderAt(settings.start + timestamp);
+      const sample = replayPlaybackSample(settings.segments, timestamp);
+      renderAt(sample.time, sample.countdown);
       timings.renderSubmissionMs += performance.now() - renderStarted;
       const encodeStarted = performance.now();
-      await source.add(timestamp, Math.min(1 / settings.fps, settings.end - settings.start - timestamp));
+      await source.add(timestamp, Math.min(1 / settings.fps, settings.duration - timestamp));
       timings.encoderWaitMs += performance.now() - encodeStarted;
       if (index % 15 === 0 || index === settings.frames - 1) {
         elements.progress.value = (index + 1) / settings.frames;
@@ -528,12 +564,20 @@ renderer.setAnimationLoop(timestamp => {
   lastFrame = timestamp;
   if (exporting || preparing) return;
   if (playing && replay) {
-    time = Math.min(replay.duration, time + elapsed * Number(elements.speed.value));
+    const previousCountdown = countdown;
+    playbackTime += elapsed * Number(elements.speed.value);
+    const sample = replayPlaybackSample(playbackSegments, playbackTime);
+    time = sample.time;
+    countdown = sample.countdown;
+    if (countdown !== null && previousCountdown === null) replayAudio.stop();
+    if (countdown === null && previousCountdown !== null) {
+      replayAudio.play(replay, time, Number(elements.speed.value)).catch(error => status(`Audio unavailable: ${error.message}`, true));
+    }
     if (time >= replay.duration) setPlaying(false);
     updateTransport();
   }
   if (orbit.enabled) orbit.update();
-  renderAt(time);
+  renderAt(time, playing ? countdown : null);
 });
 document.addEventListener("visibilitychange", () => { lastFrame = undefined; });
 window.addEventListener("pagehide", () => {

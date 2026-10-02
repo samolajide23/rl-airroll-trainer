@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { frameElapsed } from "./shared/aerial.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { createStadiumEnvironment } from "./shared/stadium.js";
 import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES, nextTrainingDrill, previousTrainingDrill } from "./modes/catalog.js";
 import { recentAttempts } from "./shared/metrics.js";
 import { preloadBall, BALL_TYPES, getSelectedBallId, setSelectedBallId } from "./shared/ball.js";
@@ -130,13 +130,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
-const environmentGenerator = new THREE.PMREMGenerator(renderer);
-const environmentRoom = new RoomEnvironment();
-const environmentTarget = environmentGenerator.fromScene(environmentRoom, 0.04);
+const environmentTarget = createStadiumEnvironment(renderer);
 scene.environment = environmentTarget.texture;
 scene.environmentIntensity = 0.65;
-environmentRoom.dispose();
-environmentGenerator.dispose();
 scene.background = new THREE.Color(0x0b1220);
 scene.fog = new THREE.Fog(0x0b1220, 40, 120);
 
@@ -150,9 +146,9 @@ camera.fov = horizontalFovToVertical(getCamera().fov, camera.aspect);
 camera.position.set(0, 4, -10);
 camera.lookAt(0, 0, 0);
 
-const hemi = new THREE.HemisphereLight(0xb8d4ff, 0x1a2030, 1.1);
+const hemi = new THREE.HemisphereLight(0xd6e2ed, 0x293329, 0.65);
 scene.add(hemi);
-const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.75);
 keyLight.position.set(8, 18, 10);
 scene.add(keyLight);
 
