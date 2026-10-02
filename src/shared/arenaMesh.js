@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS } from "./soccarMeshData.js";
+import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS, SOCCAR_QUERY_ORDER, SOCCAR_BT_TRIS } from "./soccarMeshData.js";
+import { bulletAdd, bulletCross, bulletDot, bulletScale, bulletSubtract, normalizeSse } from "./bulletMath.js";
 
 /**
  * Soccar arena collision — RocketSim SOCCAR layout:
@@ -32,6 +33,8 @@ const PLANES = [
 
 /** Packed triangles: 9 floats per tri (ax,ay,az,bx,by,bz,cx,cy,cz) */
 const TRI = SOCCAR_TRIS;
+const QUERY_RANK = new Uint16Array(SOCCAR_TRI_COUNT);
+SOCCAR_QUERY_ORDER.forEach((triangle, rank) => { QUERY_RANK[triangle] = rank; });
 
 export const ARENA_TRI_COUNT = SOCCAR_TRI_COUNT;
 
@@ -327,7 +330,7 @@ const _meshP = new THREE.Vector3();
 const _meshN = new THREE.Vector3();
 let sharedEdges;
 
-function adjustInternalEdgeNormal(triangle, point, normal) {
+function adjustInternalEdgeNormal(triangle, point, normal, native = false) {
   if (!sharedEdges) {
     sharedEdges = new Map();
     const edges = new Map();
@@ -368,7 +371,12 @@ function adjustInternalEdgeNormal(triangle, point, normal) {
   const planar = face.clone().cross(neighbor.face).lengthSq() < 0.0001;
   const convex = face.dot(neighbor.interior.clone().sub(start)) < 0;
   if (planar || !convex) {
-    if (face.dot(normal) >= 0) normal.copy(face);
+    if (face.dot(normal) >= 0) {
+      if (native) {
+        const vertices = [0, 3, 6].map(offset => new THREE.Vector3().fromArray(SOCCAR_BT_TRIS, triangle * 9 + offset));
+        normal.copy(normalizeSse(bulletCross(bulletSubtract(vertices[1], vertices[0]), bulletSubtract(vertices[2], vertices[0]))));
+      } else normal.copy(face);
+    }
     return;
   }
   const axis = start.clone().sub(end).normalize();
@@ -388,12 +396,62 @@ function adjustInternalEdgeNormal(triangle, point, normal) {
  * Triangle normals point from the closest feature toward the sphere, so goal
  * interiors do not depend on a global "toward arena centre" heuristic.
  */
-export function sphereArenaContacts(position, radius, margin = 1, { merge = true } = {}) {
+function nativeSphereTriangle(center, radius, margin, triangle) {
+  const round = Math.fround;
+  const [first, second, third] = [0, 3, 6].map(offset => new THREE.Vector3().fromArray(SOCCAR_BT_TRIS, triangle * 9 + offset));
+  const edgeSecond = bulletSubtract(second, first), edgeThird = bulletSubtract(third, first);
+  const face = bulletCross(edgeSecond, edgeThird);
+  const squared = bulletDot(face, face);
+  if (squared < 1.1920928955078125e-7 ** 2) return null;
+  const normal = bulletScale(face, round(1 / round(Math.sqrt(squared))));
+  const relative = bulletSubtract(center, first);
+  const planeDistance = Math.abs(bulletDot(relative, normal));
+  const range = round(radius + margin);
+  if (planeDistance >= range) return null;
+  if (bulletDot(relative, normal) < 0) normal.negate();
+  const gamma = round(bulletDot(bulletCross(edgeSecond, relative), face) / squared);
+  const beta = round(bulletDot(bulletCross(relative, edgeThird), face) / squared);
+  const alpha = round(round(1 - gamma) - beta);
+  let point;
+  if ([gamma, beta, alpha].every(value => value >= 0 && value <= 1)) {
+    point = bulletSubtract(center, bulletScale(normal, planeDistance));
+  } else {
+    const fromSecond = bulletSubtract(center, second), fromThird = bulletSubtract(center, third);
+    const firstSecond = bulletDot(edgeSecond, relative), firstThird = bulletDot(edgeThird, relative);
+    const secondSecond = bulletDot(edgeSecond, fromSecond), secondThird = bulletDot(edgeThird, fromSecond);
+    const thirdSecond = bulletDot(edgeSecond, fromThird), thirdThird = bulletDot(edgeThird, fromThird);
+    const areaThird = round(round(firstSecond * secondThird) - round(secondSecond * firstThird));
+    const areaSecond = round(round(thirdSecond * firstThird) - round(firstSecond * thirdThird));
+    const areaFirst = round(round(secondSecond * thirdThird) - round(thirdSecond * secondThird));
+    if (firstSecond <= 0 && firstThird <= 0) point = first;
+    else if (secondSecond >= 0 && secondThird <= secondSecond) point = second;
+    else if (thirdThird >= 0 && thirdSecond <= thirdThird) point = third;
+    else if (areaThird <= 0 && firstSecond >= 0 && secondSecond <= 0)
+      point = bulletAdd(first, bulletScale(edgeSecond, round(firstSecond / round(firstSecond - secondSecond))));
+    else if (areaSecond <= 0 && firstThird >= 0 && thirdThird <= 0)
+      point = bulletAdd(first, bulletScale(edgeThird, round(firstThird / round(firstThird - thirdThird))));
+    else if (areaFirst <= 0 && round(secondThird - secondSecond) >= 0 && round(thirdSecond - thirdThird) >= 0)
+      point = bulletAdd(second, bulletScale(bulletSubtract(third, second), round(round(secondThird - secondSecond) / round(round(secondThird - secondSecond) + round(thirdSecond - thirdThird)))));
+    else {
+      const inverse = round(1 / round(round(areaFirst + areaSecond) + areaThird));
+      point = bulletAdd(bulletAdd(first, bulletScale(edgeSecond, round(areaSecond * inverse))), bulletScale(edgeThird, round(areaThird * inverse)));
+    }
+  }
+  const offset = bulletSubtract(center, point);
+  const distanceSquared = bulletDot(offset, offset);
+  if (distanceSquared >= round(range * range)) return null;
+  const distance = distanceSquared > 1.1920928955078125e-7 ? round(round(Math.sqrt(distanceSquared)) - radius) : -radius;
+  if (distanceSquared > 1.1920928955078125e-7) normal.copy(normalizeSse(offset));
+  const pointA = bulletAdd(point, bulletScale(normal, distance));
+  return { normal, point, pointA, distance, rel: bulletSubtract(pointA, center) };
+}
+
+export function sphereArenaContacts(position, radius, margin = 1, { merge = true, manifold = false, bulletPosition } = {}) {
   const contacts = [];
   const { x, y, z } = position;
   for (const plane of PLANES) {
     const distance = position.clone().sub(plane.point).dot(plane.normal) - radius;
-    if (distance < margin) contacts.push({ normal: plane.normal.clone(), distance });
+    if (distance < margin) contacts.push({ normal: plane.normal.clone(), distance, plane: true });
   }
   const rangeSq = (radius + margin) ** 2;
   let sp = 0;
@@ -406,17 +464,52 @@ export function sphereArenaContacts(position, radius, margin = 1, { merge = true
       _stack[sp++] = node.left;
       continue;
     }
+    const native = manifold ? nativeSphereTriangle(bulletPosition ?? bulletScale(position, Math.fround(0.02)), Math.fround(radius * Math.fround(0.02)), Math.fround(margin / 50), node.tri) : null;
+    if (manifold && !native) continue;
     const d2 = closestOnTri(x, y, z, node.tri, _cp, _cn);
     if (d2 >= rangeSq) continue;
     const normal = position.clone().sub(_cp);
     if (d2 > EPS) normal.multiplyScalar(1 / Math.sqrt(d2));
     else normal.copy(_cn);
-    if (!merge) adjustInternalEdgeNormal(node.tri, _cp, normal);
-    const distance = Math.sqrt(d2) - radius;
+    if (native) { normal.copy(native.normal); _cp.copy(native.point).multiplyScalar(50); }
+    const rel = manifold ? normal.clone().multiplyScalar(-radius) : undefined;
+    if (!merge) adjustInternalEdgeNormal(node.tri, _cp, normal, manifold);
+    let distance = Math.sqrt(d2) - radius;
+    if (native) {
+      if (!normal.equals(native.normal)) native.point = bulletSubtract(native.pointA, bulletScale(normal, native.distance));
+      native.distance = bulletDot(bulletSubtract(native.pointA, native.point), normal);
+      rel.copy(native.rel).multiplyScalar(50);
+      distance = native.distance * 50;
+    }
     // Adjacent coplanar triangles describe one constraint, not repeated hits.
     const same = merge && contacts.find((c) => c.normal.dot(normal) > 0.9999);
     if (same) same.distance = Math.min(same.distance, distance);
-    else contacts.push({ normal, distance });
+    else contacts.push({ normal, distance, ...(manifold ? { rel, nativeRel: native.rel, nativeDistance: native.distance, triangle: node.tri, mesh: SOCCAR_MESH_ENDS.findIndex(end => node.tri < end) } : {}) });
+  }
+  if (manifold) {
+    contacts.sort((first, second) => (QUERY_RANK[first.triangle] ?? -1) - (QUERY_RANK[second.triangle] ?? -1));
+    const groups = new Map();
+    for (const contact of contacts) {
+      const key = contact.plane ? contact : contact.mesh;
+      const points = groups.get(key) ?? [];
+      if (points.length < 4) points.push(contact);
+      else {
+        let deepest = -1;
+        let depth = contact.distance;
+        points.forEach((point, index) => {
+          if (point.distance < depth) { deepest = index; depth = point.distance; }
+        });
+        const areas = points.map((point, index) => {
+          if (index === deepest) return 0;
+          const remaining = points.filter((entry, other) => other !== index);
+          return contact.rel.clone().sub(remaining[0].rel)
+            .cross(remaining[2].rel.clone().sub(remaining[1].rel)).lengthSq();
+        });
+        points[areas.indexOf(Math.max(...areas))] = contact;
+      }
+      groups.set(key, points);
+    }
+    return [...groups.values()].flat();
   }
   // Resolve the deepest constraint first; edge contacts must not deflect the
   // sphere before the underlying face at a triangulated ramp seam.
@@ -430,7 +523,7 @@ export function sphereArenaContacts(position, radius, margin = 1, { merge = true
  * @param {number} x @param {number} y @param {number} z
  * @param {THREE.Vector3} [outNormal]
  */
-export function boxTriangleGapContacts(center, axes, halfSize, margin, threshold = 2) {
+export function boxTriangleGapContacts(center, axes, halfSize, margin, threshold = 2, includeMarginPenetration = false) {
   const contacts = [];
   const radius = Math.hypot(...halfSize) + margin + threshold;
   const stack = [BVH_ROOT];
@@ -443,7 +536,7 @@ export function boxTriangleGapContacts(center, axes, halfSize, margin, threshold
     }
     const vertices = [0, 3, 6].map(offset => new THREE.Vector3().fromArray(TRI, node.tri * 9 + offset).sub(center));
     const face = vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();
-    if (Math.abs(face.z) >= 0.5) continue;
+    if (Math.abs(face.z) >= (includeMarginPenetration ? 0.9999 : 0.5)) continue;
     const support = direction => {
       const box = new THREE.Vector3();
       axes.forEach((axis, index) => box.addScaledVector(axis, (axis.dot(direction) >= 0 ? 1 : -1) * halfSize[index]));
@@ -495,7 +588,7 @@ export function boxTriangleGapContacts(center, axes, halfSize, margin, threshold
       if (closest.lengthSq() < 1e-10) break;
     }
     const distance = closest.length() - margin;
-    if (!weights || distance <= 0 || distance >= threshold) continue;
+    if (!weights || distance <= (includeMarginPenetration ? -margin + 1e-5 : 0) || distance >= threshold) continue;
     const normal = closest.clone().normalize();
     const rawNormal = normal.clone();
     adjustInternalEdgeNormal(node.tri, center.clone().add(simplex.reduce((point, vertex, index) => point.addScaledVector(vertex.triangle, weights[index]), new THREE.Vector3())), normal);

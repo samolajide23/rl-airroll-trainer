@@ -1,0 +1,6189 @@
+{
+  "id": "hybrid_landing",
+  "limits": {
+    "position": 0.0002,
+    "velocity": 0.0005,
+    "omega": 0.00001,
+    "forward": 0.00005,
+    "right": 0.00005,
+    "up": 0.00005,
+    "boost": 0.00001,
+    "air_time": 0.00003,
+    "ground": 0
+  },
+  "first_tick": null,
+  "exceeded": [],
+  "rows": [
+    {
+      "tick": 0,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -1000,
+          0,
+          250
+        ],
+        "vel": [
+          600,
+          300,
+          -300
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 1,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.3461720160287154e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -994.9954223632812,
+          2.500000238418579,
+          247.45486450195312
+        ],
+        "vel": [
+          600.5555419921875,
+          300,
+          -305.4166564941406
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -994.9954223632812,
+          2.500000238418579,
+          247.45486450195312
+        ],
+        "vel": [
+          600.5555419921875,
+          300,
+          -305.4166564941406
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 2,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 8.692344032057431e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -989.9861450195312,
+          5.000000476837158,
+          244.8645782470703
+        ],
+        "vel": [
+          601.1111450195312,
+          300,
+          -310.83331298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -989.9861450195312,
+          5.000000476837158,
+          244.8645782470703
+        ],
+        "vel": [
+          601.1111450195312,
+          300,
+          -310.83331298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 3,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.2351741776893697e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -984.9722900390625,
+          7.500000476837158,
+          242.2291717529297
+        ],
+        "vel": [
+          601.6666870117188,
+          300,
+          -316.2499694824219
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -984.9722900390625,
+          7.500000476837158,
+          242.2291717529297
+        ],
+        "vel": [
+          601.6666870117188,
+          300,
+          -316.2499694824219
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 4,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.7384688064114862e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -979.9537353515625,
+          10.000000953674316,
+          239.54861450195312
+        ],
+        "vel": [
+          602.2222290039062,
+          300,
+          -321.6666259765625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -979.9537353515625,
+          10.000000953674316,
+          239.54861450195312
+        ],
+        "vel": [
+          602.2222290039062,
+          300,
+          -321.6666259765625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 5,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.2417634351336027e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -974.9305419921875,
+          12.500001907348633,
+          236.8229217529297
+        ],
+        "vel": [
+          602.77783203125,
+          300,
+          -327.0832824707031
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -974.9305419921875,
+          12.500001907348633,
+          236.8229217529297
+        ],
+        "vel": [
+          602.77783203125,
+          300,
+          -327.0832824707031
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 6,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 7.450580638557192e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -969.90283203125,
+          15.000001907348633,
+          234.05209350585938
+        ],
+        "vel": [
+          603.3333740234375,
+          300,
+          -332.49993896484375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -969.90283203125,
+          15.000001907348633,
+          234.05209350585938
+        ],
+        "vel": [
+          603.3333740234375,
+          300,
+          -332.49993896484375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 7,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.4835269257783565e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -964.870361328125,
+          17.500001907348633,
+          231.2361297607422
+        ],
+        "vel": [
+          603.888916015625,
+          300,
+          -337.9165954589844
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -964.870361328125,
+          17.500001907348633,
+          231.2361297607422
+        ],
+        "vel": [
+          603.888916015625,
+          300,
+          -337.9165954589844
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 8,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 3.4769376128229723e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -959.8333129882812,
+          20.000003814697266,
+          228.375
+        ],
+        "vel": [
+          604.4445190429688,
+          300,
+          -343.333251953125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -959.8333129882812,
+          20.000003814697266,
+          228.375
+        ],
+        "vel": [
+          604.4445190429688,
+          300,
+          -343.333251953125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 9,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.980232241545089e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -954.7916259765625,
+          22.500003814697266,
+          225.46875
+        ],
+        "vel": [
+          605.0000610351562,
+          300,
+          -348.7499084472656
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -954.7916259765625,
+          22.500003814697266,
+          225.46875
+        ],
+        "vel": [
+          605.0000610351562,
+          300,
+          -348.7499084472656
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 10,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.4835268702672053e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -949.745361328125,
+          25.000003814697266,
+          222.51736450195312
+        ],
+        "vel": [
+          605.5556030273438,
+          300,
+          -354.16656494140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -949.745361328125,
+          25.000003814697266,
+          222.51736450195312
+        ],
+        "vel": [
+          605.5556030273438,
+          300,
+          -354.16656494140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 11,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.986821498989322e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -944.6943969726562,
+          27.500003814697266,
+          219.52085876464844
+        ],
+        "vel": [
+          606.1112060546875,
+          300,
+          -359.5832214355469
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -944.6943969726562,
+          27.500003814697266,
+          219.52085876464844
+        ],
+        "vel": [
+          606.1112060546875,
+          300,
+          -359.5832214355469
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 12,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.4901161277114383e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -939.638916015625,
+          30.000003814697266,
+          216.47918701171875
+        ],
+        "vel": [
+          606.666748046875,
+          300,
+          -364.9998779296875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -939.638916015625,
+          30.000003814697266,
+          216.47918701171875
+        ],
+        "vel": [
+          606.666748046875,
+          300,
+          -364.9998779296875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 13,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 9.934107564335548e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -934.5787353515625,
+          32.500003814697266,
+          213.3923797607422
+        ],
+        "vel": [
+          607.2222900390625,
+          300,
+          -370.4165344238281
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -934.5787353515625,
+          32.500003814697266,
+          213.3923797607422
+        ],
+        "vel": [
+          607.2222900390625,
+          300,
+          -370.4165344238281
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 14,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.967053851556713e-10,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -929.513916015625,
+          35.000003814697266,
+          210.26043701171875
+        ],
+        "vel": [
+          607.7778930664062,
+          300,
+          -375.83319091796875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -929.513916015625,
+          35.000003814697266,
+          210.26043701171875
+        ],
+        "vel": [
+          607.7778930664062,
+          300,
+          -375.83319091796875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 15,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.3877787807814457e-17,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -924.4444580078125,
+          37.50000762939453,
+          207.0833740234375
+        ],
+        "vel": [
+          608.3334350585938,
+          300,
+          -381.2498474121094
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -924.4444580078125,
+          37.50000762939453,
+          207.0833740234375
+        ],
+        "vel": [
+          608.3334350585938,
+          300,
+          -381.2498474121094
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 16,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.953875225645945e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -919.370361328125,
+          40.00000762939453,
+          203.86114501953125
+        ],
+        "vel": [
+          608.8890380859375,
+          300,
+          -386.66650390625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -919.370361328125,
+          40.00000762939453,
+          203.86114501953125
+        ],
+        "vel": [
+          608.8890380859375,
+          300,
+          -386.66650390625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 17,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.390775045129189e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -914.2916870117188,
+          42.50000762939453,
+          200.59378051757812
+        ],
+        "vel": [
+          609.444580078125,
+          300,
+          -392.0831298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -914.2916870117188,
+          42.50000762939453,
+          200.59378051757812
+        ],
+        "vel": [
+          609.444580078125,
+          300,
+          -392.0831298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 18,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.0861625676937834e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -909.2083129882812,
+          45.00000762939453,
+          197.2812957763672
+        ],
+        "vel": [
+          610.0001220703125,
+          300,
+          -397.4997863769531
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -909.2083129882812,
+          45.00000762939453,
+          197.2812957763672
+        ],
+        "vel": [
+          610.0001220703125,
+          300,
+          -397.4997863769531
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 19,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.781550090258378e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -904.120361328125,
+          47.50000762939453,
+          193.92364501953125
+        ],
+        "vel": [
+          610.5557250976562,
+          300,
+          -402.9164733886719
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -904.120361328125,
+          47.50000762939453,
+          193.92364501953125
+        ],
+        "vel": [
+          610.5557250976562,
+          300,
+          -402.9164733886719
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 20,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 3.476937612822972e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -899.0277099609375,
+          50.00000762939453,
+          190.5208740234375
+        ],
+        "vel": [
+          611.1112670898438,
+          300,
+          -408.3331604003906
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -899.0277099609375,
+          50.00000762939453,
+          190.5208740234375
+        ],
+        "vel": [
+          611.1112670898438,
+          300,
+          -408.3331604003906
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 21,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.172325135387567e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -893.9305419921875,
+          52.500003814697266,
+          187.0729522705078
+        ],
+        "vel": [
+          611.6668090820312,
+          300,
+          -413.7498474121094
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -893.9305419921875,
+          52.500003814697266,
+          187.0729522705078
+        ],
+        "vel": [
+          611.6668090820312,
+          300,
+          -413.7498474121094
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 22,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.867712657952161e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -888.8286743164062,
+          55,
+          183.57989501953125
+        ],
+        "vel": [
+          612.222412109375,
+          300,
+          -419.16650390625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -888.8286743164062,
+          55,
+          183.57989501953125
+        ],
+        "vel": [
+          612.222412109375,
+          300,
+          -419.16650390625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 23,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 5.563100180516756e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -883.7222290039062,
+          57.5,
+          180.0417022705078
+        ],
+        "vel": [
+          612.7779541015625,
+          300,
+          -424.58319091796875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -883.7222290039062,
+          57.5,
+          180.0417022705078
+        ],
+        "vel": [
+          612.7779541015625,
+          300,
+          -424.58319091796875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 24,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.25848770308135e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -878.611083984375,
+          59.999996185302734,
+          176.4583740234375
+        ],
+        "vel": [
+          613.33349609375,
+          300,
+          -429.9998779296875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -878.611083984375,
+          59.999996185302734,
+          176.4583740234375
+        ],
+        "vel": [
+          613.33349609375,
+          300,
+          -429.9998779296875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 25,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.953875225645945e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -873.495361328125,
+          62.49999237060547,
+          172.82989501953125
+        ],
+        "vel": [
+          613.8890991210938,
+          300,
+          -435.41656494140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -873.495361328125,
+          62.49999237060547,
+          172.82989501953125
+        ],
+        "vel": [
+          613.8890991210938,
+          300,
+          -435.41656494140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 26,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 7.649262748210539e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -868.375,
+          64.99999237060547,
+          169.1562957763672
+        ],
+        "vel": [
+          614.4446411132812,
+          300,
+          -440.8332214355469
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -868.375,
+          64.99999237060547,
+          169.1562957763672
+        ],
+        "vel": [
+          614.4446411132812,
+          300,
+          -440.8332214355469
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 27,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 8.344650270775134e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -863.25,
+          67.49999237060547,
+          165.4375457763672
+        ],
+        "vel": [
+          615.0001831054688,
+          300,
+          -446.2499084472656
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -863.25,
+          67.49999237060547,
+          165.4375457763672
+        ],
+        "vel": [
+          615.0001831054688,
+          300,
+          -446.2499084472656
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 28,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 9.040037793339728e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -858.120361328125,
+          69.99998474121094,
+          161.6736602783203
+        ],
+        "vel": [
+          615.5557861328125,
+          300,
+          -451.6665954589844
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -858.120361328125,
+          69.99998474121094,
+          161.6736602783203
+        ],
+        "vel": [
+          615.5557861328125,
+          300,
+          -451.6665954589844
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 29,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 9.735425315904322e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -852.9860229492188,
+          72.49998474121094,
+          157.8646240234375
+        ],
+        "vel": [
+          616.111328125,
+          300,
+          -457.0832824707031
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -852.9860229492188,
+          72.49998474121094,
+          157.8646240234375
+        ],
+        "vel": [
+          616.111328125,
+          300,
+          -457.0832824707031
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 30,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 8.940696719084151e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -847.84716796875,
+          74.99998474121094,
+          154.01046752929688
+        ],
+        "vel": [
+          616.6668701171875,
+          300,
+          -462.49993896484375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -847.84716796875,
+          74.99998474121094,
+          154.01046752929688
+        ],
+        "vel": [
+          616.6668701171875,
+          300,
+          -462.49993896484375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 31,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 8.14596812226398e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -842.70361328125,
+          77.4999771118164,
+          150.1111602783203
+        ],
+        "vel": [
+          617.2224731445312,
+          300,
+          -467.9166259765625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -842.70361328125,
+          77.4999771118164,
+          150.1111602783203
+        ],
+        "vel": [
+          617.2224731445312,
+          300,
+          -467.9166259765625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 32,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 7.351239522668251e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -837.5554809570312,
+          79.9999771118164,
+          146.16671752929688
+        ],
+        "vel": [
+          617.7780151367188,
+          300,
+          -473.33331298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -837.5554809570312,
+          79.9999771118164,
+          146.16671752929688
+        ],
+        "vel": [
+          617.7780151367188,
+          300,
+          -473.33331298828125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 33,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.556510923072523e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -832.4027099609375,
+          82.4999771118164,
+          142.1771240234375
+        ],
+        "vel": [
+          618.3335571289062,
+          300,
+          -478.75
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -832.4027099609375,
+          82.4999771118164,
+          142.1771240234375
+        ],
+        "vel": [
+          618.3335571289062,
+          300,
+          -478.75
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 34,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 5.761782323476794e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -827.245361328125,
+          84.99996948242188,
+          138.1424102783203
+        ],
+        "vel": [
+          618.88916015625,
+          300,
+          -484.1666564941406
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -827.245361328125,
+          84.99996948242188,
+          138.1424102783203
+        ],
+        "vel": [
+          618.88916015625,
+          300,
+          -484.1666564941406
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 35,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.967053723881065e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -822.083251953125,
+          87.49996948242188,
+          134.0625457763672
+        ],
+        "vel": [
+          619.4447021484375,
+          300,
+          -489.5833435058594
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -822.083251953125,
+          87.49996948242188,
+          134.0625457763672
+        ],
+        "vel": [
+          619.4447021484375,
+          300,
+          -489.5833435058594
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 36,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.1723251242853365e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -816.9166259765625,
+          89.99996948242188,
+          129.9375457763672
+        ],
+        "vel": [
+          620.000244140625,
+          300,
+          -495.0000305175781
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -816.9166259765625,
+          89.99996948242188,
+          129.9375457763672
+        ],
+        "vel": [
+          620.000244140625,
+          300,
+          -495.0000305175781
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 37,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 3.377596524689608e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -811.745361328125,
+          92.49996185302734,
+          125.76739501953125
+        ],
+        "vel": [
+          620.5558471679688,
+          300,
+          -500.4167175292969
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -811.745361328125,
+          92.49996185302734,
+          125.76739501953125
+        ],
+        "vel": [
+          620.5558471679688,
+          300,
+          -500.4167175292969
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 38,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.582867925093879e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -806.5693969726562,
+          94.99996185302734,
+          121.5521240234375
+        ],
+        "vel": [
+          621.1113891601562,
+          300,
+          -505.8333740234375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -806.5693969726562,
+          94.99996185302734,
+          121.5521240234375
+        ],
+        "vel": [
+          621.1113891601562,
+          300,
+          -505.8333740234375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 39,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.7881393254981504e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -801.3888549804688,
+          97.49996185302734,
+          117.29170227050781
+        ],
+        "vel": [
+          621.6669311523438,
+          300,
+          -511.25006103515625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -801.3888549804688,
+          97.49996185302734,
+          117.29170227050781
+        ],
+        "vel": [
+          621.6669311523438,
+          300,
+          -511.25006103515625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 40,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 9.934107259024216e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -796.2036743164062,
+          99.99996185302734,
+          112.98614501953125
+        ],
+        "vel": [
+          622.2225341796875,
+          300,
+          -516.666748046875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -796.2036743164062,
+          99.99996185302734,
+          112.98614501953125
+        ],
+        "vel": [
+          622.2225341796875,
+          300,
+          -516.666748046875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 41,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.986821263066929e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -791.0138549804688,
+          102.49996185302734,
+          108.63545227050781
+        ],
+        "vel": [
+          622.778076171875,
+          300,
+          -522.0834350585938
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -791.0138549804688,
+          102.49996185302734,
+          108.63545227050781
+        ],
+        "vel": [
+          622.778076171875,
+          300,
+          -522.0834350585938
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 42,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 5.960464732890358e-9,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -785.8194580078125,
+          104.99996185302734,
+          104.23961639404297
+        ],
+        "vel": [
+          623.3336181640625,
+          300,
+          -527.5001220703125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -785.8194580078125,
+          104.99996185302734,
+          104.23961639404297
+        ],
+        "vel": [
+          623.3336181640625,
+          300,
+          -527.5001220703125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 43,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.3907750728847645e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -780.620361328125,
+          107.49995422363281,
+          99.79864501953125
+        ],
+        "vel": [
+          623.8892211914062,
+          300,
+          -532.9168090820312
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -780.620361328125,
+          107.49995422363281,
+          99.79864501953125
+        ],
+        "vel": [
+          623.8892211914062,
+          300,
+          -532.9168090820312
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 44,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.1855036724804933e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -775.4166259765625,
+          109.99995422363281,
+          95.31253051757812
+        ],
+        "vel": [
+          624.4447631835938,
+          300,
+          -538.3334350585938
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -775.4166259765625,
+          109.99995422363281,
+          95.31253051757812
+        ],
+        "vel": [
+          624.4447631835938,
+          300,
+          -538.3334350585938
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 45,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 2.980232272076222e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -770.208251953125,
+          112.49995422363281,
+          90.78128051757812
+        ],
+        "vel": [
+          625.0003051757812,
+          300,
+          -543.7501220703125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -770.208251953125,
+          112.49995422363281,
+          90.78128051757812
+        ],
+        "vel": [
+          625.0003051757812,
+          300,
+          -543.7501220703125
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 46,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 3.774960871671951e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -764.9953002929688,
+          114.99994659423828,
+          86.20488739013672
+        ],
+        "vel": [
+          625.555908203125,
+          300,
+          -549.1668090820312
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -764.9953002929688,
+          114.99994659423828,
+          86.20488739013672
+        ],
+        "vel": [
+          625.555908203125,
+          300,
+          -549.1668090820312
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 47,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 4.5696894712676794e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -759.7777099609375,
+          117.49994659423828,
+          81.58335876464844
+        ],
+        "vel": [
+          626.1114501953125,
+          300,
+          -554.58349609375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -759.7777099609375,
+          117.49994659423828,
+          81.58335876464844
+        ],
+        "vel": [
+          626.1114501953125,
+          300,
+          -554.58349609375
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 48,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 5.364418070863408e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -754.5554809570312,
+          119.99994659423828,
+          76.91668701171875
+        ],
+        "vel": [
+          626.6669921875,
+          300,
+          -560.0001831054688
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -754.5554809570312,
+          119.99994659423828,
+          76.91668701171875
+        ],
+        "vel": [
+          626.6669921875,
+          300,
+          -560.0001831054688
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 49,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.159146670459137e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -749.32861328125,
+          122.49993896484375,
+          72.20487976074219
+        ],
+        "vel": [
+          627.2225952148438,
+          300,
+          -565.4168701171875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -749.32861328125,
+          122.49993896484375,
+          72.20487976074219
+        ],
+        "vel": [
+          627.2225952148438,
+          300,
+          -565.4168701171875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 50,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 6.953875270054866e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -744.09716796875,
+          124.99993896484375,
+          67.44793701171875
+        ],
+        "vel": [
+          627.7781372070312,
+          300,
+          -570.8335571289062
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -744.09716796875,
+          124.99993896484375,
+          67.44793701171875
+        ],
+        "vel": [
+          627.7781372070312,
+          300,
+          -570.8335571289062
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 51,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 7.748603869650594e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -738.8610229492188,
+          127.49993896484375,
+          62.645851135253906
+        ],
+        "vel": [
+          628.333740234375,
+          300,
+          -576.250244140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -738.8610229492188,
+          127.49993896484375,
+          62.645851135253906
+        ],
+        "vel": [
+          628.333740234375,
+          300,
+          -576.250244140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 52,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 8.543332469246323e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -733.6203002929688,
+          129.99993896484375,
+          57.79862976074219
+        ],
+        "vel": [
+          628.8892822265625,
+          300,
+          -581.6668701171875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -733.6203002929688,
+          129.99993896484375,
+          57.79862976074219
+        ],
+        "vel": [
+          628.8892822265625,
+          300,
+          -581.6668701171875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 53,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 9.338061068842052e-8,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -728.3749389648438,
+          132.49993896484375,
+          52.90626907348633
+        ],
+        "vel": [
+          629.44482421875,
+          300,
+          -587.0835571289062
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -728.3749389648438,
+          132.49993896484375,
+          52.90626907348633
+        ],
+        "vel": [
+          629.44482421875,
+          300,
+          -587.0835571289062
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 54,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.013278966843778e-7,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -723.1249389648438,
+          134.9999237060547,
+          47.96876525878906
+        ],
+        "vel": [
+          630.0004272460938,
+          300,
+          -592.500244140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -723.1249389648438,
+          134.9999237060547,
+          47.96876525878906
+        ],
+        "vel": [
+          630.0004272460938,
+          300,
+          -592.500244140625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 55,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.0927518268033509e-7,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -717.8703002929688,
+          137.4999237060547,
+          42.98612594604492
+        ],
+        "vel": [
+          630.5559692382812,
+          300,
+          -597.9169311523438
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -717.8703002929688,
+          137.4999237060547,
+          42.98612594604492
+        ],
+        "vel": [
+          630.5559692382812,
+          300,
+          -597.9169311523438
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 56,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.1722246867629238e-7,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -712.6110229492188,
+          139.9999237060547,
+          37.958343505859375
+        ],
+        "vel": [
+          631.1115112304688,
+          300,
+          -603.3336181640625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -712.6110229492188,
+          139.9999237060547,
+          37.958343505859375
+        ],
+        "vel": [
+          631.1115112304688,
+          300,
+          -603.3336181640625
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 57,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.2516975467224967e-7,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -707.3471069335938,
+          142.4999237060547,
+          32.88542556762695
+        ],
+        "vel": [
+          631.6671142578125,
+          300,
+          -608.7503051757812
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -707.3471069335938,
+          142.4999237060547,
+          32.88542556762695
+        ],
+        "vel": [
+          631.6671142578125,
+          300,
+          -608.7503051757812
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 58,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 0,
+      "forward_error_deg": 0,
+      "right_error_deg": 0,
+      "up_error_deg": 0,
+      "boost_error": 0,
+      "air_time_error": 1.3311704066820695e-7,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -702.0785522460938,
+          144.9999237060547,
+          27.76736831665039
+        ],
+        "vel": [
+          632.22265625,
+          300,
+          -614.1669921875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      },
+      "candidate": {
+        "pos": [
+          -702.0785522460938,
+          144.9999237060547,
+          27.76736831665039
+        ],
+        "vel": [
+          632.22265625,
+          300,
+          -614.1669921875
+        ],
+        "omega": [
+          0,
+          0,
+          0
+        ],
+        "on_ground": false
+      }
+    },
+    {
+      "tick": 59,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 1.1920928955078125e-7,
+      "forward_error_deg": 5.7901939345649696e-8,
+      "right_error_deg": 0,
+      "up_error_deg": 5.7901939345649696e-8,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -696.81005859375,
+          147.4999237060547,
+          23.342952728271484
+        ],
+        "vel": [
+          632.22265625,
+          300,
+          -530.9298706054688
+        ],
+        "omega": [
+          0,
+          0.05401754379272461,
+          0
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -696.81005859375,
+          147.4999237060547,
+          23.342952728271484
+        ],
+        "vel": [
+          632.22265625,
+          300,
+          -530.9298706054688
+        ],
+        "omega": [
+          0,
+          0.05401766300201416,
+          0
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 60,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 5.961512123809361e-7,
+      "forward_error_deg": 3.5054920718350276e-7,
+      "right_error_deg": 4.966224473288692e-9,
+      "up_error_deg": 3.504751462566741e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -691.5000610351562,
+          149.97219848632812,
+          19.62128257751465
+        ],
+        "vel": [
+          637.1985473632812,
+          296.673095703125,
+          -446.6005859375
+        ],
+        "omega": [
+          -0.0000021617051970679313,
+          0.09354805946350098,
+          -0.004786580801010132
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -691.5000610351562,
+          149.97219848632812,
+          19.62128257751465
+        ],
+        "vel": [
+          637.1985473632812,
+          296.673095703125,
+          -446.6005859375
+        ],
+        "omega": [
+          -0.000002161697921110317,
+          0.09354865550994873,
+          -0.0047865696251392365
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 61,
+      "position_error": 0,
+      "velocity_error": 0,
+      "omega_error": 8.102938490477285e-7,
+      "forward_error_deg": 1.813264817394308e-8,
+      "right_error_deg": 1.1344591520865851e-7,
+      "up_error_deg": 1.1432697509835345e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -686.1486206054688,
+          152.41444396972656,
+          16.585155487060547
+        ],
+        "vel": [
+          642.1717529296875,
+          293.0693664550781,
+          -364.335205078125
+        ],
+        "omega": [
+          -0.000005201061867410317,
+          0.12034758180379868,
+          -0.0090150386095047
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -686.1486206054688,
+          152.41444396972656,
+          16.585155487060547
+        ],
+        "vel": [
+          642.1717529296875,
+          293.0693664550781,
+          -364.335205078125
+        ],
+        "omega": [
+          -0.000004964182153344154,
+          0.1203468069434166,
+          -0.009015031158924103
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 62,
+      "position_error": 0,
+      "velocity_error": 0.000030517578125,
+      "omega_error": 0.0000012839503638184402,
+      "forward_error_deg": 2.1978139377305727e-7,
+      "right_error_deg": 6.824626456970187e-7,
+      "up_error_deg": 7.261292721600618e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -680.756103515625,
+          154.82479858398438,
+          14.700430870056152
+        ],
+        "vel": [
+          647.1024169921875,
+          289.24169921875,
+          -226.16712951660156
+        ],
+        "omega": [
+          0.00015384386642836034,
+          1.505820393562317,
+          -0.012712989002466202
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -680.756103515625,
+          154.82479858398438,
+          14.700430870056152
+        ],
+        "vel": [
+          647.1024169921875,
+          289.24169921875,
+          -226.1671600341797
+        ],
+        "omega": [
+          0.0001550359884276986,
+          1.5058199167251587,
+          -0.012712989002466202
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 63,
+      "position_error": 0,
+      "velocity_error": 0.00006103515625,
+      "omega_error": 8.424514432122581e-7,
+      "forward_error_deg": 6.268136083134611e-7,
+      "right_error_deg": 9.66858594025716e-7,
+      "up_error_deg": 0.000001165376869107535,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -675.3228149414062,
+          157.20230102539062,
+          13.980216979980469
+        ],
+        "vel": [
+          651.9906616210938,
+          285.3015441894531,
+          -86.42552185058594
+        ],
+        "omega": [
+          -0.000057268713135272264,
+          0.31150129437446594,
+          -0.016780849546194077
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -675.3228149414062,
+          157.20230102539062,
+          13.980216979980469
+        ],
+        "vel": [
+          651.9906616210938,
+          285.3015441894531,
+          -86.42558288574219
+        ],
+        "omega": [
+          -0.00005667336517944932,
+          0.3115006983280182,
+          -0.016780845820903778
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 64,
+      "position_error": 0,
+      "velocity_error": 0.0000362396240234375,
+      "omega_error": 5.34578397275683e-7,
+      "forward_error_deg": 5.796762210301558e-7,
+      "right_error_deg": 0.0000011953283443697342,
+      "up_error_deg": 0.0000013561489955546734,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -669.8494873046875,
+          159.54649353027344,
+          13.888486862182617
+        ],
+        "vel": [
+          656.7969360351562,
+          281.3034973144531,
+          -11.007549285888672
+        ],
+        "omega": [
+          -0.00015295750927180052,
+          -0.0978461354970932,
+          -0.02077915519475937
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -669.8494873046875,
+          159.54649353027344,
+          13.888486862182617
+        ],
+        "vel": [
+          656.7969360351562,
+          281.3034973144531,
+          -11.007585525512695
+        ],
+        "omega": [
+          -0.00015247904229909182,
+          -0.0978463739156723,
+          -0.02077915519475937
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 65,
+      "position_error": 0,
+      "velocity_error": 0.000030517578125,
+      "omega_error": 6.540513343683809e-7,
+      "forward_error_deg": 0.0000011094854992023125,
+      "right_error_deg": 0.0000014236431526779534,
+      "up_error_deg": 0.0000017772181424010894,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -664.336181640625,
+          161.85787963867188,
+          14.109532356262207
+        ],
+        "vel": [
+          661.59716796875,
+          277.3661804199219,
+          26.525455474853516
+        ],
+        "omega": [
+          -0.00017281901091337204,
+          -0.19141268730163574,
+          -0.02461380511522293
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -664.336181640625,
+          161.85787963867188,
+          14.109532356262207
+        ],
+        "vel": [
+          661.59716796875,
+          277.3661804199219,
+          26.52542495727539
+        ],
+        "omega": [
+          -0.00017234159167855978,
+          -0.19141313433647156,
+          -0.024613801389932632
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 66,
+      "position_error": 0,
+      "velocity_error": 0.000011444091796875,
+      "omega_error": 9.510219805767495e-8,
+      "forward_error_deg": 8.29351849060551e-7,
+      "right_error_deg": 0.0000014083299978042809,
+      "up_error_deg": 0.0000016138833972966726,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -658.7830810546875,
+          164.136962890625,
+          14.434109687805176
+        ],
+        "vel": [
+          666.3729858398438,
+          273.4895324707031,
+          38.94929122924805
+        ],
+        "omega": [
+          -0.00012858049012720585,
+          -0.14640510082244873,
+          -0.028324011713266373
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -658.7830810546875,
+          164.136962890625,
+          14.434109687805176
+        ],
+        "vel": [
+          666.3729858398438,
+          273.4895324707031,
+          38.94927978515625
+        ],
+        "omega": [
+          -0.00012861203867942095,
+          -0.14640501141548157,
+          -0.028324004262685776
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 67,
+      "position_error": 0,
+      "velocity_error": 0.000019073486328125,
+      "omega_error": 4.473114942864944e-7,
+      "forward_error_deg": 0.0000010383678941446219,
+      "right_error_deg": 0.0000014151765883916932,
+      "up_error_deg": 0.000001753926508397174,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -653.1904907226562,
+          166.38421630859375,
+          14.765815734863281
+        ],
+        "vel": [
+          671.1141357421875,
+          269.6717834472656,
+          39.804779052734375
+        ],
+        "omega": [
+          -0.00010213459609076381,
+          -0.10315436869859695,
+          -0.031957026571035385
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -653.1904907226562,
+          166.38421630859375,
+          14.765815734863281
+        ],
+        "vel": [
+          671.1141357421875,
+          269.6717834472656,
+          39.80475997924805
+        ],
+        "omega": [
+          -0.0001021207426674664,
+          -0.10315481573343277,
+          -0.03195701912045479
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 68,
+      "position_error": 0,
+      "velocity_error": 0.000011444091796875,
+      "omega_error": 1.4170805379524016e-7,
+      "forward_error_deg": 0.0000011705256579193764,
+      "right_error_deg": 0.0000014437378285986599,
+      "up_error_deg": 0.0000018551816063437302,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -647.5587158203125,
+          168.60012817382812,
+          15.068822860717773
+        ],
+        "vel": [
+          675.81591796875,
+          265.9092712402344,
+          36.36100387573242
+        ],
+        "omega": [
+          -0.00008698145393282175,
+          -0.0737592801451683,
+          -0.03553617745637894
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -647.5587158203125,
+          168.60012817382812,
+          15.068822860717773
+        ],
+        "vel": [
+          675.81591796875,
+          265.9092712402344,
+          36.360992431640625
+        ],
+        "omega": [
+          -0.00008692196570336819,
+          -0.07375940680503845,
+          -0.035536155104637146
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 69,
+      "position_error": 0,
+      "velocity_error": 0.000003814697265625,
+      "omega_error": 1.6480002299856451e-7,
+      "forward_error_deg": 0.0000011840588970723064,
+      "right_error_deg": 0.0000015217925997226986,
+      "up_error_deg": 0.000001904737500580973,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -641.8880615234375,
+          170.78512573242188,
+          15.338979721069336
+        ],
+        "vel": [
+          680.4782104492188,
+          262.19952392578125,
+          32.418766021728516
+        ],
+        "omega": [
+          -0.00010212691267952323,
+          -0.05861589312553406,
+          -0.03906895965337753
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -641.8880615234375,
+          170.78512573242188,
+          15.338979721069336
+        ],
+        "vel": [
+          680.4782104492188,
+          262.19952392578125,
+          32.41876220703125
+        ],
+        "omega": [
+          -0.00010196346556767821,
+          -0.058615878224372864,
+          -0.03906894475221634
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 70,
+      "position_error": 0,
+      "velocity_error": 0.0000095367431640625,
+      "omega_error": 2.477331246372652e-7,
+      "forward_error_deg": 0.0000011574588241324815,
+      "right_error_deg": 0.0000016384862210377099,
+      "up_error_deg": 0.0000020039660875246367,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -636.1788940429688,
+          172.93963623046875,
+          15.577845573425293
+        ],
+        "vel": [
+          685.1016235351562,
+          258.5399475097656,
+          28.66383171081543
+        ],
+        "omega": [
+          -0.0001090603182092309,
+          -0.04692257195711136,
+          -0.04255538061261177
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -636.1788940429688,
+          172.93963623046875,
+          15.577845573425293
+        ],
+        "vel": [
+          685.1016235351562,
+          258.5399475097656,
+          28.663822174072266
+        ],
+        "omega": [
+          -0.00010881625348702073,
+          -0.04692259803414345,
+          -0.042555347084999084
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 71,
+      "position_error": 0,
+      "velocity_error": 0.000011444091796875,
+      "omega_error": 9.960310500695198e-8,
+      "forward_error_deg": 0.00000117356687797893,
+      "right_error_deg": 0.000001649838948816235,
+      "up_error_deg": 0.0000020191704868881204,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -630.4314575195312,
+          175.0640411376953,
+          15.787549018859863
+        ],
+        "vel": [
+          689.6868896484375,
+          254.92800903320312,
+          25.16445541381836
+        ],
+        "omega": [
+          -0.0001108060241676867,
+          -0.03780268132686615,
+          -0.04599418118596077
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -630.4314575195312,
+          175.0640411376953,
+          15.787549018859863
+        ],
+        "vel": [
+          689.6868896484375,
+          254.92800903320312,
+          25.164443969726562
+        ],
+        "omega": [
+          -0.00011078279931098223,
+          -0.03780277073383331,
+          -0.045994143933057785
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 72,
+      "position_error": 0,
+      "velocity_error": 0.0000133514404296875,
+      "omega_error": 1.963523435208037e-7,
+      "forward_error_deg": 0.0000012140449754047603,
+      "right_error_deg": 0.0000017144195992130738,
+      "up_error_deg": 0.000002103856933637225,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -624.6461791992188,
+          177.15870666503906,
+          15.970524787902832
+        ],
+        "vel": [
+          694.2346801757812,
+          251.3611602783203,
+          21.957168579101562
+        ],
+        "omega": [
+          -0.00010884733637794852,
+          -0.030621768906712532,
+          -0.049383699893951416
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -624.6461791992188,
+          177.15870666503906,
+          15.970524787902832
+        ],
+        "vel": [
+          694.2346801757812,
+          251.3611602783203,
+          21.957155227661133
+        ],
+        "omega": [
+          -0.00010872056009247899,
+          -0.030621634796261787,
+          -0.049383632838726044
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 73,
+      "position_error": 0,
+      "velocity_error": 0.0000152587890625,
+      "omega_error": 4.7044239983052887e-7,
+      "forward_error_deg": 0.0000010076604458783517,
+      "right_error_deg": 0.0000018563602414009473,
+      "up_error_deg": 0.000002125673109019179,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -618.8233032226562,
+          179.22402954101562,
+          16.12932586669922
+        ],
+        "vel": [
+          698.74560546875,
+          247.83689880371094,
+          19.056156158447266
+        ],
+        "omega": [
+          -0.00010458531323820353,
+          -0.0249175988137722,
+          -0.05272209271788597
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -618.8233032226562,
+          179.22402954101562,
+          16.12932586669922
+        ],
+        "vel": [
+          698.74560546875,
+          247.83689880371094,
+          19.056140899658203
+        ],
+        "omega": [
+          -0.00010428711539134383,
+          -0.02491724118590355,
+          -0.0527220256626606
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 74,
+      "position_error": 0,
+      "velocity_error": 0.0000171661376953125,
+      "omega_error": 4.911285393885894e-7,
+      "forward_error_deg": 7.466906996534068e-7,
+      "right_error_deg": 0.0000019174661359273447,
+      "up_error_deg": 0.000002045104881130801,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -612.963134765625,
+          181.2602996826172,
+          16.266494750976562
+        ],
+        "vel": [
+          703.2203369140625,
+          244.35301208496094,
+          16.46014976501465
+        ],
+        "omega": [
+          -0.00009875631076283753,
+          -0.020349441096186638,
+          -0.05600741505622864
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -612.963134765625,
+          181.2602996826172,
+          16.266494750976562
+        ],
+        "vel": [
+          703.2203369140625,
+          244.35301208496094,
+          16.460132598876953
+        ],
+        "omega": [
+          -0.00009863032028079033,
+          -0.02034897170960903,
+          -0.05600734427571297
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 75,
+      "position_error": 0,
+      "velocity_error": 0.0000171661376953125,
+      "omega_error": 2.0218357284544517e-7,
+      "forward_error_deg": 7.547474384304406e-7,
+      "right_error_deg": 0.000002009942732295664,
+      "up_error_deg": 0.0000021505202775195566,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -607.0659790039062,
+          183.2678680419922,
+          16.384475708007812
+        ],
+        "vel": [
+          707.6593017578125,
+          240.9074249267578,
+          14.157709121704102
+        ],
+        "omega": [
+          -0.00009227034752257168,
+          -0.016664771363139153,
+          -0.05923791602253914
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -607.0659790039062,
+          183.2678680419922,
+          16.384475708007812
+        ],
+        "vel": [
+          707.6593017578125,
+          240.9074249267578,
+          14.157691955566406
+        ],
+        "omega": [
+          -0.00009207718539983034,
+          -0.016664767637848854,
+          -0.05923785641789436
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 76,
+      "position_error": 0,
+      "velocity_error": 0.00001621246337890625,
+      "omega_error": 1.696220477110965e-7,
+      "forward_error_deg": 9.046218536014329e-7,
+      "right_error_deg": 0.0000019888292601813254,
+      "up_error_deg": 0.0000021606696590985367,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -601.132080078125,
+          185.24700927734375,
+          16.485567092895508
+        ],
+        "vel": [
+          712.0630493164062,
+          237.49838256835938,
+          12.130969047546387
+        ],
+        "omega": [
+          -0.0000850920332595706,
+          -0.013674521818757057,
+          -0.06241203472018242
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -601.132080078125,
+          185.24700927734375,
+          16.485567092895508
+        ],
+        "vel": [
+          712.0630493164062,
+          237.49838256835938,
+          12.130952835083008
+        ],
+        "omega": [
+          -0.00008515018271282315,
+          -0.01367467362433672,
+          -0.06241198629140854
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 77,
+      "position_error": 0,
+      "velocity_error": 0.0000209808349609375,
+      "omega_error": 2.7055560875168934e-7,
+      "forward_error_deg": 9.25788399910676e-7,
+      "right_error_deg": 0.0000020680928667312566,
+      "up_error_deg": 0.000002267454911598543,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -595.1618041992188,
+          187.19805908203125,
+          16.571887969970703
+        ],
+        "vel": [
+          716.43212890625,
+          234.12413024902344,
+          10.3584566116333
+        ],
+        "omega": [
+          -0.00007837862358428538,
+          -0.011235877871513367,
+          -0.06552845239639282
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -595.1618041992188,
+          187.19805908203125,
+          16.571887969970703
+        ],
+        "vel": [
+          716.43212890625,
+          234.12413024902344,
+          10.35843563079834
+        ],
+        "omega": [
+          -0.00007820880273357034,
+          -0.011236083693802357,
+          -0.06552840769290924
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 78,
+      "position_error": 0,
+      "velocity_error": 0.00002288818359375,
+      "omega_error": 2.2186183447983216e-7,
+      "forward_error_deg": 0.0000011544556548733011,
+      "right_error_deg": 0.0000020657099486094348,
+      "up_error_deg": 0.000002300841953110202,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -589.1554565429688,
+          189.12124633789062,
+          16.645362854003906
+        ],
+        "vel": [
+          720.7669677734375,
+          230.78321838378906,
+          8.81701374053955
+        ],
+        "omega": [
+          -0.00007090863073244691,
+          -0.009238209575414658,
+          -0.06858600676059723
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -589.1554565429688,
+          189.12124633789062,
+          16.645362854003906
+        ],
+        "vel": [
+          720.7669677734375,
+          230.78321838378906,
+          8.816990852355957
+        ],
+        "omega": [
+          -0.00007093185558915138,
+          -0.009238425642251968,
+          -0.06858596205711365
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 79,
+      "position_error": 0,
+      "velocity_error": 0.000028133392333984375,
+      "omega_error": 4.36945755301943e-7,
+      "forward_error_deg": 0.0000011296996212489294,
+      "right_error_deg": 0.0000018640942946013272,
+      "up_error_deg": 0.000002166518601942514,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -583.1132202148438,
+          191.01686096191406,
+          16.70772361755371
+        ],
+        "vel": [
+          725.0679931640625,
+          227.47430419921875,
+          7.48315954208374
+        ],
+        "omega": [
+          -0.0000635240285191685,
+          -0.0075967335142195225,
+          -0.07158376276493073
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -583.1132202148438,
+          191.01686096191406,
+          16.70772361755371
+        ],
+        "vel": [
+          725.0679931640625,
+          227.47430419921875,
+          7.483131408691406
+        ],
+        "omega": [
+          -0.00006394198862835765,
+          -0.007596857380121946,
+          -0.07158373296260834
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 80,
+      "position_error": 0,
+      "velocity_error": 0.0000286102294921875,
+      "omega_error": 6.17839225013784e-7,
+      "forward_error_deg": 0.0000010727348478923227,
+      "right_error_deg": 0.0000016039154036059622,
+      "up_error_deg": 0.000001907268916162833,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -577.035400390625,
+          192.8851776123047,
+          16.76050567626953
+        ],
+        "vel": [
+          729.335693359375,
+          224.1962127685547,
+          6.334022521972656
+        ],
+        "omega": [
+          -0.000056732125813141465,
+          -0.006244580261409283,
+          -0.07452107965946198
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -577.035400390625,
+          192.8851776123047,
+          16.76050567626953
+        ],
+        "vel": [
+          729.335693359375,
+          224.1962127685547,
+          6.333993911743164
+        ],
+        "omega": [
+          -0.000057291443226858974,
+          -0.00624431949108839,
+          -0.07452104985713959
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 81,
+      "position_error": 0,
+      "velocity_error": 0.00001811981201171875,
+      "omega_error": 5.78987516354611e-7,
+      "forward_error_deg": 8.961381289314837e-7,
+      "right_error_deg": 0.0000014043743206604154,
+      "up_error_deg": 0.0000015957165179961814,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -570.9223022460938,
+          194.72640991210938,
+          16.805072784423828
+        ],
+        "vel": [
+          733.5704956054688,
+          220.94786071777344,
+          5.347923278808594
+        ],
+        "omega": [
+          -0.00005013859481550753,
+          -0.005128455348312855,
+          -0.0773974061012268
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -570.9223022460938,
+          194.72640991210938,
+          16.805072784423828
+        ],
+        "vel": [
+          733.5704956054688,
+          220.94786071777344,
+          5.347905158996582
+        ],
+        "omega": [
+          -0.00005055702058598399,
+          -0.005128056276589632,
+          -0.07739737629890442
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 82,
+      "position_error": 0,
+      "velocity_error": 0.000034332275390625,
+      "omega_error": 3.887368205373194e-7,
+      "forward_error_deg": 8.479552767355856e-7,
+      "right_error_deg": 0.0000012135803562456946,
+      "up_error_deg": 0.0000014165669416453639,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -564.774169921875,
+          196.54080200195312,
+          16.842613220214844
+        ],
+        "vel": [
+          737.7728271484375,
+          217.72828674316406,
+          4.504809379577637
+        ],
+        "omega": [
+          -0.00004387603257782757,
+          -0.004206294193863869,
+          -0.08021242916584015
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -564.774169921875,
+          196.54080200195312,
+          16.842613220214844
+        ],
+        "vel": [
+          737.7728271484375,
+          217.72828674316406,
+          4.504775047302246
+        ],
+        "omega": [
+          -0.000044262997107580304,
+          -0.004206257872283459,
+          -0.08021242171525955
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 83,
+      "position_error": 0,
+      "velocity_error": 0.00003266334533691406,
+      "omega_error": 1.7098063211054728e-7,
+      "forward_error_deg": 8.736487081666651e-7,
+      "right_error_deg": 0.0000011460423703698424,
+      "up_error_deg": 0.000001417133231383567,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -558.59130859375,
+          198.32861328125,
+          16.874164581298828
+        ],
+        "vel": [
+          741.9429931640625,
+          214.53662109375,
+          3.7862679958343506
+        ],
+        "omega": [
+          -0.00003803553408943117,
+          -0.0034443242475390434,
+          -0.08296599984169006
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -558.59130859375,
+          198.32861328125,
+          16.874164581298828
+        ],
+        "vel": [
+          741.9429931640625,
+          214.53662109375,
+          3.7862353324890137
+        ],
+        "omega": [
+          -0.00003820462734438479,
+          -0.003444344736635685,
+          -0.08296598494052887
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 84,
+      "position_error": 0,
+      "velocity_error": 0.000026702880859375,
+      "omega_error": 1.4824420798953705e-7,
+      "forward_error_deg": 7.252212614245608e-7,
+      "right_error_deg": 0.0000011749369010835057,
+      "up_error_deg": 0.0000013491602060587508,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -552.3739624023438,
+          200.09005737304688,
+          16.9006290435791
+        ],
+        "vel": [
+          746.08154296875,
+          211.37208557128906,
+          3.175767421722412
+        ],
+        "omega": [
+          -0.00003281206591054797,
+          -0.002814139472320676,
+          -0.08565812557935715
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -552.3739624023438,
+          200.09005737304688,
+          16.9006290435791
+        ],
+        "vel": [
+          746.08154296875,
+          211.37208557128906,
+          3.1757407188415527
+        ],
+        "omega": [
+          -0.000032707786886021495,
+          -0.002814035164192319,
+          -0.08565811067819595
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 85,
+      "position_error": 0,
+      "velocity_error": 0.000029802322387695312,
+      "omega_error": 7.224881562649634e-8,
+      "forward_error_deg": 8.591410124341931e-7,
+      "right_error_deg": 0.0000012060486368370875,
+      "up_error_deg": 0.0000014309199318343704,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -546.1224365234375,
+          201.82533264160156,
+          16.92278289794922
+        ],
+        "vel": [
+          750.1887817382812,
+          208.23397827148438,
+          2.658475160598755
+        ],
+        "omega": [
+          -0.000027629575924947858,
+          -0.0022937145549803972,
+          -0.08828890323638916
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -546.1224365234375,
+          201.82533264160156,
+          16.92278289794922
+        ],
+        "vel": [
+          750.1887817382812,
+          208.23397827148438,
+          2.658445358276367
+        ],
+        "omega": [
+          -0.000027569738449528813,
+          -0.002293748315423727,
+          -0.08828888088464737
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 86,
+      "position_error": 0,
+      "velocity_error": 0.000026226043701171875,
+      "omega_error": 8.91596404177994e-8,
+      "forward_error_deg": 8.462680221753808e-7,
+      "right_error_deg": 0.0000012290586638879454,
+      "up_error_deg": 0.0000013892478262421166,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -539.8369140625,
+          203.53466796875,
+          16.94129180908203
+        ],
+        "vel": [
+          754.26513671875,
+          205.12164306640625,
+          2.221284866333008
+        ],
+        "omega": [
+          -0.000023040425730869174,
+          -0.0018642462091520429,
+          -0.090858593583107
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -539.8369140625,
+          203.53466796875,
+          16.94129180908203
+        ],
+        "vel": [
+          754.26513671875,
+          205.12164306640625,
+          2.2212586402893066
+        ],
+        "omega": [
+          -0.000023086467990651727,
+          -0.0018641904462128878,
+          -0.09085854142904282
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 87,
+      "position_error": 0,
+      "velocity_error": 0.000024557113647460938,
+      "omega_error": 2.9967128849512765e-7,
+      "forward_error_deg": 8.790264858866824e-7,
+      "right_error_deg": 0.0000011033328011027294,
+      "up_error_deg": 0.0000013216157684750326,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -533.5176391601562,
+          205.21829223632812,
+          16.95673179626465
+        ],
+        "vel": [
+          758.3109130859375,
+          202.0344696044922,
+          1.8526732921600342
+        ],
+        "omega": [
+          -0.0000186639663297683,
+          -0.001510250847786665,
+          -0.09336751699447632
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -533.5176391601562,
+          205.21829223632812,
+          16.95673179626465
+        ],
+        "vel": [
+          758.3109130859375,
+          202.0344696044922,
+          1.8526487350463867
+        ],
+        "omega": [
+          -0.000018952880054712296,
+          -0.0015102787874639034,
+          -0.09336744248867035
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 88,
+      "position_error": 0,
+      "velocity_error": 0.00002753734588623047,
+      "omega_error": 1.9644081127090878e-7,
+      "forward_error_deg": 9.988155894963547e-7,
+      "right_error_deg": 0.0000010702511078038948,
+      "up_error_deg": 0.000001276796070690711,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -527.1649169921875,
+          206.87640380859375,
+          16.969587326049805
+        ],
+        "vel": [
+          762.3265991210938,
+          198.97189331054688,
+          1.5425987243652344
+        ],
+        "omega": [
+          -0.000014845660189166665,
+          -0.0012187412939965725,
+          -0.09581606090068817
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -527.1649169921875,
+          206.87640380859375,
+          16.969587326049805
+        ],
+        "vel": [
+          762.3265991210938,
+          198.97189331054688,
+          1.5425711870193481
+        ],
+        "omega": [
+          -0.000015023804735392332,
+          -0.0012187773827463388,
+          -0.0958159863948822
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 89,
+      "position_error": 0,
+      "velocity_error": 0.000026106834411621094,
+      "omega_error": 4.39323138234467e-7,
+      "forward_error_deg": 7.862410002300056e-7,
+      "right_error_deg": 8.859094134860651e-7,
+      "up_error_deg": 0.0000010149744889004022,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -520.7789916992188,
+          208.50918579101562,
+          16.98027229309082
+        ],
+        "vel": [
+          766.3125,
+          195.9333953857422,
+          1.2823067903518677
+        ],
+        "omega": [
+          -0.000011273426935076714,
+          -0.0009789945324882865,
+          -0.09820470213890076
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -520.7789916992188,
+          208.50918579101562,
+          16.98027229309082
+        ],
+        "vel": [
+          766.3125,
+          195.9333953857422,
+          1.282280683517456
+        ],
+        "omega": [
+          -0.000011635973351076245,
+          -0.0009787578601390123,
+          -0.09820462763309479
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 90,
+      "position_error": 0,
+      "velocity_error": 0.00002086162567138672,
+      "omega_error": 6.955738475355762e-7,
+      "forward_error_deg": 7.612172294736457e-7,
+      "right_error_deg": 8.241693100478388e-7,
+      "up_error_deg": 7.59228131780867e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -514.360107421875,
+          210.11683654785156,
+          16.9891414642334
+        ],
+        "vel": [
+          770.2689208984375,
+          192.91844177246094,
+          1.0642505884170532
+        ],
+        "omega": [
+          -0.000007701135473325849,
+          -0.0007824394851922989,
+          -0.10053405910730362
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -514.360107421875,
+          210.11683654785156,
+          16.9891414642334
+        ],
+        "vel": [
+          770.2689208984375,
+          192.91844177246094,
+          1.0642297267913818
+        ],
+        "omega": [
+          -0.000008185976184904575,
+          -0.0007819475140422583,
+          -0.10053397715091705
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 91,
+      "position_error": 0,
+      "velocity_error": 0.000032782554626464844,
+      "omega_error": 3.0991719044312146e-7,
+      "forward_error_deg": 6.480533363098648e-7,
+      "right_error_deg": 6.908770361005692e-7,
+      "up_error_deg": 5.402619532010714e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -507.908447265625,
+          211.69955444335938,
+          16.996490478515625
+        ],
+        "vel": [
+          774.1962890625,
+          189.92660522460938,
+          0.8819341659545898
+        ],
+        "omega": [
+          -0.00000505617936141789,
+          -0.0006210344145074487,
+          -0.10280469805002213
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -507.908447265625,
+          211.69955444335938,
+          16.996490478515625
+        ],
+        "vel": [
+          774.1962890625,
+          189.92660522460938,
+          0.8819013833999634
+        ],
+        "omega": [
+          -0.000005288398824632168,
+          -0.0006208380218595266,
+          -0.10280463844537735
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 92,
+      "position_error": 0,
+      "velocity_error": 0.000032782554626464844,
+      "omega_error": 5.178404805749426e-7,
+      "forward_error_deg": 7.150961204586698e-7,
+      "right_error_deg": 7.053050526438122e-7,
+      "up_error_deg": 4.1927859479415015e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -501.42431640625,
+          213.2575225830078,
+          17.002573013305664
+        ],
+        "vel": [
+          778.0948486328125,
+          186.95742797851562,
+          0.7297523021697998
+        ],
+        "omega": [
+          -0.000002335320459678769,
+          -0.0004894910380244255,
+          -0.1050172820687294
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -501.42431640625,
+          213.2575225830078,
+          17.002573013305664
+        ],
+        "vel": [
+          778.0948486328125,
+          186.95742797851562,
+          0.7297195196151733
+        ],
+        "omega": [
+          -0.00000284943962469697,
+          -0.0004894575686194003,
+          -0.10501722991466522
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 93,
+      "position_error": 0,
+      "velocity_error": 0.00003057718276977539,
+      "omega_error": 2.3593067146243724e-7,
+      "forward_error_deg": 6.373947602574707e-7,
+      "right_error_deg": 5.72823725496533e-7,
+      "up_error_deg": 3.250791446651408e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -494.907958984375,
+          214.7909393310547,
+          17.007596969604492
+        ],
+        "vel": [
+          781.9650268554688,
+          184.010498046875,
+          0.6029382348060608
+        ],
+        "omega": [
+          -2.7171336114406586e-7,
+          -0.00038224985473789275,
+          -0.10717249661684036
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -494.907958984375,
+          214.7909393310547,
+          17.007596969604492
+        ],
+        "vel": [
+          781.9650268554688,
+          184.010498046875,
+          0.602907657623291
+        ],
+        "omega": [
+          -4.941830411553383e-7,
+          -0.0003823010192718357,
+          -0.10717243701219559
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 94,
+      "position_error": 0,
+      "velocity_error": 0.00003348147343463239,
+      "omega_error": 3.055817061137522e-7,
+      "forward_error_deg": 6.656740911883835e-7,
+      "right_error_deg": 5.028819652838934e-7,
+      "up_error_deg": 3.9289068628161116e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -488.35955810546875,
+          216.29998779296875,
+          17.011741638183594
+        ],
+        "vel": [
+          785.80712890625,
+          181.0853729248047,
+          0.49746036529541016
+        ],
+        "omega": [
+          0.000001674226950854063,
+          -0.00029518772498704493,
+          -0.10927106440067291
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -488.35955810546875,
+          216.29998779296875,
+          17.011741638183594
+        ],
+        "vel": [
+          785.80712890625,
+          181.08535766601562,
+          0.49743056297302246
+        ],
+        "omega": [
+          0.0000014356919564306736,
+          -0.00029536656802520156,
+          -0.10927099734544754
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 95,
+      "position_error": 0,
+      "velocity_error": 0.00003348147343463239,
+      "omega_error": 3.805018713200537e-7,
+      "forward_error_deg": 7.448833406110283e-7,
+      "right_error_deg": 6.921337510784335e-7,
+      "up_error_deg": 4.006878605953789e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -481.7793884277344,
+          217.7848358154297,
+          17.01515769958496
+        ],
+        "vel": [
+          789.6215209960938,
+          178.18165588378906,
+          0.4098735749721527
+        ],
+        "omega": [
+          0.0000034298573154956102,
+          -0.0002248064411105588,
+          -0.11131376773118973
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -481.7793884277344,
+          217.7848358154297,
+          17.01515769958496
+        ],
+        "vel": [
+          789.6215209960938,
+          178.181640625,
+          0.409843772649765
+        ],
+        "omega": [
+          0.000003057182766497135,
+          -0.00022482499480247498,
+          -0.11131369322538376
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 96,
+      "position_error": 0,
+      "velocity_error": 0.000028936950090883238,
+      "omega_error": 4.2168403257556234e-7,
+      "forward_error_deg": 7.858780311720165e-7,
+      "right_error_deg": 7.309623008688949e-7,
+      "up_error_deg": 2.998054631115624e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -475.16766357421875,
+          219.2456512451172,
+          17.017967224121094
+        ],
+        "vel": [
+          793.4083862304688,
+          175.29896545410156,
+          0.33724233508110046
+        ],
+        "omega": [
+          0.000004715489922091365,
+          -0.00016840558964759111,
+          -0.11330140382051468
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -475.16766357421875,
+          219.2456512451172,
+          17.017967224121094
+        ],
+        "vel": [
+          793.4083862304688,
+          175.2989501953125,
+          0.3372177481651306
+        ],
+        "omega": [
+          0.000005009904270991683,
+          -0.00016811303794384003,
+          -0.11330132931470871
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 97,
+      "position_error": 0,
+      "velocity_error": 0.00003282004347774849,
+      "omega_error": 1.6413638988452788e-7,
+      "forward_error_deg": 9.098510424495422e-7,
+      "right_error_deg": 8.025414096510348e-7,
+      "up_error_deg": 3.241522362374289e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -468.52459716796875,
+          220.6826171875,
+          17.02027702331543
+        ],
+        "vel": [
+          797.1681518554688,
+          172.4369354248047,
+          0.2771221101284027
+        ],
+        "omega": [
+          0.000006404356099665165,
+          -0.00012239301577210426,
+          -0.11523473262786865
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -468.52459716796875,
+          220.6826171875,
+          17.02027702331543
+        ],
+        "vel": [
+          797.1681518554688,
+          172.43692016601562,
+          0.2770930528640747
+        ],
+        "omega": [
+          0.000006285670679062605,
+          -0.00012229234562255442,
+          -0.11523468047380447
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 98,
+      "position_error": 0,
+      "velocity_error": 0.00003348147343463239,
+      "omega_error": 1.5843642278756747e-7,
+      "forward_error_deg": 0.0000010864649147124183,
+      "right_error_deg": 0.000001077156264896448,
+      "up_error_deg": 3.967919145897254e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -461.85040283203125,
+          222.09591674804688,
+          17.022172927856445
+        ],
+        "vel": [
+          800.901123046875,
+          169.59515380859375,
+          0.22741779685020447
+        ],
+        "omega": [
+          0.000007656199159100652,
+          -0.00008581363363191485,
+          -0.1171146035194397
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -461.85040283203125,
+          222.09591674804688,
+          17.022172927856445
+        ],
+        "vel": [
+          800.901123046875,
+          169.5951385498047,
+          0.22738799452781677
+        ],
+        "omega": [
+          0.000007514638127759099,
+          -0.0000858620333019644,
+          -0.11711455136537552
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 99,
+      "position_error": 0,
+      "velocity_error": 0.00003548565667871777,
+      "omega_error": 2.516105524996921e-7,
+      "forward_error_deg": 0.0000010519038752978198,
+      "right_error_deg": 9.046137524338748e-7,
+      "up_error_deg": 3.0286106635821664e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -455.1453552246094,
+          223.48568725585938,
+          17.023725509643555
+        ],
+        "vel": [
+          804.6074829101562,
+          166.77328491210938,
+          0.1863829791545868
+        ],
+        "omega": [
+          0.000008407310815528035,
+          -0.000056752178352326155,
+          -0.11894183605909348
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -455.1453552246094,
+          223.48568725585938,
+          17.023725509643555
+        ],
+        "vel": [
+          804.6074829101562,
+          166.7732696533203,
+          0.18635094165802002
+        ],
+        "omega": [
+          0.000008653121767565608,
+          -0.00005678195157088339,
+          -0.1189417913556099
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 100,
+      "position_error": 0,
+      "velocity_error": 0.00003481447043074557,
+      "omega_error": 1.7748189523813306e-7,
+      "forward_error_deg": 0.000001362265377095898,
+      "right_error_deg": 0.000001295902358405553,
+      "up_error_deg": 3.700694851747832e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -448.40966796875,
+          224.85211181640625,
+          17.02499771118164
+        ],
+        "vel": [
+          808.28759765625,
+          163.97096252441406,
+          0.152558833360672
+        ],
+        "omega": [
+          0.000009294861229136586,
+          -0.00003370757622178644,
+          -0.12071727216243744
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -448.40966796875,
+          224.85211181640625,
+          17.02499771118164
+        ],
+        "vel": [
+          808.28759765625,
+          163.970947265625,
+          0.15252754092216492
+        ],
+        "omega": [
+          0.000009430281352251768,
+          -0.000033818359952419996,
+          -0.12071724236011505
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 101,
+      "position_error": 0,
+      "velocity_error": 0.000032782554626464844,
+      "omega_error": 3.8246003948368004e-7,
+      "forward_error_deg": 0.000001288108894353982,
+      "right_error_deg": 0.0000010710291360070046,
+      "up_error_deg": 4.7000509471947545e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -441.6434631347656,
+          226.19534301757812,
+          17.02603530883789
+        ],
+        "vel": [
+          811.9418334960938,
+          161.1878204345703,
+          0.12471303343772888
+        ],
+        "omega": [
+          0.000009908457286655903,
+          -0.000015563680790364742,
+          -0.12244179099798203
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -441.6434631347656,
+          226.19534301757812,
+          17.02603530883789
+        ],
+        "vel": [
+          811.9418334960938,
+          161.1878204345703,
+          0.12468025088310242
+        ],
+        "omega": [
+          0.000010079762432724237,
+          -0.000015902696759440005,
+          -0.12244174629449844
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 102,
+      "position_error": 0,
+      "velocity_error": 0.00003548565667871777,
+      "omega_error": 2.888636750375433e-7,
+      "forward_error_deg": 9.966347451539513e-7,
+      "right_error_deg": 8.362661166762127e-7,
+      "up_error_deg": 6.009449643825446e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -434.8470764160156,
+          227.51553344726562,
+          17.026884078979492
+        ],
+        "vel": [
+          815.5704345703125,
+          158.42355346679688,
+          0.10181739926338196
+        ],
+        "omega": [
+          0.000010891963029280305,
+          -0.000001614404027350247,
+          -0.1241161972284317
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -434.8470764160156,
+          227.51553344726562,
+          17.026884078979492
+        ],
+        "vel": [
+          815.5704345703125,
+          158.4235382080078,
+          0.10178536176681519
+        ],
+        "omega": [
+          0.000010945717804133892,
+          -0.0000018966529751196504,
+          -0.12411616742610931
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 103,
+      "position_error": 0,
+      "velocity_error": 0.00003481447043074557,
+      "omega_error": 1.862444691496405e-7,
+      "forward_error_deg": 0.0000012130437672799108,
+      "right_error_deg": 9.978047370487018e-7,
+      "up_error_deg": 6.059230176835087e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -428.0206298828125,
+          228.81283569335938,
+          17.02757453918457
+        ],
+        "vel": [
+          819.1737060546875,
+          155.6777801513672,
+          0.08302554488182068
+        ],
+        "omega": [
+          0.000011466065188869834,
+          0.000008861752576194704,
+          -0.1257414072751999
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -428.0206298828125,
+          228.81283569335938,
+          17.02757453918457
+        ],
+        "vel": [
+          819.1737060546875,
+          155.67776489257812,
+          0.0829942524433136
+        ],
+        "omega": [
+          0.000011562573490664363,
+          0.000009018229320645332,
+          -0.1257413774728775
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 104,
+      "position_error": 0,
+      "velocity_error": 0.0000361597363304964,
+      "omega_error": 2.562467738671016e-7,
+      "forward_error_deg": 8.202792185379866e-7,
+      "right_error_deg": 8.88377836773769e-7,
+      "up_error_deg": 4.1444548083977803e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -421.16436767578125,
+          230.08741760253906,
+          17.02813720703125
+        ],
+        "vel": [
+          822.7518310546875,
+          152.95016479492188,
+          0.06761625409126282
+        ],
+        "omega": [
+          0.000011740106856450438,
+          0.000016941703506745398,
+          -0.12731826305389404
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -421.16436767578125,
+          230.08741760253906,
+          17.02813720703125
+        ],
+        "vel": [
+          822.7518310546875,
+          152.9501495361328,
+          0.06758347153663635
+        ],
+        "omega": [
+          0.000011788972187787294,
+          0.000017193247913382947,
+          -0.12731826305389404
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 105,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.00003085863191411718,
+      "omega_error": 3.7446247794939684e-7,
+      "forward_error_deg": 0.000001099986906597334,
+      "right_error_deg": 0.0000010377526997206926,
+      "up_error_deg": 4.1328662392746285e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -414.27850341796875,
+          231.3394317626953,
+          17.028596878051758
+        ],
+        "vel": [
+          826.3051147460938,
+          150.2404022216797,
+          0.054989755153656006
+        ],
+        "omega": [
+          0.000012130883987993002,
+          0.000023340253392234445,
+          -0.12884767353534698
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -414.27850341796875,
+          231.3394317626953,
+          17.028594970703125
+        ],
+        "vel": [
+          826.3051147460938,
+          150.24038696289062,
+          0.05496293306350708
+        ],
+        "omega": [
+          0.000012340722605586052,
+          0.000023650398361496627,
+          -0.12884767353534698
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 106,
+      "position_error": 0,
+      "velocity_error": 0.00003751595132350085,
+      "omega_error": 9.173418404620187e-8,
+      "forward_error_deg": 9.662167025559566e-7,
+      "right_error_deg": 8.411289260422818e-7,
+      "up_error_deg": 3.762733656509534e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -407.36322021484375,
+          232.56900024414062,
+          17.028968811035156
+        ],
+        "vel": [
+          829.8338623046875,
+          147.54811096191406,
+          0.04466846585273743
+        ],
+        "omega": [
+          0.00001262497971765697,
+          0.000028142545488663018,
+          -0.130330428481102
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -407.36322021484375,
+          232.56900024414062,
+          17.028968811035156
+        ],
+        "vel": [
+          829.8338623046875,
+          147.548095703125,
+          0.04463419318199158
+        ],
+        "omega": [
+          0.000012610136764124036,
+          0.000028231836040504277,
+          -0.1303304135799408
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 107,
+      "position_error": 0.000003814697265625,
+      "velocity_error": 0.00003216227086872494,
+      "omega_error": 6.825885724111478e-8,
+      "forward_error_deg": 7.801778532991433e-7,
+      "right_error_deg": 8.529310814870006e-7,
+      "up_error_deg": 3.1520444524344616e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -400.41876220703125,
+          233.77627563476562,
+          17.029272079467773
+        ],
+        "vel": [
+          833.3384399414062,
+          144.8730010986328,
+          0.036228448152542114
+        ],
+        "omega": [
+          0.00001307512866333127,
+          0.00003157852916046977,
+          -0.13176743686199188
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -400.41876220703125,
+          233.77627563476562,
+          17.029268264770508
+        ],
+        "vel": [
+          833.3384399414062,
+          144.87298583984375,
+          0.036200135946273804
+        ],
+        "omega": [
+          0.000013081880751997232,
+          0.00003164479858241975,
+          -0.13176745176315308
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 108,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.000027681994274008823,
+      "omega_error": 5.983634503385322e-7,
+      "forward_error_deg": 7.93214272035344e-7,
+      "right_error_deg": 7.771323232316232e-7,
+      "up_error_deg": 2.442708583908789e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -393.4452819824219,
+          234.96141052246094,
+          17.029516220092773
+        ],
+        "vel": [
+          836.8189086914062,
+          142.21473693847656,
+          0.02934485673904419
+        ],
+        "omega": [
+          0.000013374025002121925,
+          0.00003392108192201704,
+          -0.1331595927476883
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -393.4452819824219,
+          234.96141052246094,
+          17.02951431274414
+        ],
+        "vel": [
+          836.8189086914062,
+          142.2147216796875,
+          0.029321759939193726
+        ],
+        "omega": [
+          0.000012776494259014726,
+          0.000033931457437574863,
+          -0.1331595629453659
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 109,
+      "position_error": 0.000003814697265625,
+      "velocity_error": 0.000039568338159649437,
+      "omega_error": 1.0140197630511333e-7,
+      "forward_error_deg": 5.876081618637443e-7,
+      "right_error_deg": 5.032344121418876e-7,
+      "up_error_deg": 1.15931000650602e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -386.4429626464844,
+          236.12451171875,
+          17.029714584350586
+        ],
+        "vel": [
+          840.2754516601562,
+          139.57302856445312,
+          0.02373829483985901
+        ],
+        "omega": [
+          0.000013017997844144702,
+          0.000035596691304817796,
+          -0.1345076858997345
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -386.4429626464844,
+          236.12451171875,
+          17.02971076965332
+        ],
+        "vel": [
+          840.2754516601562,
+          139.57301330566406,
+          0.023701786994934082
+        ],
+        "omega": [
+          0.000013070093700662255,
+          0.000035682402085512877,
+          -0.1345076709985733
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 110,
+      "position_error": 0.000003814697265625,
+      "velocity_error": 0.000020314693540468313,
+      "omega_error": 4.058398255672382e-7,
+      "forward_error_deg": 0.0000010006431231178727,
+      "right_error_deg": 8.226756094920444e-7,
+      "up_error_deg": 1.2638361716129772e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -379.41204833984375,
+          237.2657470703125,
+          17.029874801635742
+        ],
+        "vel": [
+          843.7086791992188,
+          136.94752502441406,
+          0.01914873719215393
+        ],
+        "omega": [
+          0.000012821750715374947,
+          0.00003640020440798253,
+          -0.1358126401901245
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -379.41204833984375,
+          237.2657470703125,
+          17.029870986938477
+        ],
+        "vel": [
+          843.7086791992188,
+          136.947509765625,
+          0.019135326147079468
+        ],
+        "omega": [
+          0.00001310507650487125,
+          0.00003669077705126256,
+          -0.1358126401901245
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 111,
+      "position_error": 0.000003814697265625,
+      "velocity_error": 0.000004470348358154297,
+      "omega_error": 3.4065560407052547e-7,
+      "forward_error_deg": 7.955816469160245e-7,
+      "right_error_deg": 8.985827031029258e-7,
+      "up_error_deg": 1.7638663892407339e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -372.3527526855469,
+          238.38525390625,
+          17.03000259399414
+        ],
+        "vel": [
+          847.11865234375,
+          134.33792114257812,
+          0.015434622764587402
+        ],
+        "omega": [
+          0.000012835749657824636,
+          0.00003672088496387005,
+          -0.1370753049850464
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -372.3527526855469,
+          238.38525390625,
+          17.029998779296875
+        ],
+        "vel": [
+          847.11865234375,
+          134.33792114257812,
+          0.015439093112945557
+        ],
+        "omega": [
+          0.00001286529004573822,
+          0.00003705993003677577,
+          -0.1370752900838852
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 112,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.0000022351741790771484,
+      "omega_error": 2.0542401669945538e-7,
+      "forward_error_deg": 0.000001212365236042255,
+      "right_error_deg": 0.0000011510402431592719,
+      "up_error_deg": 1.52106393913396e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -365.26519775390625,
+          239.48312377929688,
+          17.030105590820312
+        ],
+        "vel": [
+          850.5054321289062,
+          131.74392700195312,
+          0.012426823377609253
+        ],
+        "omega": [
+          0.000012950360542163253,
+          0.00003688714059535414,
+          -0.1382964700460434
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -365.26519775390625,
+          239.48312377929688,
+          17.03010368347168
+        ],
+        "vel": [
+          850.5054321289062,
+          131.74392700195312,
+          0.01242905855178833
+        ],
+        "omega": [
+          0.000012883683666586876,
+          0.00003708087024278939,
+          -0.1382964551448822
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 113,
+      "position_error": 0,
+      "velocity_error": 0.0000152587890625,
+      "omega_error": 1.9534713009063232e-7,
+      "forward_error_deg": 9.680537360512692e-7,
+      "right_error_deg": 7.079117254879973e-7,
+      "up_error_deg": 6.590942277349891e-8,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -358.1496276855469,
+          240.55950927734375,
+          17.030187606811523
+        ],
+        "vel": [
+          853.8694458007812,
+          129.16522216796875,
+          0.009983032941818237
+        ],
+        "omega": [
+          0.000012995093129575253,
+          0.00003696688509080559,
+          -0.13947702944278717
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -358.1496276855469,
+          240.55950927734375,
+          17.030187606811523
+        ],
+        "vel": [
+          853.8694458007812,
+          129.1652069091797,
+          0.009983032941818237
+        ],
+        "omega": [
+          0.00001280906144529581,
+          0.0000369072804460302,
+          -0.13947702944278717
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 114,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.00000849031499540988,
+      "omega_error": 3.4094015845572964e-7,
+      "forward_error_deg": 9.538026296418237e-7,
+      "right_error_deg": 0.0000010475632817848468,
+      "up_error_deg": 1.60321325374336e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -351.0061950683594,
+          241.614501953125,
+          17.030256271362305
+        ],
+        "vel": [
+          857.2108154296875,
+          126.60150146484375,
+          0.008013099431991577
+        ],
+        "omega": [
+          0.00001292454544454813,
+          0.00003679962537717074,
+          -0.14061781764030457
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -351.0061950683594,
+          241.614501953125,
+          17.030254364013672
+        ],
+        "vel": [
+          857.2108154296875,
+          126.60149383544922,
+          0.008009374141693115
+        ],
+        "omega": [
+          0.000012641830835491419,
+          0.00003660965012386441,
+          -0.14061783254146576
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 115,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.00001612548007834762,
+      "omega_error": 5.314169667409136e-7,
+      "forward_error_deg": 7.168563037983635e-7,
+      "right_error_deg": 9.71484875840776e-7,
+      "up_error_deg": 1.9610897185697936e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -343.8351135253906,
+          242.6482696533203,
+          17.030309677124023
+        ],
+        "vel": [
+          860.5299682617188,
+          124.052490234375,
+          0.006420910358428955
+        ],
+        "omega": [
+          0.000012789794709533453,
+          0.00003665733675006777,
+          -0.14171962440013885
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -343.8351135253906,
+          242.6482696533203,
+          17.03030776977539
+        ],
+        "vel": [
+          860.5299682617188,
+          124.05247497558594,
+          0.006415694952011108
+        ],
+        "omega": [
+          0.000013004551874473691,
+          0.00003617216134443879,
+          -0.14171965420246124
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 116,
+      "position_error": 0,
+      "velocity_error": 0.00001698062999081976,
+      "omega_error": 4.949678539563545e-7,
+      "forward_error_deg": 9.7124235428347e-7,
+      "right_error_deg": 7.453506907651517e-7,
+      "up_error_deg": 4.690082658882224e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -336.6365661621094,
+          243.66091918945312,
+          17.030351638793945
+        ],
+        "vel": [
+          863.8269653320312,
+          121.51787567138672,
+          0.00513419508934021
+        ],
+        "omega": [
+          0.000012540724128484726,
+          0.000035948381992056966,
+          -0.14278335869312286
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -336.6365661621094,
+          243.66091918945312,
+          17.030351638793945
+        ],
+        "vel": [
+          863.8269653320312,
+          121.51786041259766,
+          0.005126744508743286
+        ],
+        "omega": [
+          0.000012823700672015548,
+          0.00003554228169377893,
+          -0.14278335869312286
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 117,
+      "position_error": 0,
+      "velocity_error": 0.000009241651639008243,
+      "omega_error": 2.995829959243983e-7,
+      "forward_error_deg": 9.816695601836945e-7,
+      "right_error_deg": 9.957410999633074e-7,
+      "up_error_deg": 5.780223593279575e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -329.41070556640625,
+          244.652587890625,
+          17.030385971069336
+        ],
+        "vel": [
+          867.10205078125,
+          118.99736785888672,
+          0.004092603921890259
+        ],
+        "omega": [
+          0.000012732663890346885,
+          0.000035226752515882254,
+          -0.14380976557731628
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -329.41070556640625,
+          244.652587890625,
+          17.030385971069336
+        ],
+        "vel": [
+          867.10205078125,
+          118.99736022949219,
+          0.004087388515472412
+        ],
+        "omega": [
+          0.000012905016774311662,
+          0.000034981712815351784,
+          -0.14380976557731628
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 118,
+      "position_error": 0,
+      "velocity_error": 0.000010157346770234157,
+      "omega_error": 3.655871450609754e-7,
+      "forward_error_deg": 0.0000012553180166085627,
+      "right_error_deg": 0.000001192809958757747,
+      "up_error_deg": 6.398566407949656e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -322.15777587890625,
+          245.62332153320312,
+          17.030412673950195
+        ],
+        "vel": [
+          870.3554077148438,
+          116.49068450927734,
+          0.003259629011154175
+        ],
+        "omega": [
+          0.00001310283550992608,
+          0.000034357974072918296,
+          -0.14479966461658478
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -322.15777587890625,
+          245.62332153320312,
+          17.030412673950195
+        ],
+        "vel": [
+          870.3554077148438,
+          116.49067687988281,
+          0.0032529234886169434
+        ],
+        "omega": [
+          0.000012738717487081885,
+          0.00003432523226365447,
+          -0.14479966461658478
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 119,
+      "position_error": 0.0000019073486328125,
+      "velocity_error": 0.000020814079359863852,
+      "omega_error": 2.766524109284091e-7,
+      "forward_error_deg": 0.000001036367286567737,
+      "right_error_deg": 8.007966158182144e-7,
+      "up_error_deg": 5.648601441274387e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -314.87786865234375,
+          246.57330322265625,
+          17.03043556213379
+        ],
+        "vel": [
+          873.58740234375,
+          113.99755859375,
+          0.002596527338027954
+        ],
+        "omega": [
+          0.00001278982381336391,
+          0.00003352928615640849,
+          -0.1457538604736328
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -314.87786865234375,
+          246.57330322265625,
+          17.030433654785156
+        ],
+        "vel": [
+          873.58740234375,
+          113.99754333496094,
+          0.002582371234893799
+        ],
+        "omega": [
+          0.000012520933523774147,
+          0.00003359263064339757,
+          -0.14575384557247162
+        ],
+        "on_ground": true
+      }
+    },
+    {
+      "tick": 120,
+      "position_error": 0.000003814697265625,
+      "velocity_error": 0.0000180798681652482,
+      "omega_error": 2.8327597675918043e-7,
+      "forward_error_deg": 0.000001538560737308095,
+      "right_error_deg": 0.000001265975691950089,
+      "up_error_deg": 6.021970165199275e-7,
+      "boost_error": 0,
+      "air_time_error": 0,
+      "ground_mismatch": 0,
+      "ball_position_error": 0,
+      "ball_velocity_error": 0,
+      "ball_omega_error": 0,
+      "reference": {
+        "pos": [
+          -307.57122802734375,
+          247.5026092529297,
+          17.030452728271484
+        ],
+        "vel": [
+          876.7980346679688,
+          111.5177001953125,
+          0.00206679105758667
+        ],
+        "omega": [
+          0.000012295902706682682,
+          0.000032873504096642137,
+          -0.1466730684041977
+        ],
+        "on_ground": true
+      },
+      "candidate": {
+        "pos": [
+          -307.57122802734375,
+          247.5026092529297,
+          17.03044891357422
+        ],
+        "vel": [
+          876.7980346679688,
+          111.51769256591797,
+          0.0020503997802734375
+        ],
+        "omega": [
+          0.000012340547982603312,
+          0.00003315284266136587,
+          -0.1466730833053589
+        ],
+        "on_ground": true
+      }
+    }
+  ]
+}

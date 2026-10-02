@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tools/physics-compare",
+    "test": "node --test \"tools/**/*.test.mjs\"",
     "bot:record": "node tools/physics-compare/record-skybot.mjs",
     "bot:movement": "node tools/physics-compare/movement-bot.mjs",
     "physics:ball": "node tools/python-runner.mjs tools/physics-compare/generate_rocketsim.py --scenarios tools/physics-compare/ball-scenarios.json --out tools/physics-compare/out/ball/rocketsim && node tools/physics-compare/run_js.mjs --scenarios tools/physics-compare/ball-scenarios.json --out tools/physics-compare/out/ball/js && node tools/physics-compare/compare.mjs --rs tools/physics-compare/out/ball/rocketsim --js tools/physics-compare/out/ball/js --out tools/physics-compare/out/ball/report.md",
@@ -22,7 +22,9 @@
     "physics:signs": "node tools/orientation-signs.mjs"
   },
   "dependencies": {
+    "@rlrml/subtr-actor": "^1.3.1",
     "lucide": "^1.49.0",
+    "mediabunny": "^1.61.0",
     "three": "^0.170.0"
   },
   "devDependencies": {

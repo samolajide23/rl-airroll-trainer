@@ -3,6 +3,8 @@ import { arenaDistance, arenaNormal, sphereArenaContacts } from "./arenaMesh.js"
 import { getHitboxPreset, HITBOX_PRESETS } from "./hitboxPresets.js";
 import { CAR_TORQUE_SCALE, RL_CONST as C, RL_CURVES } from "./rlConst.js";
 import { UU } from "./rl-units.js";
+import { sphereBoxWitness } from "./bulletContact.js";
+import { bulletAdd, bulletScale, bulletDot } from "./bulletMath.js";
 
 /* =====================================================================
  *  Rocket League constants, hitbox / ball helpers and render mapping
@@ -163,6 +165,35 @@ export function axes(q) {
 
 export function makeBall(pos = V(0, 1500, 500)) {
   return { pos: pos.clone(), vel: V(), omega: V(), lastExtraTick: -99 };
+}
+
+const ballBulletStates = new WeakMap();
+
+export function synchronizeBallBulletState(ball) {
+  if (ball.physicsProfile !== "rocketsim") return null;
+  let state = ballBulletStates.get(ball);
+  if (!state) {
+    state = { pos: V(), vel: V(), publishedPos: V(NaN, NaN, NaN), publishedVel: V(NaN, NaN, NaN) };
+    ballBulletStates.set(ball, state);
+  }
+  for (const [key, published] of [["pos", "publishedPos"], ["vel", "publishedVel"]]) {
+    for (const axis of ["x", "y", "z"]) {
+      if (ball[key][axis] !== state[published][axis]) state[key][axis] = Math.fround(Math.fround(ball[key][axis]) * Math.fround(0.02));
+      ball[key][axis] = Math.fround(state[key][axis] * 50);
+    }
+    state[published].copy(ball[key]);
+  }
+  for (const axis of ["x", "y", "z"]) ball.omega[axis] = Math.fround(ball.omega[axis]);
+  return state;
+}
+
+function publishBallBulletState(ball, state) {
+  for (const axis of ["x", "y", "z"]) {
+    ball.pos[axis] = Math.fround(state.pos[axis] * 50);
+    ball.vel[axis] = Math.fround(state.vel[axis] * 50);
+  }
+  state.publishedPos.copy(ball.pos);
+  state.publishedVel.copy(ball.vel);
 }
 
 /* --------------------- Octane OBB ↔ arena solids --------------------- */
@@ -370,20 +401,113 @@ function ballInvInertia(radius = RL.BALL_RADIUS) {
   return 1 / (0.4 * RL.BALL_MASS * radius * radius);
 }
 
+function solveRocketSimBallContacts(ball, bullet, beforeGravity, contacts, push, dt) {
+  if (contacts.length === 0) return;
+  const round = Math.fround;
+  const dot = (first, second) => round(round(first.x * second.x) + round(round(first.y * second.y) + round(first.z * second.z)));
+  const cross = (first, second) => V(
+    round(round(first.y * second.z) - round(first.z * second.y)),
+    round(round(first.z * second.x) - round(first.x * second.z)),
+    round(round(first.x * second.y) - round(first.y * second.x)));
+  const scaled = (vector, scalar) => V(...["x", "y", "z"].map(axis => round(vector[axis] * scalar)));
+  const add = (target, vector) => {
+    for (const axis of ["x", "y", "z"]) target[axis] = round(target[axis] + vector[axis]);
+  };
+  const inverseMass = round(1 / RL.BALL_MASS);
+  const radius = round(round(RL.BALL_RADIUS) * round(0.02));
+  const inverseInertia = round(1 / round(round(round(0.4) * round(RL.BALL_MASS)) * round(radius * radius)));
+  const unitBinMidpoint = 1 + 0.5 / 1024;
+  const unitRsqrtEstimate = round(Math.round(8192 / Math.sqrt(unitBinMidpoint)) / 8192);
+  const planeScale = round(unitRsqrtEstimate * round(1.5 - round(round(0.5 * unitRsqrtEstimate) * unitRsqrtEstimate)));
+  const deltaVelocity = V(), deltaSpin = V();
+  const makeRow = (direction, lever, target = 0) => {
+    const torque = cross(lever, direction);
+    const angular = scaled(torque, inverseInertia);
+    const inverse = round(1 / round(inverseMass + dot(direction, cross(angular, lever))));
+    const speed = round(dot(direction, bullet.vel) + dot(torque, ball.omega));
+    return { direction, torque, angular, inverse, rhs: round(round(target - speed) * inverse), impulse: 0 };
+  };
+  const combinedNormal = V();
+  let totalRadius = 0;
+  for (const contact of contacts) add(combinedNormal, scaled(contact.normal, contact.plane ? planeScale : 1));
+  for (const contact of contacts) {
+    const lever = contact.nativeRel ?? scaled(contact.normal, -radius);
+    totalRadius = round(totalRadius + round(Math.sqrt(dot(lever, lever))));
+  }
+  const rows = [scaled(combinedNormal, round(1 / contacts.length))].map(normal => {
+    const lever = scaled(normal, -round(totalRadius / contacts.length));
+    const incoming = dot(normal, beforeGravity);
+    const bounce = incoming < round(-0.2) ? round(-incoming * round(RL.BALL_RESTITUTION)) : 0;
+    const velocity = cross(ball.omega, lever);
+    add(velocity, bullet.vel);
+    const tangent = velocity.clone();
+    add(tangent, scaled(normal, -dot(velocity, normal)));
+    const squared = dot(tangent, tangent);
+    if (squared > round(1.1920928955078125e-7)) {
+      tangent.copy(scaled(tangent, round(1 / round(Math.sqrt(squared)))));
+    } else if (Math.abs(normal.z) > Math.SQRT1_2) {
+      tangent.set(0, -normal.z, normal.y).normalize();
+    } else tangent.set(-normal.y, normal.x, 0).normalize();
+    return { normal: makeRow(normal, lever, bounce), friction: makeRow(tangent, lever) };
+  });
+  const solve = (row, lower, upper) => {
+    const deltaSpeed = round(dot(row.direction, deltaVelocity) + dot(row.torque, deltaSpin));
+    const change = round(row.rhs - round(deltaSpeed * row.inverse));
+    const next = clamp(round(row.impulse + change), lower, upper);
+    const impulse = round(next - row.impulse);
+    row.impulse = next;
+    add(deltaVelocity, scaled(scaled(row.direction, inverseMass), impulse));
+    add(deltaSpin, scaled(row.angular, impulse));
+  };
+  const penetrationRows = contacts.map(contact => {
+    const normal = scaled(contact.normal, contact.plane ? planeScale : 1);
+    const lever = contact.nativeRel ?? scaled(normal, -radius);
+    const row = makeRow(normal, lever);
+    const depth = round(Math.min(0, contact.nativeDistance ?? contact.distance / 50));
+    row.rhs = round(round(round(-depth * round(0.8)) * round(1 / round(dt))) * row.inverse);
+    return row;
+  });
+  for (let iteration = 0; iteration < 10; iteration++)
+    for (const row of penetrationRows) solve(row, 0, Infinity);
+  push.copy(scaled(scaled(deltaVelocity, round(dt)), 50));
+  deltaVelocity.set(0, 0, 0);
+  deltaSpin.set(0, 0, 0);
+  for (let iteration = 0; iteration < 10; iteration++) {
+    for (const row of rows) solve(row.normal, 0, Infinity);
+    for (const row of rows) {
+      const limit = round(round(RL.BALL_FRICTION) * row.normal.impulse);
+      solve(row.friction, -limit, limit);
+    }
+  }
+  add(bullet.vel, deltaVelocity);
+  add(ball.omega, deltaSpin);
+  publishBallBulletState(ball, bullet);
+}
+
 export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = false, deferContacts = false } = {}) {
   const R = RL.BALL_RADIUS;
+  const bullet = synchronizeBallBulletState(ball);
   // RocketSim Arena::Step explicitly sleeps a ball with exactly zero linear
   // and angular velocity (including the kickoff ball). Contact impulses wake it.
   const sleeping = ball.vel.lengthSq() === 0 && ball.omega.lengthSq() === 0;
   if (sleeping && !deferTransform) return;
   // Bullet applies exponential damping before gravity, not Euler drag after it.
-  if (!sleeping) ball.vel.multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt));
+  if (!sleeping && bullet) {
+    const damping = Math.fround(Math.pow(Math.fround(1 - Math.fround(RL.BALL_DRAG)), Math.fround(dt)));
+    for (const axis of ["x", "y", "z"]) bullet.vel[axis] = Math.fround(bullet.vel[axis] * damping);
+    publishBallBulletState(ball, bullet);
+  } else if (!sleeping) ball.vel.multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt));
   const preGravity = ball.vel.clone();
-  if (!sleeping) ball.vel.z -= RL.GRAVITY * dt;
+  const nativePreGravity = bullet?.vel.clone();
+  if (!sleeping && bullet) {
+    bullet.vel.z = Math.fround(bullet.vel.z + Math.fround(Math.fround(-RL.GRAVITY / 50) * Math.fround(dt)));
+    publishBallBulletState(ball, bullet);
+  } else if (!sleeping) ball.vel.z -= RL.GRAVITY * dt;
   const e = RL.BALL_RESTITUTION;
   const push = V();
+  let independentContactsSolved = false;
   const constraints = [];
-  const arenaContacts = arena ? sphereArenaContacts(ball.pos, R, 0.02 * (R + 4), { merge: !deferTransform }) : [];
+  const arenaContacts = arena ? sphereArenaContacts(ball.pos, R, 0.02 * (R + 4), { merge: !deferTransform && !bullet, manifold: !!bullet && !deferTransform, bulletPosition: bullet?.pos }) : [];
   for (const { normal, distance } of arenaContacts) {
     if (distance < 0) push.addScaledVector(normal, Math.max(0, -distance * 0.8 - push.dot(normal)));
   }
@@ -428,11 +552,23 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
     }
   };
   if (!deferContacts) {
-    solveContacts();
-    if (deferTransform) for (let iteration = 1; iteration < 10; iteration++) solveContacts();
+    if (bullet && !deferTransform) solveRocketSimBallContacts(ball, bullet, nativePreGravity, arenaContacts, push, dt);
+    else {
+      solveContacts();
+      if (deferTransform) for (let iteration = 1; iteration < 10; iteration++) solveContacts();
+    }
   }
   const finish = () => {
-    ball.pos.addScaledVector(ball.vel, dt).add(push);
+    if (bullet) {
+      synchronizeBallBulletState(ball);
+      for (const axis of ["x", "y", "z"]) {
+        const displacement = Math.fround(bullet.vel[axis] * Math.fround(dt));
+        bullet.pos[axis] = deferTransform && !independentContactsSolved
+          ? Math.fround(Math.fround(bullet.pos[axis] + displacement) + Math.fround(push[axis] / 50))
+          : Math.fround(Math.fround(bullet.pos[axis] + Math.fround(push[axis] / 50)) + displacement);
+      }
+      publishBallBulletState(ball, bullet);
+    } else ball.pos.addScaledVector(ball.vel, dt).add(push);
     if (ball.extraVelocityCache) {
       ball.vel.add(ball.extraVelocityCache);
       ball.extraVelocityCache.set(0, 0, 0);
@@ -440,9 +576,17 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
     // RocketSim clamps after integrating, not before (important for hard hits).
     if (ball.vel.length() > RL.BALL_MAX_SPEED) ball.vel.setLength(RL.BALL_MAX_SPEED);
     if (ball.omega.length() > RL.BALL_MAX_SPIN) ball.omega.setLength(RL.BALL_MAX_SPIN);
+    if (bullet) synchronizeBallBulletState(ball);
   };
   if (deferTransform) {
     finish.solveContacts = solveContacts;
+    finish.solveIndependentContacts = () => {
+      const contacts = arena ? sphereArenaContacts(ball.pos, R, 0.02 * (R + 4), {
+        merge: false, manifold: true, bulletPosition: bullet.pos,
+      }) : [];
+      solveRocketSimBallContacts(ball, bullet, nativePreGravity, contacts, push, dt);
+      independentContactsSolved = true;
+    };
     return finish;
   }
   finish();
@@ -451,7 +595,7 @@ export function stepBall(ball, dt = RL.DT, { arena = true, deferTransform = fals
 /* --------------------------- car <-> ball hit --------------------------- */
 
 /** Returns contact info or null. Applies engine-style inelastic impulse + Psyonix extra impulse. */
-export function collideCarBall(car, ball, tick, { deferred = false, contactVelocity, externalAngularImpulse, solveBallArena } = {}) {
+export function collideCarBall(car, ball, tick, { deferred = false, bulletTransform, contactVelocity, externalAngularImpulse, solveBallArena } = {}) {
   const { f, l, u, center, half } = carHitbox(car);
   // Bullet's btBoxShape has a 0.04 BT (=2 uu) rounded collision margin.
   const margin = deferred ? Math.min(2, Math.min(...half) * 0.1) : 0;
@@ -482,6 +626,25 @@ export function collideCarBall(car, ball, tick, { deferred = false, contactVeloc
   near.addScaledVector(localNormal, margin);
   const nearW = center.clone().addScaledVector(f, near.x).addScaledVector(l, near.y).addScaledVector(u, near.z);
   const n = V().addScaledVector(f, localNormal.x).addScaledVector(l, localNormal.y).addScaledVector(u, localNormal.z);
+  let nativeWitness;
+  if (deferred && car.physicsProfile === "rocketsim" && !car.wheelsContact) {
+    const round = Math.fround, toBullet = value => round(round(value) * round(0.02));
+    const hitbox = car.hitbox ?? getHitboxPreset("octane");
+    const basis = bulletTransform?.basis ?? [f, l, u].map(vector => V(...vector.toArray().map(round)));
+    const rows = ["x", "y", "z"].map(axis => V(...basis.map(vector => vector[axis])));
+    const offset = V(...hitbox.offset.map(toBullet));
+    const bodyPosition = bulletTransform?.origin ?? V(...car.pos.toArray().map(toBullet));
+    const boxCenter = bulletAdd(bodyPosition, V(...rows.map(row => bulletDot(row, offset))));
+    nativeWitness = sphereBoxWitness(boxCenter, basis,
+      hitbox.size.map(value => round(round(toBullet(value) / 2) - round(0.04))),
+      Math.min(round(0.04), round(Math.min(...hitbox.size.map(value => round(toBullet(value) / 2))) * round(0.1))),
+      synchronizeBallBulletState(ball)?.pos ?? V(...ball.pos.toArray().map(toBullet)), toBullet(RL.BALL_RADIUS));
+    if (nativeWitness) {
+      n.copy(nativeWitness.normal).negate();
+      nearW.copy(bulletScale(nativeWitness.boxPoint, 50));
+      penetration = -nativeWitness.distance * 50;
+    }
+  }
   const preContactRelPos = ball.pos.clone().sub(car.pos);
   if (!deferred) ball.pos.addScaledVector(n, penetration);
 
@@ -490,6 +653,7 @@ export function collideCarBall(car, ball, tick, { deferred = false, contactVeloc
   const carPointVel = car.vel.clone().add(car.omega.clone().cross(carPoint));
   // Ball contact point relative to ball centre ≈ −R n
   const ballR = n.clone().multiplyScalar(-RL.BALL_RADIUS);
+  if (nativeWitness) ballR.copy(bulletScale(nativeWitness.spherePoint, 50)).sub(ball.pos);
   const ballPointVel = ball.vel.clone().add(ball.omega.clone().cross(ballR));
   const vn = ballPointVel.clone().sub(carPointVel).dot(n);
   if (vn < 0 || (deferred && penetration > 0)) {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RenderPose } from "../shared/renderPose.js";
 import { formatSpeed } from "../shared/rl-units.js";
 import { BoostTrail } from "../shared/boostTrail.js";
 import { cloneBallMesh, preloadBall } from "../shared/ball.js";
@@ -149,6 +150,8 @@ export class FreePlayMode {
     this.root.add(this.botTarget);
 
     this.clock = new FixedStepClock();
+    this.carRenderPose = new RenderPose();
+    this.ballRenderPose = new RenderPose();
     this.chase = new ChaseCamera();
     this.trail = new BoostTrail(this.root, { exhaustLocal: new THREE.Vector3(0, 0.08, -0.65) });
     this.trail.attachFlames(this.carMesh);
@@ -331,6 +334,8 @@ export class FreePlayMode {
     this.botTarget.visible = false;
     resetBoostPads(this.pads);
     this.clock.reset();
+    this.carRenderPose.reset();
+    this.ballRenderPose.reset();
     this.chase.invalidate();
     this.syncMeshes();
     syncCarJump(this.carMesh, this.physCar);
@@ -341,8 +346,8 @@ export class FreePlayMode {
     this.ctx.hud.status.textContent = `Reset — ${this.hitbox.label} hitbox · blue half`;
   }
 
-  syncMeshes(syncWheels = true) {
-    applyToCarModel(this.physCar, this.carMesh, ARENA_UU);
+  syncMeshes(syncWheels = true, renderCar = this.physCar, renderBall = this.physBall) {
+    applyToCarModel(renderCar, this.carMesh, ARENA_UU);
     alignCarVisualToHitbox(this.carMesh, this.physCar.hitbox, ARENA_UU);
     if (syncWheels) syncCarWheels(this.carMesh, this.physCar);
     if (this._exhaustCar !== this.carMesh || this._exhaustScale !== this.carMesh.scale.x) {
@@ -354,7 +359,7 @@ export class FreePlayMode {
     this.ballVisual.visible = Boolean(this.physBall);
     this.ballShadow.visible = Boolean(this.physBall);
     if (this.physBall) {
-      physToThree(this.physBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
+      physToThree(renderBall.pos, this.ballMesh.position).multiplyScalar(ARENA_UU);
       this.ballVisual.position.copy(this.ballMesh.position);
       this.updateShadow(this.ballShadow, this.ballMesh.position, BALL_VIS_R * 2.1, BALL_VIS_R * 2.1);
     }
@@ -363,7 +368,7 @@ export class FreePlayMode {
     // footprint, without altering the chase camera or simulation orientation.
     const projectedForward = this.shadowForward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
     this.carShadow.rotation.set(-Math.PI / 2, 0, Math.atan2(-projectedForward.x, projectedForward.z));
-    if (this.hitboxHelper.visible) syncHitboxHelper(this.hitboxHelper, this.physCar, ARENA_UU);
+    if (this.hitboxHelper.visible) syncHitboxHelper(this.hitboxHelper, renderCar, ARENA_UU);
   }
 
   updateShadow(shadow, position, width, depth) {
@@ -469,7 +474,7 @@ export class FreePlayMode {
     // Keep feeding the ball while TransitionSpeed blends in/out of ball cam.
     const feedBall = Boolean(this.physBall) && (ballCam || this.chase.ballCamBlend > 0.001);
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
-    physToThree(this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
+    physToThree(this.renderVelocity ?? this.physCar.vel, this.velThree).multiplyScalar(ARENA_UU);
     applyModeChaseCamera(this.chase, this.ctx.camera, dt, {
       target: this.carMesh.position,
       forward: this.forward,
@@ -492,11 +497,19 @@ export class FreePlayMode {
   update(dt, _now) {
     this.pollUtilityKeys();
     const input = readControls();
+    const step = (tickDt, controls) => {
+      this.carRenderPose.capture(this.physCar);
+      if (this.physBall) this.ballRenderPose.capture(this.physBall, this.ballVisual.quaternion);
+      this._stepOnce(tickDt, controls);
+    };
+    if (this.physBall && this.ballRenderPose.source === this.physBall) {
+      this.ballVisual.quaternion.copy(this.ballRenderPose.currentRotation ?? this.ballVisual.quaternion);
+    }
     if (this.botEnabled && this.bot instanceof KamaelBot) {
-      this.bot.advance(this.clock, dt, this.physCar, this.physBall, tickDt => this._stepOnce(tickDt));
+      this.bot.advance(this.clock, dt, this.physCar, this.physBall, tickDt => step(tickDt));
     } else {
       this.clock.advance(dt, (tickDt) => {
-        this._stepOnce(tickDt, readPhysicsControls());
+        step(tickDt, readPhysicsControls());
       });
     }
     const { hud } = this.ctx;
@@ -506,7 +519,19 @@ export class FreePlayMode {
     hud.arl.classList.toggle("on", input.airLeft);
     hud.arr.classList.toggle("on", input.airRight);
     this.carMesh.userData.setBoost?.(this.boosting);
-    this.syncMeshes(false);
+    const alpha = this.clock.acc / RL.DT;
+    const carPose = this.carRenderPose.sample(this.physCar, alpha);
+    const renderCar = { ...this.physCar, pos: carPose.position, q: carPose.rotation, vel: carPose.velocity };
+    this.renderVelocity = carPose.velocity;
+    let renderBall = this.physBall;
+    if (this.physBall) {
+      this.ballRenderPose.currentRotation ??= new THREE.Quaternion();
+      this.ballRenderPose.currentRotation.copy(this.ballVisual.quaternion);
+      const ballPose = this.ballRenderPose.sample(this.physBall, alpha, this.ballVisual.quaternion);
+      renderBall = { ...this.physBall, pos: ballPose.position };
+      this.ballVisual.quaternion.copy(ballPose.rotation);
+    }
+    this.syncMeshes(false, renderCar, renderBall);
     this.updateBoostMeter();
     this.trail.update(this.carMesh, this.boosting, dt);
     syncCarJump(this.carMesh, this.physCar, dt);

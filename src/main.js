@@ -3,7 +3,7 @@ import { frameElapsed } from "./shared/aerial.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES, nextTrainingDrill, previousTrainingDrill } from "./modes/catalog.js";
 import { recentAttempts } from "./shared/metrics.js";
-import { preloadBall } from "./shared/ball.js";
+import { preloadBall, BALL_TYPES, getSelectedBallId, setSelectedBallId } from "./shared/ball.js";
 import { preloadCars } from "./shared/carAssets.js";
 import {
   getActiveGamepad,
@@ -1577,6 +1577,19 @@ globalThis.__trainerMenu = {
     if (tab === 'loadout') {
       buildLocker();
       container.append(lockerListEl, lockerCreditEl);
+      const ballSetting = document.createElement('label');
+      ballSetting.className = 'setting';
+      const ballTitle = document.createElement('strong');
+      ballTitle.textContent = 'Ball type';
+      const ballSelect = document.createElement('select');
+      ballSelect.setAttribute('aria-label', 'Ball type');
+      for (const ball of BALL_TYPES) {
+        ballSelect.add(new Option(ball.name, ball.id));
+      }
+      ballSelect.value = getSelectedBallId();
+      ballSelect.addEventListener('change', () => setSelectedBallId(ballSelect.value));
+      ballSetting.append(ballTitle, ballSelect);
+      container.append(ballSetting);
     } else {
       setSettingsTab(tab === 'bindings' ? 'controls' : tab);
       if (tab === 'bindings') setBindingsView(true);

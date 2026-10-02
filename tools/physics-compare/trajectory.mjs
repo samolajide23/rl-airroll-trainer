@@ -53,7 +53,7 @@ export function validatePair(rs, js) {
 
 export function compareScenario(rs, js) {
   validatePair(rs, js);
-  const errors = { pos: [], vel: [], omega: [], fwd: [], up: [], boost: [], air_time: [] };
+  const errors = { pos: [], vel: [], omega: [], fwd: [], right: [], up: [], boost: [], air_time: [] };
   let groundMismatch = 0;
   let worst = { tick: 0, pos: 0 };
   rs.frames.forEach((a, i) => {
@@ -65,6 +65,7 @@ export function compareScenario(rs, js) {
     if (pe >= worst.pos) worst = { tick: a.tick, pos: pe };
     if (rs.entity !== "ball") {
       errors.fwd.push(angle(a.rot.forward, b.rot.forward));
+      errors.right.push(angle(a.rot.right, b.rot.right));
       errors.up.push(angle(a.rot.up, b.rot.up));
       errors.boost.push(Math.abs(a.boost - b.boost));
       errors.air_time.push(Math.abs(a.air_time - b.air_time));
@@ -75,7 +76,7 @@ export function compareScenario(rs, js) {
   const result = { id: rs.id, description: rs.description, entity: rs.entity ?? "car", frames: rs.frames.length, worst_tick: worst.tick, ground_mismatch_ticks: groundMismatch,
     final: { rs_pos: a.pos, js_pos: b.pos, rs_ang_vel: a.ang_vel, js_ang_vel: b.ang_vel, rs_forward: a.rot?.forward, js_forward: b.rot?.forward } };
   for (const [key, values] of Object.entries(errors)) {
-    const suffix = key === "fwd" || key === "up" ? "_deg" : "";
+    const suffix = ["fwd", "right", "up"].includes(key) ? "_deg" : "";
     result[`${key}_mean${suffix}`] = values.length ? mean(values) : 0;
     result[`${key}_max${suffix}`] = values.length ? maximum(values) : 0;
   }
@@ -92,6 +93,9 @@ export function compareScenario(rs, js) {
 /** Explicit budgets are regression limits, not claims of exact game parity. */
 export function failuresFor(result, budgets) {
   const limits = { ...budgets.defaults, ...budgets.scenarios?.[result.id] };
+  if (result.entity !== "ball" && limits.right_max_deg === undefined && limits.fwd_max_deg !== undefined) {
+    limits.right_max_deg = limits.fwd_max_deg;
+  }
   return Object.entries(limits).flatMap(([metric, limit]) => {
     assert(Number.isFinite(limit) && limit >= 0, `Invalid budget: ${metric}`);
     assert(Number.isFinite(result[metric]), `Unknown/nonfinite metric: ${metric}`);

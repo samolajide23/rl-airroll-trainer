@@ -9,7 +9,42 @@ import { BoostTrail } from "../../src/shared/boostTrail.js";
 import { disposeCarVisualMaterials } from "../../src/shared/car.js";
 import { disposeScene } from "../../src/shared/disposeScene.js";
 import viteConfig from "../../vite.config.js";
-import { SOCCAR_TRI_COUNT, SOCCAR_TRIS } from "../../src/shared/soccarMeshData.js";
+import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_BT_TRIS, SOCCAR_QUERY_ORDER, SOCCAR_MESH_ENDS } from "../../src/shared/soccarMeshData.js";
+import { RenderPose } from "../../src/shared/renderPose.js";
+import { FixedStepClock } from "../../src/shared/aerial.js";
+
+test("render motion stays continuous at irregular display intervals", () => {
+  const clock = new FixedStepClock();
+  const pose = new RenderPose();
+  const state = { pos: new THREE.Vector3(), vel: new THREE.Vector3(120, 0, 0), q: new THREE.Quaternion() };
+  let elapsed = 0;
+  for (const duration of [1 / 144, 1 / 144, 1 / 90, 1 / 240, 1 / 60, 1 / 144]) {
+    elapsed += duration;
+    clock.advance(duration, tickDuration => {
+      pose.capture(state);
+      state.pos.addScaledVector(state.vel, tickDuration);
+    });
+    const sample = pose.sample(state, clock.acc / RL.DT);
+    assert.ok(Math.abs(sample.position.x - Math.max(0, elapsed - RL.DT) * 120) < 1e-10);
+  }
+});
+
+test("render poses interpolate without mutating physics and snap on resets or teleports", () => {
+  const pose = new RenderPose();
+  const state = { pos: new THREE.Vector3(), vel: new THREE.Vector3(120, 0, 0), q: new THREE.Quaternion() };
+  pose.capture(state);
+  state.pos.x = 1;
+  state.q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+  pose.sample(state, 0.5);
+  assert.equal(pose.position.x, 0.5);
+  assert.ok(Math.abs(pose.rotation.angleTo(new THREE.Quaternion()) - Math.PI / 4) < 1e-10);
+  assert.equal(state.pos.x, 1);
+  state.pos.x = 1000;
+  assert.equal(pose.sample(state, 0.5).position.x, 1000);
+  pose.reset();
+  state.pos.x = 5;
+  assert.equal(pose.sample(state, 0).position.x, 5);
+});
 
 test("compact production arena data preserves every Float32 coordinate exactly", async () => {
   const plugin = viteConfig.plugins.find(plugin => plugin.name === "compact-arena-data");
@@ -17,6 +52,9 @@ test("compact production arena data preserves every Float32 coordinate exactly",
   const compact = await import(`data:text/javascript;base64,${Buffer.from(transformed.code).toString("base64")}`);
   assert.equal(compact.SOCCAR_TRI_COUNT, SOCCAR_TRI_COUNT);
   assert.deepEqual(compact.SOCCAR_TRIS, SOCCAR_TRIS);
+  assert.deepEqual(compact.SOCCAR_BT_TRIS, SOCCAR_BT_TRIS);
+  assert.deepEqual(compact.SOCCAR_QUERY_ORDER, SOCCAR_QUERY_ORDER);
+  assert.deepEqual(compact.SOCCAR_MESH_ENDS, SOCCAR_MESH_ENDS);
 });
 
 test("scene cleanup releases owned resources once and preserves shared assets", () => {

@@ -7,6 +7,25 @@ import { UU } from "./rl-units.js";
 export const UU_SCALE = UU;
 
 const BALL_URL = "/ball/rocket-league-ball.glb";
+const BALL_STORAGE_KEY = "rl-airroll-ball";
+export const BALL_TYPES = [
+  { id: "standard", name: "Standard" },
+  { id: "souly-blossom", name: "Souly Blossom" },
+];
+let blossomTextures = null;
+
+export function getSelectedBallId() {
+  try {
+    const selected = localStorage.getItem(BALL_STORAGE_KEY);
+    if (BALL_TYPES.some((ball) => ball.id === selected)) return selected;
+  } catch {}
+  return "standard";
+}
+
+export function setSelectedBallId(id) {
+  if (!BALL_TYPES.some((ball) => ball.id === id)) return;
+  try { localStorage.setItem(BALL_STORAGE_KEY, id); } catch {}
+}
 
 /** @type {THREE.Group | null} Template normalized so visual radius ≈ 1. */
 let ballTemplate = null;
@@ -64,12 +83,30 @@ function normalizeBallModel(root) {
 export function preloadBall() {
   if (preloadPromise) return preloadPromise;
   const loader = new GLTFLoader();
-  preloadPromise = loader
-    .loadAsync(BALL_URL)
-    .then((gltf) => {
+  const textures = new THREE.TextureLoader();
+  preloadPromise = Promise.all([
+    loader.loadAsync(BALL_URL),
+    Promise.all([
+      textures.loadAsync("/ball/souly-blossom/SoulyBlossomBall.png"),
+      textures.loadAsync("/ball/souly-blossom/SoulyBlossomMask.png"),
+    ]).catch((err) => {
+      console.warn("Failed to load Souly Blossom textures:", err);
+      return null;
+    }),
+  ])
+    .then(([gltf, skin]) => {
       const template = normalizeBallModel(gltf.scene);
       template.name = "ball-template-rl";
       ballTemplate = template;
+      if (skin) {
+        skin[0].colorSpace = THREE.SRGBColorSpace;
+        for (const texture of skin) {
+          texture.flipY = false;
+          texture.repeat.set(0.32, -0.26);
+          texture.offset.set(0.035, 0.025);
+        }
+        blossomTextures = skin;
+      }
     })
     .catch((err) => {
       console.warn("Failed to load rocket league ball GLB:", err);
@@ -88,7 +125,7 @@ export function isBallReady() {
  * Clone the prepared GLB template (deep clone with materials).
  * @returns {THREE.Group | null}
  */
-export function cloneBallMesh() {
+export function cloneBallMesh(ballId = getSelectedBallId()) {
   if (!ballTemplate) return null;
   const clone = ballTemplate.clone(true);
   clone.userData.sharedAssets = true;
@@ -99,8 +136,25 @@ export function cloneBallMesh() {
       } else {
         obj.material = obj.material.clone();
       }
+      if (ballId === "souly-blossom" && blossomTextures) {
+        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+        for (const material of materials) {
+          material.map = blossomTextures[0];
+          material.normalMap = blossomTextures[1];
+          material.color?.setHex(0xffffff);
+          material.emissive?.setHex(0x000000);
+          material.emissiveMap = null;
+          material.aoMap = null;
+          material.metalnessMap = null;
+          material.roughnessMap = null;
+          material.metalness = 0.15;
+          material.roughness = 0.55;
+          material.needsUpdate = true;
+        }
+      }
     }
   });
+  clone.userData.ballType = ballId;
   return clone;
 }
 

@@ -19,21 +19,25 @@ export function firstDivergence(reference, candidate, limits = { velocity: 0.5, 
             velocity_error: distance(frame.vel, other.vel),
             omega_error: distance(frame.ang_vel, other.ang_vel),
             forward_error_deg: frame.rot ? angle(frame.rot.forward, other.rot.forward) : 0,
+            right_error_deg: frame.rot ? angle(frame.rot.right, other.rot.right) : 0,
             up_error_deg: frame.rot ? angle(frame.rot.up, other.rot.up) : 0,
             boost_error: frame.rot ? Math.abs(frame.boost - other.boost) : 0,
             air_time_error: frame.rot ? Math.abs(frame.air_time - other.air_time) : 0,
             ground_mismatch: frame.rot ? Number(frame.on_ground !== other.on_ground) : 0,
-            reference: { pos: frame.pos, vel: frame.vel, omega: frame.ang_vel, on_ground: frame.on_ground },
-            candidate: { pos: other.pos, vel: other.vel, omega: other.ang_vel, on_ground: other.on_ground },
+            ball_position_error: frame.ball ? distance(frame.ball.pos, other.ball.pos) : 0,
+            ball_velocity_error: frame.ball ? distance(frame.ball.vel, other.ball.vel) : 0,
+            ball_omega_error: frame.ball ? distance(frame.ball.ang_vel, other.ball.ang_vel) : 0,
+            reference: { pos: frame.pos, vel: frame.vel, omega: frame.ang_vel, on_ground: frame.on_ground, ball: frame.ball },
+            candidate: { pos: other.pos, vel: other.vel, omega: other.ang_vel, on_ground: other.on_ground, ball: other.ball },
         };
     });
-    const fields = { position: "position_error", velocity: "velocity_error", omega: "omega_error", forward: "forward_error_deg", up: "up_error_deg", boost: "boost_error", air_time: "air_time_error", ground: "ground_mismatch" };
+    const fields = { position: "position_error", velocity: "velocity_error", omega: "omega_error", forward: "forward_error_deg", right: "right_error_deg", up: "up_error_deg", boost: "boost_error", air_time: "air_time_error", ground: "ground_mismatch", ball_position: "ball_position_error", ball_velocity: "ball_velocity_error", ball_omega: "ball_omega_error" };
     const exceeded = row => Object.entries(fields).filter(([key, field]) => row[field] > (limits[key] ?? Infinity)).map(([key]) => key);
     const index = rows.findIndex(row => exceeded(row).length > 0);
     return {
         first_tick: index < 0 ? null : rows[index].tick,
         exceeded: index < 0 ? [] : exceeded(rows[index]),
-        limits, context: index < 0 ? [] : rows.slice(Math.max(0, index - 2), index + 4)
+        limits, rows, context: index < 0 ? [] : rows.slice(Math.max(0, index - 2), index + 4)
     };
 }
 

@@ -9,7 +9,8 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import * as THREE from "three";
 import { RL, axes, makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
-import { makeBall, stepBall } from "../../src/shared/rl-physics.js";
+import { auditState, auditPads, auditSetup, validateAuditScenarios } from "./audit-state.mjs";
+import { makeBall, stepBall, synchronizeBallBulletState } from "../../src/shared/rl-physics.js";
 import { RS, setCarOrientation } from "../../src/shared/carSim.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
 import { createSoccarBoostPads, stepBoostPads } from "../../src/shared/boostPads.js";
@@ -77,6 +78,20 @@ function idleControls() {
   };
 }
 
+function resetPreparedGameplay(car) {
+  const fresh = makePhysCar(car.pos, 0, car.hitbox);
+  for (const key of ["onGround", "wheelsContact", "numWheelsInContact", "prevJump", "jumping", "jumpTime", "hasJumped",
+    "hasDoubleJumped", "hasFlipped", "isFlipping", "flipTime", "airTime", "airTimeSinceJump", "isAutoFlipping",
+    "autoFlipTimer", "autoFlipTorqueScale", "isBoosting", "boostingTime", "isSupersonic", "supersonicTime", "handbrakeVal"]) car[key] = fresh[key];
+  car.wheelsContact = false;
+  car.numWheelsInContact = 0;
+  car.flipRelTorque.set(0, 0, 0);
+  car.lastControls = idleControls();
+  car.worldContact.hasContact = false;
+  car.worldContact.normal.set(0, 0, 0);
+  for (const wheel of car.wheels) wheel.inContact = false;
+}
+
 function initCar(initial) {
   const car = makePhysCar(new THREE.Vector3(...initial.pos), 0, initial.hitbox ?? "octane");
   car.physicsProfile = "rocketsim";
@@ -120,6 +135,7 @@ function prepareGround(car, initial, settleTicks, pads) {
   car.omega.set(...initial.ang_vel);
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
+  resetPreparedGameplay(car);
 }
 
 /** Match generate_rocketsim.prepare_airborne. */
@@ -135,16 +151,14 @@ function prepareAirborne(car, initial) {
   car.omega.set(...initial.ang_vel);
   setOrientation(car, initial.yaw ?? 0, initial.pitch ?? 0, initial.roll ?? 0);
   car.boost = initial.boost ?? RL.BOOST_MAX;
-  car.onGround = true;
-  car.wheelsContact = false;
-  car.numWheelsInContact = 0;
+  resetPreparedGameplay(car);
   // Reference set_state replaces gameplay state after its warmup tick.
   car.airTime = 0;
   car.airTimeSinceJump = 0;
   if (initial.air_time_since_jump !== undefined) {
     car.hasJumped = initial.has_jumped ?? true;
     car.jumping = false;
-    car.airTimeSinceJump = initial.air_time_since_jump;
+    car.airTimeSinceJump = Math.fround(initial.air_time_since_jump);
   }
 }
 
@@ -244,7 +258,7 @@ function dumpJsConstants() {
   };
 }
 
-function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
+export function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
   const initial = deepMerge(defaults.initial ?? {}, scenario.initial);
   const ticks = scenario.ticks;
   const mode = scenarioMode(scenario, initial);
@@ -253,19 +267,29 @@ function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
     const ball = makeBall(new THREE.Vector3(...initial.pos));
     ball.vel.set(...initial.vel);
     ball.omega.set(...initial.ang_vel);
-    const snapshotBall = (tick) => ({ tick, pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega) });
+    ball.physicsProfile = "rocketsim";
+    synchronizeBallBulletState(ball);
+    const snapshotBall = (tick) => ({ tick, pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega),
+      ...(scenario.audit ? { audit: { ball: auditState(ball, "ball"), pads: auditPads(mode === "soccar" ? createSoccarBoostPads() : []) } } : {}),
+    });
     const frames = [snapshotBall(0)];
     for (let tick = 0; tick < ticks; tick++) {
       stepBall(ball, RL.DT, { arena: mode !== "void" });
       frames.push(snapshotBall(tick + 1));
     }
-    return { id: scenario.id, description: scenario.description ?? "", entity: "ball", engine: "rl-physics.js", game_mode: mode, tick_rate: 1 / RL.DT, tick_time: RL.DT, ticks, initial, frames };
+    return { id: scenario.id, description: scenario.description ?? "", entity: "ball", engine: "rl-physics.js", game_mode: mode, tick_rate: 1 / RL.DT, tick_time: RL.DT, ticks, initial, frames,
+      ...(scenario.audit ? { audit_setup: auditSetup(null, "raw") } : {}),
+    };
   }
   const car = initCar(initial);
   car.captureArenaContacts = !!seedReference;
   car.arenaCollisions = mode !== "void";
   const pads = mode === "soccar" ? createSoccarBoostPads() : [];
-  if (initial.on_ground) prepareGround(car, initial, settleTicks, pads);
+  if (scenario.preparation === "raw") {
+    car.onGround = true;
+    car.wheelsContact = false;
+    car.numWheelsInContact = 0;
+  } else if (initial.on_ground) prepareGround(car, initial, settleTicks, pads);
   else prepareAirborne(car, initial);
 
   const ballInitial = scenario.ball ?? null;
@@ -273,11 +297,14 @@ function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
   if (ball) {
     ball.vel.set(...(ballInitial.vel ?? [0, 0, 0]));
     ball.omega.set(...(ballInitial.ang_vel ?? [0, 0, 0]));
+    ball.physicsProfile = "rocketsim";
+    synchronizeBallBulletState(ball);
   }
   const capture = (tick, controls) => {
     const frame = snapshot(car, tick, controls);
     if (seedReference) frame.arena_contacts = car.lastArenaContacts ?? [];
     if (ball) frame.ball = { pos: vecList(ball.pos), vel: vecList(ball.vel), ang_vel: vecList(ball.omega) };
+    if (scenario.audit) frame.audit = { car: auditState(car, "car"), ball: auditState(ball, "ball"), pads: auditPads(pads) };
     return frame;
   };
   const frames = [];
@@ -317,6 +344,7 @@ function runScenario(scenario, defaults, seedReference = null, seedEvery = 1) {
     ticks,
     initial,
     ball_initial: ballInitial,
+    ...(scenario.audit ? { audit_setup: auditSetup(car, scenario.preparation ?? (initial.on_ground ? "settled" : "airborne_warmup"), settleTicks) } : {}),
     ...(seedReference ? { diagnostic_reference_seed_interval: seedEvery } : {}),
     frames,
   };
@@ -337,6 +365,7 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2));
 const data = JSON.parse(await readFile(args.scenarios, "utf8"));
+if (data.scenarios.some(scenario => scenario.audit)) validateAuditScenarios(data);
 const scenarioHash = createHash("sha256").update(await readFile(args.scenarios)).digest("hex");
 const defaults = data.defaults ?? {};
 const seedReference = args.seedReference ? JSON.parse(await readFile(args.seedReference, "utf8")) : null;

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { normalizeSse } from "./bulletMath.js";
 import { ContactManifold } from "./contactManifold.js";
 import { arenaDistance, arenaNormal, boxTriangleGapContacts, raycastArena } from "./arenaMesh.js";
 import { SOCCAR_TRIS } from "./soccarMeshData.js";
@@ -17,6 +18,7 @@ import {
   hitboxExtentOnAxis,
   makeBall,
   stepBall,
+  synchronizeBallBulletState,
 } from "./rl-physics.js";
 
 /* =====================================================================
@@ -179,9 +181,7 @@ function integratePosition(car, push, dt) {
   for (const axis of ["x", "y", "z"]) {
     const velocity = Math.fround(linearVelocity[axis] + nativeLength(push[axis]));
     const displacement = Math.fround(velocity * Math.fround(dt));
-    const calibratedFreeFlight = car.physicsProfile === "native" && !car.hasJumped && !car.hasFlipped && !car.onGround;
-    const increment = calibratedFreeFlight ? Math.fround(Math.round(Math.fround(displacement * BT_TO_UU) * 100 + 0.0001) / 100 / BT_TO_UU) : displacement;
-    state.origin[axis] = Math.fround(state.origin[axis] + increment);
+    state.origin[axis] = Math.fround(state.origin[axis] + displacement);
     car.pos[axis] = Math.fround(state.origin[axis] * BT_TO_UU);
   }
   state.published.copy(car.pos);
@@ -312,11 +312,13 @@ function makeWheels(hitbox) {
     const front = i < 2;
     const left = i % 2 === 1;
     const cfg = front ? hitbox.wheels.front : hitbox.wheels.back;
-    const restLength = f32(f32(cfg.suspensionRest) - f32(RS.MAX_SUSPENSION_TRAVEL));
+    const suspensionRest = f32(cfg.suspensionRest);
+    const restLength = f32(suspensionRest - f32(RS.MAX_SUSPENSION_TRAVEL));
     wheels.push({
       front,
       left,
       radius: f32(cfg.radius),
+      suspensionRest,
       restLength,
       connection: V(f32(cfg.offset[0]), f32(left ? -cfg.offset[1] : cfg.offset[1]), f32(cfg.offset[2])),
       forceScale: front ? RS.SUSPENSION_FORCE_SCALE_FRONT : RS.SUSPENSION_FORCE_SCALE_BACK,
@@ -371,6 +373,7 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     wheelsContact: true,
     numWheelsInContact: 4,
     prevJump: false,
+    lastControls: sanitizeControls({}),
     /** RocketSim `isJumping` */
     jumping: false,
     jumpTime: 0,
@@ -392,7 +395,7 @@ export function makeCar(pos, yaw = Math.PI / 2, hitboxOrCarId = "octane") {
     handbrakeVal: 0,
     dodgeDeadzone: RL.DODGE_DEADZONE,
     /** Hitbox ↔ arena contact from the previous physics step. */
-    worldContact: { hasContact: false, normal: V(0, 0, 1) },
+    worldContact: { hasContact: false, normal: V() },
     /** Averaged wheel contact normal (car up when airborne). */
     contactNormal: V(0, 0, 1),
     /** Stable id for car↔car bump cooldown (RocketSim `Car::id`). */
@@ -454,7 +457,7 @@ function carFrame(car) {
  * @param {THREE.Vector3} v
  */
 function nativeInertiaMatrix(car, fr) {
-  const halfExtents = car.hitbox.size.map(length => f32(nativeLength(length) * 0.5));
+  const halfExtents = car.hitbox.size.map(length => f32(nativeLength(car.physicsProfile === "rocketsim" ? f32(length) : length) * 0.5));
   const dimensions = halfExtents.map(length => f32(length - f32(0.04)));
   const margin = Math.min(f32(0.04), f32(Math.min(...halfExtents) * f32(0.1)));
   const lengths = dimensions.map(value => f32(2 * f32(value + margin)));
@@ -549,6 +552,8 @@ function updateWheelTransform(car, fr, wheel) {
   wheel.axle.set(...matrix.map(row => nativeDot(V(...row), fr.r)));
 }
 
+const wheelSolverTime = new WeakMap();
+
 function rayCastWheel(car, fr, wheel, numWheels, dt) {
   const travel = RS.MAX_SUSPENSION_TRAVEL;
   const subtraction = car.physicsProfile === "native" ? 0 : RS.SUSPENSION_SUBTRACTION;
@@ -570,10 +575,15 @@ function rayCastWheel(car, fr, wheel, numWheels, dt) {
       planePoint = vertices[0];
       const edges = vertices.slice(1).map(vertex => V(...["x", "y", "z"].map(axis => f32(vertex[axis] - planePoint[axis]))));
       planeNormal = nativeCross(edges[0], edges[1]);
-      const inverse = f32(1 / f32(Math.sqrt(nativeDot(planeNormal, planeNormal))));
-      hit.normal.set(...["x", "y", "z"].map(axis => f32(planeNormal[axis] * inverse)));
+      if (car.physicsProfile === "rocketsim") {
+        hit.normal.copy(normalizeSse(planeNormal.clone()));
+      } else {
+        const inverse = f32(1 / f32(Math.sqrt(nativeDot(planeNormal, planeNormal))));
+        hit.normal.set(...["x", "y", "z"].map(axis => f32(planeNormal[axis] * inverse)));
+      }
       if (nativeDot(hit.normal, delta) > 0) hit.normal.negate();
     }
+    if (car.physicsProfile === "rocketsim") normalizeSse(hit.normal);
     const plane = nativeDot(planeNormal, planePoint);
     const fromDistance = f32(nativeDot(planeNormal, wheel.nativeHardPoint) - plane);
     const toDistance = f32(nativeDot(planeNormal, target) - plane);
@@ -640,7 +650,7 @@ function rayCastWheel(car, fr, wheel, numWheels, dt) {
       wheel.nativeContactPoint,
       wheel.contactNormal,
       f32(traceNative - pushbackThresh),
-      dt,
+      car.physicsProfile === "rocketsim" ? (wheelSolverTime.get(car) ?? 1 / 60) : dt,
       true,
     );
     wheel.nativeExtraPushback = f32(impulse / numWheels);
@@ -660,7 +670,7 @@ function calcFrictionImpulses(car, fr, dt) {
   };
   const cached = translationState.get(car);
   const origin = cached?.published.equals(car.pos) ? cached.origin : nativeVector(car.pos);
-  const halfExtents = car.hitbox.size.map(length => f32(nativeLength(length) * 0.5));
+  const halfExtents = car.hitbox.size.map(length => f32(nativeLength(car.physicsProfile === "rocketsim" ? f32(length) : length) * 0.5));
   const margin = Math.min(f32(0.04), f32(Math.min(...halfExtents) * f32(0.1)));
   const squared = halfExtents.map(value => f32(2 * f32(f32(value - f32(0.04)) + margin))).map(value => f32(value * value));
   const inverseInertia = [f32(1 / f32(f32(CAR_MASS / 12) * f32(squared[1] + squared[2]))), f32(1 / f32(f32(CAR_MASS / 12) * f32(squared[0] + squared[2]))), f32(1 / f32(f32(CAR_MASS / 12) * f32(squared[0] + squared[1])))];
@@ -763,11 +773,20 @@ function vehicleSecond(car, fr, dt, jumpingFromGround = false, reverseBraking = 
 /** btVehicleRL::getUpwardsDirFromWheelContacts */
 function upwardsDirFromWheelContacts(car, fr) {
   const sum = V();
-  for (const wheel of car.wheels) {
-    if (wheel.inContact) sum.add(wheel.contactNormal);
+  if (car.physicsProfile !== "rocketsim") {
+    for (const wheel of car.wheels) if (wheel.inContact) sum.add(wheel.contactNormal);
+    return sum.lengthSq() === 0 ? fr.u.clone() : sum.normalize();
   }
-  if (sum.lengthSq() === 0) return fr.u.clone();
-  return sum.normalize();
+  for (const wheel of car.wheels) {
+    if (wheel.inContact) {
+      for (const axis of ["x", "y", "z"]) sum[axis] = f32(sum[axis] + wheel.contactNormal[axis]);
+    }
+  }
+  const squared = nativeDot(sum, sum);
+  if (squared === 0) return fr.u.clone();
+  const inverse = f32(1 / f32(Math.sqrt(squared)));
+  for (const axis of ["x", "y", "z"]) sum[axis] = f32(sum[axis] * inverse);
+  return sum;
 }
 
 /* ------------------------------- Car tick ------------------------------- */
@@ -1035,8 +1054,11 @@ function updateDoubleJumpOrFlip(car, fr, c, jumpPressed, forwardSpeed, dt) {
     car.flipTime = 0;
   } else {
     car.airTime += dt;
-    if (car.hasJumped && !car.jumping) car.airTimeSinceJump += dt;
-    else car.airTimeSinceJump = 0;
+    if (car.hasJumped && !car.jumping) {
+      car.airTimeSinceJump = car.physicsProfile === "rocketsim"
+        ? f32(f32(car.airTimeSinceJump) + f32(dt))
+        : car.airTimeSinceJump + dt;
+    } else car.airTimeSinceJump = 0;
 
     if (jumpPressed && car.airTimeSinceJump < RL.FLIP_WINDOW) {
       const inputMagnitude = Math.abs(c.yaw) + Math.abs(c.pitch) + Math.abs(c.roll);
@@ -1325,11 +1347,14 @@ function solveArenaContacts(car, fr, dt, impactVelocity, impactOmega) {
     });
   }
 
-  if (contacts.some(contact => Math.abs(contact.n.z) < RS.CONTACT_FLOOR_NORMAL_Z)) {
+  if (contacts.some(contact => Math.abs(contact.n.z) < 0.9999)) {
     const center = car.pos.clone().addScaledVector(fr.f, offset[0])
       .addScaledVector(fr.r, offset[1]).addScaledVector(fr.u, offset[2]);
     const margin = Math.min(2, Math.min(...size) * 0.05);
-    const gaps = boxTriangleGapContacts(center, [fr.f, fr.r, fr.u], size.map(length => length / 2 - 2), margin);
+    const gaps = boxTriangleGapContacts(center, [fr.f, fr.r, fr.u], size.map(length => length / 2 - 2), margin, 2, true);
+    for (let index = contacts.length - 1; index >= 0; index--) {
+      if (gaps.some(contact => (contact.distance < 0 || Math.abs(contact.normal.z) >= RS.CONTACT_FLOOR_NORMAL_Z) && contact.normal.dot(contacts[index].n) > 0.9999)) contacts.splice(index, 1);
+    }
     contacts.unshift(...gaps.map(contact => ({ rel: contact.point.clone().sub(car.pos), n: contact.normal, dist: contact.distance, face: true })));
   }
   if (contacts.length === 0) return { push, turn };
@@ -1579,6 +1604,7 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
   const previousJumpContact = car.physicsProfile === "native" && car.hasJumped && car.wheels.some(wheel => wheel.inContact)
     ? upwardsDirFromWheelContacts(car, fr) : null;
   vehicleFirst(car, fr, dt);
+  wheelSolverTime.set(car, dt);
 
   const jumpPressed = c.jump && !car.prevJump;
   let numWheels = 0;
@@ -1640,6 +1666,7 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
 
   updateSupersonic(car, dt);
   car.prevJump = c.jump;
+  car.lastControls = { ...c };
   if (car.carContact.cooldownTimer > 0) {
     car.carContact.cooldownTimer = Math.max(0, car.carContact.cooldownTimer - dt);
   }
@@ -1654,6 +1681,8 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
 /** Coupled Free Play tick: solve contact at the old transforms, integrate with
  * engine impulses, then apply the separate ball-only extra velocity cache. */
 export function stepCarBall(car, ball, controls, tick, dt = RL.DT) {
+  ball.physicsProfile = car.physicsProfile;
+  synchronizeBallBulletState(ball);
   let finishBall;
   let contact;
   if (car.physicsProfile === "native" && ball.extraVelocityCache) {
@@ -1671,11 +1700,19 @@ export function stepCarBall(car, ball, controls, tick, dt = RL.DT) {
     const contactVelocity = ball.vel.clone().multiplyScalar(Math.pow(1 - RL.BALL_DRAG, dt)).sub(nativeHitVelocity ?? impactVelocity);
     finishBall = stepBall(ball, dt, { arena: car.arenaCollisions, deferTransform: true, deferContacts: true });
     let contactsSolved = false;
-    contact = collideCarBall(car, ball, tick, { deferred: true, contactVelocity, externalAngularImpulse: car.omega.clone().sub(impactOmega), solveBallArena: phase => {
+    const frame = carFrame(car), translation = translationState.get(car);
+    const bulletTransform = {
+      basis: [frame.f, frame.r, frame.u],
+      origin: translation?.published.equals(car.pos) ? translation.origin : nativeVector(car.pos),
+    };
+    contact = collideCarBall(car, ball, tick, { deferred: true, bulletTransform, contactVelocity, externalAngularImpulse: car.omega.clone().sub(impactOmega), solveBallArena: phase => {
       contactsSolved = true;
       finishBall.solveContacts(phase);
     } });
-    if (!contactsSolved) for (let iteration = 0; iteration < 10; iteration++) finishBall.solveContacts();
+    if (!contactsSolved) {
+      if (!contact && car.physicsProfile === "rocketsim") finishBall.solveIndependentContacts();
+      else for (let iteration = 0; iteration < 10; iteration++) finishBall.solveContacts();
+    }
   });
   if (car.physicsProfile === "native" && car.onGround && car.contactNormal.z === 0 && ball.extraVelocityCache) {
     const pendingExtraVelocity = ball.extraVelocityCache.clone();

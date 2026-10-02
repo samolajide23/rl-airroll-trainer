@@ -103,6 +103,11 @@ if (live) {
   lockerTab.dataset.view = 'locker';
   lockerTab.textContent = 'Locker';
   menuRoot.querySelector('.site-header nav').append(lockerTab);
+  const replayTab = document.createElement('button');
+  replayTab.type = 'button';
+  replayTab.textContent = 'Replay Studio';
+  replayTab.onclick = () => location.assign(`${import.meta.env.BASE_URL}replay.html`);
+  menuRoot.querySelector('.site-header nav').append(replayTab);
   const previousPageHint = document.createElement('span');
   previousPageHint.className = 'header-page-control';
   previousPageHint.textContent = formatPadButton(4);

@@ -188,7 +188,7 @@ test("mechanics circuit records finite deterministic controls through driving an
   assert.deepEqual(run(), run());
 });
 
-test("mechanics bot attempts a flick only after sustained close carry", () => {
+test("mechanics bot attempts a flick only after sustained forward carry", () => {
   const car = makePhysCar(new Vector3(0, 0, 17), 0, "octane");
   car.onGround = true;
   const ball = makeBall(new Vector3(0, 0, 150));
@@ -199,6 +199,9 @@ test("mechanics bot attempts a flick only after sustained close carry", () => {
     bot.controls(car, ball);
     bot.observe(car, ball, idleControls());
   }
+  assert.equal(bot.maneuver, null);
+  ball.pos.x = 60;
+  bot.controls(car, ball);
   assert.equal(bot.maneuver.kind, "Flick");
   bot.reset();
   assert.equal(bot.carryTicks, 0);
@@ -239,23 +242,26 @@ test("mechanics land upright with the intended heading after an isolated maneuve
   }
 });
 
-test("a forward flick from a settled carry launches the ball upward and forward", () => {
+test("a forward flick from a forward carry makes a dodge touch and launches the ball", () => {
   const car = makePhysCar(new Vector3(0, 0, 17), 0, "octane");
   car.vel.x = 700;
-  const ball = makeBall(new Vector3(15, 0, 145));
+  const ball = makeBall(new Vector3(60, 0, 145));
   ball.vel.x = 700;
   const bot = new MechanicsBot();
   bot.begin(car, ball);
   bot.startManeuver("Flick");
   let peakVertical = 0;
   let peakForward = 0;
+  let dodgeTouch = false;
   for (let tick = 0; tick < 120; tick++) {
     const controls = bot.maneuverControls(car);
-    stepCarBall(car, ball, controls ?? idleControls(), tick, RL.DT);
+    const contact = stepCarBall(car, ball, controls ?? idleControls(), tick, RL.DT);
+    if (contact && car.hasFlipped) dodgeTouch = true;
     bot.observe(car, ball, controls ?? idleControls());
     peakVertical = Math.max(peakVertical, ball.vel.z);
     peakForward = Math.max(peakForward, ball.vel.x);
   }
+  assert.ok(dodgeTouch, "flick must touch the ball after the dodge, not just during takeoff");
   assert.ok(peakVertical > 200, `flick vertical speed: ${peakVertical}`);
   assert.ok(peakForward > 800, `flick forward speed: ${peakForward}`);
 });

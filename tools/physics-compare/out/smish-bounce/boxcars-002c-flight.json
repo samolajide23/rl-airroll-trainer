@@ -1,0 +1,27 @@
+{
+  "status": "diagnostic-only",
+  "intervals": 3,
+  "samples": 7351,
+  "rejectedCandidates": 0,
+  "rejections": {
+    "contactRisk": 0,
+    "timing": 0,
+    "motion": 0
+  },
+  "windows": [],
+  "limitations": [
+    "Replay provenance and game version must be checked separately; this is not current-version native telemetry certification",
+    "Sparse network states and replay timestamps are not synchronized 120 Hz physics observations",
+    "Inferred ticks use observed displacement and are not independent timing evidence",
+    "Contact exclusion is heuristic; velocity/position filtering uses the current model and biases accepted windows",
+    "No car, bounce, angular velocity or full-match parity certification"
+  ],
+  "decodedSha256": "c21c38018010ca606d70423088404f7f89a936173b18b863a598db3c3d92dfb5",
+  "metadata": {
+    "RecordFPS": 30,
+    "MapName": "Underwater_P",
+    "Date": "2017-08-09 20-58-07",
+    "NumFrames": 8421,
+    "MatchType": "Online"
+  }
+}

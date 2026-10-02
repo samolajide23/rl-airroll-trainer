@@ -253,7 +253,7 @@ export class ChaseCamera {
    * }} opts
    */
   update(camera, dt, opts) {
-    const cfg = getCamera();
+    const cfg = opts.settings ?? getCamera();
     const aspect = camera.aspect || 16 / 9;
     const vFov = horizontalFovToVertical(cfg.fov, aspect);
     if (Math.abs(camera.fov - vFov) > 0.05) {

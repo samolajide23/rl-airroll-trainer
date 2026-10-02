@@ -3,12 +3,13 @@ import assert from "node:assert/strict";
 
 test("physics input preserves short taps and separates swivel deadzone", async () => {
   const listeners = new Map();
+  const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
   globalThis.window = {
     innerWidth: 1024, innerHeight: 768,
     addEventListener(name, listener) { listeners.set(name, listener); },
   };
   globalThis.localStorage = { getItem: () => null, setItem() { } };
-  globalThis.navigator = { getGamepads: () => [] };
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: { getGamepads: () => [] } });
   const settings = await import("../../src/shared/settings.js");
   const input = await import("../../src/shared/input.js");
   const send = (name, values = {}) => listeners.get(name)({ preventDefault() { }, ...values });
@@ -54,6 +55,7 @@ test("physics input preserves short taps and separates swivel deadzone", async (
   } finally {
     delete globalThis.window;
     delete globalThis.localStorage;
-    delete globalThis.navigator;
+    if (navigatorDescriptor) Object.defineProperty(globalThis, "navigator", navigatorDescriptor);
+    else delete globalThis.navigator;
   }
 });

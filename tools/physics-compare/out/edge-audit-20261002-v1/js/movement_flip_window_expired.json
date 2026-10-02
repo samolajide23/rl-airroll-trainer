@@ -1,0 +1,5826 @@
+{
+  "id": "movement_flip_window_expired",
+  "description": "",
+  "engine": "carSim.js",
+  "game_mode": "void",
+  "tick_rate": 120,
+  "tick_time": 0.008333333333333333,
+  "ticks": 30,
+  "initial": {
+    "pos": [
+      0,
+      0,
+      2000
+    ],
+    "vel": [
+      0,
+      0,
+      0
+    ],
+    "ang_vel": [
+      0,
+      0,
+      0
+    ],
+    "yaw": 0,
+    "pitch": 0,
+    "roll": 0,
+    "boost": 100,
+    "on_ground": false,
+    "air_time_since_jump": 1.25
+  },
+  "ball_initial": {
+    "pos": [
+      0,
+      0,
+      92.75
+    ],
+    "vel": [
+      0,
+      0,
+      0
+    ],
+    "ang_vel": [
+      0,
+      0,
+      0
+    ]
+  },
+  "audit_setup": {
+    "preparation": "legacy",
+    "settle_ticks": 240,
+    "car_config": {
+      "hitbox_size": [
+        120.507,
+        86.6994,
+        38.6591
+      ],
+      "hitbox_pos_offset": [
+        13.8757,
+        0,
+        20.755
+      ],
+      "dodge_deadzone": 0.5,
+      "front_wheels": {
+        "connection_point_offset": [
+          51.25,
+          25.899999618530273,
+          20.7549991607666
+        ],
+        "suspension_rest_length": 38.755001068115234,
+        "wheel_radius": 12.5
+      },
+      "back_wheels": {
+        "connection_point_offset": [
+          -33.75,
+          29.5,
+          20.7549991607666
+        ],
+        "suspension_rest_length": 37.05500030517578,
+        "wheel_radius": 15
+      }
+    },
+    "mutators": {
+      "ball_drag": 0.029999999329447746,
+      "ball_hit_extra_force_scale": 1,
+      "ball_mass": 30,
+      "ball_max_speed": 6000,
+      "ball_radius": 91.25,
+      "ball_world_friction": 0.3499999940395355,
+      "ball_world_restitution": 0.6000000238418579,
+      "boost_accel_air": 1058.3333740234375,
+      "boost_accel_ground": 991.6666870117188,
+      "boost_pad_cooldown_big": 10,
+      "boost_pad_cooldown_small": 4,
+      "boost_used_per_second": 33.33333206176758,
+      "bump_cooldown_time": 0.25,
+      "bump_force_scale": 1,
+      "car_mass": 180,
+      "car_spawn_boost_amount": 33.33333206176758,
+      "car_world_friction": 0.30000001192092896,
+      "car_world_restitution": 0.30000001192092896,
+      "goal_base_threshold_y": 5124.25,
+      "gravity": [
+        0,
+        0,
+        -650
+      ],
+      "jump_accel": 1458.3333740234375,
+      "jump_immediate_force": 291.6666564941406,
+      "respawn_delay": 3,
+      "demo_mode": null,
+      "enable_car_ball_collision": null,
+      "enable_car_car_collision": null,
+      "enable_team_demos": null,
+      "unlimited_double_jumps": null,
+      "unlimited_flips": null
+    }
+  },
+  "frames": [
+    {
+      "tick": 0,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": -1,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": true,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        2000
+      ],
+      "vel": [
+        0,
+        0,
+        0
+      ],
+      "ang_vel": [
+        0,
+        0,
+        0
+      ],
+      "angle": [
+        0,
+        0,
+        0
+      ],
+      "rot": {
+        "forward": [
+          1,
+          0,
+          0
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boost": 100,
+      "on_ground": true,
+      "air_time": 0,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            2000
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              1,
+              0,
+              0
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0,
+              0,
+              1
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": true,
+          "air_time": 0,
+          "air_time_since_jump": 1.25,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 1,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": -1,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": true,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.954833984375
+      ],
+      "vel": [
+        0,
+        0,
+        -5.4166669845581055
+      ],
+      "ang_vel": [
+        0,
+        0.10386329144239426,
+        0
+      ],
+      "angle": [
+        0,
+        -0.0008655277113762455,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.999999625430984,
+          0,
+          -0.0008655276033096015
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.0008655276033096015,
+          0,
+          0.999999625430984
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.008333333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.954833984375
+          ],
+          "vel": [
+            0,
+            0,
+            -5.4166669845581055
+          ],
+          "ang_vel": [
+            0,
+            0.10386329144239426,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.999999625430984,
+              0,
+              -0.0008655276033096015
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.0008655276033096015,
+              0,
+              0.999999625430984
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.008333333333333333,
+          "air_time_since_jump": 1.2583333253860474,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.008333333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": -1,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": true,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 2,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.8646240234375
+      ],
+      "vel": [
+        0,
+        0,
+        -10.833333969116211
+      ],
+      "ang_vel": [
+        0,
+        0.10137385129928589,
+        0
+      ],
+      "angle": [
+        0,
+        -0.001710309854717879,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999985374206548,
+          0,
+          -0.0017103090208963959
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.0017103090208963959,
+          0,
+          0.9999985374206548
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.016666666666666666,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.8646240234375
+          ],
+          "vel": [
+            0,
+            0,
+            -10.833333969116211
+          ],
+          "ang_vel": [
+            0,
+            0.10137385129928589,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999985374206548,
+              0,
+              -0.0017103090208963959
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.0017103090208963959,
+              0,
+              0.9999985374206548
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.016666666666666666,
+          "air_time_since_jump": 1.2666666507720947,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.016666666666666666,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 3,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.7291259765625
+      ],
+      "vel": [
+        0,
+        0,
+        -16.25
+      ],
+      "ang_vel": [
+        0,
+        0.09894407540559769,
+        0
+      ],
+      "angle": [
+        0,
+        -0.002534843800371327,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999967872853561,
+          0,
+          -0.002534841085793993
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.002534841085793993,
+          0,
+          0.9999967872853561
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.025,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.7291259765625
+          ],
+          "vel": [
+            0,
+            0,
+            -16.25
+          ],
+          "ang_vel": [
+            0,
+            0.09894407540559769,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999967872853561,
+              0,
+              -0.002534841085793993
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.002534841085793993,
+              0,
+              0.9999967872853561
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.025,
+          "air_time_since_jump": 1.274999976158142,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.025,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 4,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.548583984375
+      ],
+      "vel": [
+        0,
+        0,
+        -21.666667938232422
+      ],
+      "ang_vel": [
+        0,
+        0.09657254070043564,
+        0
+      ],
+      "angle": [
+        0,
+        -0.003339615184501229,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999944234906516,
+          0,
+          -0.0033396089767002007
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.0033396089767002007,
+          0,
+          0.9999944234906516
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.03333333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.548583984375
+          ],
+          "vel": [
+            0,
+            0,
+            -21.666667938232422
+          ],
+          "ang_vel": [
+            0,
+            0.09657254070043564,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999944234906516,
+              0,
+              -0.0033396089767002007
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.0033396089767002007,
+              0,
+              0.9999944234906516
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.03333333333333333,
+          "air_time_since_jump": 1.2833333015441895,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.03333333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 5,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.3228759765625
+      ],
+      "vel": [
+        0,
+        0,
+        -27.08333396911621
+      ],
+      "ang_vel": [
+        0,
+        0.09425784647464752,
+        0
+      ],
+      "angle": [
+        0,
+        -0.004125097600334454,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999914917976546,
+          0,
+          -0.0041250859012718355
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.0041250859012718355,
+          0,
+          0.9999914917976546
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.041666666666666664,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.3228759765625
+          ],
+          "vel": [
+            0,
+            0,
+            -27.08333396911621
+          ],
+          "ang_vel": [
+            0,
+            0.09425784647464752,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999914917976546,
+              0,
+              -0.0041250859012718355
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.0041250859012718355,
+              0,
+              0.9999914917976546
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.041666666666666664,
+          "air_time_since_jump": 1.2916666269302368,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.041666666666666664,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 6,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1999.052001953125
+      ],
+      "vel": [
+        0,
+        0,
+        -32.5
+      ],
+      "ang_vel": [
+        0,
+        0.0919986292719841,
+        0
+      ],
+      "angle": [
+        0,
+        -0.004891752539536052,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.999988035402666,
+          0,
+          -0.004891733030236933
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.004891733030236933,
+          0,
+          0.999988035402666
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.049999999999999996,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1999.052001953125
+          ],
+          "vel": [
+            0,
+            0,
+            -32.5
+          ],
+          "ang_vel": [
+            0,
+            0.0919986292719841,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.999988035402666,
+              0,
+              -0.004891733030236933
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.004891733030236933,
+              0,
+              0.999988035402666
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.049999999999999996,
+          "air_time_since_jump": 1.2999999523162842,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.049999999999999996,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 7,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1998.7359619140625
+      ],
+      "vel": [
+        0,
+        0,
+        -37.91666793823242
+      ],
+      "ang_vel": [
+        0,
+        0.08979356288909912,
+        0
+      ],
+      "angle": [
+        0,
+        -0.005640032499115266,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999840950602126,
+          0,
+          -0.005640002597621929
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.005640002597621929,
+          0,
+          0.9999840950602126
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.05833333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1998.7359619140625
+          ],
+          "vel": [
+            0,
+            0,
+            -37.91666793823242
+          ],
+          "ang_vel": [
+            0,
+            0.08979356288909912,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999840950602126,
+              0,
+              -0.005640002597621929
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.005640002597621929,
+              0,
+              0.9999840950602126
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.05833333333333333,
+          "air_time_since_jump": 1.3083332777023315,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.05833333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 8,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1998.375
+      ],
+      "vel": [
+        0,
+        0,
+        -43.333335876464844
+      ],
+      "ang_vel": [
+        0,
+        0.08764135092496872,
+        0
+      ],
+      "angle": [
+        0,
+        -0.00637037727694403,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999797092179695,
+          0,
+          -0.006370334190234472
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.006370334190234472,
+          0,
+          0.9999797092179695
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.06666666666666667,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1998.375
+          ],
+          "vel": [
+            0,
+            0,
+            -43.333335876464844
+          ],
+          "ang_vel": [
+            0,
+            0.08764135092496872,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999797092179695,
+              0,
+              -0.006370334190234472
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.006370334190234472,
+              0,
+              0.9999797092179695
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.06666666666666667,
+          "air_time_since_jump": 1.316666603088379,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.06666666666666667,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 9,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1997.9686279296875
+      ],
+      "vel": [
+        0,
+        0,
+        -48.750003814697266
+      ],
+      "ang_vel": [
+        0,
+        0.08554072678089142,
+        0
+      ],
+      "angle": [
+        0,
+        -0.007083216636976619,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999749141295637,
+          0,
+          -0.007083157407317353
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.007083157407317353,
+          0,
+          0.9999749141295637
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.075,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1997.9686279296875
+          ],
+          "vel": [
+            0,
+            0,
+            -48.750003814697266
+          ],
+          "ang_vel": [
+            0,
+            0.08554072678089142,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999749141295637,
+              0,
+              -0.007083157407317353
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.007083157407317353,
+              0,
+              0.9999749141295637
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.075,
+          "air_time_since_jump": 1.3249999284744263,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.075,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 10,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1997.5172119140625
+      ],
+      "vel": [
+        0,
+        0,
+        -54.16666793823242
+      ],
+      "ang_vel": [
+        0,
+        0.08349044620990753,
+        0
+      ],
+      "angle": [
+        0,
+        -0.007778970067971651,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999697439681721,
+          0,
+          -0.007778891614216299
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.007778891614216299,
+          0,
+          0.9999697439681721
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.08333333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1997.5172119140625
+          ],
+          "vel": [
+            0,
+            0,
+            -54.16666793823242
+          ],
+          "ang_vel": [
+            0,
+            0.08349044620990753,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999697439681721,
+              0,
+              -0.007778891614216299
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.007778891614216299,
+              0,
+              0.9999697439681721
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.08333333333333333,
+          "air_time_since_jump": 1.3333332538604736,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.08333333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 11,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1997.020751953125
+      ],
+      "vel": [
+        0,
+        0,
+        -59.583335876464844
+      ],
+      "ang_vel": [
+        0,
+        0.08148930966854095,
+        0
+      ],
+      "angle": [
+        0,
+        -0.008458047757484245,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999642309316852,
+          0,
+          -0.008457946911735403
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.008457946911735403,
+          0,
+          0.9999642309316852
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.09166666666666666,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1997.020751953125
+          ],
+          "vel": [
+            0,
+            0,
+            -59.583335876464844
+          ],
+          "ang_vel": [
+            0,
+            0.08148930966854095,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999642309316852,
+              0,
+              -0.008457946911735403
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.008457946911735403,
+              0,
+              0.9999642309316852
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.09166666666666666,
+          "air_time_since_jump": 1.341666579246521,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.09166666666666666,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 12,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1996.47900390625
+      ],
+      "vel": [
+        0,
+        0,
+        -65
+      ],
+      "ang_vel": [
+        0,
+        0.07953613996505737,
+        0
+      ],
+      "angle": [
+        0,
+        -0.009120848774505435,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.999958405354419,
+          0,
+          -0.009120722314642005
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.009120722314642005,
+          0,
+          0.999958405354419
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.09999999999999999,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1996.47900390625
+          ],
+          "vel": [
+            0,
+            0,
+            -65
+          ],
+          "ang_vel": [
+            0,
+            0.07953613996505737,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.999958405354419,
+              0,
+              -0.009120722314642005
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.009120722314642005,
+              0,
+              0.999958405354419
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.09999999999999999,
+          "air_time_since_jump": 1.3499999046325684,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.09999999999999999,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 13,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1995.89208984375
+      ],
+      "vel": [
+        0,
+        0,
+        -70.41667175292969
+      ],
+      "ang_vel": [
+        0,
+        0.07762978225946426,
+        0
+      ],
+      "angle": [
+        0,
+        -0.009767763664628617,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999522957819658,
+          0,
+          -0.00976760834293866
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.00976760834293866,
+          0,
+          0.9999522957819658
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.10833333333333332,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1995.89208984375
+          ],
+          "vel": [
+            0,
+            0,
+            -70.41667175292969
+          ],
+          "ang_vel": [
+            0,
+            0.07762978225946426,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999522957819658,
+              0,
+              -0.00976760834293866
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.00976760834293866,
+              0,
+              0.9999522957819658
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.10833333333333332,
+          "air_time_since_jump": 1.3583332300186157,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.10833333333333332,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 14,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1995.26025390625
+      ],
+      "vel": [
+        0,
+        0,
+        -75.83333587646484
+      ],
+      "ang_vel": [
+        0,
+        0.07576911896467209,
+        0
+      ],
+      "angle": [
+        0,
+        -0.010399172245159684,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.999945929094247,
+          0,
+          -0.010398984813601242
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.010398984813601242,
+          0,
+          0.999945929094247
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.11666666666666665,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1995.26025390625
+          ],
+          "vel": [
+            0,
+            0,
+            -75.83333587646484
+          ],
+          "ang_vel": [
+            0,
+            0.07576911896467209,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.999945929094247,
+              0,
+              -0.010398984813601242
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.010398984813601242,
+              0,
+              0.999945929094247
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.11666666666666665,
+          "air_time_since_jump": 1.366666555404663,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.11666666666666665,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 15,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1994.5831298828125
+      ],
+      "vel": [
+        0,
+        0,
+        -81.25000762939453
+      ],
+      "ang_vel": [
+        0,
+        0.0739530473947525,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01101544883943983,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999393305602913,
+          0,
+          -0.01101522607148997
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.01101522607148997,
+          0,
+          0.9999393305602913
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.12499999999999999,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1994.5831298828125
+          ],
+          "vel": [
+            0,
+            0,
+            -81.25000762939453
+          ],
+          "ang_vel": [
+            0,
+            0.0739530473947525,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999393305602913,
+              0,
+              -0.01101522607148997
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.01101522607148997,
+              0,
+              0.9999393305602913
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.12499999999999999,
+          "air_time_since_jump": 1.3749998807907104,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.12499999999999999,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 16,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1993.86083984375
+      ],
+      "vel": [
+        0,
+        0,
+        -86.66667175292969
+      ],
+      "ang_vel": [
+        0,
+        0.07218050956726074,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01161695448339873,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999325239512998,
+          0,
+          -0.011616693193462813
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.011616693193462813,
+          0,
+          0.9999325239512998
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.13333333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1993.86083984375
+          ],
+          "vel": [
+            0,
+            0,
+            -86.66667175292969
+          ],
+          "ang_vel": [
+            0,
+            0.07218050956726074,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999325239512998,
+              0,
+              -0.011616693193462813
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.011616693193462813,
+              0,
+              0.9999325239512998
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.13333333333333333,
+          "air_time_since_jump": 1.3833332061767578,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.13333333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 17,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1993.093505859375
+      ],
+      "vel": [
+        0,
+        0,
+        -92.08334350585938
+      ],
+      "ang_vel": [
+        0,
+        0.07045045495033264,
+        0
+      ],
+      "angle": [
+        0,
+        -0.012204040391780175,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999255316264036,
+          0,
+          -0.012203737451917274
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.012203737451917274,
+          0,
+          0.9999255316264036
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.14166666666666666,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1993.093505859375
+          ],
+          "vel": [
+            0,
+            0,
+            -92.08334350585938
+          ],
+          "ang_vel": [
+            0,
+            0.07045045495033264,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999255316264036,
+              0,
+              -0.012203737451917274
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.012203737451917274,
+              0,
+              0.9999255316264036
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.14166666666666666,
+          "air_time_since_jump": 1.3916665315628052,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.14166666666666666,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 18,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1992.281005859375
+      ],
+      "vel": [
+        0,
+        0,
+        -97.50000762939453
+      ],
+      "ang_vel": [
+        0,
+        0.06876186281442642,
+        0
+      ],
+      "angle": [
+        0,
+        -0.012777055259812454,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999183745434771,
+          0,
+          -0.012776707613582627
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.012776707613582627,
+          0,
+          0.9999183745434771
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.15,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1992.281005859375
+          ],
+          "vel": [
+            0,
+            0,
+            -97.50000762939453
+          ],
+          "ang_vel": [
+            0,
+            0.06876186281442642,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999183745434771,
+              0,
+              -0.012776707613582627
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.012776707613582627,
+              0,
+              0.9999183745434771
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.15,
+          "air_time_since_jump": 1.3999998569488525,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.15,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 19,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1991.4234619140625
+      ],
+      "vel": [
+        0,
+        0,
+        -102.91667175292969
+      ],
+      "ang_vel": [
+        0,
+        0.06711374968290329,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01333633541546813,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999110723968256,
+          0,
+          -0.013335940090343501
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.013335940090343501,
+          0,
+          0.9999110723968256
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.15833333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1991.4234619140625
+          ],
+          "vel": [
+            0,
+            0,
+            -102.91667175292969
+          ],
+          "ang_vel": [
+            0,
+            0.06711374968290329,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999110723968256,
+              0,
+              -0.013335940090343501
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.013335940090343501,
+              0,
+              0.9999110723968256
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.15833333333333333,
+          "air_time_since_jump": 1.4083331823349,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.15833333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 20,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1990.5206298828125
+      ],
+      "vel": [
+        0,
+        0,
+        -108.33333587646484
+      ],
+      "ang_vel": [
+        0,
+        0.06550513952970505,
+        0
+      ],
+      "angle": [
+        0,
+        -0.013882212179978481,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9999036436417139,
+          0,
+          -0.013881766297302534
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.013881766297302534,
+          0,
+          0.9999036436417139
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.16666666666666666,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1990.5206298828125
+          ],
+          "vel": [
+            0,
+            0,
+            -108.33333587646484
+          ],
+          "ang_vel": [
+            0,
+            0.06550513952970505,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9999036436417139,
+              0,
+              -0.013881766297302534
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.013881766297302534,
+              0,
+              0.9999036436417139
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.16666666666666666,
+          "air_time_since_jump": 1.4166665077209473,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.16666666666666666,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 21,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1989.57275390625
+      ],
+      "vel": [
+        0,
+        0,
+        -113.75000762939453
+      ],
+      "ang_vel": [
+        0,
+        0.06393508613109589,
+        0
+      ],
+      "angle": [
+        0,
+        -0.014415004100990848,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998961056245952,
+          0,
+          -0.014414504884930901
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.014414504884930901,
+          0,
+          0.9998961056245952
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.175,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1989.57275390625
+          ],
+          "vel": [
+            0,
+            0,
+            -113.75000762939453
+          ],
+          "ang_vel": [
+            0,
+            0.06393508613109589,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998961056245952,
+              0,
+              -0.014414504884930901
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.014414504884930901,
+              0,
+              0.9998961056245952
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.175,
+          "air_time_since_jump": 1.4249998331069946,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.175,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 22,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1988.5797119140625
+      ],
+      "vel": [
+        0,
+        0,
+        -119.16667175292969
+      ],
+      "ang_vel": [
+        0,
+        0.06240266188979149,
+        0
+      ],
+      "angle": [
+        0,
+        -0.014935025785781667,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998884745724866,
+          0,
+          -0.014934470569956337
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.014934470569956337,
+          0,
+          0.9998884745724866
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.18333333333333332,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1988.5797119140625
+          ],
+          "vel": [
+            0,
+            0,
+            -119.16667175292969
+          ],
+          "ang_vel": [
+            0,
+            0.06240266188979149,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998884745724866,
+              0,
+              -0.014934470569956337
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.014934470569956337,
+              0,
+              0.9998884745724866
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.18333333333333332,
+          "air_time_since_jump": 1.433333158493042,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.18333333333333332,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 23,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1987.5416259765625
+      ],
+      "vel": [
+        0,
+        0,
+        -124.58334350585938
+      ],
+      "ang_vel": [
+        0,
+        0.06090696528553963,
+        0
+      ],
+      "angle": [
+        0,
+        -0.015442586371699958,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998807656484393,
+          0,
+          -0.015441972604482157
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.015441972604482157,
+          0,
+          0.9998807656484393
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.19166666666666665,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1987.5416259765625
+          ],
+          "vel": [
+            0,
+            0,
+            -124.58334350585938
+          ],
+          "ang_vel": [
+            0,
+            0.06090696528553963,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998807656484393,
+              0,
+              -0.015441972604482157
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.015441972604482157,
+              0,
+              0.9998807656484393
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.19166666666666665,
+          "air_time_since_jump": 1.4416664838790894,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.19166666666666665,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 24,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1986.458251953125
+      ],
+      "vel": [
+        0,
+        0,
+        -130
+      ],
+      "ang_vel": [
+        0,
+        0.05944712087512016,
+        0
+      ],
+      "angle": [
+        0,
+        -0.015937981081354198,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.99987299309403,
+          0,
+          -0.015937306330948142
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.015937306330948142,
+          0,
+          0.99987299309403
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.19999999999999998,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1986.458251953125
+          ],
+          "vel": [
+            0,
+            0,
+            -130
+          ],
+          "ang_vel": [
+            0,
+            0.05944712087512016,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.99987299309403,
+              0,
+              -0.015937306330948142
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.015937306330948142,
+              0,
+              0.99987299309403
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.19999999999999998,
+          "air_time_since_jump": 1.4499998092651367,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.19999999999999998,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 25,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1985.329833984375
+      ],
+      "vel": [
+        0,
+        0,
+        -135.4166717529297
+      ],
+      "ang_vel": [
+        0,
+        0.05802226439118385,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01642149465229766,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998651702790298,
+          0,
+          -0.016420756610524556
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.016420756610524556,
+          0,
+          0.9998651702790298
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.20833333333333331,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1985.329833984375
+          ],
+          "vel": [
+            0,
+            0,
+            -135.4166717529297
+          ],
+          "ang_vel": [
+            0,
+            0.05802226439118385,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998651702790298,
+              0,
+              -0.016420756610524556
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.016420756610524556,
+              0,
+              0.9998651702790298
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.20833333333333331,
+          "air_time_since_jump": 1.458333134651184,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.20833333333333331,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 26,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1984.15625
+      ],
+      "vel": [
+        0,
+        0,
+        -140.83334350585938
+      ],
+      "ang_vel": [
+        0,
+        0.05663156136870384,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01689342803685933,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998573094466194,
+          0,
+          -0.016892624518302757
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.016892624518302757,
+          0,
+          0.9998573094466194
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.21666666666666665,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1984.15625
+          ],
+          "vel": [
+            0,
+            0,
+            -140.83334350585938
+          ],
+          "ang_vel": [
+            0,
+            0.05663156136870384,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998573094466194,
+              0,
+              -0.016892624518302757
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.016892624518302757,
+              0,
+              0.9998573094466194
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.21666666666666665,
+          "air_time_since_jump": 1.4666664600372314,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.21666666666666665,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 27,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1982.9373779296875
+      ],
+      "vel": [
+        0,
+        0,
+        -146.25001525878906
+      ],
+      "ang_vel": [
+        0,
+        0.05527418851852417,
+        0
+      ],
+      "angle": [
+        0,
+        -0.01735404632810277,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998494223095815,
+          0,
+          -0.0173531752753302
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.0173531752753302,
+          0,
+          0.9998494223095815
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.22499999999999998,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1982.9373779296875
+          ],
+          "vel": [
+            0,
+            0,
+            -146.25001525878906
+          ],
+          "ang_vel": [
+            0,
+            0.05527418851852417,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998494223095815,
+              0,
+              -0.0173531752753302
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.0173531752753302,
+              0,
+              0.9998494223095815
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.22499999999999998,
+          "air_time_since_jump": 1.4749997854232788,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.22499999999999998,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 28,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1981.673583984375
+      ],
+      "vel": [
+        0,
+        0,
+        -151.6666717529297
+      ],
+      "ang_vel": [
+        0,
+        0.053949352353811264,
+        0
+      ],
+      "angle": [
+        0,
+        -0.017803627346782747,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998415196265867,
+          0,
+          -0.017802686828260583
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.017802686828260583,
+          0,
+          0.9998415196265867
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.2333333333333333,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1981.673583984375
+          ],
+          "vel": [
+            0,
+            0,
+            -151.6666717529297
+          ],
+          "ang_vel": [
+            0,
+            0.053949352353811264,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998415196265867,
+              0,
+              -0.017802686828260583
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.017802686828260583,
+              0,
+              0.9998415196265867
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.2333333333333333,
+          "air_time_since_jump": 1.4833331108093262,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.2333333333333333,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 29,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1980.3646240234375
+      ],
+      "vel": [
+        0,
+        0,
+        -157.08334350585938
+      ],
+      "ang_vel": [
+        0,
+        0.05265627056360245,
+        0
+      ],
+      "angle": [
+        0,
+        -0.018242430549428708,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998336114960431,
+          0,
+          -0.018241418761187456
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.018241418761187456,
+          0,
+          0.9998336114960431
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.24166666666666664,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1980.3646240234375
+          ],
+          "vel": [
+            0,
+            0,
+            -157.08334350585938
+          ],
+          "ang_vel": [
+            0,
+            0.05265627056360245,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998336114960431,
+              0,
+              -0.018241418761187456
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.018241418761187456,
+              0,
+              0.9998336114960431
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.24166666666666664,
+          "air_time_since_jump": 1.4916664361953735,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.24166666666666664,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    },
+    {
+      "tick": 30,
+      "controls": {
+        "throttle": 0,
+        "steer": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0,
+        "boost": false,
+        "jump": false,
+        "handbrake": false
+      },
+      "pos": [
+        0,
+        0,
+        1979.0103759765625
+      ],
+      "vel": [
+        0,
+        0,
+        -162.50001525878906
+      ],
+      "ang_vel": [
+        0,
+        0.051394183188676834,
+        0
+      ],
+      "angle": [
+        0,
+        -0.018670712828635916,
+        0
+      ],
+      "rot": {
+        "forward": [
+          0.9998257073055516,
+          0,
+          -0.01866962809307593
+        ],
+        "right": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0.01866962809307593,
+          0,
+          0.9998257073055516
+        ]
+      },
+      "boost": 100,
+      "on_ground": false,
+      "air_time": 0.24999999999999997,
+      "ball": {
+        "pos": [
+          0,
+          0,
+          92.74999237060547
+        ],
+        "vel": [
+          0,
+          0,
+          0
+        ],
+        "ang_vel": [
+          0,
+          0,
+          0
+        ]
+      },
+      "audit": {
+        "car": {
+          "pos": [
+            0,
+            0,
+            1979.0103759765625
+          ],
+          "vel": [
+            0,
+            0,
+            -162.50001525878906
+          ],
+          "ang_vel": [
+            0,
+            0.051394183188676834,
+            0
+          ],
+          "rot_mat": {
+            "forward": [
+              0.9998257073055516,
+              0,
+              -0.01866962809307593
+            ],
+            "right": [
+              0,
+              1,
+              0
+            ],
+            "up": [
+              0.01866962809307593,
+              0,
+              0.9998257073055516
+            ]
+          },
+          "boost": 100,
+          "is_on_ground": false,
+          "air_time": 0.24999999999999997,
+          "air_time_since_jump": 1.499999761581421,
+          "auto_flip_timer": 0,
+          "auto_flip_torque_scale": 0,
+          "boosting_time": 0,
+          "car_contact_cooldown_timer": 0,
+          "car_contact_id": 0,
+          "demo_respawn_timer": 0,
+          "flip_rel_torque": [
+            0,
+            0,
+            0
+          ],
+          "flip_time": 0,
+          "handbrake_val": 0,
+          "has_double_jumped": false,
+          "has_flipped": false,
+          "has_jumped": true,
+          "has_world_contact": false,
+          "is_auto_flipping": false,
+          "is_demoed": false,
+          "is_flipping": false,
+          "is_jumping": false,
+          "is_supersonic": false,
+          "jump_time": 0.24999999999999997,
+          "supersonic_time": 0,
+          "world_contact_normal": [
+            0,
+            0,
+            0
+          ],
+          "wheels_with_contact": [
+            false,
+            false,
+            false,
+            false
+          ],
+          "ball_hit_info": null,
+          "last_controls": {
+            "throttle": 0,
+            "steer": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0,
+            "boost": false,
+            "jump": false,
+            "handbrake": false
+          },
+          "tick_count_since_update": null,
+          "time_spent_boosting": 0,
+          "update_counter": null
+        },
+        "ball": {
+          "pos": [
+            0,
+            0,
+            92.74999237060547
+          ],
+          "vel": [
+            0,
+            0,
+            0
+          ],
+          "ang_vel": [
+            0,
+            0,
+            0
+          ],
+          "rot_mat": null,
+          "heatseeker_target_dir": null,
+          "heatseeker_target_speed": null,
+          "heatseeker_time_since_hit": null,
+          "last_hit_car_id": null,
+          "tick_count_since_update": null,
+          "update_counter": null
+        },
+        "pads": []
+      }
+    }
+  ],
+  "scenario_sha256": "bfd23dae34ea6b8d19a8a22f210d26cc4d0449c2f201d4be642e83bd5eae7061"
+}

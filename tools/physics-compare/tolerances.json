@@ -1,9 +1,9 @@
 {
-  "notes": "Numeric regression budgets tightened another tenfold (100x stricter than the original defaults); zero ground-state mismatches allowed. These are accuracy gates, not exact-parity certification. Explicit car-contact exceptions are also 100x stricter. Ball-goal velocity exception is unchanged; dedicated ball/contact budget files are separate.",
-  "defaults": { "pos_max": 0.002, "vel_max": 0.005, "omega_max": 0.0001, "fwd_max_deg": 0.0005, "up_max_deg": 0.0005, "boost_max": 0.0001, "air_time_max": 0.0003, "ground_mismatch_ticks": 0 },
+  "notes": "Numeric defaults and car exceptions tightened tenfold on 2026-10-02; zero ground-state mismatches allowed. Accuracy gates, not exact native certification. Ball-goal velocity exception and separate ball/contact budgets unchanged.",
+  "defaults": { "pos_max": 0.0002, "vel_max": 0.0005, "omega_max": 0.00001, "fwd_max_deg": 0.00005, "up_max_deg": 0.00005, "boost_max": 0.00001, "air_time_max": 0.00003, "ground_mismatch_ticks": 0 },
   "scenarios": {
     "ball_goal": { "vel_max": 4 },
-    "ground_flip_forward": { "pos_max": 0.017, "vel_max": 0.1, "omega_max": 0.0075, "fwd_max_deg": 0.013, "up_max_deg": 0.013 },
-    "ground_jump_into_wall": { "pos_max": 0.085, "vel_max": 0.3, "omega_max": 0.012, "fwd_max_deg": 0.01, "up_max_deg": 0.013 }
+    "ground_flip_forward": { "pos_max": 0.0017, "vel_max": 0.01, "omega_max": 0.00075, "fwd_max_deg": 0.0013, "up_max_deg": 0.0013 },
+    "ground_jump_into_wall": { "pos_max": 0.0085, "vel_max": 0.03, "omega_max": 0.0012, "fwd_max_deg": 0.001, "up_max_deg": 0.0013 }
   }
 }

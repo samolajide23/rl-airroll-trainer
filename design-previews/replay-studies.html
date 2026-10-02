@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Replay Layout Studies | AIRLAB</title>
+</head>
+<body>
+  <header class="study-bar">
+    <a href="/replay.html" class="study-brand">AIR<span>LAB</span></a>
+    <label>Layout<select id="layout" aria-label="Layout study"></select></label>
+    <button id="previous" class="icon" title="Previous layout" aria-label="Previous layout"></button>
+    <button id="next" class="icon" title="Next layout" aria-label="Next layout"></button>
+    <button id="compare" aria-expanded="false"></button>
+    <button id="choose" aria-pressed="false"></button>
+  </header>
+  <section id="comparison" hidden aria-label="Compare all 15 layouts"></section>
+  <div class="study-caption"><span id="study-name"></span><span>VOLT / LAYOUT STUDIES</span></div>
+  <div id="app"></div>
+  <script type="module" src="./replay-studies.js"></script>
+</body>
+</html>

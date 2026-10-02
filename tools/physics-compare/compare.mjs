@@ -110,10 +110,10 @@ for (const failure of failures) md += `- ${failure}\n`;
 if (rsConst && jsConst) md += constantsSection(rsConst, jsConst) + "\n";
 
 md += `## Trajectory errors\n\n`;
-md += `| Scenario | pos mean/max (uu) | vel mean/max | ω mean/max | fwd° mean/max | up° mean/max |\n`;
-md += `|---|---:|---:|---:|---:|---:|\n`;
+md += `| Scenario | pos mean/max (uu) | vel mean/max | ω mean/max | fwd° mean/max | right° mean/max | up° mean/max |\n`;
+md += `|---|---:|---:|---:|---:|---:|---:|\n`;
 for (const r of results) {
-  md += `| \`${r.id}\` | ${fmt(r.pos_mean)} / ${fmt(r.pos_max)} | ${fmt(r.vel_mean)} / ${fmt(r.vel_max)} | ${fmt(r.omega_mean)} / ${fmt(r.omega_max)} | ${fmt(r.fwd_mean_deg)} / ${fmt(r.fwd_max_deg)} | ${fmt(r.up_mean_deg)} / ${fmt(r.up_max_deg)} |\n`;
+  md += `| \`${r.id}\` | ${fmt(r.pos_mean)} / ${fmt(r.pos_max)} | ${fmt(r.vel_mean)} / ${fmt(r.vel_max)} | ${fmt(r.omega_mean)} / ${fmt(r.omega_max)} | ${fmt(r.fwd_mean_deg)} / ${fmt(r.fwd_max_deg)} | ${fmt(r.right_mean_deg)} / ${fmt(r.right_max_deg)} | ${fmt(r.up_mean_deg)} / ${fmt(r.up_max_deg)} |\n`;
 }
 
 if (results.some(r => r.ball_pos_max !== undefined)) {

@@ -109,6 +109,36 @@ The full suite passes 183/184: the existing forward-flick speed assertion
 still fails, with speed changing from 771.53 to 768.48 uu/s (threshold 800).
 No assertion or reference hash gate was relaxed.
 
+## Displacement precision and flick verification: 2026-10-02
+
+Per-tick hundredth-unit displacement rounding has been removed. At 120 Hz,
+an isolated native car with horizontal velocity +0.6 uu/s moved approximately
++1.2 uu in one second, while -0.6 uu/s produced no horizontal movement.
+Smaller velocities also stopped translating despite retaining nonzero velocity.
+Both profiles now accumulate unquantized float32 Bullet-unit displacement.
+Regression tests cover symmetric velocities from 0.1 to 0.6 uu/s, ordinary
+coasting, recorded velocity gains and teleport resynchronization.
+
+The translation and combined throttle-position results below are historical,
+not acceptance results for the current implementation. Reported packet
+increments are not sufficient evidence that the engine rounds each displacement.
+The native capture cache is unavailable on this machine; fresh continuous
+replays are required to quantify the current position residuals. Gravity and
+throttle force calibrations remain unchanged. Exact native parity is unverified.
+
+The old centered-carry flick fixture touched only on ticks 0-2, before the
+tick-7 dodge. A forward carry at 60 uu produces subsequent contacts on ticks
+23-24, with peak forward speed approximately 1156 uu/s and upward speed
+516 uu/s. Automatic flick readiness now requires a sustained forward carry
+within the locally tested 60-75 uu range, with bounded lateral offset and height.
+The regression requires a post-dodge touch as well as the original speed
+thresholds. This validates a browser maneuver, not native flick parity.
+
+The default test command now discovers all tool tests on Node 24, and the
+input mock restores the original navigator descriptor. All 197 tests and the
+production build pass. Native curved-wall/contact-history investigations still
+require original captures and should not be repaired by tuning ball impulses.
+
 ## Retained native free-flight throttle calibration: 2026-10-01
 
 Two accepted retry-capture throttle repeats show 0.55 uu/s steady velocity

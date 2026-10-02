@@ -305,6 +305,32 @@ def ensure_meshes(mesh_dir: Path) -> None:
     _MESHES_READY = True
 
 
+def audit_value(value: Any) -> Any:
+    if isinstance(value, (bool, int, float, str)) or value is None:
+        return value
+    if isinstance(value, (tuple, list)):
+        return [audit_value(entry) for entry in value]
+    if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
+        return vec_list(value)
+    if hasattr(value, "forward") and hasattr(value, "right") and hasattr(value, "up"):
+        return rot_payload(value)
+    result = {}
+    for key in dir(value):
+        if key.startswith("_") or key.isupper() or key == "last_rel_dodge_torque":
+            continue
+        entry = getattr(value, key)
+        if not callable(entry):
+            result[key] = audit_value(entry)
+    return result
+
+
+def audit_pads(arena: rs.Arena) -> list[dict[str, Any]]:
+    return sorted([
+        {"pos": vec_list(pad.get_pos()), "big": pad.is_big, "state": audit_value(pad.get_state())}
+        for pad in arena.get_boost_pads()
+    ], key=lambda pad: tuple(pad["pos"]))
+
+
 def run_scenario(
     scenario: dict[str, Any],
     defaults: dict[str, Any],
@@ -333,6 +359,14 @@ def run_scenario(
             state = ball.get_state()
             return {"tick": tick, "pos": vec_list(state.pos), "vel": vec_list(state.vel), "ang_vel": vec_list(state.ang_vel)}
 
+        if scenario.get("audit"):
+            original_ball_snapshot = ball_snapshot
+
+            def ball_snapshot(tick: int) -> dict[str, Any]:
+                frame = original_ball_snapshot(tick)
+                frame["audit"] = {"ball": audit_value(ball.get_state()), "pads": audit_pads(arena)}
+                return frame
+
         frames = [ball_snapshot(0)]
         for tick in range(ticks):
             arena.step(1)
@@ -344,6 +378,7 @@ def run_scenario(
             "game_mode": mode, "tick_rate": float(arena.tick_rate),
             "tick_time": float(arena.tick_time), "ticks": ticks,
             "initial": initial, "frames": frames,
+            **({"audit_setup": {"mutators": audit_value(arena.get_mutator_config()), "preparation": "raw"}} if scenario.get("audit") else {}),
         }
 
     hitbox = str(initial.get("hitbox", "octane")).upper()
@@ -361,7 +396,15 @@ def run_scenario(
             ball.set_state(bs)
         except Exception:
             pass
-    if initial.get("on_ground", False):
+    if scenario.get("preparation") == "raw":
+        state = rs.CarState()
+        state.pos = rs.Vec(*initial["pos"])
+        state.vel = rs.Vec(*initial["vel"])
+        state.ang_vel = rs.Vec(*initial["ang_vel"])
+        state.rot_mat = angle_rot(initial)
+        state.boost = float(initial["boost"])
+        car.set_state(state)
+    elif initial.get("on_ground", False):
         prepare_ground(arena, car, initial, settle_ticks)
     else:
         prepare_airborne(arena, car, initial)
@@ -409,6 +452,12 @@ def run_scenario(
         if ball_initial:
             state = arena.ball.get_state()
             frame["ball"] = {"pos": vec_list(state.pos), "vel": vec_list(state.vel), "ang_vel": vec_list(state.ang_vel)}
+        if scenario.get("audit"):
+            frame["audit"] = {
+                "car": audit_value(car.get_state()),
+                "ball": audit_value(arena.ball.get_state()),
+                "pads": audit_pads(arena),
+            }
         return frame
 
     frames: list[dict[str, Any]] = []
@@ -436,6 +485,12 @@ def run_scenario(
         "ball_initial": ball_initial,
         "car_only": car_only,
         "touch_callbacks": touch_callbacks,
+        **({"audit_setup": {
+            "mutators": audit_value(arena.get_mutator_config()),
+            "car_config": audit_value(car.get_config()),
+            "preparation": scenario.get("preparation", "settled" if initial.get("on_ground") else "airborne_warmup"),
+            "settle_ticks": settle_ticks,
+        }} if scenario.get("audit") else {}),
         "frames": frames,
     }
 

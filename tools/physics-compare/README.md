@@ -198,11 +198,21 @@ npm install
 # Or dump via https://github.com/ZealanL/RLArenaCollisionDumper
 ```
 
-Regenerate the browser mesh pack after changing `.cmf` files:
+Regenerate the browser mesh pack after changing `.cmf` files. This now requires
+the compiled `roof_trace.cpp` tracer and matching pinned RocketSim sources;
+see [native build flags](../../docs/strict-fresh-parity.md#wall-contact-follow-up).
+Its `mesh-order` mode supplies the native BVH traversal order. The generator
+rejects missing, duplicate or unmatched triangles and retains both original
+Bullet-unit float32 vertices and the existing UU geometry.
 
 ```bash
 node tools/physics-compare/gen_soccar_mesh.mjs
 ```
+
+The default tracer is `tools/physics-compare/out/native/ball_wall_trace.exe`.
+Pass an explicit executable path as the first argument on other platforms or
+for another build location. Ordinary builds and tests use the checked-in mesh
+pack and do not require the native tracer.
 
 ## Run
 

@@ -135,7 +135,11 @@ export class MechanicsBot extends SkybotDiagnostic {
       target = ball.pos.clone().addScaledVector(goalDirection, carrying ? 500 : -100);
       desiredSpeed = carrying ? 900 : Math.min(1100, ball.vel.length() + Math.hypot(offset.x, offset.y) * 0.8);
       this.action = carrying ? "Carry" : "Dribble approach";
-      if (this.carryTicks > 90 && !this.maneuver && this.tick >= this.cooldownUntil) this.startManeuver("Flick");
+      const forward = new Vector3(1, 0, 0).applyQuaternion(car.q).setZ(0).normalize();
+      const right = new Vector3(-forward.y, forward.x, 0);
+      const forwardOffset = offset.dot(forward);
+      const flickReady = forwardOffset >= 60 && forwardOffset <= 75 && Math.abs(offset.dot(right)) < 30 && offset.z < 150;
+      if (this.carryTicks > 90 && flickReady && !this.maneuver && this.tick >= this.cooldownUntil) this.startManeuver("Flick");
     } else {
       if (target.distanceTo(car.pos) < 350) {
         this.routeIndex = (this.routeIndex + 1) % routes.length;

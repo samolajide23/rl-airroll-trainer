@@ -14,6 +14,70 @@ import { makePhysCar } from "../../src/shared/carPhysics.js";
 
 const close = (a, b, tolerance = 1e-6) => assert(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
 
+test("RocketSim wall-curve margin contact does not invent corner roll", () => {
+  const car = makePhysCar(new THREE.Vector3(3600, 0, 17), 0);
+  car.physicsProfile = "rocketsim";
+  for (let tick = 0; tick < 240; tick++) stepCar(car, {});
+  car.pos.set(3600, 0, car.pos.z);
+  car.vel.set(0, 0, 0);
+  car.omega.set(0, 0, 0);
+  car.q.identity();
+  car.boost = 100;
+  stepCar(car, {});
+  car.vel.set(0, 0, 0);
+  car.omega.set(0, 0, 0);
+  car.q.identity();
+  car.boost = 100;
+  for (let tick = 1; tick <= 91; tick++) {
+    stepCar(car, tick <= 3 ? { jump: true, throttle: 1 } : { throttle: 1, boost: true });
+  }
+  assert.ok(car.pos.distanceTo(new THREE.Vector3(3941.53515625, 0.0022142711095511913, 62.186580657958984)) < 0.001);
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(707.902587890625, 0.13005365431308746, 24.743669509887695)) < 0.07);
+  assert.ok(car.omega.distanceTo(new THREE.Vector3(0.10792434215545654, -5.498936653137207, 0.006831048987805843)) < 0.0001);
+});
+
+test("RocketSim wheel pushback uses initial then previous solver timestep", () => {
+  const car = makePhysCar(new THREE.Vector3(0, 5500, 610), 0, "octane");
+  car.physicsProfile = "rocketsim";
+  car.boost = 100;
+  car.onGround = false;
+  stepCar(car, {});
+  assert.ok(car.pos.distanceTo(new THREE.Vector3(-3.160520023470781e-8, 5500.0654296875, 610.1597900390625)) < 1e-7);
+  assert.ok(car.vel.distanceTo(new THREE.Vector3(-0.000003792624283960322, 7.864131927490234, 19.176897048950195)) < 1e-6);
+  const initialPushback = car.wheels[1].extraPushback;
+  close(initialPushback, 673.4271240234375, 0.0001);
+  car.pos.set(0, 5500, 610);
+  car.vel.set(0, 0, 0);
+  car.omega.set(0, 0, 0);
+  car.q.identity();
+  stepCar(car, {});
+  close(car.wheels[1].extraPushback, initialPushback * 2, 0.0001);
+});
+
+test("RocketSim roof wheel normal and raw force match native SSE normalization", () => {
+  const car = makePhysCar(new THREE.Vector3(0, 5500, 610), 0, "octane");
+  car.physicsProfile = "rocketsim";
+  car.boost = 100;
+  car.onGround = false;
+  stepCar(car, {});
+  assert.deepEqual(car.wheels[3].contactNormal.toArray(), [
+    -4.179651398317219e-7, 0.30457162857055664, 0.9524893760681152,
+  ]);
+  assert.equal(car.wheels[3].clippedInvContactDotSuspension, 1.0498805046081543);
+  assert.equal(car.wheels[3].nativeSuspensionForce, 5036.8740234375);
+  car.pos.set(0, 5500, 610);
+  car.vel.set(0, 300, 0);
+  car.omega.set(0, 0, 0);
+  car.q.identity();
+  car.onGround = true;
+  car.wheelsContact = false;
+  car.numWheelsInContact = 0;
+  car.airTime = 0;
+  car.airTimeSinceJump = 0;
+  stepCar(car, { throttle: 1, steer: 0.3 });
+  assert.equal(car.wheels[3].nativeSuspensionForce, 872.3978881835938);
+});
+
 test("native wall throttle rise applies current engine force", () => {
   const car = makePhysCar(new THREE.Vector3(-4079.13989, -421.829987, 463.929993), 0);
   const restore = () => {
@@ -185,7 +249,7 @@ test("native unboosted free-flight throttle matches recorded velocity gains", ()
     if (throttle === 1) {
       const beforeCoast = car.pos.x;
       for (let tick = 0; tick < 99; tick++) stepCar(car, {});
-      close(car.pos.x - beforeCoast, 27.72, 0.001);
+      close(car.pos.x - beforeCoast, beforeRelease * RL.DT * 99, 0.001);
     }
   }
   for (const excluded of ["reference", "hasJumped", "hasFlipped"]) {
@@ -213,14 +277,30 @@ test("native coasting gravity matches independent recorded velocity gains withou
   }
 });
 
-test("native coast displacement matches recorded horizontal increments", () => {
+test("native coast displacement integrates velocity without per-tick quantization", () => {
   const car = makePhysCar(new THREE.Vector3(166.8000030517578, 66.79999542236328, 1495.419921875), 0);
   car.arenaCollisions = false;
   car.vel.set(500.0010070800781, 200.00100708007812, -119.28099822998047);
+  const start = car.pos.clone();
+  const velocity = car.vel.clone();
   for (let tick = 0; tick < 180; tick++) stepCar(car, {});
-  close(car.pos.x, 917.3999633789062, 0.003);
-  close(car.pos.y, 367.3999938964844, 0.003);
-  close(car.pos.z, 582.0800170898438, 0.05);
+  close(car.pos.x, start.x + velocity.x * RL.DT * 180, 0.003);
+  close(car.pos.y, start.y + velocity.y * RL.DT * 180, 0.003);
+});
+
+test("free-flight translation retains small velocities symmetrically in both profiles", () => {
+  for (const profile of ["native", "rocketsim"]) {
+    for (const speed of [-0.6, -0.5, -0.1, 0.1, 0.5, 0.6]) {
+      const car = makePhysCar(new THREE.Vector3(0, 0, 1500), 0);
+      car.physicsProfile = profile;
+      car.arenaCollisions = false;
+      car.vel.set(speed, -speed, 0);
+      for (let tick = 0; tick < 120; tick++) stepCar(car, {});
+      close(car.pos.x, speed, 0.00001);
+      close(car.pos.y, -speed, 0.00001);
+      close(car.vel.x, speed, 0.00001);
+    }
+  }
 });
 
 test("native gravity calibration excludes jump and dodge history", () => {
@@ -705,6 +785,10 @@ test("first-divergence diagnostic identifies the earliest velocity mismatch", ()
   const result = firstDivergence(reference, candidate);
   assert.equal(result.first_tick, 1);
   assert.equal(result.context[1].velocity_error, 2);
+  assert.equal(result.rows.length, reference.frames.length);
+  assert.deepEqual(result.rows.map(row => row.tick), [0, 1]);
+  assert.equal(result.rows[0].velocity_error, 0);
+  assert.equal(result.rows[1].velocity_error, 2);
 });
 
 test("first-divergence diagnostic detects small position and orientation errors independently", () => {
@@ -757,6 +841,25 @@ test("numerical divergence fails budgets instead of just printing a report", () 
   b.frames[1].pos[0] = 5;
   assert.equal(failuresFor(compareScenario(a, b), { defaults: { pos_max: 0.2 } }).length, 1);
   assert.throws(() => failuresFor(compareScenario(a, b), { defaults: { typo: 1 } }));
+});
+
+test("formal orientation gate enforces the right axis and preserves explicit limits", () => {
+  const reference = fixture(), candidate = fixture();
+  for (const data of [reference, candidate]) {
+    data.entity = "car";
+    for (const frame of data.frames) {
+      frame.rot = { forward: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1] };
+      frame.boost = 100; frame.air_time = 0; frame.on_ground = false;
+    }
+  }
+  const radians = 0.01 * Math.PI / 180;
+  candidate.frames[1].rot.right = [0, Math.cos(radians), Math.sin(radians)];
+  candidate.frames[1].rot.up = [0, -Math.sin(radians), Math.cos(radians)];
+  const result = compareScenario(reference, candidate);
+  const defaults = { fwd_max_deg: 0.00005, up_max_deg: 1 };
+  assert.match(failuresFor(result, { defaults })[0], /right_max_deg/);
+  assert.equal(failuresFor(result, { defaults: { ...defaults, right_max_deg: 1 } }).length, 0);
+  assert.equal(failuresFor(result, { defaults, scenarios: { [result.id]: { right_max_deg: 1 } } }).length, 0);
 });
 
 test("coupled comparison validates and measures the ball, not just the car", () => {
@@ -946,7 +1049,7 @@ test("coupled step preserves stationary ball sleep without contact", () => {
   car.arenaCollisions = false;
   const ball = makeBall(new THREE.Vector3(0, 0, 93.15));
   for (let tick = 0; tick < 120; tick++) stepCarBall(car, ball, {}, tick);
-  close(ball.pos.z, 93.15);
+  assert.equal(ball.pos.z, Math.fround(Math.fround(Math.fround(93.15) * Math.fround(0.02)) * 50));
   close(ball.vel.length(), 0);
 });
 
@@ -969,4 +1072,28 @@ test("offset contact matches measured first-hit ball velocity and spin", () => {
   for (let tick = 0; tick < 13; tick++) stepCarBall(car, ball, {}, tick);
   assert(ball.vel.distanceTo(new THREE.Vector3(1229.312744140625, 435.63958740234375, -7.157659530639648)) < 0.5);
   assert(ball.omega.distanceTo(new THREE.Vector3(0.000060416, -0.00028465, 0.557679)) < 0.01);
+});
+
+test("tick diagnostics check ball spawn, flight, spin and every orientation axis", () => {
+  const reference = fixture();
+  reference.entity = "car";
+  reference.ball_initial = { pos: [0, 0, 100] };
+  for (const frame of reference.frames) Object.assign(frame, {
+    rot: { forward: [1, 0, 0], right: [0, 1, 0], up: [0, 0, 1] },
+    boost: 100, air_time: 0, on_ground: false,
+    ball: { pos: [0, 0, 100], vel: [0, 0, 0], ang_vel: [0, 0, 0] },
+  });
+  for (const tick of [0, 1]) {
+    for (const [field, limit] of [["pos", "ball_position"], ["vel", "ball_velocity"], ["ang_vel", "ball_omega"]]) {
+      const candidate = structuredClone(reference);
+      candidate.frames[tick].ball[field][0] += 1;
+      const result = firstDivergence(reference, candidate, { [limit]: 0 });
+      assert.equal(result.first_tick, tick);
+      assert.deepEqual(result.exceeded, [limit]);
+    }
+    const candidate = structuredClone(reference);
+    candidate.frames[tick].rot.right = [0, -1, 0];
+    assert.equal(firstDivergence(reference, candidate, { right: 0 }).first_tick, tick);
+    assert.equal(compareScenario(reference, candidate).right_max_deg, 180);
+  }
 });

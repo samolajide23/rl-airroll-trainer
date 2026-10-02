@@ -1,0 +1,321 @@
+{
+  "engine": "carSim.js",
+  "scenarios": [
+    {
+      "id": "flip_cancel_sustained",
+      "path": "flip_cancel_sustained.json"
+    },
+    {
+      "id": "flip_cancel_partial",
+      "path": "flip_cancel_partial.json"
+    },
+    {
+      "id": "air_stall",
+      "path": "air_stall.json"
+    },
+    {
+      "id": "flip_reset_jump",
+      "path": "flip_reset_jump.json"
+    },
+    {
+      "id": "flip_window_last_tick",
+      "path": "flip_window_last_tick.json"
+    },
+    {
+      "id": "flip_window_expired",
+      "path": "flip_window_expired.json"
+    },
+    {
+      "id": "dominus_jump",
+      "path": "dominus_jump.json"
+    },
+    {
+      "id": "plank_jump",
+      "path": "plank_jump.json"
+    },
+    {
+      "id": "breakout_jump",
+      "path": "breakout_jump.json"
+    },
+    {
+      "id": "hybrid_jump",
+      "path": "hybrid_jump.json"
+    },
+    {
+      "id": "merc_jump",
+      "path": "merc_jump.json"
+    },
+    {
+      "id": "dominus_landing",
+      "path": "dominus_landing.json"
+    },
+    {
+      "id": "plank_landing",
+      "path": "plank_landing.json"
+    },
+    {
+      "id": "breakout_landing",
+      "path": "breakout_landing.json"
+    },
+    {
+      "id": "hybrid_landing",
+      "path": "hybrid_landing.json"
+    },
+    {
+      "id": "merc_landing",
+      "path": "merc_landing.json"
+    },
+    {
+      "id": "double_jump_early",
+      "path": "double_jump_early.json"
+    },
+    {
+      "id": "flip_window_before",
+      "path": "flip_window_before.json"
+    },
+    {
+      "id": "roof_recovery",
+      "path": "roof_recovery.json"
+    },
+    {
+      "id": "ceiling_impact",
+      "path": "ceiling_impact.json"
+    },
+    {
+      "id": "freefall_1s",
+      "path": "freefall_1s.json"
+    },
+    {
+      "id": "air_throttle_1s",
+      "path": "air_throttle_1s.json"
+    },
+    {
+      "id": "air_boost_1s",
+      "path": "air_boost_1s.json"
+    },
+    {
+      "id": "roll_right_1s",
+      "path": "roll_right_1s.json"
+    },
+    {
+      "id": "roll_left_1s",
+      "path": "roll_left_1s.json"
+    },
+    {
+      "id": "pitch_up_0_5s",
+      "path": "pitch_up_0_5s.json"
+    },
+    {
+      "id": "pitch_down_0_5s",
+      "path": "pitch_down_0_5s.json"
+    },
+    {
+      "id": "yaw_right_0_5s",
+      "path": "yaw_right_0_5s.json"
+    },
+    {
+      "id": "yaw_left_0_5s",
+      "path": "yaw_left_0_5s.json"
+    },
+    {
+      "id": "roll_then_release",
+      "path": "roll_then_release.json"
+    },
+    {
+      "id": "combo_pitch_roll_1s",
+      "path": "combo_pitch_roll_1s.json"
+    },
+    {
+      "id": "roll_from_pitch45",
+      "path": "roll_from_pitch45.json"
+    },
+    {
+      "id": "roll_from_pitch90",
+      "path": "roll_from_pitch90.json"
+    },
+    {
+      "id": "yaw_from_roll90",
+      "path": "yaw_from_roll90.json"
+    },
+    {
+      "id": "combo_from_yaw90",
+      "path": "combo_from_yaw90.json"
+    },
+    {
+      "id": "partial_inputs_air",
+      "path": "partial_inputs_air.json"
+    },
+    {
+      "id": "boost_and_pitch_1s",
+      "path": "boost_and_pitch_1s.json"
+    },
+    {
+      "id": "double_jump_air",
+      "path": "double_jump_air.json"
+    },
+    {
+      "id": "flip_forward_air",
+      "path": "flip_forward_air.json"
+    },
+    {
+      "id": "flip_side_air",
+      "path": "flip_side_air.json"
+    },
+    {
+      "id": "coast_from_spin",
+      "path": "coast_from_spin.json"
+    },
+    {
+      "id": "ground_rest_0_5s",
+      "path": "ground_rest_0_5s.json"
+    },
+    {
+      "id": "ground_throttle_2s",
+      "path": "ground_throttle_2s.json"
+    },
+    {
+      "id": "ground_throttle_4s",
+      "path": "ground_throttle_4s.json"
+    },
+    {
+      "id": "ground_boost_2s",
+      "path": "ground_boost_2s.json"
+    },
+    {
+      "id": "ground_steer_right_1s",
+      "path": "ground_steer_right_1s.json"
+    },
+    {
+      "id": "ground_steer_left_1s",
+      "path": "ground_steer_left_1s.json"
+    },
+    {
+      "id": "ground_coast_1s",
+      "path": "ground_coast_1s.json"
+    },
+    {
+      "id": "ground_brake_0_25s",
+      "path": "ground_brake_0_25s.json"
+    },
+    {
+      "id": "ground_powerslide_0_5s",
+      "path": "ground_powerslide_0_5s.json"
+    },
+    {
+      "id": "ground_jump_full_hold",
+      "path": "ground_jump_full_hold.json"
+    },
+    {
+      "id": "ground_jump_tap",
+      "path": "ground_jump_tap.json"
+    },
+    {
+      "id": "ground_flip_forward",
+      "path": "ground_flip_forward.json"
+    },
+    {
+      "id": "wall_drive_throttle_3s",
+      "path": "wall_drive_throttle_3s.json"
+    },
+    {
+      "id": "ground_reverse_2s",
+      "path": "ground_reverse_2s.json"
+    },
+    {
+      "id": "ground_reverse_steer",
+      "path": "ground_reverse_steer.json"
+    },
+    {
+      "id": "air_boost_depletion",
+      "path": "air_boost_depletion.json"
+    },
+    {
+      "id": "air_reverse_throttle",
+      "path": "air_reverse_throttle.json"
+    },
+    {
+      "id": "flip_forward_cancel",
+      "path": "flip_forward_cancel.json"
+    },
+    {
+      "id": "flip_diagonal_air",
+      "path": "flip_diagonal_air.json"
+    },
+    {
+      "id": "ground_powerslide_release",
+      "path": "ground_powerslide_release.json"
+    },
+    {
+      "id": "air_backflip",
+      "path": "air_backflip.json"
+    },
+    {
+      "id": "air_backflip_forward_speed",
+      "path": "air_backflip_forward_speed.json"
+    },
+    {
+      "id": "air_forwardflip_reverse_speed",
+      "path": "air_forwardflip_reverse_speed.json"
+    },
+    {
+      "id": "air_linear_speed_cap",
+      "path": "air_linear_speed_cap.json"
+    },
+    {
+      "id": "air_angular_speed_cap",
+      "path": "air_angular_speed_cap.json"
+    },
+    {
+      "id": "air_boost_one_tick",
+      "path": "air_boost_one_tick.json"
+    },
+    {
+      "id": "ground_analog_steer",
+      "path": "ground_analog_steer.json"
+    },
+    {
+      "id": "ground_fast_steer",
+      "path": "ground_fast_steer.json"
+    },
+    {
+      "id": "landing_wheels",
+      "path": "landing_wheels.json"
+    },
+    {
+      "id": "landing_powerslide",
+      "path": "landing_powerslide.json"
+    },
+    {
+      "id": "ceiling_fall_airroll",
+      "path": "ceiling_fall_airroll.json"
+    },
+    {
+      "id": "ground_jump_into_wall",
+      "path": "ground_jump_into_wall.json"
+    },
+    {
+      "id": "movement_bot_straight",
+      "path": "movement_bot_straight.json"
+    },
+    {
+      "id": "movement_bot_slalom",
+      "path": "movement_bot_slalom.json"
+    },
+    {
+      "id": "movement_bot_powerslide",
+      "path": "movement_bot_powerslide.json"
+    },
+    {
+      "id": "movement_bot_jump_dodge",
+      "path": "movement_bot_jump_dodge.json"
+    },
+    {
+      "id": "movement_bot_aerial",
+      "path": "movement_bot_aerial.json"
+    },
+    {
+      "id": "movement_bot_goal_roof",
+      "path": "movement_bot_goal_roof.json"
+    }
+  ]
+}
