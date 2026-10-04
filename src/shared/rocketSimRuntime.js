@@ -226,4 +226,13 @@ export function releaseRocketSimWorld(owner) {
   sessions.delete(owner);
 }
 
+export function resetRocketSimMatch(owner) {
+  const session = sessions.get(owner);
+  if (!session?.configuration) return;
+  session.published = [];
+  session.ball = null;
+  session.ballPublished = null;
+  for (let index = 0; index < 34; index++) engine._rs_world_pad(session.handle, index, 1);
+}
+
 export function rocketSimDiagnostics() { return { engine: engine ? "RocketSim 2.2.1 WASM" : null, worlds: sessions.size }; }

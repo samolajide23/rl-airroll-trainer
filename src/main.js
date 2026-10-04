@@ -582,6 +582,7 @@ async function startMode(def, options = {}) {
     if (import.meta.env.DEV) {
       globalThis.__activeMode = activeMode;
       globalThis.__gameCamera = camera;
+      globalThis.__gameRenderer = renderer;
       globalThis.__physicsDiagnostics = rocketSimDiagnostics;
     }
     renderer.render(scene, camera);

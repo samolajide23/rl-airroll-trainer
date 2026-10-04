@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { register } from "node:module";
 import * as THREE from "three";
 import { RL, makePhysCar, makeBall, stepCar, stepCarBall } from "../../src/shared/carPhysics.js";
 import { recentAttempts } from "../../src/shared/metrics.js";
@@ -13,6 +14,7 @@ import { formatSpeed } from "../../src/shared/rl-units.js";
 globalThis.window = { addEventListener() { }, innerWidth: 1024, innerHeight: 768 };
 globalThis.document = { addEventListener() { } };
 Object.defineProperty(globalThis, "navigator", { configurable: true, value: { getGamepads: () => [] } });
+register(`data:text/javascript,${encodeURIComponent('export async function load(url, context, nextLoad) { if (url.endsWith(".css")) return { format: "module", source: "export {};", shortCircuit: true }; return nextLoad(url, context); }')}`, import.meta.url);
 const { FreePlayMode } = await import("../../src/modes/freePlay.js");
 const { ArenaDrillBase } = await import("../../src/shared/arenaDrill.js");
 const { BallContactMode } = await import("../../src/modes/ballContact.js");

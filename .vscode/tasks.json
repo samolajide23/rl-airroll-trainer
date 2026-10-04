@@ -1324,36 +1324,12 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "Real replay camera verification short filter",
-			"type": "shell",
-			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
-			"args": [
-				"--test",
-				"--test-name-pattern=supplied",
-				"tools/telemetry/replay-viewer.test.mjs"
-			],
-			"isBackground": false,
-			"problemMatcher": []
-		},
-		{
 			"label": "Verify replay reset maneuver evidence",
 			"type": "shell",
 			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
 			"args": [
 				"--test",
 				"--test-name-pattern=confirmed replay reset",
-				"tools/telemetry/replay-viewer.test.mjs"
-			],
-			"isBackground": false,
-			"problemMatcher": []
-		},
-		{
-			"label": "Verify confirmed replay resets",
-			"type": "shell",
-			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
-			"args": [
-				"--test",
-				"--test-name-pattern=confirmed",
 				"tools/telemetry/replay-viewer.test.mjs"
 			],
 			"isBackground": false,
@@ -1586,7 +1562,7 @@
 			"args": [
 				"--input-type=module",
 				"-e",
-				"import { readdirSync } from 'node:fs'; import { join } from 'node:path'; import { spawnSync } from 'node:child_process'; const excluded = new Set(['vendor', 'node_modules', 'out', 'collision_meshes']); const collect = root => readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? excluded.has(entry.name) || entry.name.startsWith('build') ? [] : collect(join(root, entry.name)) : entry.name.endsWith('.test.mjs') ? [join(root, entry.name)] : []); const files = collect('tools').sort(); console.log('Discovered test files:', files.length); const result = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit', env: process.env }); process.exit(result.status ?? 1);"
+				"import { readdirSync, writeFileSync } from 'node:fs'; import { join } from 'node:path'; import { tmpdir } from 'node:os'; import { spawnSync } from 'node:child_process'; const excluded = new Set(['vendor', 'node_modules', 'out', 'collision_meshes']); const collect = root => readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? excluded.has(entry.name) || entry.name.startsWith('build') ? [] : collect(join(root, entry.name)) : entry.name.endsWith('.test.mjs') ? [join(root, entry.name)] : []); const files = collect('tools').sort(); console.log('Discovered test files:', files.length); const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', ...files], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env: process.env }); const output = (result.stdout ?? '') + (result.stderr ?? ''); const logPath = join(tmpdir(), 'airlab-octane-tests-' + Date.now() + '.log'); writeFileSync(logPath, output); console.log('Full test log:', logPath); const newline = String.fromCharCode(10); console.log(output.split(newline).slice(-18).join(newline)); console.log('Test exit status:', result.status, 'signal:', result.signal, 'error:', result.error?.message ?? 'none'); process.exit(result.status ?? 1);"
 			],
 			"isBackground": false,
 			"problemMatcher": []
@@ -1812,6 +1788,173 @@
 				"tools/telemetry/native-command.mjs",
 				"airroll_camera_controls",
 				"pitch-car"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Push latest code and verify remote",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\Git\\cmd\\git.exe\"",
+			"args": [
+				"push",
+				"origin",
+				"master"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify latest remote commit",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\Git\\cmd\\git.exe\"",
+			"args": [
+				"ls-remote",
+				"origin",
+				"refs/heads/master"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto nonblocking regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=inference|distinct|preserve|scheduler",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto arena inference regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=inference",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto full regressions",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto pipeline scheduler regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=scheduler",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto trial syntax check",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--check",
+				"tools/nexto/browser-trial.js"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto rendered trial syntax",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--check",
+				"tools/nexto/rendered-trial.js"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Controller input regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/physics-compare/input.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Catalog and drill contracts",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/physics-compare/catalog.test.mjs",
+				"tools/physics-compare/drills.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Telemetry completion checks",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/telemetry/research-capture.test.mjs",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Boost pad instancing regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=boost",
+				"tools/physics-compare/arena-visuals.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Arena visual instancing regressions",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/physics-compare/arena-visuals.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto seeded scenario regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=trial scenarios",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto scenario regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=scenarios",
+				"tools/nexto/nexto.test.mjs"
 			],
 			"problemMatcher": []
 		}

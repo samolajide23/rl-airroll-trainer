@@ -12,7 +12,7 @@ import { stepCarBall } from '../../src/shared/carPhysics.js';
 import { AerialBody } from '../../src/shared/aerial.js';
 import { applyToCarModel } from '../../src/shared/rl-physics.js';
 import { createSoccarBoostPads } from '../../src/shared/boostPads.js';
-import { configureRocketSim, stepRocketSim, stepRocketSimMatch, disposeRocketSimWorlds, rocketSimDiagnostics, syncRocketSimPads, releaseRocketSimWorld } from '../../src/shared/rocketSimRuntime.js';
+import { configureRocketSim, stepRocketSim, stepRocketSimMatch, disposeRocketSimWorlds, rocketSimDiagnostics, syncRocketSimPads, releaseRocketSimWorld, resetRocketSimMatch } from '../../src/shared/rocketSimRuntime.js';
 
 const build = process.env.ROCKETSIM_TEST_BUILD ?? 'build';
 const { default: createRocketSim } = await import(`./${build}/rocketsim.mjs`);
@@ -23,6 +23,46 @@ module._rs_destroy();
 configureRocketSim(module);
 
 const parityLimits = Object.freeze({ pos: 0.5, vel: 0.5, ang_vel: 0.001, basis: 0.001, boost: 0.01, air_time: 0.0003 });
+
+test('1v1 reset reuses its world with fresh-world car, ball and pad behavior', () => {
+  disposeRocketSimWorlds();
+  const reused = {}, fresh = {};
+  const setup = () => {
+    const cars = [makeCar(new THREE.Vector3(0, -4608, 17), Math.PI / 2),
+      makeCar(new THREE.Vector3(0, 4608, 17), -Math.PI / 2)];
+    cars.forEach((car, index) => { car.team = index; car.boost = 33.333333; });
+    return { cars, ball: makeBall(new THREE.Vector3(0, 0, 93.15)) };
+  };
+  const previous = setup();
+  for (let tick = 0; tick < 360; tick++) stepRocketSimMatch(reused, previous.cars, previous.ball,
+    [{ throttle: 1, boost: true, jump: tick === 100 }, { throttle: 1, boost: true }]);
+  const originalCreate = module._rs_world_create;
+  let creates = 0;
+  module._rs_world_create = (...args) => { creates++; return originalCreate(...args); };
+  try {
+    resetRocketSimMatch(reused);
+    const reusedState = setup(), freshState = setup();
+    for (let tick = 0; tick < 240; tick++) {
+      const controls = [{ throttle: 1, boost: true, jump: tick === 70 }, { throttle: 1, steer: 0.2 }];
+      stepRocketSimMatch(reused, reusedState.cars, reusedState.ball, controls);
+      stepRocketSimMatch(fresh, freshState.cars, freshState.ball, controls);
+      for (let index = 0; index < 2; index++) {
+        assert.deepEqual(reusedState.cars[index].pos.toArray(), freshState.cars[index].pos.toArray());
+        assert.deepEqual(reusedState.cars[index].vel.toArray(), freshState.cars[index].vel.toArray());
+        assert.deepEqual(reusedState.cars[index].q.toArray(), freshState.cars[index].q.toArray());
+        assert.equal(reusedState.cars[index].boost, freshState.cars[index].boost);
+      }
+      assert.deepEqual(reusedState.ball.pos.toArray(), freshState.ball.pos.toArray());
+      const reusedPads = createSoccarBoostPads(), freshPads = createSoccarBoostPads();
+      syncRocketSimPads(reusedPads, reused); syncRocketSimPads(freshPads, fresh);
+      assert.deepEqual(reusedPads.map(pad => [pad.active, pad.timer]), freshPads.map(pad => [pad.active, pad.timer]));
+    }
+    assert.equal(creates, 1);
+  } finally {
+    module._rs_world_create = originalCreate;
+    disposeRocketSimWorlds();
+  }
+});
 
 test('1v1 cars share one native world, one tick and physical bumps', () => {
   disposeRocketSimWorlds();

@@ -54,12 +54,16 @@ port, not an endorsement by its original authors.
 
 ONNX Runtime Web 1.24.3 loads from jsDelivr, so a network connection is required.
 The local model is SHA-256 checked before inference. The worker selects the
-highest-logit action every eight simulated ticks; physics pauses while a
-decision is pending. This differs from native RLBot timing. Hardcoded kickoff
-scripts and kickoff randomness are not ported. Match expiry is simplified:
+highest-logit action on a fixed eight-tick schedule. Physics continues during
+inference, retaining the previous action if a reply misses its boundary.
+The upstream 168-tick solo center-kickoff sequence is included; stochastic
+kickoff inference and teammate selection are not ported. Match expiry is simplified:
 the leading player wins at five minutes without native zero-second ball-ground
 continuation. Jump/flip availability is mapped from RocketSim state, not an
 RLBot packet. Native Nexto strength/parity is therefore not claimed.
+
+See [browser verification](docs/nexto-verification.md) for rendered five-minute
+trials, scheduler coverage, measured performance and remaining limitations.
 
 To reproduce the model export, run `tools/nexto/export_nexto.py` in a Python
 environment with `torch`, `numpy`, `onnx` and `onnxruntime`. Its 32-sample
@@ -179,7 +183,7 @@ changes across reloads.
 Training categories cover Foundations, Movement & Recoveries, Ground Control &
 Flicks, Shooting & Finishing, Aerial Control, Air Dribbles, Wall & Ceiling Play,
 Defense & Challenges, Kickoffs & 50/50s, Flip Resets and Pinches. The library
-contains 89 mechanics, including 12 playable training drills plus Free Play.
+contains 89 mechanics, including 17 playable drills.
 Existing playable names and IDs are preserved; the implementations below are
 grouped by their original training progression.
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { FreePlayMode } from "./freePlay.js";
 import { NextoBot } from "../shared/nextoBot.js";
-import { stepRocketSimMatch, syncRocketSimPads, releaseRocketSimWorld } from "../shared/rocketSimRuntime.js";
+import { stepRocketSimMatch, syncRocketSimPads, releaseRocketSimWorld, resetRocketSimMatch } from "../shared/rocketSimRuntime.js";
 import { makeCar, disposeCarVisual } from "../shared/car.js";
 import { makePhysCar, RL, applyToCarModel, alignCarVisualToHitbox, withFreeAirRoll } from "../shared/carPhysics.js";
 import { syncCarWheels } from "../shared/carVisualCalibration.js";
@@ -37,7 +37,7 @@ export class Arena1v1Mode extends FreePlayMode {
   }
 
   resetKickoff() {
-    releaseRocketSimWorld(this);
+    resetRocketSimMatch(this);
     super.resetState();
     this.physCar.team = 0;
     this.opponent = makePhysCar(new THREE.Vector3(0, 4608, 17), -Math.PI / 2, this.hitbox);
@@ -45,15 +45,16 @@ export class Arena1v1Mode extends FreePlayMode {
     this.opponent.id = 2;
     this.opponent.boost = RL.BOOST_SPAWN;
     this.nexto.reset();
+    this.nexto.startKickoff();
     this.goalPause = 0;
     this.syncOpponent();
   }
 
   _stepOnce(dt, input = {}) {
-    if (this.finished || this.goalPause > 0 || !this.nexto.ready || this.nexto.error || this.nexto.pending || this.nexto.remaining <= 0) return;
+    if (this.finished || this.goalPause > 0 || !this.nexto.ready) return;
     this.physCar.dodgeDeadzone = getPad().dodgeDeadzone;
     const controls = withFreeAirRoll(input, this.physCar);
-    const contacts = stepRocketSimMatch(this, [this.physCar, this.opponent], this.physBall, [controls, this.nexto.input], dt);
+    const contacts = stepRocketSimMatch(this, [this.physCar, this.opponent], this.physBall, [controls, this.nexto.inputForTick(this.physBall)], dt);
     const contact = contacts.find(Boolean);
     if (contact && !this.effectContactHeld) {
       this.contactEffects.hit(physToThree(contact.point, new THREE.Vector3()).multiplyScalar(ARENA_UU));
@@ -66,7 +67,7 @@ export class Arena1v1Mode extends FreePlayMode {
       this.ballVisual.quaternion.premultiply(this.ballSpinRotation);
     }
     syncRocketSimPads(this.pads, this);
-    this.nexto.remaining -= 1;
+    this.nexto.advanceTick();
     this.boosting = Boolean(this.physCar.isBoosting);
     this.sliding = Boolean(controls.handbrake ?? controls.powerslide) && this.physCar.onGround;
     syncCarWheels(this.carMesh, this.physCar, dt);
@@ -94,7 +95,7 @@ export class Arena1v1Mode extends FreePlayMode {
       if (this.goalPause <= 0 && !this.finished) this.resetKickoff();
     }
     if (!this.finished && this.goalPause <= 0) this.nexto.request(this.opponent, this.physCar, this.physBall, this.pads);
-    const paused = this.finished || this.goalPause > 0 || !this.nexto.ready || this.nexto.error || this.nexto.pending;
+    const paused = this.finished || this.goalPause > 0 || !this.nexto.ready;
     super.update(dt, now, paused ? 0 : dt);
     this.syncOpponent();
   }

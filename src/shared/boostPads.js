@@ -197,6 +197,41 @@ export function createBoostPadMeshes(parent, pads) {
     pad.mesh = mesh;
     group.add(mesh);
   }
+  const batches = new Map();
+  for (const pad of pads) {
+    for (const decoration of [...pad.mesh.children]) {
+      const key = `${pad.big}:${decoration.name}`;
+      const batch = batches.get(key) ?? [];
+      batch.push({ pad, decoration });
+      batches.set(key, batch);
+    }
+  }
+  for (const entries of batches.values()) {
+    const template = entries[0].decoration;
+    const instances = new THREE.InstancedMesh(template.geometry, template.material, entries.length);
+    instances.name = `${template.name}-instances`;
+    instances.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    instances.frustumCulled = false;
+    entries.forEach(({ pad, decoration }, index) => {
+      const marker = new THREE.Object3D();
+      marker.name = decoration.name;
+      marker.position.copy(decoration.position);
+      marker.quaternion.copy(decoration.quaternion);
+      marker.scale.copy(decoration.scale);
+      marker.updateMatrix();
+      pad.mesh.updateMatrix();
+      const matrix = new THREE.Matrix4().multiplyMatrices(pad.mesh.matrix, marker.matrix);
+      instances.setMatrixAt(index, matrix);
+      marker.userData.padInstance = { instances, index, matrix, hidden: new THREE.Matrix4().makeScale(0, 0, 0), active: true };
+      decoration.removeFromParent();
+      pad.mesh.add(marker);
+      if (decoration !== template) {
+        decoration.geometry.dispose();
+        decoration.material.dispose();
+      }
+    });
+    group.add(instances);
+  }
   // Templates are not used directly by a mesh; dispose the unused originals.
   smallMat.dispose();
   bigMat.dispose();
@@ -213,7 +248,15 @@ function syncPadVisual(pad) {
   material.opacity = 1;
   material.color.setHex(pad.active ? (pad.big ? 0xffc94a : 0xd4a017) : 0x313947);
   material.emissiveIntensity = pad.active ? (pad.big ? 0.65 : 0.4) : 0;
-  for (const child of pad.mesh.children) child.visible = pad.active;
+  for (const child of pad.mesh.children) {
+    child.visible = pad.active;
+    const instance = child.userData.padInstance;
+    if (instance && instance.active !== pad.active) {
+      instance.instances.setMatrixAt(instance.index, pad.active ? instance.matrix : instance.hidden);
+      instance.instances.instanceMatrix.needsUpdate = true;
+      instance.active = pad.active;
+    }
+  }
 }
 
 /**

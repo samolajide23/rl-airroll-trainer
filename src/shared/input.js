@@ -5,6 +5,7 @@ import { isTouchActionDown, readTouchControls } from "./touchControls.js";
 export const keys = new Set();
 const jumpTransitions = [];
 const consumedPadButtons = new Set();
+let activePadIndex = null;
 
 export function consumePadButtonUntilRelease(index) {
   consumedPadButtons.add(index);
@@ -23,9 +24,7 @@ export function resetJumpTransitions() {
 }
 
 export function readPhysicsControls() {
-  const controls = readControls();
-  if (jumpTransitions.length) controls.jump = jumpTransitions.shift();
-  return controls;
+  return readControlSnapshot(jumpTransitions.length ? jumpTransitions.shift() : undefined);
 }
 
 window.addEventListener("keydown", (e) => {
@@ -73,15 +72,23 @@ function keyHeld(action) {
 }
 
 /**
- * First connected gamepad, if any.
+ * Active connected gamepad, retaining selection while controllers are idle.
  * @returns {Gamepad | null}
  */
 export function getActiveGamepad() {
-  const pads = navigator.getGamepads?.() ?? [];
-  for (const pad of pads) {
-    if (pad) return pad;
+  const pads = Array.from(navigator.getGamepads?.() ?? []).filter(pad => pad && pad.connected !== false);
+  const current = pads.find(pad => pad.index === activePadIndex);
+  const cfg = getPad();
+  const hasActivity = pad => pad.buttons.some(button => button.pressed || button.value > 0.1)
+    || [cfg.pitchAxis, cfg.yawAxis].some(index => Math.abs(pad.axes[index] ?? 0) > cfg.deadzone)
+    || [cfg.lookXAxis, cfg.lookYAxis].some(index => Math.abs(pad.axes[index] ?? 0) > cfg.freeLookDeadzone);
+  const selected = current && hasActivity(current) ? current : pads.find(hasActivity) ?? current ?? pads[0];
+  const nextIndex = selected?.index ?? null;
+  if (nextIndex !== activePadIndex) {
+    consumedPadButtons.clear();
+    activePadIndex = nextIndex;
   }
-  return null;
+  return selected ?? null;
 }
 
 /**
@@ -149,6 +156,10 @@ export function readAerialInput() {
  * }}
  */
 export function readControls() {
+  return readControlSnapshot();
+}
+
+function readControlSnapshot(keyboardJump) {
   const cfg = getPad();
   let pitch = 0;
   let yaw = 0;
@@ -159,7 +170,7 @@ export function readControls() {
   let airLeft = keyHeld("airRollLeft");
   let airRight = keyHeld("airRollRight");
   let boost = keyHeld("boost");
-  let jump = keyHeld("jump") || keyHeld("jumpAlternative");
+  let jump = keyboardJump ?? (keyHeld("jump") || keyHeld("jumpAlternative"));
   let powerslide = keyHeld("powerslide");
   let airRoll = keyHeld("airRoll");
   let lookBehind = keyHeld("lookBehind");

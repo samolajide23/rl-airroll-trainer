@@ -17,6 +17,12 @@ self.onmessage = async ({ data }) => {
       const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), value => value.toString(16).padStart(2, "0")).join("");
       if (hash !== manifest.sha256) throw new Error("Nexto model hash mismatch");
       session = await runtime.InferenceSession.create(bytes, { executionProviders: ["wasm"] });
+      const warmup = await session.run({
+        query: new runtime.Tensor("float32", new Float32Array(32), [1, 1, 32]),
+        entities: new runtime.Tensor("float32", new Float32Array(37 * 24), [1, 37, 24]),
+        mask: new runtime.Tensor("float32", new Float32Array(37), [1, 37]),
+      });
+      if (warmup.logits.data.length !== 90 || !warmup.logits.data.every(Number.isFinite)) throw new Error("Invalid Nexto warmup output");
       self.postMessage({ type: "ready" });
     } else if (data.type === "step") {
       if (!session) throw new Error("Nexto policy is not ready");

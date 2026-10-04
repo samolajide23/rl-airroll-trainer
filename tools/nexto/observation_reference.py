@@ -1,5 +1,3 @@
-from agent import Agent
-from nexto_obs import NextoObsBuilder, BOOST_LOCATIONS
 import json
 import sys
 import types
@@ -18,6 +16,9 @@ sys.modules.update({"rlgym_compat": compat,
                     "rlgym_compat.common_values": values,
                     "rlgym_compat.game_state": state_module})
 sys.path.insert(0, str(Path(__file__).parent / "upstream"))
+
+from agent import Agent
+from nexto_obs import NextoObsBuilder, BOOST_LOCATIONS
 
 payload = json.load(sys.stdin)
 locations = [list(location) for location in BOOST_LOCATIONS]

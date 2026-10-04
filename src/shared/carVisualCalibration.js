@@ -134,11 +134,6 @@ export function syncCarJump(carMesh, car, dt = 0) {
     });
     const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8), material);
     burst.add(flash);
-    for (const lateral of [-0.24, 0.24]) {
-      const jet = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 8), material);
-      jet.position.set(lateral, -0.13, 0);
-      burst.add(jet);
-    }
     carMesh.add(burst);
     animation = {
       burst, flash, material, car, first: car.hasJumped,
@@ -158,15 +153,15 @@ export function syncCarJump(carMesh, car, dt = 0) {
   animation.second = car.hasDoubleJumped;
   animation.flip = car.hasFlipped;
   animation.age += Math.max(0, dt);
-  const progress = animation.age / 0.18;
+  const progress = animation.age / 0.12;
   animation.burst.visible = progress < 1;
   if (!animation.burst.visible) return;
   const scale = Math.abs(carMesh.scale.x) || 1;
   const underside = (car.hitbox.offset[2] - car.hitbox.size[2] / 2) * 0.01;
   animation.burst.position.set(0, (underside - 0.04) / scale, 0);
   animation.burst.scale.setScalar(1 / scale);
-  animation.flash.scale.set(0.22 + progress * 0.45, 0.035 + progress * 0.07, 0.35 + progress * 0.6);
-  animation.material.opacity = (1 - progress) ** 2 * 0.8;
+  animation.flash.scale.set(0.08 + progress * 0.05, 0.025 + progress * 0.015, 0.08 + progress * 0.05);
+  animation.material.opacity = (1 - progress) ** 2 * 0.55;
 }
 
 /** Apply suspension, steering and rolling to the existing separate wheel meshes. */

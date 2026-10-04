@@ -264,6 +264,7 @@ test("all 34 visible pads use standard coordinates, not pickup-volume sizing", (
   createBoostPadMeshes(root, pads);
   assert.equal(pads.length, 34);
   assert.equal(pads.filter(p => p.big).length, 6);
+  assert.equal(root.children[0].children.filter(child => child.isInstancedMesh).length, 7);
   for (const pad of pads) {
     assert.equal(pad.mesh.position.x, pad.x * 0.01);
     assert.equal(pad.mesh.position.z, pad.y * 0.01);
@@ -286,9 +287,20 @@ test("collected pad keeps its base and extinguishes all pickup graphics", () => 
   assert.equal(pad.timer, 10);
   assert.equal(pad.mesh.visible, true);
   assert(pad.mesh.children.every(child => !child.visible));
+  const matrix = new THREE.Matrix4();
+  for (const child of pad.mesh.children) {
+    const instance = child.userData.padInstance;
+    instance.instances.getMatrixAt(instance.index, matrix);
+    assert.equal(matrix.determinant(), 0);
+  }
   assert.equal(pad.mesh.material.emissiveIntensity, 0);
   resetBoostPads(pads);
   assert(pad.mesh.children.every(child => child.visible));
+  for (const child of pad.mesh.children) {
+    const instance = child.userData.padInstance;
+    instance.instances.getMatrixAt(instance.index, matrix);
+    assert(Math.abs(matrix.determinant() - 1) < 1e-6);
+  }
   assert.equal(pad.mesh.material.emissiveIntensity, 0.65);
 });
 

@@ -6,7 +6,95 @@ import { makeBall } from '../../src/shared/rl-physics.js';
 import { createSoccarBoostPads } from '../../src/shared/boostPads.js';
 import { NEXTO_ACTIONS, nextoObservation, nextoControls } from '../../src/shared/nextoObservation.js';
 import { spawnPythonSync } from '../python-runner.mjs';
-import { NextoBot } from '../../src/shared/nextoBot.js';
+import { NextoBot, NEXTO_KICKOFF } from '../../src/shared/nextoBot.js';
+import { createTrialScenarios, mirrorTrialScenario } from './trial-scenarios.js';
+
+test('Nexto scenarios swap roles with a field rotation without mutating starts', () => {
+  const next = createTrialScenarios(42);
+  for (let index = 0; index < 5; index++) {
+    const original = next();
+    const saved = structuredClone(original);
+    const swapped = mirrorTrialScenario(original);
+    assert.deepEqual(original, saved);
+    assert.deepEqual(swapped.cars[0].position,
+      [-original.cars[1].position[0], -original.cars[1].position[1], original.cars[1].position[2]]);
+    assert.equal(swapped.cars[1].inverted, original.cars[0].inverted);
+    assert.equal(swapped.cars[0].boost, original.cars[1].boost);
+    assert.deepEqual(mirrorTrialScenario(swapped).ball, original.ball);
+  }
+});
+
+test('Nexto trial scenarios are seeded, varied and finite with valid kickoff routing', () => {
+  const first = createTrialScenarios(42);
+  const second = createTrialScenarios(42);
+  const different = createTrialScenarios(43);
+  const scenarios = Array.from({ length: 15 }, first);
+  assert.deepEqual(scenarios, Array.from({ length: 15 }, second));
+  assert.notDeepEqual(scenarios, Array.from({ length: 15 }, different));
+  assert.equal(new Set(scenarios.map(scenario => scenario.name)).size, 5);
+  for (const scenario of scenarios) {
+    for (const car of scenario.cars) {
+      assert.ok([...car.position, car.yaw, car.boost].every(Number.isFinite));
+      assert.ok(car.boost >= 0 && car.boost <= 100);
+    }
+    assert.ok([...scenario.ball.position, ...scenario.ball.velocity].every(Number.isFinite));
+    if (scenario.scriptedKickoff) {
+      assert.equal(scenario.name, 'kickoff');
+      assert.ok(scenario.cars.every(car => car.position[0] === 0));
+    }
+  }
+});
+
+test('Nexto kickoff uses upstream 120 Hz phases and returns to policy after ball movement', () => {
+  const bot = Object.create(NextoBot.prototype);
+  bot.generation = 0;
+  bot.reset();
+  const ball = { pos: { y: 0 } };
+  bot.startKickoff();
+  assert.equal(NEXTO_KICKOFF.length, 168);
+  for (let tick = 0; tick < 168; tick++) {
+    assert.deepEqual(bot.inputForTick(ball), nextoControls(NEXTO_KICKOFF[tick]));
+  }
+  assert.deepEqual(NEXTO_KICKOFF[43], [1, 0, 0, 0, 0, 0, 1, 0]);
+  assert.deepEqual(NEXTO_KICKOFF[44], [1, -1, 0, 0, 0, 0, 1, 0]);
+  assert.deepEqual(NEXTO_KICKOFF[72], [1, 0, -0.7, 0.8, 0, 1, 1, 0]);
+  bot.inputForTick(ball);
+  assert.equal(bot.kickoffTick, -1);
+  bot.startKickoff();
+  ball.pos.y = 1;
+  bot.inputForTick(ball);
+  assert.equal(bot.kickoffTick, -1);
+  bot.error = 'failed';
+  assert.deepEqual(bot.inputForTick(ball), {});
+  bot.reset();
+  assert.equal(bot.kickoffTick, -1);
+});
+
+test('Nexto inference does not pause the arena simulation', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../../src/modes/arena1v1.js', import.meta.url), 'utf8');
+  const start = source.indexOf('  update(dt, now) {');
+  const end = source.indexOf('  updateDrillStatus()', start);
+  assert.ok(start >= 0 && end > start);
+  const simulationTimes = [];
+  class Base {
+    update(dt, now, simulationDt) { simulationTimes.push(simulationDt); }
+  }
+  const ArenaUpdate = new Function('Base', `return class extends Base { ${source.slice(start, end)} }`)(Base);
+  const mode = new ArenaUpdate();
+  Object.assign(mode, { finished: false, goalPause: 0,
+    nexto: { ready: true, pending: true, remaining: 0, request() {} },
+    syncOpponent() {} });
+  mode.update(1 / 60, 0);
+  mode.nexto.error = 'inference failed';
+  mode.update(1 / 60, 1);
+  mode.nexto.ready = false;
+  mode.update(1 / 60, 2);
+  mode.nexto.ready = true;
+  mode.finished = true;
+  mode.update(1 / 60, 3);
+  assert.deepEqual(simulationTimes, [1 / 60, 1 / 60, 0, 0]);
+});
 
 test('Nexto uses 90 distinct upstream actions and valid controls', () => {
   assert.equal(NEXTO_ACTIONS.length, 90);
@@ -97,16 +185,41 @@ test('Nexto scheduler holds eight ticks, rejects stale replies and disposes its 
     assert.equal(bot.remaining, 0);
     bot.request(...args);
     bot.worker.onmessage({data: {type: 'action', generation: bot.generation, action: 20, milliseconds: 2}});
+    assert.equal(bot.remaining, 0);
+    assert.deepEqual(bot.input, {});
+    bot.inputForTick(args[2]);
     assert.equal(bot.remaining, 8);
     assert.equal(bot.decisions, 1);
-    for (let tick = 0; tick < 8; tick++) { bot.request(...args); bot.remaining -= 1; }
-    assert.equal(bot.worker.messages.length, 3);
+    bot.advanceTick();
     bot.request(...args);
     assert.equal(bot.worker.messages.length, 4);
+    bot.worker.onmessage({data: {type: 'action', generation: bot.generation, action: 21, milliseconds: 2}});
+    for (let tick = 0; tick < 7; tick++) {
+      bot.inputForTick(args[2]);
+      assert.deepEqual(bot.action, NEXTO_ACTIONS[20]);
+      bot.advanceTick();
+      bot.request(...args);
+    }
+    assert.equal(bot.worker.messages.length, 4);
+    bot.inputForTick(args[2]);
+    assert.deepEqual(bot.action, NEXTO_ACTIONS[21]);
+    assert.equal(bot.remaining, 8);
+    bot.advanceTick();
+    bot.request(...args);
+    assert.equal(bot.worker.messages.length, 5);
+    for (let tick = 0; tick < 7; tick++) bot.advanceTick();
+    bot.inputForTick(args[2]);
+    assert.equal(bot.missedDeadlines, 1);
+    assert.equal(bot.remaining, 8);
+    bot.worker.onmessage({data: {type: 'action', generation: bot.generation, action: 22}});
+    assert.deepEqual(bot.action, NEXTO_ACTIONS[21]);
+    for (let tick = 0; tick < 8; tick++) bot.advanceTick();
+    bot.inputForTick(args[2]);
+    assert.deepEqual(bot.action, NEXTO_ACTIONS[22]);
     bot.worker.onmessage({data: {type: 'error', generation: bot.generation, message: 'failed'}});
     assert.equal(bot.pending, false);
     bot.request(...args);
-    assert.equal(bot.worker.messages.length, 4);
+    assert.equal(bot.worker.messages.length, 5);
     bot.dispose();
     assert.equal(bot.worker.terminated, true);
   } finally {
