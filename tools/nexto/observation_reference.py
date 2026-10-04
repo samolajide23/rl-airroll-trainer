@@ -1,3 +1,5 @@
+from agent import Agent
+from nexto_obs import NextoObsBuilder, BOOST_LOCATIONS
 import json
 import sys
 import types
@@ -16,8 +18,6 @@ sys.modules.update({"rlgym_compat": compat,
                     "rlgym_compat.common_values": values,
                     "rlgym_compat.game_state": state_module})
 sys.path.insert(0, str(Path(__file__).parent / "upstream"))
-from nexto_obs import NextoObsBuilder, BOOST_LOCATIONS
-from agent import Agent
 
 payload = json.load(sys.stdin)
 locations = [list(location) for location in BOOST_LOCATIONS]
@@ -33,9 +33,11 @@ ball_values = ball["pos"] + ball["vel"] + ball["omega"]
 encoded += ball_values + ball_values
 for index, car in enumerate(payload["cars"]):
     quaternion = car["q"]
-    car_values = car["pos"] + [quaternion[3], *quaternion[:3]] + car["vel"] + car["omega"]
+    car_values = car["pos"] + [quaternion[3], *
+                               quaternion[:3]] + car["vel"] + car["omega"]
     encoded += [index, car["team"]] + car_values + car_values
-    encoded += [0, 0, 0, 0, 0, car["demo"], car["ground"], 0, car["flip"], car["boost"] / 100]
+    encoded += [0, 0, 0, 0, 0, car["demo"],
+                car["ground"], 0, car["flip"], car["boost"] / 100]
 observations = builder.batched_build_obs(np.array([encoded], dtype=float))
 builder.add_actions(observations, np.array(payload["action"]), 0)
 query, entities, mask = observations[0]
