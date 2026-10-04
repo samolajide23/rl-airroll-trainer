@@ -243,7 +243,11 @@ export const PHASES = [
       mechanic("landing", "Landing Recovery", "Beginner", ["Recognise the landing surface", "Rotate wheels toward the surface", "Align with your momentum", "Land with powerslide"]),
       mechanic("air-roll-recovery", "Air Roll Recovery", "Beginner to Intermediate", ["Read your orientation before landing", "Use air roll to face the surface", "Align the wheels with your momentum", "Recover from wall and aerial touches"]),
       mechanic("flip-cancel", "Flip Cancel", "Beginner to Intermediate", ["Learn controlled front and backflips", "Apply opposite pitch to cancel rotation", "Compare early and late cancels", "Apply the technique to half flips and speed flips"], undefined, { tags: ["Flip Cancel"] }),
-      mechanic("half-flip", "Half Flip", "Beginner to Intermediate", ["Control a straight backflip", "Cancel the backflip with forward pitch", "Air roll and land facing the opposite direction", "Practise both directional air roll variations", "Recover from awkward starts and at speed"], undefined, { tags: ["Flip Cancel"] }),
+      mechanic("half-flip", "Half Flip Lab", "Beginner to Intermediate", ["Choose from six interactive teaching systems", "Learn the backflip, cancel, rotation and exit", "Compare normal-speed unaided results"], undefined, {
+        tags: ["Flip Cancel"], available: true,
+        load: () => import("./halfFlip.js"),
+        create: (ctx, options, module) => new module.HalfFlipMode(ctx, options),
+      }),
       mechanic("wavedash", "Wavedash", "Intermediate", ["Make a low jump", "Raise the nose before landing", "Dodge forward as the rear wheels touch", "Maintain momentum through the landing", "Progress to side and diagonal dashes"]),
       mechanic("speed-flip", "Speed Flip", "Advanced", ["Perform a shallow diagonal flip", "Immediately cancel with backward pitch", "Keep the nose on the intended line", "Recover wheels-down while boosting", "Compare arrival times from varied starts"], undefined, { tags: ["Flip Cancel", "Kickoff"] }),
       mechanic("chain-dash", "Chain Dashes", "Advanced", ["Keep each jump low", "Link dashes without losing momentum", "Vary direction while chaining", "Recover cleanly after the final dash"], undefined, { section: "Advanced variations" }),
@@ -362,6 +366,11 @@ export const PHASES = [
 ].map(phase => ({ ...phase, modes: phase.modes.map(mode => ({ ...mode, tags: [...new Set([...phase.tags, ...(mode.tags ?? [])])] })) }));
 
 export const FREE_PLAY = existing.get("arena");
-export const GAME_MODES = [FREE_PLAY, ...PHASES.flatMap(phase => phase.modes)];
+export const ARENA_1V1 = {
+  id: "arena-1v1", title: "Arena 1v1", description: "Five-minute soccar against Nexto.", available: true,
+  load: () => import("./arena1v1.js"),
+  create: (ctx, options, module) => new module.Arena1v1Mode(ctx),
+};
+export const GAME_MODES = [FREE_PLAY, ARENA_1V1, ...PHASES.flatMap(phase => phase.modes)];
 
 export { GHOST_ALIGN_DIFFICULTIES };

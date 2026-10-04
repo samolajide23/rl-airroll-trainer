@@ -4,12 +4,15 @@
 #include "bakkesmod/wrappers/GameObject/CarWrapper.h"
 #include "bakkesmod/wrappers/GameObject/BallWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CameraWrapper.h"
+#include "bakkesmod/wrappers/GameObject/CameraSettingsActorWrapper.h"
+#include "bakkesmod/wrappers/GameObject/CameraStates/CameraStateCarWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CarComponent/BoostWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CarComponent/JumpComponentWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CarComponent/VehicleSimWrapper.h"
 #include "bakkesmod/wrappers/GameObject/CarComponent/WheelWrapper.h"
 #include "bakkesmod/wrappers/arraywrapper.h"
 #include "bakkesmod/wrappers/GameEvent/ServerWrapper.h"
+#include "bakkesmod/wrappers/PlayerControllerWrapper.h"
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -33,6 +36,34 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
     size_t sequence = 0;
     size_t inputCount = 0;
     size_t cameraCount = 0;
+    double previousCameraElapsed = -1;
+    struct CameraCase
+    {
+        ProfileCameraSettings settings;
+        std::string label;
+        bool ballCam;
+        bool shake;
+        float lookUp = 1;
+    };
+    std::vector<CameraCase> cameraCases;
+    bool batchActive = false;
+    size_t batchIndex = 0;
+    double caseStarted = 0;
+    ProfileCameraSettings savedSettings;
+    std::string savedMode;
+    bool savedSecondary = false;
+    bool savedBehind = false;
+    float savedLookUp = 0;
+    float consumedLookUp = 0;
+    float desiredLookUp = 0;
+    double consumedLookUpElapsed = -1;
+    float swivelDeltaTime = 0;
+    Rotator swivelBefore;
+    bool dynamicBatch = false;
+    bool fovBatch = false;
+    std::string armBatch;
+    bool savedShake = false;
+    RBState savedCar, savedBall;
     static constexpr size_t MAX_BYTES = 32 * 1024 * 1024;
 
     static void vector(std::ostream &out, const Vector &value)
@@ -92,7 +123,231 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
         out.imbue(std::locale::classic());
         out << std::setprecision(9) << "{\"type\":\"" << type
             << "\",\"sequence\":" << sequence++ << ",\"elapsed\":" << elapsed();
+        if (batchActive)
+        {
+            const auto &entry = cameraCases[batchIndex];
+            out << ",\"camera_case\":\"" << cameraCases[batchIndex].label
+                << "\",\"case_elapsed\":" << elapsed() - caseStarted
+                << ",\"requested_camera\":{\"ball_cam\":" << (entry.ballCam ? "true" : "false")
+                << ",\"fov\":" << entry.settings.FOV << ",\"height\":" << entry.settings.Height
+                << ",\"angle\":" << entry.settings.Pitch << ",\"distance\":" << entry.settings.Distance
+                << ",\"stiffness\":" << entry.settings.Stiffness << ",\"swivel_speed\":" << entry.settings.SwivelSpeed
+                << ",\"transition_speed\":" << entry.settings.TransitionSpeed
+                << ",\"look_up\":" << entry.lookUp
+                << ",\"shake\":" << (entry.shake ? "true" : "false") << '}';
+            auto controller = gameWrapper->GetPlayerController();
+            if (!controller.IsNull()) out << ",\"camera_input\":{\"look_up\":" << controller.GetALookUp()
+                << ",\"consumed_look_up\":" << consumedLookUp
+                << ",\"consumed_elapsed\":" << consumedLookUpElapsed << '}';
+        }
         return out;
+    }
+
+    void restoreBatch()
+    {
+        if (!batchActive) return;
+        batchActive = false;
+        if (!gameWrapper->IsInFreeplay() || gameWrapper->IsInOnlineGame()) return;
+        auto camera = gameWrapper->GetCamera();
+        auto car = gameWrapper->GetLocalCar();
+        auto server = gameWrapper->GetGameEventAsServer();
+        if (!camera.IsNull())
+        {
+            camera.SetCameraSettings(savedSettings);
+            camera.SetbDisableCameraShake(!savedShake);
+            auto actor = camera.GetCameraSettingsActor();
+            if (!actor.IsNull())
+            {
+                actor.SetUsingSecondaryCamera(savedSecondary);
+                actor.SetUsingBehindView(savedBehind);
+            }
+        }
+        auto controller = gameWrapper->GetPlayerController();
+        if (!controller.IsNull()) controller.SetALookUp(savedLookUp);
+        if (!car.IsNull()) car.SetPhysicsState(savedCar);
+        if (!server.IsNull())
+        {
+            auto ball = server.GetBall();
+            if (!ball.IsNull()) ball.SetPhysicsState(savedBall);
+        }
+    }
+
+    void applyCameraCase()
+    {
+        auto camera = gameWrapper->GetCamera();
+        const auto &entry = cameraCases[batchIndex];
+        camera.SetbDisableCameraShake(!entry.shake);
+        auto actor = camera.GetCameraSettingsActor();
+        if (!actor.IsNull()) actor.SetUsingSecondaryCamera(entry.ballCam);
+        camera.SetCameraSettings(entry.settings);
+        caseStarted = elapsed();
+        cvarManager->log("Camera batch: " + entry.label);
+    }
+
+    void startCameraBatch(bool dynamic = false, bool fov = false, std::string arm = "")
+    {
+        std::lock_guard<std::recursive_mutex> lock(stateMutex);
+        if (recording || !gameWrapper->IsInFreeplay() || gameWrapper->IsInOnlineGame()) return;
+        auto camera = gameWrapper->GetCamera();
+        auto car = gameWrapper->GetLocalCar();
+        auto server = gameWrapper->GetGameEventAsServer();
+        if (camera.IsNull() || car.IsNull() || server.IsNull()) return;
+        auto ball = server.GetBall();
+        if (ball.IsNull()) return;
+        auto actor = camera.GetCameraSettingsActor();
+        if (actor.IsNull()) return;
+        savedSettings = camera.GetCameraSettings();
+        savedMode = camera.GetCameraState();
+        savedSecondary = actor.GetUsingSecondaryCamera();
+        savedBehind = actor.GetUsingBehindView();
+        auto controller = gameWrapper->GetPlayerController();
+        if (controller.IsNull()) return;
+        savedLookUp = controller.GetALookUp();
+        dynamicBatch = dynamic;
+        fovBatch = fov;
+        armBatch = arm;
+        savedShake = camera.IsCameraShakeOn();
+        savedCar = car.GetRBState();
+        savedBall = ball.GetRBState();
+        cameraCases.clear();
+        const std::vector<std::pair<std::string, float ProfileCameraSettings::*>> fields = {
+            {"fov", &ProfileCameraSettings::FOV}, {"height", &ProfileCameraSettings::Height},
+            {"angle", &ProfileCameraSettings::Pitch}, {"distance", &ProfileCameraSettings::Distance},
+            {"stiffness", &ProfileCameraSettings::Stiffness}, {"swivel", &ProfileCameraSettings::SwivelSpeed},
+            {"transition", &ProfileCameraSettings::TransitionSpeed}};
+        const float values[7][3] = {{60, 90, 110}, {40, 100, 200}, {-15, -5, 0},
+            {100, 270, 400}, {0, 0.5f, 1}, {1, 5, 10}, {1, 1.5f, 2}};
+        for (bool ballCam : {false, true})
+        {
+            const std::string mode = ballCam ? "ball/" : "car/";
+            for (size_t field = 0; field < fields.size(); ++field)
+                for (size_t level = 0; level < 3; ++level)
+                {
+                    auto settings = savedSettings;
+                    settings.*(fields[field].second) = values[field][level];
+                    cameraCases.push_back({settings, mode + fields[field].first + "/" + std::to_string(level), ballCam, false});
+                }
+            for (bool shake : {false, true})
+                cameraCases.push_back({savedSettings, mode + "shake/" + (shake ? "1" : "0"), ballCam, shake});
+        }
+        if (dynamicBatch)
+        {
+            cameraCases.clear();
+            for (bool ballCam : {false, true})
+                for (const auto &control : {std::string("swivel"), std::string("transition"), std::string("rear")})
+                    for (size_t level = 0; level < 3; ++level)
+                    {
+                        auto settings = savedSettings;
+                        settings.SwivelSpeed = 1 + 4.5f * level;
+                        settings.TransitionSpeed = 1 + 0.5f * level;
+                        cameraCases.push_back({settings, std::string(ballCam ? "ball/" : "car/") + control + "/" + std::to_string(level), ballCam, false});
+                    }
+        }
+        if (fovBatch)
+        {
+            cameraCases.clear();
+            for (bool ballCam : {false, true})
+                for (size_t level = 0; level < 5; ++level)
+                {
+                    auto settings = savedSettings;
+                    const float fovs[] = {60, 90, 110, 90, 60};
+                    settings.FOV = fovs[level];
+                    cameraCases.push_back({settings, std::string(ballCam ? "ball/fov/" : "car/fov/") + std::to_string(level), ballCam, false});
+                }
+        }
+        if (armBatch == "pitch-car" || armBatch == "pitch-ball")
+        {
+            const bool selectedBallCam = armBatch == "pitch-ball";
+            cameraCases.clear();
+            for (bool ballCam : {false, true})
+                if (ballCam == selectedBallCam)
+                for (size_t speed = 0; speed < 3; ++speed)
+                    for (float input : {-1.0f, -0.5f, 0.5f})
+                    {
+                        auto settings = savedSettings;
+                        settings.SwivelSpeed = 1 + 4.5f * speed;
+                        cameraCases.push_back({settings, std::string(ballCam ? "ball/" : "car/") +
+                            "swivel/" + std::to_string(speed) + "/" + std::to_string(input), ballCam, false, input});
+                    }
+            armBatch.clear();
+        }
+        if (!armBatch.empty())
+        {
+            cameraCases.clear();
+            for (bool ballCam : {false, true})
+                for (const auto &field : fields)
+                    if (field.first == armBatch)
+                        for (size_t level = 0; level < 5; ++level)
+                        {
+                            auto settings = savedSettings;
+                            const size_t fieldIndex = &field - fields.data();
+                            const size_t levels[] = {0, 1, 2, 1, 0};
+                            settings.*(field.second) = values[fieldIndex][levels[level]];
+                            cameraCases.push_back({settings, std::string(ballCam ? "ball/" : "car/") + armBatch + "/" + std::to_string(level), ballCam, false});
+                        }
+            if (cameraCases.empty()) return;
+        }
+        start();
+        if (!recording) return;
+        batchIndex = 0;
+        batchActive = true;
+        consumedLookUpElapsed = -1;
+        applyCameraCase();
+    }
+
+    void advanceCameraBatch()
+    {
+        std::lock_guard<std::recursive_mutex> lock(stateMutex);
+        if (!batchActive || !allowed()) return;
+        if (elapsed() - caseStarted >= (fovBatch || !armBatch.empty() ? 2.8 : dynamicBatch ? 2.2 : 0.85))
+        {
+            if (++batchIndex >= cameraCases.size())
+            {
+                stop("camera_batch_complete");
+                return;
+            }
+            applyCameraCase();
+        }
+        auto car = gameWrapper->GetLocalCar();
+        auto server = gameWrapper->GetGameEventAsServer();
+        auto camera = gameWrapper->GetCamera();
+        if (car.IsNull() || server.IsNull() || camera.IsNull()) { stop("batch_actor_missing"); return; }
+        auto ball = server.GetBall();
+        if (ball.IsNull()) { stop("batch_ball_missing"); return; }
+        const float phase = static_cast<float>(elapsed() - caseStarted);
+        if (dynamicBatch)
+        {
+            const auto &entry = cameraCases[batchIndex];
+            auto actor = camera.GetCameraSettingsActor();
+            auto controller = gameWrapper->GetPlayerController();
+            if (actor.IsNull() || controller.IsNull()) { stop("batch_controller_missing"); return; }
+            const bool pulse = !fovBatch && armBatch.empty() && phase >= 0.75f && phase < 1.5f;
+            controller.SetALookUp(entry.label.find("swivel") != std::string::npos && pulse ? entry.lookUp : 0);
+            actor.SetUsingBehindView(entry.label.find("rear") != std::string::npos && pulse);
+            actor.SetUsingSecondaryCamera(entry.label.find("transition") != std::string::npos && pulse ? !entry.ballCam : entry.ballCam);
+            const auto actual = camera.GetCameraSettings();
+            const auto requested = entry.settings;
+            if (phase < 0.1f || actual.FOV != requested.FOV || actual.Height != requested.Height ||
+                actual.Pitch != requested.Pitch || actual.Distance != requested.Distance ||
+                actual.Stiffness != requested.Stiffness || actual.SwivelSpeed != requested.SwivelSpeed ||
+                actual.TransitionSpeed != requested.TransitionSpeed)
+                camera.SetCameraSettings(requested);
+            car.SetLocation(Vector(0, 0, 17));
+            car.SetRotation(Rotator(0, 0, 0));
+            car.SetVelocity(Vector(0, 0, 0));
+            car.SetAngularVelocity(Vector(0, 0, 0), false);
+            ball.SetLocation(Vector(1000, 600, 300));
+            ball.SetVelocity(Vector(0, 0, 0));
+            ball.SetAngularVelocity(Vector(0, 0, 0), false);
+            return;
+        }
+        car.SetLocation(Vector(phase > 0.55f ? (phase - 0.55f) * 1000 : 0, 0, 17));
+        car.SetRotation(Rotator(0, 0, 0));
+        car.SetVelocity(Vector(phase > 0.55f ? 1000 : 0, 0, 0));
+        car.SetAngularVelocity(Vector(0, 0, 0), false);
+        ball.SetLocation(Vector(1000, phase > 0.7f ? 300 : 0, phase > 0.55f ? 400 : 93.15f));
+        ball.SetVelocity(Vector(0, 0, 0));
+        ball.SetAngularVelocity(Vector(0, 0, 0), false);
     }
 
     void captureInput()
@@ -219,6 +474,70 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
         const auto swivel = camera.GetCurrentSwivel();
         const auto settings = camera.GetCameraSettings();
         const auto screen = gameWrapper->GetScreenSize();
+        const auto cameraElapsed = elapsed();
+        auto car = gameWrapper->GetLocalCar();
+        auto server = gameWrapper->GetGameEventAsServer();
+        auto settingsActor = camera.GetCameraSettingsActor();
+        auto blender = camera.GetBlender();
+        const auto defaults = CameraStateCarWrapper::GetInstanceWithDefaultValues();
+        out << ",\"camera_callback_interval\":";
+        if (previousCameraElapsed < 0) out << "null";
+        else out << cameraElapsed - previousCameraElapsed;
+        previousCameraElapsed = cameraElapsed;
+        out << ",\"state_name\":" << std::quoted(camera.GetCameraState())
+            << ",\"behind_view\":";
+        if (settingsActor.IsNull()) out << "null";
+        else out << (settingsActor.GetUsingBehindView() ? "true" : "false");
+        out << ",\"native_rates\":{\"swivel_fast\":" << camera.GetSwivelFastSpeed()
+            << ",\"swivel_decay\":" << camera.GetSwivelDieRate()
+            << ",\"clip\":" << camera.GetClipRate() << "},\"car_camera_default_rates\":";
+        if (defaults.IsNull()) out << "null";
+        else out << "{\"to_ground\":" << defaults.GetInterpToGroundRate()
+            << ",\"to_air\":" << defaults.GetInterpToAirRate()
+            << ",\"ground_rotation\":" << defaults.GetGroundRotationInterpRate()
+            << ",\"wall_rotation\":" << defaults.GetGroundRotationInterpRateWall()
+            << ",\"fov\":" << defaults.GetFOVInterpSpeed()
+            << ",\"supersonic_fov\":" << defaults.GetSupersonicFOVInterpSpeed()
+            << ",\"ground_normal\":" << defaults.GetGroundNormalInterpRate() << '}';
+        out << ",\"blender_state\":";
+        if (blender.IsNull()) out << "null";
+        else {
+            const auto activeState = blender.GetCameraState();
+            if (activeState.IsNull()) out << "null";
+            else out << std::quoted(activeState.GetStateType());
+        }
+        out << ",\"transition\":";
+        if (blender.IsNull()) out << "null";
+        else {
+            const auto transition = blender.GetTransition();
+            out << "{\"started\":" << (transition.started ? "true" : "false");
+            if (transition.started) {
+                out << ",\"remaining_time\":" << transition.remaining_time
+                    << ",\"blend_time\":" << transition.blend_params.blend_time
+                    << ",\"blend_function\":" << static_cast<unsigned int>(transition.blend_params.blend_function)
+                    << ",\"blend_exp\":" << transition.blend_params.blend_exp
+                    << ",\"lock_outgoing\":" << (transition.blend_params.lock_outgoing ? "true" : "false")
+                    << ",\"snapshot\":{\"focus\":";
+                vector(out, transition.snapshot_pov.focus);
+                const auto snapshotRotation = transition.snapshot_pov.rotation;
+                out << ",\"rotator_unreal\":[" << snapshotRotation.Pitch << ',' << snapshotRotation.Yaw << ',' << snapshotRotation.Roll
+                    << "],\"distance\":" << transition.snapshot_pov.distance
+                    << ",\"fov\":" << transition.snapshot_pov.fov << ",\"pos\":";
+                vector(out, transition.snapshot_pov.calculated_location);
+                out << '}';
+            }
+            out << '}';
+        }
+        out << ",\"observed_car\":";
+        if (car.IsNull()) out << "null";
+        else body(out, car.GetRBState());
+        out << ",\"observed_ball\":";
+        if (server.IsNull()) out << "null";
+        else {
+            auto ball = server.GetBall();
+            if (ball.IsNull()) out << "null";
+            else body(out, ball.GetRBState());
+        }
         out << ",\"pos\":";
         vector(out, camera.GetLocation());
         out << ",\"rotator_unreal\":[" << rotation.Pitch << ',' << rotation.Yaw << ',' << rotation.Roll << ']'
@@ -276,8 +595,9 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
             sequence = 0;
             inputCount = 0;
             cameraCount = 0;
+            previousCameraElapsed = -1;
             started = std::chrono::steady_clock::now();
-            append("{\"type\":\"header\",\"version\":1,\"recorder\":\"0.3.0\",\"bakkesmod_version\":" + std::to_string(gameWrapper->GetBakkesModVersion()) + ",\"body_id\":" + std::to_string(car.GetLoadoutBody()) + ",\"position_units\":\"uu\",\"rotation_units\":\"unreal_rotator\","
+            append("{\"type\":\"header\",\"version\":1,\"recorder\":\"0.4.0\",\"camera_diagnostics_version\":1,\"bakkesmod_version\":" + std::to_string(gameWrapper->GetBakkesModVersion()) + ",\"body_id\":" + std::to_string(car.GetLoadoutBody()) + ",\"position_units\":\"uu\",\"rotation_units\":\"unreal_rotator\","
                                                                                                                                                                                                                       "\"input_phase\":\"post_SetVehicleInput_not_post_physics\","
                                                                                                                                                                                                                       "\"camera_phase\":\"drawable\",\"sample_rate_assumed\":false}");
             recording = true;
@@ -298,6 +618,7 @@ class AirrollRecorder : public BakkesMod::Plugin::BakkesModPlugin, public Bakkes
         if (!recording)
             return;
         stoppedElapsed = elapsed();
+        restoreBatch();
         recording = false;
         std::ofstream out(destination, std::ios::out | std::ios::trunc);
         if (!out)
@@ -388,19 +709,83 @@ public:
                                       { start(); }, "Start local Free Play telemetry", 0);
         cvarManager->registerNotifier("airroll_record_stop", [this](std::vector<std::string>)
                                       { stop("manual"); }, "Stop and save telemetry", 0);
+        cvarManager->registerNotifier("airroll_camera_batch", [this](std::vector<std::string>)
+                          { startCameraBatch(); }, "Run local native camera setting sweep", 0);
+        cvarManager->registerNotifier("airroll_camera_controls", [this](std::vector<std::string> arguments)
+                                                    { const std::string kind = arguments.size() > 1 ? arguments[1] : "";
+                                                        if (kind == "targets") { cvarManager->executeCommand("airroll_camera_targets"); return; }
+                                                        startCameraBatch(true, kind == "fov", kind != "fov" ? kind : ""); }, "Run local native camera control sweep", 0);
+        cvarManager->registerNotifier("airroll_camera_targets", [this](std::vector<std::string>)
+                       {
+                           std::lock_guard<std::recursive_mutex> lock(stateMutex);
+                           if (recording || !gameWrapper->IsInFreeplay() || gameWrapper->IsInOnlineGame()) return;
+                           auto camera = gameWrapper->GetCamera();
+                           if (camera.IsNull()) return;
+                           for (int step = -20; step <= 20; ++step)
+                           {
+                               const float input = step / 20.0f;
+                               const auto desired = camera.GetDesiredSwivel(input, 0);
+                               cvarManager->log("Camera target query: " + std::to_string(input) + " " + std::to_string(desired.Pitch));
+                           }
+                       }, "Query native swivel targets outside recording in local Free Play", 0);
+        gameWrapper->HookEvent("Function TAGame.Car_TA.SetVehicleInput", [this](std::string)
+                       { advanceCameraBatch(); });
         gameWrapper->HookEventPost("Function TAGame.Car_TA.SetVehicleInput", [this](std::string)
                                    { captureInput(); });
+        gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.Camera_TA.UpdateSwivel", [this](ActorWrapper, void *params, std::string)
+                       {
+                           std::lock_guard<std::recursive_mutex> lock(stateMutex);
+                           if (!batchActive || !dynamicBatch || !allowed()) return;
+                           auto controller = gameWrapper->GetPlayerController();
+                           if (controller.IsNull()) return;
+                           const auto &entry = cameraCases[batchIndex];
+                           const double phase = elapsed() - caseStarted;
+                           controller.SetALookUp(!fovBatch && armBatch.empty() &&
+                               entry.label.find("swivel") != std::string::npos &&
+                               phase >= 0.75 && phase < 1.5 ? entry.lookUp : 0);
+                           consumedLookUp = controller.GetALookUp();
+                           consumedLookUpElapsed = elapsed();
+                           swivelDeltaTime = params ? *static_cast<float *>(params) : 0;
+                           auto camera = gameWrapper->GetCamera();
+                           if (camera.IsNull()) { swivelDeltaTime = 0; return; }
+                           swivelBefore = camera.GetCurrentSwivel();
+                       });
+        gameWrapper->HookEventPost("Function TAGame.Camera_TA.UpdateSwivel", [this](std::string)
+                       {
+                           std::lock_guard<std::recursive_mutex> lock(stateMutex);
+                           if (!batchActive || !dynamicBatch || !allowed() || swivelDeltaTime <= 0) return;
+                           auto camera = gameWrapper->GetCamera();
+                           if (camera.IsNull()) return;
+                           const auto after = camera.GetCurrentSwivel();
+                           const Rotator desired{static_cast<int>((desiredLookUp < 0 ? 8900 : 5500) * desiredLookUp), 0, 0};
+                           auto out = sample("camera_swivel_update");
+                           out << ",\"desired_source\":\"native_target_argument_with_queried_range\",\"desired_look_up\":" << desiredLookUp << ",\"delta_time\":" << swivelDeltaTime
+                               << ",\"before_unreal\":[" << swivelBefore.Pitch << ',' << swivelBefore.Yaw << ',' << swivelBefore.Roll
+                               << "],\"after_unreal\":[" << after.Pitch << ',' << after.Yaw << ',' << after.Roll
+                               << "],\"desired_unreal\":[" << desired.Pitch << ',' << desired.Yaw << ',' << desired.Roll << "]}";
+                           append(out.str());
+                       });
+        gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.Camera_TA.GetDesiredSwivel", [this](ActorWrapper, void *params, std::string)
+                       {
+                           std::lock_guard<std::recursive_mutex> lock(stateMutex);
+                           if (!batchActive || !dynamicBatch || !allowed() || !params) return;
+                           desiredLookUp = *static_cast<float *>(params);
+                       });
         gameWrapper->RegisterDrawable([this](CanvasWrapper)
                                       { captureCamera(); });
-        cvarManager->log("Airroll recorder loaded. Local Free Play only; no gameplay changes.");
+        cvarManager->log("Airroll recorder loaded. Capture is read-only; explicit camera batch changes and restores local Free Play state.");
     }
 
     void onUnload() override
     {
         stop("unload");
         gameWrapper->UnhookEventPost("Function TAGame.Car_TA.SetVehicleInput");
+        gameWrapper->UnhookEvent("Function TAGame.Car_TA.SetVehicleInput");
+        gameWrapper->UnhookEvent("Function TAGame.Camera_TA.UpdateSwivel");
+        gameWrapper->UnhookEvent("Function TAGame.Camera_TA.GetDesiredSwivel");
+        gameWrapper->UnhookEventPost("Function TAGame.Camera_TA.UpdateSwivel");
         gameWrapper->UnregisterDrawables();
     }
 };
 
-BAKKESMOD_PLUGIN(AirrollRecorder, "Airroll telemetry recorder", "0.3.0", PLUGINTYPE_FREEPLAY)
+BAKKESMOD_PLUGIN(AirrollRecorder, "Airroll telemetry recorder", "0.4.0", PLUGINTYPE_FREEPLAY)

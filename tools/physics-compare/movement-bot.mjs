@@ -10,7 +10,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
 const outputIndex = process.argv.indexOf("--out");
 if (outputIndex >= 0 && !process.argv[outputIndex + 1]) throw new Error("--out requires a directory");
-const output = outputIndex >= 0 ? path.resolve(process.argv[outputIndex + 1]) : path.join(here, "out/movement-bot");
+const output = outputIndex >= 0 ? path.resolve(process.argv[outputIndex + 1]) : path.join(here,
+  process.argv.includes("--expanded") ? "out/expanded-audit-v1" : "out/movement-bot");
 
 export function buildMovementScenarios(source) {
   if (source.scenarios.some(scenario => scenario.ball || scenario.entity === "ball")) throw new Error("Movement bot requires car-only source scenarios");
@@ -81,6 +82,56 @@ export function buildAuditScenarios(movement, balls, contacts) {
   for (const scenario of buildMovementScenarios(movement).scenarios) add(scenario, movement.defaults, "movement");
   for (const scenario of contacts.scenarios) add(scenario, contacts.defaults, "contact");
   return validateAuditScenarios({ version: 3, notes: "Independent unseeded every-tick state audit; unsupported fields fail coverage. Live balls in every car case.", defaults: movement.defaults, scenarios });
+}
+
+export function buildExpandedAuditScenarios(movement, balls, contacts) {
+  const baseline = buildAuditScenarios(movement, balls, contacts);
+  const scenarios = [...baseline.scenarios];
+  const token = value => String(value).replace("-", "neg").replace(".", "p");
+  const add = (id, initial, extra = {}) => scenarios.push({
+    id: `sweep_${id}`, description: "Deterministic parameter sweep; strict unseeded audit",
+    ticks: 120, audit: true, preparation: "legacy", game_mode: "void",
+    initial: { ...movement.defaults.initial, ...initial },
+    ...(extra.entity === "ball" ? {} : { ball: { pos: [0, 3500, 1000], vel: [0, 0, 0.001], ang_vel: [0, 0, 0] } }),
+    ...extra,
+  });
+  for (const hitbox of ["octane", "dominus", "plank", "breakout", "hybrid", "merc"]) {
+    const ground = { hitbox, pos: [-1800, -3000, 17], on_ground: true };
+    for (const speed of [-1200, 0, 900, 1409, 2300]) {
+      for (const steer of [-1, 0, 1]) add(`${hitbox}_steer_speed_${token(speed)}_input_${token(steer)}`,
+        { ...ground, vel: [speed, 0, 0] },
+        { game_mode: "soccar", ticks: 240, controls: { throttle: speed < 0 ? -1 : 1, steer } });
+    }
+    for (const axis of ["pitch", "yaw", "roll"]) {
+      for (const input of [-0.5, 0.5]) add(`${hitbox}_air_${axis}_${token(input)}`,
+        { hitbox, pos: [0, 0, 2500], vel: [600, 100, 250], pitch: Math.PI / 4, roll: Math.PI / 4 },
+        { controls: { [axis]: input } });
+    }
+    for (const boost of [0, 1, 33, 100]) add(`${hitbox}_boost_amount_${boost}`,
+      { hitbox, boost, pos: [0, 0, 2500], vel: [1400, 0, 0] }, { controls: { boost: true } });
+    for (const hold of [1, 3, 12, 24]) add(`${hitbox}_jump_hold_${hold}`, ground,
+      { game_mode: "soccar", ticks: 240, control_schedule: [
+        { until_tick: hold, controls: { jump: true } }, { until_tick: 240, controls: {} },
+      ] });
+    for (const speed of [500, 1400, 2300]) {
+      for (const offset of [-60, 0, 60]) add(`${hitbox}_contact_speed_${speed}_offset_${token(offset)}`,
+        { hitbox, pos: [0, 0, 1000], vel: [speed, 0, 0] },
+        { ticks: 90, ball: { pos: [260, offset, 1020.755], vel: [0, 0, 0.001], ang_vel: [0, 0, 0] } });
+    }
+  }
+  for (const surface of ["floor", "wall", "ceiling"]) {
+    for (const speed of [500, 1500, 3000]) {
+      for (const spin of [0, 4]) {
+        const pos = surface === "wall" ? [3900, 0, 1000] : [0, 0, surface === "floor" ? 300 : 1850];
+        const vel = surface === "wall" ? [speed, 200, 0] : [200, 0, surface === "floor" ? -speed : speed];
+        add(`ball_${surface}_speed_${speed}_spin_${spin}`, { pos, vel, ang_vel: [0, spin, 0] },
+          { entity: "ball", game_mode: "soccar", preparation: "raw" });
+      }
+    }
+  }
+  return validateAuditScenarios({ ...baseline,
+    notes: "Baseline plus bounded parameter sweeps, not an exhaustive Cartesian product. Single car only; Soccar/void, standard mutators, RocketSim reference. Missing state fails coverage.",
+    scenarios });
 }
 
 export async function reportAudit(directory) {
@@ -177,6 +228,7 @@ export async function reportMovement(directory = output) {
 }
 
 async function main() {
+  if (process.argv.includes("--expanded") && !process.argv.includes("--audit")) throw new Error("--expanded requires --audit");
   if (process.argv.includes("--audit")) {
     if (process.argv.includes("--report")) {
       const summary = await reportAudit(output);
@@ -184,7 +236,8 @@ async function main() {
       return;
     }
     const sources = await Promise.all(["scenarios.json", "ball-scenarios.json", "contact-scenarios.json"].map(async name => JSON.parse(await readFile(path.join(here, name), "utf8"))));
-    const scenarios = buildAuditScenarios(...sources);
+    const scenarios = process.argv.includes("--expanded")
+      ? buildExpandedAuditScenarios(...sources) : buildAuditScenarios(...sources);
     await mkdir(output, { recursive: true });
     const file = path.join(output, "scenarios.json");
     const encoded = JSON.stringify(scenarios, null, 2);

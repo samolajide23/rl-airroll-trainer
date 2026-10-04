@@ -727,27 +727,27 @@ export function collideCarBall(car, ball, tick, { deferred = false, bulletTransf
         solveBallArena?.("friction");
       }
     } else {
-    const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / impulseDenom(n);
-    const jn = n.clone().multiplyScalar(J);
-    ball.vel.addScaledVector(jn, 1 / RL.BALL_MASS);
-    car.vel.addScaledVector(jn, -1 / RL.CAR_MASS);
-    ball.omega.add(ballR.clone().cross(jn).multiplyScalar(ballInvInertia()));
-    car.omega.sub(invInertiaWorld(carPoint.clone().cross(jn)));
-    const ballPointAfter = ball.vel.clone().add(ball.omega.clone().cross(ballR));
-    const carPointAfter = car.vel.clone().add(car.omega.clone().cross(carPoint));
-    const relAfter = ballPointAfter.sub(carPointAfter);
-    const vt = relAfter.addScaledVector(n, -relAfter.dot(n));
-    const vtLen = vt.length();
-    if (vtLen > 1e-6) {
-      const maxJf = RL.CARBALL_FRICTION * Math.abs(J);
-      const tDir = vt.clone().multiplyScalar(1 / vtLen);
-      const jfMag = Math.min(vtLen / impulseDenom(tDir), maxJf);
-      const jf = tDir.multiplyScalar(-jfMag);
-      ball.vel.addScaledVector(jf, 1 / RL.BALL_MASS);
-      car.vel.addScaledVector(jf, -1 / RL.CAR_MASS);
-      ball.omega.add(ballR.clone().cross(jf).multiplyScalar(ballInvInertia()));
-      car.omega.sub(invInertiaWorld(carPoint.clone().cross(jf)));
-    }
+      const J = (-(1 + RL.CARBALL_RESTITUTION) * vn) / impulseDenom(n);
+      const jn = n.clone().multiplyScalar(J);
+      ball.vel.addScaledVector(jn, 1 / RL.BALL_MASS);
+      car.vel.addScaledVector(jn, -1 / RL.CAR_MASS);
+      ball.omega.add(ballR.clone().cross(jn).multiplyScalar(ballInvInertia()));
+      car.omega.sub(invInertiaWorld(carPoint.clone().cross(jn)));
+      const ballPointAfter = ball.vel.clone().add(ball.omega.clone().cross(ballR));
+      const carPointAfter = car.vel.clone().add(car.omega.clone().cross(carPoint));
+      const relAfter = ballPointAfter.sub(carPointAfter);
+      const vt = relAfter.addScaledVector(n, -relAfter.dot(n));
+      const vtLen = vt.length();
+      if (vtLen > 1e-6) {
+        const maxJf = RL.CARBALL_FRICTION * Math.abs(J);
+        const tDir = vt.clone().multiplyScalar(1 / vtLen);
+        const jfMag = Math.min(vtLen / impulseDenom(tDir), maxJf);
+        const jf = tDir.multiplyScalar(-jfMag);
+        ball.vel.addScaledVector(jf, 1 / RL.BALL_MASS);
+        car.vel.addScaledVector(jf, -1 / RL.CAR_MASS);
+        ball.omega.add(ballR.clone().cross(jf).multiplyScalar(ballInvInertia()));
+        car.omega.sub(invInertiaWorld(carPoint.clone().cross(jf)));
+      }
     }
   }
   // Psyonix extra impulse on the ball only (RocketSim Ball::_OnHit).

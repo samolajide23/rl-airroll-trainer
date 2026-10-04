@@ -868,6 +868,952 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Expanded physics audit regression tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/movement-bot.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Grade contact rounding probe",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import fs from 'node:fs';import {firstDivergence} from './tools/physics-compare/first-divergence.mjs';const root='tools/physics-compare/out/expanded-audit-v1/';const limits={position:.0002,velocity:.0005,omega:.00001,forward:.00005,right:.00005,up:.00005,boost:.00001,air_time:.00003,ground:0,ball_position:.0002,ball_velocity:.0005,ball_omega:.00001};let passed=0;const gains=[],losses=[];for(const scenario of JSON.parse(fs.readFileSync(root+'scenarios.json')).scenarios){const name=scenario.id+'.json';const read=folder=>JSON.parse(fs.readFileSync(root+folder+'/'+name));const result=firstDivergence(read('rocketsim'),read('js-contact-rounding'),limits);const ok=result.first_tick===null;const old=read('audit').first_trajectory_failure===null;if(ok)passed++;if(ok!==old)(ok?gains:losses).push(scenario.id);}console.log(JSON.stringify({passed,gains,losses},null,2));"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify contact extent probe",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import fs from 'node:fs';import {execFileSync} from 'node:child_process';import {firstDivergence} from './tools/physics-compare/first-divergence.mjs';const root='tools/physics-compare/out/expanded-audit-v1/';execFileSync(process.execPath,['tools/physics-compare/run_js.mjs','--scenarios',root+'scenarios.json','--out',root+'js-contact-extents'],{stdio:'ignore'});const limits={position:.0002,velocity:.0005,omega:.00001,forward:.00005,right:.00005,up:.00005,boost:.00001,air_time:.00003,ground:0,ball_position:.0002,ball_velocity:.0005,ball_omega:.00001};let passed=0;const gains=[],losses=[];for(const scenario of JSON.parse(fs.readFileSync(root+'scenarios.json')).scenarios){const name=scenario.id+'.json';const read=folder=>JSON.parse(fs.readFileSync(root+folder+'/'+name));const ok=firstDivergence(read('rocketsim'),read('js-contact-extents'),limits).first_tick===null;const old=read('audit').first_trajectory_failure===null;if(ok)passed++;if(ok!==old)(ok?gains:losses).push(scenario.id);}console.log(JSON.stringify({passed,gains,losses},null,2));"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim WASM build",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/tools/rocketsim-wasm/build.ps1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim WASM smoke",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"${workspaceFolder}/tools/rocketsim-wasm/smoke.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Half flip coach regression",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/physics-compare/half-flip.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Build half flip coach",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"node_modules/vite/bin/vite.js",
+				"build",
+				"--logLevel",
+				"error"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim gameplay regressions",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/rocketsim-wasm/runtime.test.mjs",
+				"tools/physics-compare/half-flip.test.mjs",
+				"tools/physics-compare/movement-bot.test.mjs",
+				"tools/physics-compare/drills.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Complete repository audit",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/telemetry/research-capture.test.mjs",
+				"tools/telemetry/replay-viewer.test.mjs",
+				"tools/telemetry/match-replay.test.mjs",
+				"tools/physics-compare/arena-visuals.test.mjs",
+				"tools/rocketsim-wasm/runtime.test.mjs",
+				"tools/physics-compare/freeplay-ball.test.mjs",
+				"tools/physics-compare/drills.test.mjs",
+				"tools/physics-compare/contact-manifold.test.mjs",
+				"tools/physics-compare/catalog.test.mjs",
+				"tools/physics-compare/car-calibration.test.mjs",
+				"tools/physics-compare/camera.test.mjs",
+				"tools/physics-compare/metrics.test.mjs",
+				"tools/physics-compare/input.test.mjs",
+				"tools/physics-compare/half-flip.test.mjs",
+				"tools/physics-compare/python-runner.test.mjs",
+				"tools/physics-compare/physics.test.mjs",
+				"tools/physics-compare/telemetry.test.mjs",
+				"tools/physics-compare/skybot.test.mjs",
+				"tools/physics-compare/settings.test.mjs",
+				"tools/physics-compare/movement-bot.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim audit final totals",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-reporter=dot",
+				"tools/physics-compare",
+				"tools/telemetry",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Nexto adapter regression",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/nexto/nexto.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim native scalar build",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\tools\\rocketsim-wasm\\build-native.ps1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim native SSE wall comparison",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"${workspaceFolder}\\tools\\rocketsim-wasm\\native-wall-compare.mjs",
+				"--sse"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim WASM SIMD build",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\tools\\rocketsim-wasm\\build.ps1",
+				"-Simd",
+				"-SkipSdkSetup"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim SIMD build status",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-Process ninja,clang,wasm-ld,python -ErrorAction SilentlyContinue | Select-Object ProcessName,Id; Get-Item 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-simd/rocketsim.wasm' | Select-Object Length,LastWriteTime"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim SIMD process diagnostics",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-CimInstance Win32_Process -Filter 'ProcessId=12652' | Format-List ProcessId,ParentProcessId,ExecutablePath,CommandLine"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Stop detached RocketSim SIMD build",
+			"type": "shell",
+			"command": "taskkill",
+			"args": [
+				"/PID",
+				"12652",
+				"/T",
+				"/F"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim SIMD car parity",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {spawnSync} from 'node:child_process'; const result=spawnSync(process.execPath,['--test','--test-name-pattern=WASM car trajectories','tools/rocketsim-wasm/runtime.test.mjs'],{stdio:'inherit',env:{...process.env,ROCKETSIM_TEST_BUILD:'build-simd'}}); process.exit(result.status??1);"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim native SSE2 diagnosis",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"& 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native.ps1' -Sse; if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}; & 'C:/Program Files/nodejs/node.exe' 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/native-wall-compare.mjs' --sse --sse2; exit $LASTEXITCODE"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim exact rsqrt diagnosis",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"& 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native.ps1' -Sse -ExactRsqrt; if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}; & 'C:/Program Files/nodejs/node.exe' 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/native-wall-compare.mjs' --sse --sse2 --exact-rsqrt; exit $LASTEXITCODE"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim rsqrt resolution probe",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"& 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native.ps1' -Sse; if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}; & 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native-msvc-sse/rsqrt_probe.exe'; exit $LASTEXITCODE"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim generate verified rsqrt table",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"& 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native.ps1' -Sse; if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}; & 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/build-native-msvc-sse/rsqrt_probe.exe' 'E:/Code/rl-airroll-trainer/tools/rocketsim-wasm/rsqrt_table.generated.h'; exit $LASTEXITCODE"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim SIMD full runtime verification",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import { spawnSync } from 'node:child_process'; const result = spawnSync(process.execPath, ['--test', 'tools/rocketsim-wasm/runtime.test.mjs'], { stdio: 'inherit', env: { ...process.env, ROCKETSIM_TEST_BUILD: 'build-simd' } }); process.exit(result.status ?? 1);"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim verified production build",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"E:\\Code\\rl-airroll-trainer\\tools\\rocketsim-wasm\\build.ps1",
+				"-SkipSdkSetup"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim production runtime verification",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build verified physics app",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim coupled mechanics verification",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=coupled car-ball mechanics",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim expanded mechanics verification",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=expanded mechanics sweeps",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "RocketSim all expanded mechanics verification",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=expanded",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build native flip reset probe",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/rocketsim-wasm/build-native.ps1",
+				"-Sse"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify actual flip reset acquisition",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=wheel-on-ball",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Replay camera accuracy regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=camera",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Replay accuracy full regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/telemetry/replay-viewer.test.mjs",
+				"tools/physics-compare/camera.test.mjs",
+				"tools/telemetry/camera-capture.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Extract replay flip reset windows",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/flip-reset-replay.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Real replay camera verification",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=supplied Rocket League replay",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Real replay camera verification short filter",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=supplied",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify replay reset maneuver evidence",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=confirmed replay reset",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify confirmed replay resets",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=confirmed",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify replay viewer and reset evidence",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/telemetry/replay-viewer.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reconstruct continuous replay reset",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/reset-reconstruction.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify continuous reconstructed reset",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=continuous",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify deterministic native WASM parity",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"--test-name-pattern=deterministic",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native camera diagnostics regression",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/telemetry/camera-capture.test.mjs",
+				"tools/physics-compare/telemetry.test.mjs"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate new native ball camera captures",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/validate.mjs",
+				"C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/capture-1791013565733095.ndjson",
+				"C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/capture-1791013637402769.ndjson",
+				"C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/capture-1791013693249937.ndjson"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Summarize native ball camera diagnostics",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {readFile} from 'node:fs/promises'; import {auditCameraCapture} from './tools/telemetry/camera-capture.mjs'; const root='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'; for(const name of ['capture-1791013565733095.ndjson','capture-1791013637402769.ndjson','capture-1791013693249937.ndjson']) {const records=(await readFile(root+name,'utf8')).trim().split(/\\r?\\n/).map(JSON.parse); const cameras=records.filter(r=>r.type==='camera'); const counts=key=>Object.fromEntries([...new Set(cameras.map(r=>JSON.stringify(r[key])))].map(value=>[value,cameras.filter(r=>JSON.stringify(r[key])===value).length])); const differences=cameras.filter(r=>r.observed_car).map(r=>{const states=records.filter(s=>s.type==='input_state'); return r.observed_car.rb_time;}); console.log(JSON.stringify({name,header:records[0],audit:await auditCameraCapture(root+name,'ball'),state_names:counts('state_name'),blender_states:counts('blender_state'),behind_view:counts('behind_view'),native_rates:counts('native_rates'),default_rates:counts('car_camera_default_rates'),transition_samples:cameras.filter(r=>r.transition?.started).length,body_observations:cameras.filter(r=>r.observed_car&&r.observed_ball).length,observed_rb_time_range:[Math.min(...differences),Math.max(...differences)]},null,2));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect three native camera recordings",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {readFile} from 'node:fs/promises'; import {auditCameraCapture} from './tools/telemetry/camera-capture.mjs'; import {compareCameraRecords} from './tools/telemetry/camera-compare.mjs'; const root='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'; for(const name of ['capture-1791013565733095.ndjson','capture-1791013637402769.ndjson','capture-1791013693249937.ndjson']) {const records=(await readFile(root+name,'utf8')).trim().split(/\\r?\\n/).map(JSON.parse); const cameras=records.filter(r=>r.type==='camera'); const counts=key=>Object.fromEntries([...new Set(cameras.map(r=>JSON.stringify(r[key])))].map(value=>[value,cameras.filter(r=>JSON.stringify(r[key])===value).length])); const states=records.filter(r=>r.type==='input_state'); let index=0; const phases=cameras.map(r=>{while(index+1<states.length&&states[index+1].elapsed<=r.elapsed)index++; return (r.observed_car.rb_time-states[index].car.rb_time)*1000;}); console.log(JSON.stringify({name,header:records[0],audit:await auditCameraCapture(root+name,'ball'),state_names:counts('state_name'),blender_states:counts('blender_state'),behind_view:counts('behind_view'),native_rates:counts('native_rates'),default_rates:counts('car_camera_default_rates'),transition_samples:cameras.filter(r=>r.transition?.started).length,phase_differences_ms:[Math.min(...phases),Math.max(...phases)],baseline:compareCameraRecords(records,'ball')},null,2));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Measure native ball camera direct geometry",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {readFile} from 'node:fs/promises'; import {compareCameraRecords} from './tools/telemetry/camera-compare.mjs'; const root='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/'; for(const name of ['capture-1791013565733095.ndjson','capture-1791013637402769.ndjson','capture-1791013693249937.ndjson']) {const records=(await readFile(root+name,'utf8')).trim().split(/\\r?\\n/).map(JSON.parse);const states=records.filter(r=>r.type==='input_state');let index=0;const floor=[];for(const camera of records.filter(r=>r.type==='camera')){while(index+1<states.length&&states[index+1].elapsed<=camera.elapsed)index++;const state=states[index];if(!state.flags.on_ground||state.contact_state.ground_normal[2]<0.99)continue;const car=camera.observed_car.pos,ball=camera.observed_ball.pos;const raw=Math.atan2(ball[2]-car[2]-camera.settings.height,Math.hypot(ball[0]-car[0],ball[1]-car[1]))*180/Math.PI;const pitch=camera.rotator_unreal[0]*360/65536;floor.push({raw,pitch,configured:camera.settings.angle});}const mean=key=>floor.reduce((sum,row)=>sum+row[key],0)/floor.length;const direct=compareCameraRecords(records,'ball',0,'camera_callback');console.log(JSON.stringify({name,direct:{samples:direct.samples,position:direct.position_uu,rotation:direct.rotation_deg,fov:direct.horizontal_fov_deg,surfaces:direct.surfaces},floor:{samples:floor.length,raw_pitch_mean:mean('raw'),native_pitch_mean:mean('pitch'),configured_angle:mean('configured'),examples:floor.filter((row,index)=>index%1000===0).slice(0,5)}},null,2));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect raised ball and camera controls",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import {readFile} from 'node:fs/promises';import {validateCapture} from './tools/telemetry/validate.mjs';import {compareCameraRecords} from './tools/telemetry/camera-compare.mjs';const root='C:/Users/samto/AppData/Roaming/bakkesmod/bakkesmod/data/airroll-telemetry/';for(const name of ['capture-1791014208655059.ndjson','capture-1791014277373667.ndjson']){const integrity=await validateCapture(root+name);const records=(await readFile(root+name,'utf8')).trim().split(/\\r?\\n/).map(JSON.parse);const cameras=records.filter(row=>row.type==='camera');const counts=key=>Object.fromEntries([...new Set(cameras.map(row=>JSON.stringify(row[key])))].map(value=>[value,cameras.filter(row=>JSON.stringify(row[key])===value).length]));const bins=new Map();for(const row of cameras){if(row.state_name!=='CameraState_BallCam_TA'||row.behind_view||row.transition?.started||Math.hypot(...row.swivel)>0.01)continue;const car=row.observed_car.pos,ball=row.observed_ball.pos;const raw=Math.atan2(ball[2]-car[2]-row.settings.height,Math.hypot(ball[0]-car[0],ball[1]-car[1]))*180/Math.PI;const bin=Math.floor(raw/5)*5;const values=bins.get(bin)||[];values.push({raw,pitch:row.rotator_unreal[0]*360/65536});bins.set(bin,values);}const mean=(rows,key)=>rows.reduce((sum,row)=>sum+row[key],0)/rows.length;console.log(JSON.stringify({name,integrity,states:counts('state_name'),blender:counts('blender_state'),behind:counts('behind_view'),swivel_examples:cameras.filter(row=>Math.hypot(...row.swivel)>0.01).filter((row,index)=>index%150===0).slice(0,8).map(row=>({elapsed:row.elapsed,swivel:row.swivel})),transitions:cameras.filter(row=>row.transition?.started).filter((row,index)=>index%100===0).slice(0,15).map(row=>({elapsed:row.elapsed,state:row.state_name,...row.transition})),pitch_bins:[...bins].sort((first,second)=>first[0]-second[0]).map(([bin,rows])=>({bin,samples:rows.length,raw:mean(rows,'raw'),pitch:mean(rows,'pitch'),min:Math.min(...rows.map(row=>row.pitch)),max:Math.max(...rows.map(row=>row.pitch))})),baseline:cameras.every(row=>row.state_name==='CameraState_BallCam_TA')?compareCameraRecords(records,'ball'):null},null,2));}"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Extended native WASM parity",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--test",
+				"--test-name-pattern=deterministic",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"options": {
+				"env": {
+					"ROCKETSIM_EXTENDED_PARITY": "1"
+				}
+			},
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Diagnose goal post parity",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"set ROCKETSIM_EXTENDED_PARITY=1& set ROCKETSIM_PARITY_SCENARIO=26& set ROCKETSIM_PARITY_SEED=12345& \"C:\\Program Files\\nodejs\\node.exe\" --test --test-name-pattern=deterministic tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Freeplay UI development server",
+			"type": "shell",
+			"command": "npm run dev -- --host 127.0.0.1 --port 5181 --strictPort",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Diagnose aerial parity",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"set ROCKETSIM_EXTENDED_PARITY=1& set ROCKETSIM_PARITY_SCENARIO=8& set ROCKETSIM_PARITY_SEED=987654321& \"C:\\Program Files\\nodejs\\node.exe\" --test --test-name-pattern=deterministic tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify native cosine rounding",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=tiny-angle",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify native lifecycle parity",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"options": {
+				"env": {
+					"ROCKETSIM_MANEUVER_HITBOX": "octane",
+					"ROCKETSIM_MANEUVER_CASE": ""
+				}
+			},
+			"args": [
+				"--test",
+				"--test-name-pattern=native lifecycle",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Octane long randomized parity",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"options": {
+				"env": {
+					"ROCKETSIM_MANEUVER_HITBOX": "octane",
+					"ROCKETSIM_EXTENDED_PARITY": "1",
+					"ROCKETSIM_PARITY_TICKS": "14400",
+					"ROCKETSIM_PARITY_SCENARIO": "",
+					"ROCKETSIM_PARITY_SEED": ""
+				}
+			},
+			"args": [
+				"--test",
+				"--test-name-pattern=deterministic mixed",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "All repository tests with Octane parity",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"options": {
+				"env": {
+					"ROCKETSIM_MANEUVER_HITBOX": "octane",
+					"ROCKETSIM_MANEUVER_CASE": "",
+					"ROCKETSIM_EXTENDED_PARITY": "",
+					"ROCKETSIM_PARITY_TICKS": "600",
+					"ROCKETSIM_PARITY_SCENARIO": "",
+					"ROCKETSIM_PARITY_SEED": "",
+					"ROCKETSIM_TEST_BUILD": "build"
+				}
+			},
+			"args": [
+				"--input-type=module",
+				"-e",
+				"import { readdirSync } from 'node:fs'; import { join } from 'node:path'; import { spawnSync } from 'node:child_process'; const excluded = new Set(['vendor', 'node_modules', 'out', 'collision_meshes']); const collect = root => readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? excluded.has(entry.name) || entry.name.startsWith('build') ? [] : collect(join(root, entry.name)) : entry.name.endsWith('.test.mjs') ? [join(root, entry.name)] : []); const files = collect('tools').sort(); console.log('Discovered test files:', files.length); const result = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit', env: process.env }); process.exit(result.status ?? 1);"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Camera response audit verification",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\nodejs\\node.exe' 'E:\\Code\\rl-airroll-trainer\\tools\\telemetry\\camera-controls-audit.mjs' 'C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791017216051803.ndjson' | ForEach-Object { $row = $_ | ConvertFrom-Json; if ($row.accepted -eq $false -or $row.cases) { $_ } }",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native camera transition audit",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791017216051803.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Camera response focused regressions",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--test",
+				"tools/physics-compare/camera.test.mjs",
+				"tools/telemetry/camera-capture.test.mjs",
+				"tools/physics-compare/telemetry.test.mjs"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native measured FOV rate audit",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791017727538295.ndjson",
+				"--fov"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check camera coordinator processes",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-CimInstance Win32_Process -Filter \"name = 'node.exe'\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Camera coordinator report summary",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--input-type=module",
+				"-e",
+				"\"import{readFileSync}from'node:fs';import{join}from'node:path';const report=JSON.parse(readFileSync(join(process.env.APPDATA,'bakkesmod','bakkesmod','data','airroll-telemetry','camera-response-coverage.json')));console.log(JSON.stringify(report.sweeps.map(s=>({kind:s.kind,complete:s.complete,attempts:s.attempts.length,cases:s.cases.length}))));\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Native PlayerMove swivel probe audit",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791020095055629.ndjson"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read native camera batch report",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-native-batch.mjs",
+				"--report"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Unload native recorder for camera probe",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--experimental-websocket",
+				"tools/telemetry/native-command.mjs",
+				"plugin",
+				"unload",
+				"airroll_recorder"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Octane wall long parity reproducer",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				"--test",
+				"--test-name-pattern=deterministic mixed",
+				"tools/rocketsim-wasm/runtime.test.mjs"
+			],
+			"options": {
+				"env": {
+					"ROCKETSIM_MANEUVER_HITBOX": "octane",
+					"ROCKETSIM_EXTENDED_PARITY": "1",
+					"ROCKETSIM_PARITY_TICKS": "7200",
+					"ROCKETSIM_PARITY_SCENARIO": "12",
+					"ROCKETSIM_PARITY_SEED": "12345"
+				}
+			},
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Load native recorder camera probe",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--experimental-websocket",
+				"tools/telemetry/native-command.mjs",
+				"plugin",
+				"load",
+				"airroll_recorder"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Native swivel consumption coverage batch",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-native-batch.mjs",
+				"controls"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit native swivel consumption response",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791020915298350.ndjson"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit native swivel update equation",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791021254809984.ndjson"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit independent native swivel equation",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791021686470594.ndjson"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Native signed pitch camera sweep",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-native-batch.mjs",
+				"pitch-car",
+				"pitch-ball"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Audit signed native pitch",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"tools/telemetry/camera-controls-audit.mjs",
+				"C:\\Users\\samto\\AppData\\Roaming\\bakkesmod\\bakkesmod\\data\\airroll-telemetry\\capture-1791023210894812.ndjson",
+				"--pitch"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Query native analog camera targets",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--experimental-websocket",
+				"tools/telemetry/native-command.mjs",
+				"airroll_camera_controls",
+				"targets"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Capture native target argument pitch",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\"",
+			"args": [
+				"--experimental-websocket",
+				"tools/telemetry/native-command.mjs",
+				"airroll_camera_controls",
+				"pitch-car"
+			],
+			"problemMatcher": []
 		}
 	]
 }

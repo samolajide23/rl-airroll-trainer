@@ -1,4 +1,7 @@
 import * as THREE from "three";
+import { createIcons, icons } from "lucide";
+import "./freePlay.css";
+import { releaseRocketSimWorld } from "../shared/rocketSimRuntime.js";
 import { RenderPose } from "../shared/renderPose.js";
 import { formatSpeed } from "../shared/rl-units.js";
 import { BoostTrail } from "../shared/boostTrail.js";
@@ -210,6 +213,29 @@ export class FreePlayMode {
 
     hud.modeTitle.textContent = this.title;
     hud.root.classList.add("freeplay-hud");
+    if (this.modeId === "free-play" && !this.training) {
+      hud.root.classList.add("freeplay-studio");
+      this.studioControls = document.createElement("section");
+      this.studioControls.className = "freeplay-controls";
+      this.studioControls.setAttribute("aria-label", "Free play controls");
+      this.studioControls.innerHTML = `<h2><small>01</small>Session</h2>
+        <button type="button" data-reset title="Reset car and ball" aria-label="Reset car and ball"><i data-lucide="rotate-ccw"></i>Reset session</button>
+        <label>Camera<select data-camera aria-label="Camera"><option value="car">Car follow</option><option value="ball">Ball follow</option></select></label>
+        <h2><small>02</small>Ball</h2>
+        <div class="freeplay-ball-actions">${FREEPLAY_BALL_ACTIONS.map(action => `<button type="button" data-ball-action="${action}">${BIND_LABELS[action]}</button>`).join("")}</div>`;
+      hud.root.append(this.studioControls);
+      createIcons({ icons, root: this.studioControls });
+      this.studioControls.querySelector("[data-reset]").onclick = () => this.resetState();
+      this.studioCamera = this.studioControls.querySelector("[data-camera]");
+      this.studioCamera.onchange = () => setCamera("ballCam", this.studioCamera.value === "ball");
+      for (const button of this.studioControls.querySelectorAll("[data-ball-action]")) {
+        button.onclick = () => {
+          if (this.botEnabled) return;
+          this.physBall = applyFreePlayBallControl(button.dataset.ballAction, this.physCar, this.physBall);
+          this.ballVisual.quaternion.identity();
+        };
+      }
+    }
     hud.root.classList.remove("hidden");
     if (hud.alignMeter) hud.alignMeter.classList.add("hidden");
     if (hud.boostMeter) hud.boostMeter.classList.remove("hidden");
@@ -272,10 +298,15 @@ export class FreePlayMode {
   }
 
   stop() {
+    releaseRocketSimWorld(this.physCar);
     resetJumpTransitions();
     const { hud, scene, arena, camera } = this.ctx;
     this._stopped = true;
     this.botPanel?.remove();
+    this.studioControls?.remove();
+    this.studioControls = null;
+    this.studioCamera = null;
+    hud.root.classList.remove("freeplay-studio");
     this.bot.dispose?.();
     for (const visual of [...this.botLines, this.botTarget]) {
       visual.geometry.dispose();
@@ -323,6 +354,7 @@ export class FreePlayMode {
   }
 
   resetState() {
+    releaseRocketSimWorld(this.physCar);
     this.surfaceEffects.reset();
     this.contactEffects.reset();
     this.sliding = false;
@@ -485,6 +517,10 @@ export class FreePlayMode {
       (camCfg.ballCamMode ?? "toggle") === "hold"
         ? isActionDown("toggleBallCam")
         : Boolean(camCfg.ballCam));
+    if (this.studioCamera) {
+      this.studioCamera.value = ballCam ? "ball" : "car";
+      this.studioCamera.disabled = (camCfg.ballCamMode ?? "toggle") === "hold";
+    }
     // Keep feeding the ball while TransitionSpeed blends in/out of ball cam.
     const feedBall = Boolean(this.physBall) && (ballCam || this.chase.ballCamBlend > 0.001);
     this.forward.set(0, 0, 1).applyQuaternion(this.carMesh.quaternion);
@@ -496,6 +532,7 @@ export class FreePlayMode {
       lookAt: feedBall ? this.ballMesh.position : undefined,
       worldUp: this.worldUp,
       onGround: this.physCar.onGround,
+      groundNormal: physToThree(this.physCar.contactNormal, this.chase.contactInput),
       boosting: this.boosting,
       lookRight: input.lookRight,
       lookUp: input.lookUp,
@@ -508,7 +545,7 @@ export class FreePlayMode {
    * @param {number} dt
    * @param {number} _now
    */
-  update(dt, _now) {
+  update(dt, _now, simulationDt = dt) {
     this.pollUtilityKeys();
     const input = readControls();
     const step = (tickDt, controls) => {
@@ -520,9 +557,9 @@ export class FreePlayMode {
       this.ballVisual.quaternion.copy(this.ballRenderPose.currentRotation ?? this.ballVisual.quaternion);
     }
     if (this.botEnabled && this.bot instanceof KamaelBot) {
-      this.bot.advance(this.clock, dt, this.physCar, this.physBall, tickDt => step(tickDt));
+      this.bot.advance(this.clock, simulationDt, this.physCar, this.physBall, tickDt => step(tickDt));
     } else {
-      this.clock.advance(dt, (tickDt) => {
+      this.clock.advance(simulationDt, (tickDt) => {
         step(tickDt, readPhysicsControls());
       });
     }
@@ -570,6 +607,9 @@ export class FreePlayMode {
   }
 
   updateBotDiagnostic() {
+    if (this.studioControls) {
+      for (const button of this.studioControls.querySelectorAll("[data-ball-action]")) button.disabled = this.botEnabled;
+    }
     if (!this.botPanel) return;
     this.botPanel.querySelector("[data-bot-export]").disabled = !this.bot.recording?.scenarios[0].ticks;
     if (!this.botEnabled) {

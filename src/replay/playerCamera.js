@@ -1,7 +1,30 @@
 import { Vector3, Quaternion, Matrix4 } from "three";
-import { ChaseCamera, horizontalFovToVertical } from "../shared/chaseCamera.js";
+import { ChaseCamera } from "../shared/chaseCamera.js";
 import { frameAt, samplePose } from "./timeline.js";
 import { raycastArena } from "../shared/arenaMesh.js";
+import { getHitboxForCarId } from "../shared/hitboxPresets.js";
+
+export function inferReplayCameraSurface(pose, carId, query = raycastArena) {
+  const hitbox = getHitboxForCarId(carId);
+  const up = new Vector3(0, 1, 0).applyQuaternion(pose.quaternion);
+  const direction = new Vector3(-up.x, -up.z, -up.y);
+  const normal = new Vector3();
+  let contacts = 0;
+  for (const pair of [hitbox.wheels.front, hitbox.wheels.back]) {
+    for (const side of [-1, 1]) {
+      const offset = new Vector3(pair.offset[0], pair.offset[2], side * pair.offset[1])
+        .multiplyScalar(0.01).applyQuaternion(pose.quaternion).add(pose.position);
+      const hit = query(new Vector3(offset.x, offset.z, offset.y).multiplyScalar(100),
+        direction, pair.suspensionRest + pair.radius);
+      if (!hit?.normal || hit.normal.dot(direction) > -0.5) continue;
+      const surfaceNormal = new Vector3(hit.normal.x, hit.normal.z, hit.normal.y);
+      if (contacts && surfaceNormal.dot(normal.clone().normalize()) < 0.8) continue;
+      normal.add(surfaceNormal);
+      contacts++;
+    }
+  }
+  return { onGround: contacts >= 3, groundNormal: contacts >= 3 ? normal.normalize() : undefined };
+}
 
 export function constrainReplayCamera(position, target) {
   const origin = new Vector3(target.x, target.z, target.y).multiplyScalar(100);
@@ -58,11 +81,14 @@ export function createPlayerCameraTrack(replay, playerIndex, ballCam) {
           nextPose.position.distanceTo(pose.position) <= 15 ? sample.blend : 0;
         const lookAxis = name => axis(look[name]) +
           (axis(nextLook[name] ?? look[name]) - axis(look[name])) * lookBlend;
+        const surface = inferReplayCameraSurface(pose, player.carId);
         chase.update(virtual, 1 / 120, {
           settings, target: pose.position, forward: new Vector3(1, 0, 0).applyQuaternion(pose.quaternion),
           velocity: pose.velocity,
+          onGround: surface.onGround, groundNormal: surface.groundNormal,
           boosting: pose.boost, lookAt: ball?.position,
           ballCam: (ballCam ?? player.ballCam?.[sample.index] ?? true) && Boolean(ball),
+          lookBehind: player.rearView?.[sample.index] === true,
           lookRight: lookAxis("yaw"), lookUp: -lookAxis("pitch"),
           snap: cut,
         });
@@ -70,7 +96,7 @@ export function createPlayerCameraTrack(replay, playerIndex, ballCam) {
         previousPosition = pose.position.clone();
       } else previousPosition = undefined;
       frames.push({ position: virtual.position.clone(), quaternion: virtual.quaternion.clone(),
-        cut });
+        fov: virtual.fov, cut });
     }
     const first = frames[firstTick];
     const next = frames[nextTick];
@@ -79,7 +105,7 @@ export function createPlayerCameraTrack(replay, playerIndex, ballCam) {
     camera.quaternion.copy(first.quaternion).slerp(next.quaternion, blend);
     const pose = samplePose(player.frames, cursor);
     if (pose) constrainReplayCamera(camera.position, pose.position);
-    camera.fov = horizontalFovToVertical(settings.fov, camera.aspect);
+    camera.fov = first.fov + (next.fov - first.fov) * blend;
     camera.updateProjectionMatrix();
   };
 }

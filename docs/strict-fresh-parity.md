@@ -1,5 +1,84 @@
 # Fresh Strict RocketSim Baseline
 
+## Rejected Speed-Cap Probe
+
+A RocketSim-only probe capped the preserved Bullet-unit velocity using float32
+normalization rather than normalizing published game-unit velocity in double
+precision. With the unchanged strict defaults, it recovered all 12 failing
+boost cases and produced 306/346 trajectory passes, but lost the previously
+passing `sweep_merc_contact_speed_2300_offset_neg60` case. The probe was removed;
+the retained implementation remains at the 295/346 baseline below.
+
+Candidate recordings remain separate in `out/expanded-audit-v1/js-speed-cap`.
+They are rejected experimental output, not recordings of the retained code.
+All 24 boost trajectories had exact position and velocity agreement. Merc
+pre-contact velocity also matched exactly through tick 6, but tiny differences
+started at the tick-7 ball collision; orientation first exceeded strict limits
+at tick 85. Contact precision needs investigation before retaining this cap
+correction. No tolerance, immutable reference or native-profile change was kept.
+All 22 neighboring regression tests pass after restoring the original cap.
+
+Two follow-up contact probes were also rejected at unchanged strict limits:
+
+| Probe | Trajectory passes | Gained passes | Lost passes |
+|---|---:|---:|---:|
+| Float32 publication after each deferred impulse | 286/346 | 1 | 10 |
+| Float32 Bullet-unit extents for airborne inertia | 291/346 | 0 | 4 |
+
+Separate candidates are retained in `out/expanded-audit-v1/js-contact-rounding`
+and `out/expanded-audit-v1/js-contact-extents`. Both production changes were
+removed and all 22 neighboring tests passed again. The existing ball-only
+float32 solver uses fixed row coefficients and separately accumulated velocity
+deltas; rounding published bodies inside the current car-ball solver does not
+replicate that calculation. The next discriminating check is a native Merc
+tick-7 contact-row trace, including effective mass, RHS and accumulated impulses.
+The local `out/native/RocketSim` directory was empty during this investigation,
+so rebuilding the existing tracer requires restoring its matching pinned sources.
+
+## Expanded Parameter Audit (2026-10-02)
+
+An opt-in suite now preserves the original 100 scenario definitions and adds
+246 deterministic parameter cases. Fresh independent RocketSim and JS recordings
+in `tools/physics-compare/out/expanded-audit-v1` yield **295/346 trajectory passes**
+across **58,636 paired frames**. The baseline subset remains **91/100**; added
+cases pass **204/246**. Strict defaults are unchanged and scenario exceptions
+are not applied. No gameplay physics was changed for this expansion.
+
+| Added coverage | Parameters | Strict passes |
+|---|---|---:|
+| Ground steering | Six hitboxes; speeds -1200, 0, 900, 1409, 2300 UU/s; steer -1, 0, 1 | 89/90 |
+| Rotated aerial controls | Six hitboxes; pitch/yaw/roll inputs -0.5, 0.5; initial pitch/roll 45 degrees | 33/36 |
+| Air boost | Six hitboxes; initial boost 0, 1, 33, 100; initial speed 1400 UU/s | 12/24 |
+| Jump hold | Six hitboxes; hold 1, 3, 12, 24 ticks; 240-tick trajectories | 24/24 |
+| Airborne car-ball contact | Six hitboxes; speeds 500, 1400, 2300 UU/s; lateral offsets -60, 0, 60 UU | 29/54 |
+| Ball surface impacts | Floor/wall/ceiling; speeds 500, 1500, 3000 UU/s; spin 0, 4 rad/s | 17/18 |
+
+The 42 added failures are 25 contact, 12 boost, three aerial-control, one ground
+steering and one ball-impact case. Boost failures first diverge at tick 117;
+this is a diagnostic lead, not a proven root cause. Per-case first failure,
+exceeded metrics, state coverage and tick errors are retained in the output.
+All 22 neighboring audit/physics regression tests pass.
+
+Run from the project root with a Python environment containing RocketSim 2.2.1
+and installed collision meshes (`PYTHON` can select the executable):
+
+```sh
+node tools/physics-compare/movement-bot.mjs --audit --expanded
+```
+
+The default expanded output is separate from the original recordings. Use
+`--out <new-directory>` after changing scenario definitions; existing references
+must not be overwritten. `--prepare` only writes the manifest; `--report` grades
+existing paired recordings. The command exits nonzero while full-state coverage
+fails, even when trajectory comparisons finish successfully.
+
+**Full-state passes remain 0/346**, including unavailable audited fields and
+other state/setup mismatches. These bounded sweeps are not an exhaustive Cartesian
+product, long-run certification or native Rocket League validation. Multi-car
+collisions/demos, special modes, mutator combinations, input-device processing
+and broader simultaneous/contact histories remain outside this suite. Ground
+trajectories can reach arena surfaces; they are not guaranteed contact-free.
+
 ## Ceiling Restitution Precision Correction
 
 The complete ceiling trajectory now passes at unchanged strict limits.

@@ -80,8 +80,9 @@ export function createNeonCity() {
   };
   for (const side of [-1, 1]) {
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(19, 4.75), new THREE.MeshBasicMaterial({
-      map: signTexture("NIGHT CIRCUIT", "AERIAL PRACTICE / DISTRICT 07"), toneMapped: false, side: THREE.DoubleSide,
+      map: signTexture("NIGHT CIRCUIT", "AERIAL PRACTICE / DISTRICT 07"), toneMapped: false,
     }));
+    screen.rotation.y = side > 0 ? Math.PI : 0;
     screen.position.set(0, 18, side * (end + 15)); root.add(screen);
   }
   for (const material of [...lineMaterial, structureMaterial, crownMaterial]) {

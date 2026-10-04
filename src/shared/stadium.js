@@ -1,11 +1,39 @@
 import * as THREE from "three";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { RL } from "./rl-physics.js";
 import { UU } from "./rl-units.js";
 import { SOCCAR_TRIS } from "./soccarMeshData.js";
 import { createNeonCity } from "./neonCity.js";
 
-const BLUE = 0x329cff, ORANGE = 0xff9b43;
+const BLUE = 0x399fd6, ORANGE = 0xed9250;
+
+class GoalMouthCurve extends THREE.Curve {
+  constructor(depth, radius) {
+    super();
+    this.depth = depth;
+    this.radius = radius;
+  }
+
+  getPoint(amount, target = new THREE.Vector3()) {
+    const cornerX = 8, cornerY = 5.44;
+    const arcLength = Math.PI * this.radius / 2;
+    let distance = amount * (cornerY * 2 + arcLength * 2 + cornerX * 2);
+    if (distance <= cornerY) return target.set(-cornerX - this.radius, distance, this.depth);
+    distance -= cornerY;
+    if (distance <= arcLength) {
+      const angle = Math.PI - distance / this.radius;
+      return target.set(-cornerX + Math.cos(angle) * this.radius, cornerY + Math.sin(angle) * this.radius, this.depth);
+    }
+    distance -= arcLength;
+    if (distance <= cornerX * 2) return target.set(-cornerX + distance, cornerY + this.radius, this.depth);
+    distance -= cornerX * 2;
+    if (distance <= arcLength) {
+      const angle = Math.PI / 2 - distance / this.radius;
+      return target.set(cornerX + Math.cos(angle) * this.radius, cornerY + Math.sin(angle) * this.radius, this.depth);
+    }
+    return target.set(cornerX + this.radius, cornerY - (distance - arcLength), this.depth);
+  }
+}
 
 export function createStadiumReflectionScene() {
   const scene = new THREE.Scene();
@@ -19,7 +47,7 @@ export function createStadiumReflectionScene() {
   };
   add("reflection-turf", [halfWidth * 2, 0.1, halfLength * 2], [0, -1.5, 0], 0x42653b);
   for (const side of [-1, 1]) {
-    add("reflection-stands", [5, 10, halfLength * 2], [side * (halfWidth + 4), 7, 0], 0x253443);
+    add("reflection-stands", [5, 10, halfLength * 2], [side * (halfWidth + 4), 7, 0], 0x343e40);
     add("reflection-team-end", [halfWidth * 2, 6, 1], [0, 1.5, side * halfLength], side < 0 ? BLUE : ORANGE, 0.45);
     for (let along = -40; along <= 40; along += 16) {
       add("reflection-floodlight", [2.2, 0.08, 5], [side * (halfWidth + 7), 14.12, along], 0xe0f4ff, 6);
@@ -45,39 +73,60 @@ export function createStadiumEnvironment(renderer) {
 /** Procedural textures keep the stadium offline-capable and lightweight. */
 function turfTexture(detail = false) {
   const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 1024;
+  canvas.width = canvas.height = detail ? 1024 : 2048;
   const ctx = canvas.getContext("2d");
-  for (let band = 0; band < 16; band++) {
-    ctx.fillStyle = detail ? "#808080" : band % 2 ? "#42653b" : "#355630";
-    ctx.fillRect(0, band * 64, 1024, 64);
+  for (let row = 0; row < 16; row++) {
+    for (let column = 0; column < 12; column++) {
+      ctx.fillStyle = detail ? "#808080" : (row + column) % 2 ? "#466744" : "#3b5b3c";
+      ctx.fillRect(column * canvas.width / 12, row * canvas.height / 16, canvas.width / 12 + 1, canvas.height / 16 + 1);
+    }
+  }
+  if (!detail) {
+    const halfWidth = RL.HALF_W * UU, halfLength = RL.HALF_L * UU;
+    for (let row = 0; row < 1024; row++) {
+      const along = (row / 1024 - 0.5) * halfLength * 2;
+      for (let column = 0; column < 1024; column++) {
+        const across = (column / 1024 - 0.5) * halfWidth * 2;
+        const endDistance = halfLength - Math.abs(along);
+        const radius = Math.hypot(across, along);
+        const teamColor = along < 0 ? "rgba(57,159,214,.48)" : "rgba(237,146,80,.48)";
+        let color;
+        if (Math.abs(across) < 15 && endDistance > 1.5 && endDistance < 17) {
+          const chevron = ((endDistance + Math.abs(across) * 0.75) % 3.2 + 3.2) % 3.2;
+          color = chevron < 1.2 ? teamColor : "rgba(20,37,31,.2)";
+          if (Math.abs(across) > 14.7 || endDistance < 1.7 || endDistance > 16.8) color = teamColor;
+        } else if (radius > 1.2 && radius < 8.9) {
+          const spoke = ((Math.atan2(along, across) * 12 / Math.PI) % 1 + 1) % 1;
+          if (radius > 8.6 || radius < 1.45 || (spoke < 0.24 && radius > 2.3)) color = teamColor;
+        } else if (Math.abs(across) > 31 && Math.abs(across) < 31.12 && endDistance > 13) {
+          color = "rgba(175,205,188,.2)";
+        }
+        if (color) {
+          ctx.fillStyle = color;
+          ctx.fillRect(column * 2, row * 2, 2, 2);
+        }
+      }
+    }
   }
   let seed = 8217;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  for (let i = 0; i < 70000; i++) {
+  for (let i = 0; i < (detail ? 70000 : 180000); i++) {
     ctx.fillStyle = detail
       ? (random() > 0.5 ? "rgba(255,255,255,.2)" : "rgba(0,0,0,.2)")
-      : (random() > 0.5 ? "rgba(180,204,128,.08)" : "rgba(14,35,12,.1)");
-    ctx.fillRect(random() * 1024, random() * 1024, detail ? 0.8 : 0.4, detail ? 1 + random() * 2.5 : 0.3 + random() * 0.5);
+      : (random() > 0.5 ? "rgba(173,194,128,.15)" : "rgba(14,35,12,.19)");
+    const across = random() * canvas.width, along = random() * canvas.height;
+    ctx.fillRect(across, along, detail ? 0.8 : 0.6 + random(), detail ? 1 + random() * 2.5 : 1 + random() * 3);
+    if (!detail && i % 120 === 0) {
+      ctx.fillStyle = "rgba(149,139,90,.055)";
+      ctx.fillRect(across, along, 2 + random() * 4, 8 + random() * 16);
+    }
   }
   const texture = new THREE.CanvasTexture(canvas);
+  texture.name = detail ? "turf-blade-relief" : "soccar-detailed-pitch";
   texture.colorSpace = detail ? THREE.NoColorSpace : THREE.SRGBColorSpace;
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(detail ? RL.HALF_W * UU : 1, detail ? RL.HALF_L * UU : 1);
   texture.anisotropy = 16;
-  return texture;
-}
-
-function netTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 64;
-  const ctx = canvas.getContext("2d");
-  ctx.strokeStyle = "rgba(210,235,255,.7)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, 64, 64);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(32, 12);
-  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
@@ -123,35 +172,183 @@ export function createStadium() {
   const turf = new THREE.MeshStandardMaterial({ map: turfTexture(), roughness: 0.92, metalness: 0 });
   turf.bumpMap = turfTexture(true);
   turf.bumpScale = 0.012;
-  const paint = new THREE.MeshStandardMaterial({ color: 0xf0f3df, roughness: 0.88, metalness: 0, depthWrite: false });
+  const paint = new THREE.MeshStandardMaterial({ color: 0xe5ebe4, roughness: 0.88, metalness: 0, depthWrite: false });
   paint.name = "field-paint";
-  const dark = new THREE.MeshStandardMaterial({ color: 0x182c39, roughness: 0.55, metalness: 0.32, side: THREE.DoubleSide });
-  const blue = new THREE.MeshStandardMaterial({ color: 0x214966, roughness: 0.48, metalness: 0.28, side: THREE.DoubleSide, transparent: true, opacity: 0.16, depthWrite: false });
-  const orange = new THREE.MeshStandardMaterial({ color: 0x654836, roughness: 0.48, metalness: 0.28, side: THREE.DoubleSide, transparent: true, opacity: 0.16, depthWrite: false });
-  const buckets = [[], [], []];
-  for (let i = 0; i < SOCCAR_TRIS.length; i += 9) {
-    const z = (SOCCAR_TRIS[i + 2] + SOCCAR_TRIS[i + 5] + SOCCAR_TRIS[i + 8]) / 3;
-    const y = (SOCCAR_TRIS[i + 1] + SOCCAR_TRIS[i + 4] + SOCCAR_TRIS[i + 7]) / 3;
-    const points = buckets[z < 260 ? 0 : y < 0 ? 1 : 2];
-    for (let j = 0; j < 9; j += 3) points.push(SOCCAR_TRIS[i + j] * UU, SOCCAR_TRIS[i + j + 2] * UU, SOCCAR_TRIS[i + j + 1] * UU);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x929d99, roughness: 0.78, metalness: 0.12, side: THREE.BackSide });
+  dark.name = "arena-ramp-finish";
+  const blue = new THREE.MeshStandardMaterial({ color: 0xb1d0db, roughness: 0.65, metalness: 0, side: THREE.BackSide, transparent: true, opacity: 0.08, depthWrite: false });
+  const orange = blue.clone();
+  const goalLining = dark.clone();
+  goalLining.name = "goal-interior-finish";
+  for (const material of [dark, goalLining]) {
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = "varying vec3 vPanelPosition;\n" + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvPanelPosition = (modelMatrix * vec4(position, 1.0)).xyz;");
+      shader.fragmentShader = "varying vec3 vPanelPosition;\n" + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+        vec3 panelGrid = abs(fract(vPanelPosition / vec3(4.0, 0.8, 4.0) + 0.5) - 0.5);
+        vec3 panelWidth = max(fwidth(vPanelPosition / vec3(4.0, 0.8, 4.0)), vec3(0.002));
+        vec3 panelJoint = 1.0 - smoothstep(panelWidth, panelWidth * 2.0, panelGrid);
+        vec3 surfaceNormal = abs(normalize(cross(dFdx(vPanelPosition), dFdy(vPanelPosition))));
+        float joint = max(panelJoint.y * (1.0 - surfaceNormal.y), max(panelJoint.x * surfaceNormal.z, panelJoint.z * surfaceNormal.x));
+        diffuseColor.rgb *= 1.0 - joint * 0.12;
+      `);
+    };
+    material.customProgramCacheKey = () => "arena-panel-joints-v3";
   }
+  const shell = new THREE.BufferGeometry();
+  const shellPoints = [];
+  for (let i = 0; i < SOCCAR_TRIS.length; i += 9) {
+    for (let j = 0; j < 9; j += 3) shellPoints.push(SOCCAR_TRIS[i + j] * UU, SOCCAR_TRIS[i + j + 2] * UU, SOCCAR_TRIS[i + j + 1] * UU);
+  }
+  shell.setAttribute("position", new THREE.Float32BufferAttribute(shellPoints, 3));
+  const smooth = mergeVertices(shell);
+  smooth.computeVertexNormals();
+  const buckets = [[], [], [], []], normalBuckets = [[], [], [], []];
+  const rampHeight = 3.2;
+  const clip = (polygon, below) => {
+    const result = [];
+    for (let vertex = 0; vertex < polygon.length; vertex++) {
+      const start = polygon[vertex], end = polygon[(vertex + 1) % polygon.length];
+      const startInside = below ? start.position.y <= rampHeight : start.position.y >= rampHeight;
+      const endInside = below ? end.position.y <= rampHeight : end.position.y >= rampHeight;
+      if (startInside) result.push(start);
+      if (startInside !== endInside) {
+        const amount = (rampHeight - start.position.y) / (end.position.y - start.position.y);
+        result.push({ position: start.position.clone().lerp(end.position, amount), normal: start.normal.clone().lerp(end.normal, amount).normalize() });
+      }
+    }
+    return result;
+  };
+  const append = (polygon, bucket) => {
+    for (let vertex = 1; vertex < polygon.length - 1; vertex++) {
+      for (const point of [polygon[0], polygon[vertex], polygon[vertex + 1]]) {
+        buckets[bucket].push(...point.position.toArray());
+        normalBuckets[bucket].push(...point.normal.toArray());
+      }
+    }
+  };
+  const refineRamp = (polygon, depth = 2) => {
+    if (!depth) {
+      append(clip(polygon, true), 0);
+      append(clip(polygon, false), polygon[0].position.z < 0 ? 1 : 2);
+      return;
+    }
+    const midpoints = polygon.map((start, index) => {
+      const end = polygon[(index + 1) % 3];
+      const position = start.position.clone().lerp(end.position, 0.5);
+      return { position, normal: start.normal.clone().add(end.normal).normalize() };
+    });
+    refineRamp([polygon[0], midpoints[0], midpoints[2]], depth - 1);
+    refineRamp([midpoints[0], polygon[1], midpoints[1]], depth - 1);
+    refineRamp([midpoints[2], midpoints[1], polygon[2]], depth - 1);
+    refineRamp(midpoints, depth - 1);
+  };
+  for (let triangle = 0; triangle < smooth.index.count; triangle += 3) {
+    const polygon = [0, 1, 2].map(offset => {
+      const vertex = smooth.index.getX(triangle + offset);
+      return { position: new THREE.Vector3().fromBufferAttribute(smooth.attributes.position, vertex), normal: new THREE.Vector3().fromBufferAttribute(smooth.attributes.normal, vertex) };
+    });
+    const center = polygon.reduce((sum, point) => sum.add(point.position), new THREE.Vector3()).divideScalar(3);
+    if (Math.abs(center.z) > hl + 0.05 && Math.abs(center.x) <= gw + 1 && center.y <= gh + 0.5) {
+      append(polygon, 3);
+    } else if (polygon.some(point => point.position.y < rampHeight) && polygon.some(point => point.normal.y > 0.05 && point.normal.y < 0.99)) {
+      refineRamp(polygon);
+    } else {
+      append(clip(polygon, true), 0);
+      append(clip(polygon, false), center.z < 0 ? 1 : 2);
+    }
+  }
+  shell.dispose();
+  smooth.dispose();
   buckets.forEach((points, index) => {
-    const geometry = new THREE.BufferGeometry();
+    let geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
-    geometry.computeVertexNormals();
-    const mesh = new THREE.Mesh(geometry, [dark, blue, orange][index]);
+    geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normalBuckets[index], 3));
+    if (index === 3) {
+      const lining = mergeVertices(geometry);
+      geometry.dispose();
+      geometry = lining;
+    }
+    const mesh = new THREE.Mesh(geometry, [dark, blue, orange, goalLining][index]);
     mesh.name = "collision-matched-arena-surface";
+    mesh.receiveShadow = true;
     root.add(mesh);
   });
   const box = (w, h, d, x, y, z, material) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     mesh.position.set(x, y, z); root.add(mesh); return mesh;
   };
+  const perimeterPoints = [];
+  const cornerRadius = 1152 * UU;
+  for (const [across, along, start] of [[1, 1, 0], [-1, 1, Math.PI / 2], [-1, -1, Math.PI], [1, -1, Math.PI * 1.5]]) {
+    for (let step = 0; step <= 24; step++) {
+      const angle = start + step / 24 * Math.PI / 2;
+      perimeterPoints.push(new THREE.Vector3(across * (hw - cornerRadius) + Math.cos(angle) * (cornerRadius + 1.2), 5.8, along * (hl - cornerRadius) + Math.sin(angle) * (cornerRadius + 1.2)));
+    }
+  }
+  const architecture = new THREE.MeshStandardMaterial({ color: 0x465351, roughness: 0.68, metalness: 0.25 });
+  const perimeterCurve = new THREE.CurvePath();
+  for (let point = 0; point < perimeterPoints.length; point++) {
+    const start = perimeterPoints[point], end = perimeterPoints[(point + 1) % perimeterPoints.length];
+    const crossesGoal = start.z * end.z > 0 && start.x * end.x < 0;
+    const route = crossesGoal ? [start,
+      new THREE.Vector3(Math.sign(start.x) * 11, 5.8, start.z),
+      new THREE.Vector3(Math.sign(start.x) * 10, 7.4, start.z),
+      new THREE.Vector3(Math.sign(end.x) * 10, 7.4, end.z),
+      new THREE.Vector3(Math.sign(end.x) * 11, 5.8, end.z), end] : [start, end];
+    for (let segment = 1; segment < route.length; segment++) perimeterCurve.add(new THREE.LineCurve3(route[segment - 1], route[segment]));
+  }
+  const fascia = new THREE.Mesh(new THREE.TubeGeometry(perimeterCurve, 320, 0.32, 12, true), architecture);
+  fascia.name = "continuous-stadium-fascia";
+  root.add(fascia);
+  const trim = new THREE.Mesh(new THREE.TubeGeometry(perimeterCurve, 320, 0.045, 8, true), new THREE.MeshBasicMaterial({ color: 0xd8e7e2, toneMapped: false }));
+  trim.position.y = -0.35;
+  trim.name = "continuous-stadium-light";
+  root.add(trim);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(hw * 2, hl * 2), turf);
   floor.name = "standard-soccar-floor";
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   root.add(floor);
+  const bladeGeometry = new THREE.BufferGeometry();
+  bladeGeometry.setAttribute("position", new THREE.Float32BufferAttribute([
+    -0.018, 0, 0, 0.018, 0, 0, 0.006, 0.016, 0,
+    0, 0, -0.018, 0, 0, 0.018, 0, 0.014, 0.006,
+  ], 3));
+  bladeGeometry.computeVertexNormals();
+  const bladeMaterial = new THREE.MeshStandardMaterial({ roughness: 0.95, side: THREE.DoubleSide });
+  bladeMaterial.onBeforeCompile = shader => {
+    shader.uniforms.pitchMap = { value: turf.map };
+    shader.vertexShader = "varying vec2 vPitchUv; varying float vGrassDistance;\n" + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace("#include <project_vertex>", `#include <project_vertex>
+      vec4 grassWorld = modelMatrix * instanceMatrix * vec4(position, 1.0);
+      vPitchUv = vec2(grassWorld.x / ${(hw * 2).toFixed(4)} + 0.5, 0.5 - grassWorld.z / ${(hl * 2).toFixed(4)});
+      vGrassDistance = length(mvPosition.xyz);
+    `);
+    shader.fragmentShader = "uniform sampler2D pitchMap; varying vec2 vPitchUv; varying float vGrassDistance;\n" + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+      float grassFade = 1.0 - smoothstep(14.0, 30.0, vGrassDistance);
+      float grassDither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+      if (grassDither > grassFade) discard;
+      diffuseColor.rgb *= texture2D(pitchMap, vPitchUv).rgb * 1.12;
+    `);
+  };
+  bladeMaterial.customProgramCacheKey = () => "pitch-grass-v1";
+  const grass = new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 180000);
+  grass.name = "short-cut-pitch-grass";
+  const blade = new THREE.Object3D();
+  let grassSeed = 941;
+  const grassRandom = () => { grassSeed = (Math.imul(grassSeed, 1664525) + 1013904223) >>> 0; return grassSeed / 4294967296; };
+  for (let index = 0; index < grass.count; index++) {
+    blade.position.set((grassRandom() - 0.5) * (hw * 2 - 12), 0.001, (grassRandom() - 0.5) * (hl * 2 - 12));
+    blade.rotation.y = grassRandom() * Math.PI;
+    blade.scale.setScalar(0.65 + grassRandom() * 0.35);
+    blade.updateMatrix();
+    grass.setMatrixAt(index, blade.matrix);
+  }
+  grass.computeBoundingSphere();
+  root.add(grass);
   const stripe = (w, d, x, z, material = paint) => {
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), material);
     mesh.rotation.x = -Math.PI / 2; mesh.position.set(x, 0.018, z); root.add(mesh);
@@ -182,52 +379,91 @@ export function createStadium() {
     for (const x of [-13.5, 13.5]) stripe(0.16, 13, x, sign * (hl - 9.5));
     stripe(gw * 2, 0.3, 0, sign * (hl - 0.1), tint);
     ring(9.5, 0.08, 0, sign * (hl - 15), tint);
-    const frame = new THREE.MeshStandardMaterial({ color: 0xc6d5df, roughness: 0.28, metalness: 0.75 });
-    for (const x of [-gw, gw]) {
-      box(0.22, gh, 0.22, x + Math.sign(x) * 0.11, gh / 2, sign * (hl + 0.12), frame);
-      box(0.065, gh - 0.12, 0.065, x + Math.sign(x) * 0.035, gh / 2, sign * (hl - 0.02), glow);
+    const frame = new THREE.MeshStandardMaterial({ color: sign < 0 ? 0x9acbdb : 0xe0b293, roughness: 0.32, metalness: 0.45, emissive: sign < 0 ? BLUE : ORANGE, emissiveIntensity: 0.08 });
+    const postRadius = 0.16;
+    const frameDepth = sign * (hl - postRadius - 0.015);
+    const frameRadius = 104 * UU + postRadius;
+    const mouthCurve = new GoalMouthCurve(frameDepth, frameRadius);
+    const mouthFrame = new THREE.Mesh(new THREE.TubeGeometry(mouthCurve, 384, postRadius, 24, false), frame);
+    mouthFrame.name = "goal-mouth-frame";
+    root.add(mouthFrame);
+    const revealPath = new GoalMouthCurve(frameDepth, 104 * UU - 0.005);
+    const revealPositions = [];
+    for (let segment = 0; segment < 384; segment++) {
+      const start = revealPath.getPoint(segment / 384);
+      const end = revealPath.getPoint((segment + 1) / 384);
+      const backStart = start.clone();
+      const backEnd = end.clone();
+      backStart.z = backEnd.z = sign * (hl + 0.08);
+      for (const point of [start, end, backStart, end, backEnd, backStart]) revealPositions.push(...point.toArray());
     }
-    box(gw * 2 + 0.44, 0.22, 0.22, 0, gh + 0.11, sign * (hl + 0.12), frame);
-    box(gw * 2, 0.06, 0.06, 0, gh + 0.035, sign * (hl - 0.02), glow);
-    const addNet = (width, depth, position, rotation) => {
-      const texture = netTexture();
-      texture.repeat.set(width / 0.45, depth / 0.45);
-      const net = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), new THREE.MeshStandardMaterial({ map: texture, color: 0xd5e0e5, roughness: 0.95, transparent: true, opacity: 0.48, side: THREE.DoubleSide, depthWrite: false }));
-      net.name = "goal-net-panel";
-      net.position.set(...position);
-      net.rotation.set(...rotation);
-      root.add(net);
-    };
-    addNet(gw * 2, gh, [0, gh / 2, sign * (hl + gd - 0.1)], [0, 0, 0]);
-    addNet(gw * 2, gd, [0, gh + 0.02, sign * (hl + gd / 2)], [Math.PI / 2, 0, 0]);
-    for (const side of [-1, 1]) {
-      addNet(gd, gh, [side * (gw + 0.02), gh / 2, sign * (hl + gd / 2)], [0, Math.PI / 2, 0]);
-      box(0.14, 0.14, gd, side * (gw + 0.12), gh + 0.12, sign * (hl + gd / 2), frame);
-      box(0.14, gh, 0.14, side * (gw + 0.12), gh / 2, sign * (hl + gd), frame);
-    }
-    box(gw * 2 + 0.24, 0.14, 0.14, 0, gh + 0.12, sign * (hl + gd), frame);
+    const revealGeometry = new THREE.BufferGeometry();
+    revealGeometry.setAttribute("position", new THREE.Float32BufferAttribute(revealPositions, 3));
+    const weldedReveal = mergeVertices(revealGeometry);
+    revealGeometry.dispose();
+    weldedReveal.computeVertexNormals();
+    const revealMaterial = frame.clone();
+    revealMaterial.side = THREE.DoubleSide;
+    const reveal = new THREE.Mesh(weldedReveal, revealMaterial);
+    reveal.name = "goal-mouth-reveal";
+    root.add(reveal);
     for (const side of [-1, 1]) {
       const radius = 1152 * UU;
-      const points = [];
+      const points = [new THREE.Vector3(side * (gw + 1), 3.14, sign * hl)];
       for (let step = 0; step <= 32; step++) {
-        const angle = step / 32 * Math.PI / 2;
-        points.push(new THREE.Vector3(side * (hw - radius + Math.cos(angle) * (radius + 0.12)), 3.14, sign * (hl - radius + Math.sin(angle) * (radius + 0.12))));
+        const angle = Math.PI / 2 - step / 32 * Math.PI / 2;
+        points.push(new THREE.Vector3(side * (hw - radius + Math.cos(angle) * radius), 3.14, sign * (hl - radius + Math.sin(angle) * radius)));
       }
-      const rail = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 32, 0.055, 6, false), glow);
+      points.push(new THREE.Vector3(side * hw, 3.14, 0));
+      const samples = [];
+      for (let segment = 1; segment < points.length; segment++) {
+        const start = points[segment - 1], end = points[segment];
+        const steps = Math.ceil(start.distanceTo(end) / 0.4);
+        for (let step = 0; step < steps; step++) samples.push(start.clone().lerp(end, step / steps));
+      }
+      samples.push(points[points.length - 1]);
+      const surfaces = root.children.filter(object => object.name === "collision-matched-arena-surface");
+      const origin = new THREE.Vector3(0, 3.14, 0);
+      const raycaster = new THREE.Raycaster();
+      for (const point of samples) {
+        const direction = point.clone().sub(origin).normalize();
+        raycaster.set(origin, direction);
+        const hit = raycaster.intersectObjects(surfaces, false)[0];
+        if (hit) point.copy(hit.point).addScaledVector(direction, -0.12);
+      }
+      const railPath = new THREE.CurvePath();
+      for (let point = 1; point < samples.length; point++) railPath.add(new THREE.LineCurve3(samples[point - 1], samples[point]));
+      const rail = new THREE.Mesh(new THREE.TubeGeometry(railPath, samples.length * 2, 0.055, 8, false), glow);
+      rail.name = "surface-mounted-team-rail";
       root.add(rail);
     }
-    for (const xs of [-1, 1]) box(hw - gw - 1, 0.1, 0.12, xs * (gw + (hw - gw) / 2), 3.1, sign * (hl + 0.25), glow);
-    for (const x of [-hw, hw]) box(0.1, 0.12, hl - 1, x + Math.sign(x) * 0.14, 3.1, sign * hl / 2, glow);
   }
-  const glass = new THREE.MeshStandardMaterial({ color: 0x78b7d0, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide, roughness: 0.2 });
   for (const x of [-hw, hw]) {
-    box(0.15, 3.2, hl * 2, x + Math.sign(x) * 0.08, 1.6, 0, dark);
-    box(0.06, height - 3.2, hl * 2, x + Math.sign(x) * 0.1, (height + 3.2) / 2, 0, glass);
-    for (let z = -hl; z <= hl; z += 12.8) box(0.1, height - 3.2, 0.1, x, (height + 3.2) / 2, z, dark);
+    for (let z = -hl + 12; z <= hl - 12; z += 12.8) {
+      const path = new THREE.CurvePath();
+      const surfaces = root.children.filter(object => object.name === "collision-matched-arena-surface");
+      const raycaster = new THREE.Raycaster();
+      let previous;
+      for (let step = 0; step <= 64; step++) {
+        const up = 3.21 + (height - 3.23) * step / 64;
+        const origin = new THREE.Vector3(0, up, z);
+        const direction = new THREE.Vector3(Math.sign(x), 0, 0);
+        raycaster.set(origin, direction);
+        const hit = raycaster.intersectObjects(surfaces, false)[0];
+        if (!hit) continue;
+        const point = hit.point.clone().addScaledVector(direction, -0.12);
+        if (previous) path.add(new THREE.LineCurve3(previous, point));
+        previous = point;
+      }
+      const post = new THREE.Mesh(new THREE.TubeGeometry(path, 128, 0.06, 8, false), dark);
+      post.name = "surface-mounted-wall-post";
+      root.add(post);
+    }
+    for (let z = -hl + 16; z <= hl - 16; z += 16) box(0.35, 5.6, 0.45, x + Math.sign(x) * 1.25, 2.8, z, architecture);
   }
 
   // Instanced seating avoids thousands of individual draw calls.
-  const stands = new THREE.MeshStandardMaterial({ color: 0x182535, roughness: 0.85 });
+  const stands = new THREE.MeshStandardMaterial({ color: 0x586460, roughness: 0.85 });
   const seats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.6, 0.32, 0.5), new THREE.MeshStandardMaterial({ roughness: 0.65 }), 2940);
   const dummy = new THREE.Object3D(); let index = 0;
   for (const side of [-1, 1]) for (let row = 0; row < 7; row++) {
@@ -287,8 +523,8 @@ export function createStadium() {
   const enclosure = new THREE.LineSegments(latticeGeo, new THREE.LineBasicMaterial({ color: 0xa6bdc5, transparent: true, opacity: 0.065, depthWrite: false }));
   enclosure.name = "stadium-hex-enclosure";
   root.add(enclosure);
-  const roof = new THREE.MeshStandardMaterial({ color: 0x101b2c, roughness: 0.4, metalness: 0.6 });
-  const flood = new THREE.MeshBasicMaterial({ color: 0xe0f4ff, toneMapped: false });
+  const roof = new THREE.MeshStandardMaterial({ color: 0x252e30, roughness: 0.4, metalness: 0.6 });
+  const flood = new THREE.MeshBasicMaterial({ color: 0xe5eee7, toneMapped: false });
   for (const x of [-hw - 7, hw + 7]) {
     box(8, 0.65, hl * 2 + 22, x, 16, 0, roof);
     for (let z = -48; z <= 48; z += 16) {
@@ -310,8 +546,8 @@ export function createStadium() {
   }));
   sky.name = "stadium-dusk-sky"; root.add(sky);
   root.add(createNeonCity());
-  root.add(new THREE.HemisphereLight(0xd6e2ed, 0x33362c, 0.45));
-  const sun = new THREE.DirectionalLight(0xf0f4ff, 1.35); sun.position.set(-30, 65, -35); root.add(sun);
+  root.add(new THREE.HemisphereLight(0xe6eee9, 0x65735f, 1.15));
+  const sun = new THREE.DirectionalLight(0xf3f1e8, 1.65); sun.position.set(-30, 65, -35); root.add(sun);
 
   const batches = new Map();
   for (const child of root.children) {
@@ -346,6 +582,70 @@ export function createStadium() {
     obj.updateMatrix();
     obj.matrixAutoUpdate = false;
   });
+
+  const cutaway = { value: new THREE.Vector4() };
+  const cameraPosition = new THREE.Vector3();
+  const localCamera = new THREE.Vector3();
+  const interior = new THREE.Vector3(0, height / 2, 0);
+  const rayInterior = new THREE.Vector3();
+  const worldInterior = new THREE.Vector3();
+  const inverseRoot = new THREE.Matrix4();
+  const direction = new THREE.Vector3();
+  const shellRay = new THREE.Raycaster();
+  const cutawayShell = root.children.filter(object => object.name === "collision-matched-arena-surface");
+  const cachedPosition = new THREE.Vector3(Infinity, Infinity, Infinity);
+  const cachedRoot = new THREE.Matrix4();
+  const updateCutaway = (renderer, scene, camera) => {
+    camera.getWorldPosition(cameraPosition);
+    if (cachedPosition.equals(cameraPosition) && cachedRoot.equals(root.matrixWorld)) return;
+    cachedPosition.copy(cameraPosition);
+    cachedRoot.copy(root.matrixWorld);
+    inverseRoot.copy(root.matrixWorld).invert();
+    localCamera.copy(cameraPosition).applyMatrix4(inverseRoot);
+    rayInterior.copy(interior);
+    if (Math.abs(localCamera.x) < RL.GOAL_HALF_W * UU && Math.abs(localCamera.z) > hl && localCamera.y < RL.GOAL_HEIGHT * UU) {
+      rayInterior.set(0, RL.GOAL_HEIGHT * UU / 2, Math.sign(localCamera.z) * (hl + gd / 2));
+    }
+    direction.copy(localCamera).sub(rayInterior);
+    const distance = direction.length();
+    shellRay.set(rayInterior.applyMatrix4(root.matrixWorld), direction.clone().transformDirection(root.matrixWorld));
+    const hit = shellRay.intersectObjects(cutawayShell, false)[0];
+    const inGoalWidth = Math.abs(localCamera.x) < RL.GOAL_HALF_W * UU && localCamera.y < RL.GOAL_HEIGHT * UU;
+    const outside = Math.abs(localCamera.x) > hw || Math.abs(localCamera.z) > hl + (inGoalWidth ? gd : 0) || localCamera.y < 0 || localCamera.y > height || (hit && hit.distance < cameraPosition.distanceTo(shellRay.ray.origin) - 0.001);
+    worldInterior.copy(interior).applyMatrix4(root.matrixWorld);
+    direction.copy(cameraPosition).sub(worldInterior).normalize();
+    cutaway.value.set(direction.x, direction.y, direction.z, outside && distance > 0 ? -direction.dot(worldInterior) : -1e6);
+  };
+  const decorationMaterials = new Map();
+  const shellMaterials = new Set(cutawayShell.map(object => object.material));
+  for (const object of root.children) {
+    if (!object.isMesh || ["collision-matched-arena-surface", "standard-soccar-floor", "standard-goal-floor", "short-cut-pitch-grass", "stadium-dusk-sky"].includes(object.name)) continue;
+    object.onBeforeRender = updateCutaway;
+    const prepareMaterial = source => {
+      if (decorationMaterials.has(source)) return decorationMaterials.get(source);
+      const material = shellMaterials.has(source) ? source.clone() : source;
+      decorationMaterials.set(source, material);
+      const compile = source.onBeforeCompile;
+      const programKey = source.customProgramCacheKey();
+      material.onBeforeCompile = (shader, renderer) => {
+        compile.call(material, shader, renderer);
+        shader.uniforms.stadiumCutaway = cutaway;
+        shader.vertexShader = "varying vec3 vStadiumPosition;\n" + shader.vertexShader;
+        shader.vertexShader = shader.vertexShader.replace("#include <project_vertex>", `#include <project_vertex>
+          vec4 stadiumPosition = vec4(transformed, 1.0);
+          #ifdef USE_INSTANCING
+            stadiumPosition = instanceMatrix * stadiumPosition;
+          #endif
+          vStadiumPosition = (modelMatrix * stadiumPosition).xyz;`);
+        shader.fragmentShader = "uniform vec4 stadiumCutaway; varying vec3 vStadiumPosition;\n" + shader.fragmentShader;
+        shader.fragmentShader = shader.fragmentShader.replace("#include <clipping_planes_fragment>", `#include <clipping_planes_fragment>
+          if (dot(stadiumCutaway.xyz, vStadiumPosition) + stadiumCutaway.w > 0.0) discard;`);
+      };
+      material.customProgramCacheKey = () => `${programKey}-exterior-cutaway-v1`;
+      return material;
+    };
+    object.material = Array.isArray(object.material) ? object.material.map(prepareMaterial) : prepareMaterial(object.material);
+  }
 
   root.userData.dispose = () => {
     const geometries = new Set(), materials = new Set(), textures = new Set();

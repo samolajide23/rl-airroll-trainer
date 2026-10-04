@@ -1,66 +1,96 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Replay Studio | RL Air Roll Trainer</title>
-  </head>
-  <body>
-    <header class="site-header">
-      <a href="/" class="brand">AIR<span>LAB</span><small>ROCKET LEAGUE TRAINING</small></a>
-      <nav aria-label="Main menu"><a href="/">Home</a><a href="/">Arena</a><a href="/">Training</a><a href="/">Settings</a><a href="/">Locker</a><a href="/replay.html" aria-current="page">Replay Studio</a></nav>
-    </header>
-    <header class="studio-header">
-      <div><span class="eyebrow">REPLAY WORKSPACE</span><h1>Replay Studio</h1><span id="filename">No replay loaded</span></div>
-      <button id="sample" type="button"><i data-lucide="file-video"></i>Open added replay</button>
-      <button id="import" type="button"><i data-lucide="folder-open"></i>Import replay</button>
-      <input id="file" type="file" accept=".replay" hidden>
-    </header>
-    <main>
-      <section class="follow controls" aria-label="Follow settings">
-        <h2><small>01</small>Follow</h2>
-        <label>View<select id="camera"><option value="overview">Overview</option><option value="closeup">Fixed close-up</option><option value="ball">Ball follow</option><option value="player">Player POV</option><option value="director">Goal Director</option></select></label>
-        <label>Follow player<select id="follow-player" disabled></select></label>
-        <label>Ball comparison<select id="ball-comparison" disabled><option value="">Off</option></select></label>
-        <output id="ball-errors" aria-live="polite"></output>
-        <a id="ball-report" hidden download="ball-comparison.json"><i data-lucide="download"></i>Comparison report</a>
-      </section>
-      <section id="stage" aria-label="Replay preview">
-        <canvas id="preview"></canvas>
-        <div id="match" hidden></div>
-        <div class="stage-caption"><span>REPLAY / <b id="frame-label">00:00</b></span><span id="camera-label">OVERVIEW</span></div>
-      </section>
-      <aside class="controls">
-        <h2><small>02</small>Export</h2>
-        <label>Resolution<select id="resolution"><option value="1280,720">1280 x 720</option><option value="1920,1080">1920 x 1080</option></select></label>
-        <label>Frame rate<select id="fps"><option value="30">30 fps</option><option value="60">60 fps</option><option value="120">120 fps</option></select></label>
-        <label>Start (seconds)<input id="clip-start" type="number" min="0" step="0.01" value="0" disabled></label>
-        <label>End (seconds)<input id="clip-end" type="number" min="0" step="0.01" disabled></label>
-        <button id="export" class="primary" type="button" disabled><i data-lucide="film"></i>Render MP4</button>
-        <button id="cancel" type="button" hidden><i data-lucide="x"></i>Cancel render</button>
-        <progress id="progress" max="1" value="0" hidden aria-label="Render progress"></progress>
-        <a id="download" hidden download="replay.mp4"><i data-lucide="download"></i>Download MP4</a>
-        <output id="status" role="status" aria-live="polite">Ready</output>
-        <span class="format">MP4 / H.264 / AAC</span>
-      </aside>
-      <nav class="transport" aria-label="Playback">
-        <div class="playback-timeline">
-          <input id="seek" type="range" min="0" max="1" step="any" value="0" disabled aria-label="Replay time">
-          <div class="playback-ruler"><span>00:00</span><span id="duration">00:00</span></div>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Replay Studio | RL Air Roll Trainer</title>
+</head>
+
+<body>
+  <header class="site-header">
+    <a href="/" class="brand">AIR<span>LAB</span><small>RL TRAINING</small></a>
+    <nav aria-label="Main menu"><a href="/">Home</a><a href="/">Arena</a><a href="/">Training</a><a
+        href="/">Settings</a><a href="/">Locker</a><a href="/replay.html" aria-current="page">Replay Studio</a></nav>
+  </header>
+  <header class="studio-header">
+    <div><span class="eyebrow">REPLAY WORKSPACE</span>
+      <h1>Replay Studio</h1><span id="filename">No replay loaded</span>
+    </div>
+    <button id="sample" type="button"><i data-lucide="file-video"></i>Open added replay</button>
+    <button id="import" type="button"><i data-lucide="folder-open"></i>Import replay</button>
+    <input id="file" type="file" accept=".replay" hidden>
+  </header>
+  <main>
+    <section class="follow controls" aria-label="Follow settings">
+      <h2><small>01</small>Follow</h2>
+      <label>View<select id="camera">
+          <option value="overview">Overview</option>
+          <option value="closeup">Fixed close-up</option>
+          <option value="ball">Ball follow</option>
+          <option value="player">Player POV</option>
+          <option value="director">Goal Director</option>
+        </select></label>
+      <label>Follow player<select id="follow-player" disabled></select></label>
+      <label>Ball comparison<select id="ball-comparison" disabled>
+          <option value="">Off</option>
+        </select></label>
+      <output id="ball-errors" aria-live="polite"></output>
+      <a id="ball-report" hidden download="ball-comparison.json"><i data-lucide="download"></i>Comparison report</a>
+    </section>
+    <section id="stage" aria-label="Replay preview">
+      <canvas id="preview"></canvas>
+      <div id="match" hidden></div>
+      <div class="stage-caption"><span>REPLAY / <b id="frame-label">00:00</b></span><span
+          id="camera-label">OVERVIEW</span></div>
+    </section>
+    <aside class="controls">
+      <h2><small>02</small>Export</h2>
+      <label>Resolution<select id="resolution">
+          <option value="1280,720">1280 x 720</option>
+          <option value="1920,1080">1920 x 1080</option>
+        </select></label>
+      <label>Frame rate<select id="fps">
+          <option value="30">30 fps</option>
+          <option value="60">60 fps</option>
+          <option value="120">120 fps</option>
+        </select></label>
+      <label>Start (seconds)<input id="clip-start" type="number" min="0" step="0.01" value="0" disabled></label>
+      <label>End (seconds)<input id="clip-end" type="number" min="0" step="0.01" disabled></label>
+      <button id="export" class="primary" type="button" disabled><i data-lucide="film"></i>Render MP4</button>
+      <button id="cancel" type="button" hidden><i data-lucide="x"></i>Cancel render</button>
+      <progress id="progress" max="1" value="0" hidden aria-label="Render progress"></progress>
+      <a id="download" hidden download="replay.mp4"><i data-lucide="download"></i>Download MP4</a>
+      <output id="status" role="status" aria-live="polite">Ready</output>
+      <span class="format">MP4 / H.264 / AAC</span>
+    </aside>
+    <nav class="transport" aria-label="Playback">
+      <div class="playback-timeline">
+        <input id="seek" type="range" min="0" max="1" step="any" value="0" disabled aria-label="Replay time">
+        <div class="playback-ruler"><span>00:00</span><span id="duration">00:00</span></div>
+      </div>
+      <div class="playback-bottom">
+        <output id="time"><strong id="elapsed">00:00</strong><span id="total">/ 00:00</span></output>
+        <div class="playback-buttons">
+          <button id="restart" title="Restart" aria-label="Restart" disabled><i data-lucide="rotate-ccw"></i></button>
+          <button id="previous-frame" title="Previous frame" aria-label="Previous frame" disabled><i
+              data-lucide="skip-back"></i></button>
+          <button id="play" title="Play" aria-label="Play" aria-pressed="false" disabled><i
+              data-lucide="play"></i></button>
+          <button id="next-frame" title="Next frame" aria-label="Next frame" disabled><i
+              data-lucide="skip-forward"></i></button>
         </div>
-        <div class="playback-bottom">
-          <output id="time"><strong id="elapsed">00:00</strong><span id="total">/ 00:00</span></output>
-          <div class="playback-buttons">
-            <button id="restart" title="Restart" aria-label="Restart" disabled><i data-lucide="rotate-ccw"></i></button>
-            <button id="previous-frame" title="Previous frame" aria-label="Previous frame" disabled><i data-lucide="skip-back"></i></button>
-            <button id="play" title="Play" aria-label="Play" aria-pressed="false" disabled><i data-lucide="play"></i></button>
-            <button id="next-frame" title="Next frame" aria-label="Next frame" disabled><i data-lucide="skip-forward"></i></button>
-          </div>
-          <select id="speed" aria-label="Playback speed"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select>
-        </div>
-      </nav>
-    </main>
-    <footer class="site-footer"><span>TRAIN WITH INTENT.</span><span>REPLAY / LOCAL WORKSPACE</span></footer>
-    <script type="module" src="/src/replay/studio.js"></script>
-  </body>
+        <select id="speed" aria-label="Playback speed">
+          <option value="0.25">0.25x</option>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+        </select>
+      </div>
+    </nav>
+  </main>
+  <footer class="site-footer"><span>TRAIN WITH INTENT.</span><span>REPLAY / LOCAL WORKSPACE</span></footer>
+  <script type="module" src="/src/replay/studio.js"></script>
+</body>
+
 </html>

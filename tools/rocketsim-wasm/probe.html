@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RocketSim WASM Probe</title>
+</head>
+<body>
+  <h1>RocketSim 2.2.1 WASM</h1>
+  <pre id="result">Loading engine...</pre>
+  <script type="module">
+    import { loadSoccar, runContactChecks } from './soccar.mjs';
+    const output = document.querySelector('#result');
+    try {
+      const build = new URLSearchParams(location.search).get('build') === 'build-simd' ? 'build-simd' : 'build';
+      const { default: createRocketSim } = await import(`./${build}/rocketsim.mjs`);
+      const engine = await createRocketSim();
+      engine._rs_create();
+      const started = performance.now();
+      engine._rs_step(120, 0, 0, 0, 0, 0, 0, 1, 0);
+      const elapsedMs = performance.now() - started;
+      const pointer = engine._rs_state() / 4;
+      const state = Array.from(engine.HEAPF32.subarray(pointer, pointer + 10));
+      if (!state.every(Number.isFinite) || state[9] >= 100) {
+        throw new Error('Engine smoke check failed');
+      }
+      engine._rs_destroy();
+      const soccar = await createRocketSim();
+      const meshRoot = new URL('/tools/physics-compare/collision_meshes/', location.origin);
+      const fetchChecked = async url => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Asset request failed: ${response.status}`);
+        return response;
+      };
+      const manifest = await (await fetchChecked(new URL('manifest.json', meshRoot))).json();
+      const meshes = await loadSoccar(soccar, manifest, async name => {
+        return (await fetchChecked(new URL(`soccar/${name}`, meshRoot))).arrayBuffer();
+      }, crypto);
+      const contacts = runContactChecks(soccar);
+      output.textContent = JSON.stringify({ status: 'passed', ticks: 120, elapsedMs, state, meshes, contacts }, null, 2);
+    } catch (error) {
+      output.textContent = `FAILED: ${error.message}`;
+      throw error;
+    }
+  </script>
+</body>
+</html>

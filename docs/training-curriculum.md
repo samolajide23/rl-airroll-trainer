@@ -8,7 +8,7 @@ results are displayed where recorded. Continue Training resumes the last
 successfully launched drill; this is not a mastery or lesson-completion score.
 
 Planned mechanics expose their curriculum and a Free Play action, not a simulated
-lesson. Half flips, wavedashes, pinches, resets and match scenarios still need
+lesson. Wavedashes, pinches, resets and most match scenarios still need
 dedicated setups, detectors, feedback and progression gates. The displayed steps
 are learning objectives, not separately playable stages yet.
 
@@ -18,6 +18,42 @@ and Match Skills. Individual levels describe difficulty; category order is a
 recommended path rather than a prerequisite lock.
 
 ## Shared Simulation Drills
+### Half Flip Lab
+
+Half Flip Lab offers six independent teaching styles for the same mechanic:
+Guided Walkthrough, Demonstrate & Imitate, Component Workshops, Attempt &
+Diagnose, Experiment & Discover, and Scenario-Based Learning. Select a style
+inside the lab; styles do not automatically blend or switch.
+
+The top-centre coach measures readiness from the last five attempts, with a
+minimum of three attempts. Supported, Independent and Precision levels require
+70%, 80% and 90% success respectively before recommending advancement. Three
+consecutive misses offer a previous-step review (or restored guidance on the
+first step); progression remains player-confirmed. Higher levels shorten cues,
+tighten upright/exit alignment and angular-speed limits, and reduce the full
+attempt deadline from five to four to three seconds. These are tunable prototype
+thresholds, not a validated estimate of learning readiness.
+
+Scored attempts dim the scene over one second and allow 1.4 seconds to settle
+before review commands appear. Driving controls remain active during the
+transition and review; the recorded result cannot be changed afterwards.
+D-pad selects tutorial buttons and Cross/A confirms the selected button. Sticks
+and triggers remain driving controls; confirmation is inactive until a D-pad
+selection, so a held jump cannot accidentally retry the attempt.
+
+Workshops isolate the cancel, rotation and landing before reconnecting
+them. Imitation includes a normal-speed reference and half-speed attempt
+playback. Diagnosis reports the first missing phase after a whole attempt.
+Experiments compare no cancel, late cancel and early cancel before a free
+attempt. The scenario requires a complete recovery and a ball interception
+before the visible red line.
+
+Every style offers the same five unaided, normal-speed checks with varied
+headings. Scores and a 1-5 usefulness rating are saved locally for comparison.
+These are prototype detectors, not mastery certification or evidence of
+teaching effectiveness. Prepared workshop states are deliberate component
+setups; full attempts and checks use shared physics without input assistance.
+
 ### Live Stage Guide
 
 All thirty Foundations stages now have a stage-aware guide at the top of the

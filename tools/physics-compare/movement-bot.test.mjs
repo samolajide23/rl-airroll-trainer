@@ -8,13 +8,34 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { Vector3 } from "three";
-import { buildMovementScenarios, buildAuditScenarios } from "./movement-bot.mjs";
+import { buildMovementScenarios, buildAuditScenarios, buildExpandedAuditScenarios } from "./movement-bot.mjs";
 import { auditLeaves, auditState, auditSetup, requestedRotation, validateAuditScenarios, stateSchema } from "./audit-state.mjs";
 import { makePhysCar, stepCar } from "../../src/shared/carPhysics.js";
 import { stepCarBall } from "../../src/shared/carSim.js";
 import { makeBall, stepBall, synchronizeBallBulletState } from "../../src/shared/rl-physics.js";
 import { sphereArenaContacts } from "../../src/shared/arenaMesh.js";
 import { SOCCAR_QUERY_ORDER, SOCCAR_TRI_COUNT } from "../../src/shared/soccarMeshData.js";
+
+test("expanded audit preserves the baseline and covers every declared parameter", async () => {
+  const sources = await Promise.all(["scenarios.json", "ball-scenarios.json", "contact-scenarios.json"].map(async name =>
+    JSON.parse(await readFile(new URL(name, import.meta.url), "utf8"))));
+  const baseline = buildAuditScenarios(...sources);
+  const expanded = buildExpandedAuditScenarios(...sources);
+  assert.equal(baseline.scenarios.length, 100);
+  assert.equal(expanded.scenarios.length, 346);
+  assert.deepEqual(expanded.scenarios.slice(0, 100), baseline.scenarios);
+  assert.deepEqual(buildExpandedAuditScenarios(...sources), expanded);
+  assert.equal(new Set(expanded.scenarios.map(scenario => scenario.id)).size, 346);
+  assert.deepEqual(JSON.parse(JSON.stringify(expanded)), expanded);
+  for (const hitbox of ["octane", "dominus", "plank", "breakout", "hybrid", "merc"]) {
+    const cases = expanded.scenarios.filter(scenario => scenario.id.startsWith(`sweep_${hitbox}_`));
+    assert.equal(cases.length, 38);
+    assert.equal(cases.filter(scenario => scenario.id.includes("_contact_")).length, 9);
+    assert.deepEqual(cases.filter(scenario => scenario.id.includes("_boost_amount_")).map(scenario => scenario.initial.boost), [0, 1, 33, 100]);
+    assert.deepEqual(cases.filter(scenario => scenario.id.includes("_jump_hold_")).map(scenario => scenario.control_schedule[0].until_tick), [1, 3, 12, 24]);
+  }
+  assert.equal(expanded.scenarios.filter(scenario => scenario.id.startsWith("sweep_ball_")).length, 18);
+});
 
 test("RocketSim ball freefall and drag retain Bullet float32 integration for 120 ticks", () => {
   for (const sample of [

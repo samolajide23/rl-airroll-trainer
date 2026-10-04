@@ -32,6 +32,42 @@ npm run dev
 
 Open the Vite URL (usually `http://localhost:5173`).
 
+Gameplay requires the locally built RocketSim WASM module and hashed SOCCAR
+meshes. See [the native runtime setup](tools/rocketsim-wasm/README.md) for build
+prerequisites, validation and asset distribution restrictions. Physics runs in
+RocketSim at 120 Hz; input, drills and presentation remain JavaScript.
+
+## Nexto 1v1
+
+Open **Arena > Classic > Soccar > 1v1 > Play Nexto** for a five-minute match
+with sudden-death overtime. Reset starts a new match; goals preserve the score
+and clock while resetting both cars and the ball. Both cars share one native
+RocketSim world, including bumps, ball contacts and boost pickups.
+
+The opponent uses the real [Nexto policy by Rolv-Arild and the Necto contributors](https://github.com/Rolv-Arild/Necto),
+pinned to revision `2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca`, converted from
+TorchScript to ONNX. The model and adapted upstream behavior are licensed
+**CC BY-NC-SA 4.0**: noncommercial use, attribution and share-alike obligations
+apply. See [the included license](public/bots/nexto/LICENSE) and
+[model provenance](public/bots/nexto/manifest.json). This is a modified browser
+port, not an endorsement by its original authors.
+
+ONNX Runtime Web 1.24.3 loads from jsDelivr, so a network connection is required.
+The local model is SHA-256 checked before inference. The worker selects the
+highest-logit action every eight simulated ticks; physics pauses while a
+decision is pending. This differs from native RLBot timing. Hardcoded kickoff
+scripts and kickoff randomness are not ported. Match expiry is simplified:
+the leading player wins at five minutes without native zero-second ball-ground
+continuation. Jump/flip availability is mapped from RocketSim state, not an
+RLBot packet. Native Nexto strength/parity is therefore not claimed.
+
+To reproduce the model export, run `tools/nexto/export_nexto.py` in a Python
+environment with `torch`, `numpy`, `onnx` and `onnxruntime`. Its 32-sample
+CPU comparison verifies logits and exact selected actions. Run
+`node --test tools/nexto/nexto.test.mjs` for the observation/action and scheduler
+tests; the upstream observation comparison requires Python with NumPy/Torch
+and the pinned sources downloaded by the exporter.
+
 ## Replay Studio
 
 Open `/replay.html` to import a Rocket League `.replay` locally, preview the
@@ -56,10 +92,13 @@ deterministic framing. This is an edited view, not Rocket League's native camera
 
 **Follow player** selects Player POV and applies that player's recorded FOV,
 distance, height, angle, stiffness, swivel speed and transition speed. Recorded
-look values and ball-cam on/off toggles are replayed automatically in Player POV,
+look values, rear view and ball-cam on/off toggles are replayed automatically in Player POV,
 both in the preview and exported MP4. Camera values are applied without showing
 technical controls. Look values interpolate between continuous observations rather
-than stepping at network cadence; ball-cam toggles retain recorded timestamps.
+than stepping at network cadence; camera-mode toggles retain recorded timestamps.
+FOV retains the shared camera's speed expansion and native 16:9 reference through
+preview, export and seeking. Floor and wall state is inferred conservatively from
+calibrated wheel rays against the arena, not recovered from native contact telemetry.
 The yaw/pitch byte scale remains an approximation, not verified native camera input semantics.
 Missing toggle data defaults to ball-follow; missing profiles
 use defaults. Camera shake preference is unavailable. Camera smoothing is an

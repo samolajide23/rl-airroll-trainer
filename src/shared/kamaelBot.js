@@ -1,6 +1,7 @@
 import { Vector3 } from "three";
 import { SkybotDiagnostic } from "./skybot.js";
 import { makeBall, stepBall, RL } from "./carPhysics.js";
+import { releaseRocketSimWorld } from "./rocketSimRuntime.js";
 
 const vector = value => ({ x: value.x, y: value.y, z: value.z });
 const physics = (pos, vel, omega, rotation = { pitch: 0, yaw: 0, roll: 0 }) => ({ location: vector(pos), velocity: vector(vel), angular_velocity: vector(omega), rotation });
@@ -21,6 +22,7 @@ export function kamaelInput(car, ball, tick, pads, touch) {
     stepBall(predictedBall, RL.DT);
     stepBall(predictedBall, RL.DT);
   }
+  releaseRocketSimWorld(predictedBall);
   const packet = {
     num_cars: 1,
     game_cars: [{ name: "Kamael", team: 0, is_demolished: false, is_super_sonic: car.isSupersonic, has_wheel_contact: car.onGround, jumped: car.hasJumped, double_jumped: car.hasDoubleJumped || car.hasFlipped, boost: car.boost, physics: physics(car.pos, car.vel, car.omega, rotation), hitbox: { length: car.hitbox.size[0], width: car.hitbox.size[1], height: car.hitbox.size[2] }, hitbox_offset: { x: car.hitbox.offset[0], y: car.hitbox.offset[1], z: car.hitbox.offset[2] } }],

@@ -1787,7 +1787,9 @@ export function stepCar(car, controls, dt = RL.DT, beforeTransform) {
       normalizeSse(car.omega, nativeDot(car.omega, car.omega));
       for (const axis of ["x", "y", "z"]) car.omega[axis] = f32(car.omega[axis] * RL.MAX_ANG_VEL);
     }
-  } else if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
+  } else {
+    if (car.omega.length() > RL.MAX_ANG_VEL) car.omega.setLength(RL.MAX_ANG_VEL);
+  }
 }
 
 /** Coupled Free Play tick: solve contact at the old transforms, integrate with

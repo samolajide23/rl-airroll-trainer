@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { getCamera } from "./settings.js";
 import { UU } from "./rl-units.js";
+import { RL_CONST as C } from "./rlConst.js";
+import { raycastArena } from "./arenaMesh.js";
 
 export { UU };
 
@@ -10,8 +12,8 @@ export { UU };
  * Ball-cam model: Psyonix engineer (r/unrealengine) — Focus / Rotation / Distance.
  *
  * Honest parity note: slider defaults/ranges match RL. Runtime rates marked [A] are
- * approximated (car-cam stiffness internals / exact TransitionSpeed scale are not
- * public). Transition itself uses BakkesMod `linterp` timing (elapsed × speed).
+ * approximated. Native automated captures establish transition duration,
+ * quadratic ease-out and the 25 degree/second setting FOV response.
  */
 export const RL_CAMERA = {
   FOV: 110, // [V] horizontal degrees
@@ -36,14 +38,14 @@ export const RL_CAMERA = {
    */
   SWIVEL_YAW_PER_SPEED: Math.PI / 5, // [V]
   /** DesiredSwivel pitch (rad) per SwivelSpeed unit at full stick. */
-  SWIVEL_PITCH_PER_SPEED: Math.PI / 8, // [V]
+  SWIVEL_PITCH_PER_SPEED: Math.PI / 15,
   /**
    * BakkesMod CameraWrapper::SwivelDieRate — return-to-center rate (1/s)
    * when the right stick is released.
    */
-  SWIVEL_DIE_RATE: 6.5, // [V]
+  SWIVEL_DIE_RATE: 2,
   /** How fast CurrentSwivel catches DesiredSwivel while stick held. */
-  SWIVEL_CATCH_RATE: 14, // [V]
+  SWIVEL_CATCH_RATE: 1,
   /**
    * Rotational lag rate range for stiffness (car cam only).
    * Exponential approach on yaw: `dYaw *= exp(-rate*dt)`.
@@ -56,14 +58,6 @@ export const RL_CAMERA = {
   STIFF_ROT_RATE_MAX: 120, // [A]
   /** Maps slider → rate with more weight on the snappy end of the range. */
   STIFF_ROT_POWER: 0.55, // [A]
-  /**
-   * BakkesMod CameraWrapper::linterp is `t = min(1, elapsed * speed)`.
-   * In-game TransitionSpeed 1–2 alone is too slow as raw 1/speed seconds
-   * (players treat 2.0 as near hard-cut). Scale so:
-   *   1.0 → ~0.17s, 1.5 → ~0.11s, 2.0 → ~0.08s.
-   * [A] exact internal multiplier unknown; shape matches player reports.
-   */
-  TRANSITION_SPEED_SCALE: 6, // [A]
   /** Camera shake amplitude (uu) when boosting with shake enabled. */
   SHAKE_BOOST_UU: 4.5, // [A]
   SHAKE_IDLE_UU: 0, // [V]
@@ -82,6 +76,15 @@ export const RL_CAMERA = {
   FLAT_FORWARD_MAX_UP: 0.9, // [A]
   /** Min horizontal speed (three m/s ≈ uu/s×UU) to trust velocity follow. */
   AIR_FOLLOW_VEL_MIN: 1.5, // [A] 150 uu/s
+  SURFACE_YAW_RATE: 10,
+  SURFACE_PITCH_RATE: 10,
+  SURFACE_YAW_MIN_HORIZONTAL: 0.15,
+  SURFACE_YAW_FULL_HORIZONTAL: 0.65,
+  WALL_RELEASE_RATE: 4,
+  WALL_PITCH_RELEASE_RATE: 1,
+  LANDING_RECOVERY_RATE: 8,
+  LANDING_YAW_STIFFNESS: [0, 0.1, 0.25, 0.35, 0.5, 0.75, 0.9, 1],
+  LANDING_YAW_RATES: [13.39, 16.63, 21.42, 24.76, 29.5, 37.33, 41.92, 45],
 };
 
 /**
@@ -163,17 +166,17 @@ function forwardFromYawPitch(out, yawRad, pitchRad, up, tmpRight) {
 /**
  * Rocket League car-cam / ball-cam chase.
  *
- * Car-cam arm (ProfileCameraSettings):
- *   camLoc  = carLoc − forward·Distance + up·Height
- *   focusZ  = Height + Distance·tan(Pitch)
- *   focus   = carLoc + up·focusZ
+ * Grounded car cam uses a surface-relative height and pitched distance arm.
+ * Yaw confidence falls near vertical; pitch and contact normal stay independent.
+ * Wall flight retains that view and releases toward world-up without following
+ * body rotation through flips. Floor jumps retain their takeoff heading.
  *
  * Ball-cam (Psyonix Focus / Rotation / Distance model):
  *   Focus   = carLoc + up·Height
  *   Rotation = look Focus→ball, pitch clamped to ≥ Angle (stable near ground)
  *   camLoc  = Focus − Rot.Forward·Distance
  *
- * TransitionSpeed: BakkesMod linterp on the Focus/Rotation view (not a
+ * TransitionSpeed: native quadratic ease-out on the Focus/Rotation view (not a
  * world-space position crawl, and not stiffness).
  */
 export class ChaseCamera {
@@ -192,6 +195,21 @@ export class ChaseCamera {
     this.tmpBallFwd = new THREE.Vector3();
     this.carCamPos = new THREE.Vector3();
     this.carCamLook = new THREE.Vector3();
+    this.surfaceForward = new THREE.Vector3(0, 0, 1);
+    this.surfaceUp = new THREE.Vector3(0, 1, 0);
+    this.contactInput = new THREE.Vector3(0, 1, 0);
+    this.surfaceReady = false;
+    this.surfaceYaw = null;
+    this.surfacePitch = 0;
+    this.wallFlight = false;
+    this.wasAirborne = false;
+    this.landingRecovery = false;
+    this.landingYawRate = 0;
+    this.normalRotation = new THREE.Quaternion();
+    this.identityRotation = new THREE.Quaternion();
+    this.obstructionOrigin = new THREE.Vector3();
+    this.obstructionDirection = new THREE.Vector3();
+    this.armLength = null;
     this.ballCamPos = new THREE.Vector3();
     this.ballCamLook = new THREE.Vector3();
     this.forward = new THREE.Vector3();
@@ -199,6 +217,10 @@ export class ChaseCamera {
     this.swivelYaw = 0;
     this.swivelPitch = 0;
     this.shakePhase = 0;
+    this.desiredSwivelPitch = 0;
+    this.horizontalFov = null;
+    this.profileHeight = null;
+    this.profileDistance = null;
     this._ready = false;
     /** 0 = car cam, 1 = ball cam after current transition completes. */
     this.ballCamBlend = 0;
@@ -208,6 +230,9 @@ export class ChaseCamera {
     this._transitionFrom = 0;
     /** Last desired ball-cam target (0/1) — detects toggles. */
     this._ballTarget = 0;
+    this._ballYaw = null;
+    this._ballPitch = null;
+    this.rearYaw = 0;
   }
 
   /**
@@ -253,17 +278,28 @@ export class ChaseCamera {
    * }} opts
    */
   update(camera, dt, opts) {
+    dt = Number.isFinite(dt) ? Math.max(0, Math.min(dt, 0.1)) : 0;
     const cfg = opts.settings ?? getCamera();
-    const aspect = camera.aspect || 16 / 9;
-    const vFov = horizontalFovToVertical(cfg.fov, aspect);
-    if (Math.abs(camera.fov - vFov) > 0.05) {
+    const speedFraction = THREE.MathUtils.clamp((opts.velocity?.length() ?? 0) / (2300 * UU), 0, 1);
+    const targetFov = cfg.fov + 5 * speedFraction;
+    if (opts.snap || !this._ready || this.horizontalFov === null) this.horizontalFov = targetFov;
+    else this.horizontalFov += THREE.MathUtils.clamp(targetFov - this.horizontalFov, -25 * dt, 25 * dt);
+    const vFov = horizontalFovToVertical(this.horizontalFov, 16 / 9);
+    if (Math.abs(camera.fov - vFov) > 0.0001) {
       camera.fov = vFov;
       camera.updateProjectionMatrix();
     }
 
     const up = opts.worldUp ?? this.worldUp;
-    const dist0 = cfg.distance * UU;
-    const height = cfg.height * UU;
+    if (opts.snap || !this._ready || this.profileHeight === null) {
+      this.profileHeight = cfg.height;
+      this.profileDistance = cfg.distance;
+    } else {
+      this.profileHeight += (cfg.height - this.profileHeight) * (1 - Math.exp(-2.03 * dt));
+      this.profileDistance += (cfg.distance - this.profileDistance) * (1 - Math.exp(-4.14 * dt));
+    }
+    const dist0 = this.profileDistance * UU;
+    const height = this.profileHeight * UU;
     const angleRad = THREE.MathUtils.degToRad(cfg.angle);
     const stiff = THREE.MathUtils.clamp(
       Number.isFinite(cfg.stiffness) ? cfg.stiffness : RL_CAMERA.STIFFNESS,
@@ -304,11 +340,18 @@ export class ChaseCamera {
     const velMin = RL_CAMERA.AIR_FOLLOW_VEL_MIN;
     const velOk = velFlatSq > velMin * velMin;
     const airborne = opts.onGround === false;
+    if (opts.snap || !this._ready || airborne) {
+      this.landingRecovery = false;
+      this.landingYawRate = 0;
+    } else if (this.wasAirborne) {
+      this.landingRecovery = true;
+      this.landingYawRate = 0;
+    }
 
-    // Prefer momentum in air (RL car-cam). Never track tumbling nose while
-    // airborne without velocity — that reverses yaw when the car faces back
-    // mid-flip and whips the camera even with FLAT_FORWARD_MAX_UP.
-    if (airborne && this._ready && !opts.snap) {
+    // Wall departures recover toward momentum; floor jumps retain takeoff yaw.
+    if (airborne && this.wallFlight && velOk && !opts.snap) {
+      this.tmp.copy(this.tmp2).normalize();
+    } else if (airborne && this._ready && !opts.snap) {
       this.tmp.copy(this.smoothDir);
     } else if (velOk && (airborne || noseUnstable)) {
       this.tmp.copy(this.tmp2).normalize();
@@ -340,7 +383,8 @@ export class ChaseCamera {
       if (Math.abs(dYaw) > Math.PI * 0.75 && noseUnstable) {
         dYaw = 0;
       }
-      this._followYaw += dYaw * (1 - Math.exp(-rotRate * Math.max(dt, 0)));
+      const followRate = airborne && this.wallFlight ? RL_CAMERA.WALL_RELEASE_RATE : rotRate;
+      this._followYaw += dYaw * (1 - Math.exp(-followRate * Math.max(dt, 0)));
     }
     this.smoothDir.set(
       Math.sin(this._followYaw),
@@ -352,22 +396,31 @@ export class ChaseCamera {
     const lookRight = THREE.MathUtils.clamp(opts.lookRight ?? 0, -1, 1);
     const lookUp = THREE.MathUtils.clamp(opts.lookUp ?? 0, -1, 1);
     const desireYaw = lookRight * RL_CAMERA.SWIVEL_SPEED * RL_CAMERA.SWIVEL_YAW_PER_SPEED;
-    const desirePitch = lookUp * RL_CAMERA.SWIVEL_SPEED * RL_CAMERA.SWIVEL_PITCH_PER_SPEED;
+    const pitchMagnitude = Math.abs(lookUp);
+    const halfPitch = lookUp < 0 ? 5353 : 3291;
+    const fullPitch = lookUp < 0 ? 8900 : 5500;
+    const desirePitch = Math.trunc(Math.sign(lookUp) * (pitchMagnitude <= 0.5 ?
+      pitchMagnitude * 2 * halfPitch : halfPitch + (pitchMagnitude - 0.5) * 2 * (fullPitch - halfPitch)));
     const stickHeld = Math.abs(lookRight) + Math.abs(lookUp) > 0.02;
     if (opts.snap) {
       this.swivelYaw = 0;
       this.swivelPitch = 0;
+      this.desiredSwivelPitch = 0;
     } else if (stickHeld) {
-      const catchRate = RL_CAMERA.SWIVEL_CATCH_RATE * swivelSpeed / RL_CAMERA.SWIVEL_SPEED;
+      const catchRate = RL_CAMERA.SWIVEL_CATCH_RATE * swivelSpeed;
       const catchT = 1 - Math.exp(-Math.max(0, dt) * catchRate);
       this.swivelYaw += (desireYaw - this.swivelYaw) * catchT;
-      this.swivelPitch += (desirePitch - this.swivelPitch) * catchT;
     } else {
-      const die = 1 - Math.exp(-Math.max(0, dt) * RL_CAMERA.SWIVEL_DIE_RATE);
+      const die = 1 - Math.exp(-Math.max(0, dt) * RL_CAMERA.SWIVEL_DIE_RATE * swivelSpeed);
       this.swivelYaw *= 1 - die;
-      this.swivelPitch *= 1 - die;
       if (Math.abs(this.swivelYaw) < 1e-4) this.swivelYaw = 0;
-      if (Math.abs(this.swivelPitch) < 1e-4) this.swivelPitch = 0;
+    }
+    if (!opts.snap && dt > 0) {
+      const pitchUnits = Math.round(this.swivelPitch * 32768 / Math.PI);
+      const pitchRate = swivelSpeed * (this.desiredSwivelPitch !== 0 ? 1 : 2);
+      this.swivelPitch = Math.trunc(pitchUnits + (this.desiredSwivelPitch - pitchUnits) *
+        Math.min(1, dt * pitchRate)) * Math.PI / 32768;
+      this.desiredSwivelPitch = desirePitch;
     }
 
     // Stiffness zoom-out toward max speed (also applies in ball cam per RL).
@@ -386,22 +439,108 @@ export class ChaseCamera {
     // ========== Car-cam rotation (yaw from stiffness arm, pitch = Angle) ==========
     // Rear View (look behind) flips the chase arm 180° around the car.
     const lookBehind = Boolean(opts.lookBehind);
-    const rearFlip = lookBehind ? Math.PI : 0;
+    const rearTarget = lookBehind ? Math.PI : 0;
+    const immediateFloorRear = !this.wallFlight && (!opts.groundNormal || opts.groundNormal.y > 0.99);
+    this.rearYaw = opts.snap || !this._ready || immediateFloorRear ? rearTarget : this.rearYaw + THREE.MathUtils.clamp(rearTarget - this.rearYaw, -Math.PI * dt * 2, Math.PI * dt * 2);
+    const rearFlip = this.rearYaw;
+    const rearForwardHorizontal = Math.hypot(this.forward.x, this.forward.z);
     const baseCarYaw =
-      Math.atan2(this.smoothDir.x, this.smoothDir.z) + rearFlip;
-    const carYaw = baseCarYaw - this.swivelYaw;
-    const carPitch = angleRad + this.swivelPitch;
+      (lookBehind && airborne && rearForwardHorizontal > 0.15 ?
+        Math.atan2(this.forward.x, this.forward.z) : Math.atan2(this.smoothDir.x, this.smoothDir.z)) + rearFlip;
 
     // ProfileCameraSettings arm: horizontal back + Height, look via tan(Angle).
     // Keep this exact endpoint for blend=0 so car cam matches prior parity.
     const carLookLift = height + dist * Math.tan(angleRad);
     this.carCamLook.copy(opts.target).addScaledVector(up, carLookLift);
     // When looking behind, place the camera on the opposite side of the car.
-    const armSign = lookBehind ? 1 : -1;
+    this.tmpBallFwd.set(Math.sin(baseCarYaw), 0, Math.cos(baseCarYaw));
     this.carCamPos
       .copy(opts.target)
-      .addScaledVector(this.smoothDir, armSign * dist)
+      .addScaledVector(this.tmpBallFwd, -dist)
       .addScaledVector(up, height);
+    if (opts.onGround && opts.groundNormal?.lengthSq() > 0.5) {
+      const surfaceUp = this.tmp.copy(opts.groundNormal).normalize();
+      const surfaceForward = this.tmpBallFwd.copy(this.forward).addScaledVector(surfaceUp, -this.forward.dot(surfaceUp));
+      if (surfaceForward.lengthSq() > 1e-6) {
+        surfaceForward.normalize();
+        if (!this.surfaceReady && this._ready && !opts.snap) {
+          this.surfaceUp.copy(up);
+          this.surfaceYaw = this._followYaw;
+          this.surfacePitch = angleRad;
+          this.surfaceReady = true;
+        }
+        const surfaceRate = this.landingRecovery ? RL_CAMERA.LANDING_RECOVERY_RATE : Math.abs(surfaceUp.dot(up)) < 0.7 ? Math.min(rotRate, 10) : rotRate;
+        const blend = opts.snap || !this.surfaceReady ? 1 : 1 - Math.exp(-surfaceRate * Math.max(0, dt));
+        if (blend === 1) this.surfaceUp.copy(surfaceUp);
+        else {
+          this.normalRotation.setFromUnitVectors(this.surfaceUp, surfaceUp);
+          this.normalRotation.slerp(this.identityRotation, 1 - blend);
+          this.surfaceUp.applyQuaternion(this.normalRotation).normalize();
+        }
+        this.surfaceForward.copy(surfaceForward);
+        const vertical = surfaceForward.dot(up);
+        const horizontal = Math.sqrt(Math.max(0, 1 - vertical * vertical));
+        this.tmpRight.crossVectors(surfaceUp, surfaceForward).normalize();
+        surfaceForward.applyAxisAngle(this.tmpRight, -angleRad);
+        const desiredYaw = Math.atan2(surfaceForward.x, surfaceForward.z);
+        if (opts.snap || this.surfaceYaw === null) this.surfaceYaw = desiredYaw;
+        else {
+          const yawRate = Math.abs(surfaceUp.dot(up)) < 0.7 ? RL_CAMERA.SURFACE_YAW_RATE : rotRate;
+          const confidence = THREE.MathUtils.smoothstep(horizontal, RL_CAMERA.SURFACE_YAW_MIN_HORIZONTAL, RL_CAMERA.SURFACE_YAW_FULL_HORIZONTAL);
+          const landingRates = RL_CAMERA.LANDING_YAW_RATES;
+          const landingStiffness = RL_CAMERA.LANDING_YAW_STIFFNESS;
+          let landingRate = landingRates[landingRates.length - 1];
+          for (let index = 1; index < landingStiffness.length; index++) {
+            if (stiff <= landingStiffness[index]) {
+              const fraction = (stiff - landingStiffness[index - 1]) / (landingStiffness[index] - landingStiffness[index - 1]);
+              landingRate = THREE.MathUtils.lerp(landingRates[index - 1], landingRates[index], fraction);
+              break;
+            }
+          }
+          if (this.landingRecovery) this.landingYawRate += stiff === 1 ? 2 : 2 * (1 - Math.exp(-landingRate * Math.max(0, dt)));
+          const yawBlend = this.landingRecovery ? Math.min(1, this.landingYawRate * confidence * Math.max(0, dt)) : 1 - Math.exp(-yawRate * confidence * Math.max(0, dt));
+          this.surfaceYaw = lerpAngle(this.surfaceYaw, desiredYaw, yawBlend);
+        }
+        const desiredPitch = THREE.MathUtils.clamp(Math.asin(THREE.MathUtils.clamp(surfaceForward.dot(up), -1, 1)), -65 * Math.PI / 180, 65 * Math.PI / 180);
+        const pitchRate = this.landingRecovery ? RL_CAMERA.LANDING_RECOVERY_RATE : Math.abs(surfaceUp.dot(up)) < 0.7 ? RL_CAMERA.SURFACE_PITCH_RATE : rotRate;
+        this.surfacePitch = opts.snap || !this.surfaceReady || (!this.landingRecovery && surfaceUp.dot(up) > 0.99) ? desiredPitch : this.surfacePitch + (desiredPitch - this.surfacePitch) * (1 - Math.exp(-pitchRate * Math.max(0, dt)));
+        if (this.landingRecovery && Math.abs(lerpAngle(this.surfaceYaw, desiredYaw, 1) - this.surfaceYaw) < 0.001 && Math.abs(this.surfacePitch - desiredPitch) < 0.001 && this.surfaceUp.dot(surfaceUp) > 0.9999) this.landingRecovery = false;
+        this.surfaceReady = true;
+        this.wallFlight = Math.abs(surfaceUp.dot(up)) < 0.7;
+        this.tmpBallFwd.copy(this.forward).addScaledVector(surfaceUp, -this.forward.dot(surfaceUp)).normalize().negate();
+        this.tmpRight.crossVectors(surfaceUp, this.tmpBallFwd).normalize();
+        this.tmpBallFwd.applyAxisAngle(this.tmpRight, -angleRad);
+        let viewPitch = THREE.MathUtils.clamp(Math.asin(THREE.MathUtils.clamp(this.tmpBallFwd.dot(up), -1, 1)), -65 * Math.PI / 180, 65 * Math.PI / 180);
+        const rearViewYaw = Math.atan2(this.tmpBallFwd.x, this.tmpBallFwd.z);
+        const rearBlend = this.rearYaw / Math.PI;
+        const viewYaw = lerpAngle(this.surfaceYaw, rearViewYaw, rearBlend);
+        viewPitch = this.surfacePitch + (viewPitch - this.surfacePitch) * rearBlend;
+        forwardFromYawPitch(this.tmpBallFwd, viewYaw, viewPitch, up, this.tmpRight);
+        this.carCamPos.copy(opts.target).addScaledVector(this.surfaceUp, height).addScaledVector(this.tmpBallFwd, -dist);
+        this.carCamLook.copy(this.carCamPos).addScaledVector(this.tmpBallFwd, dist);
+      }
+    } else if (airborne && this.wallFlight && this.surfaceReady && !opts.snap) {
+      const release = 1 - Math.exp(-RL_CAMERA.WALL_RELEASE_RATE * Math.max(0, dt));
+      this.normalRotation.setFromUnitVectors(this.surfaceUp, up);
+      this.normalRotation.slerp(this.identityRotation, 1 - release);
+      this.surfaceUp.applyQuaternion(this.normalRotation).normalize();
+      this.surfaceYaw = lerpAngle(this.surfaceYaw, this._followYaw, release);
+      const desiredPitch = angleRad;
+      this.surfacePitch += (desiredPitch - this.surfacePitch) * (1 - Math.exp(-RL_CAMERA.WALL_PITCH_RELEASE_RATE * Math.max(0, dt)));
+      const airborneRearYaw = (rearForwardHorizontal > 0.15 ? Math.atan2(this.forward.x, this.forward.z) : this._followYaw) + Math.PI;
+      forwardFromYawPitch(this.tmpBallFwd, lerpAngle(this.surfaceYaw, airborneRearYaw, this.rearYaw / Math.PI), this.surfacePitch * (1 - 2 * this.rearYaw / Math.PI), up, this.tmpRight);
+      this.carCamPos.copy(opts.target).addScaledVector(this.surfaceUp, height).addScaledVector(this.tmpBallFwd, -dist);
+      this.carCamLook.copy(this.carCamPos).addScaledVector(this.tmpBallFwd, dist);
+      if (this.surfaceUp.dot(up) > 0.9999 && Math.abs(this.surfacePitch - angleRad) < 0.003 && Math.abs(lerpAngle(this.surfaceYaw, this._followYaw, 1) - this.surfaceYaw) < 0.003) {
+        this.surfaceReady = false;
+        this.surfaceYaw = null;
+        this.wallFlight = false;
+      }
+    } else {
+      this.surfaceReady = false;
+      this.surfaceYaw = null;
+      this.wallFlight = false;
+    }
     if (Math.abs(this.swivelYaw) > 1e-6 || Math.abs(this.swivelPitch) > 1e-6) {
       this.tmp.copy(this.carCamPos).sub(this.carCamLook);
       this.tmp.applyAxisAngle(up, -this.swivelYaw);
@@ -417,8 +556,11 @@ export class ChaseCamera {
     // Rear View overrides ball cam while held (RL: show behind the car).
     let baseBallYaw = baseCarYaw;
     let baseBallPitch = angleRad;
-    if (opts.lookAt && !lookBehind) {
+    const minimumBallPitch = airborne ? -RL_CAMERA.BALL_CAM_MAX_PITCH : angleRad;
+    if (opts.lookAt) {
       this.tmp.copy(opts.lookAt).sub(this.tmp2);
+      const floorBallView = !airborne && (!opts.groundNormal || opts.groundNormal.y > 0.99);
+      if (floorBallView) this.tmp.y -= C.BALL_COLLISION_RADIUS_SOCCAR * UU;
       const horizSq = this.tmp.x * this.tmp.x + this.tmp.z * this.tmp.z;
       const horiz = Math.sqrt(horizSq);
       if (horizSq > 1e-8) {
@@ -426,18 +568,33 @@ export class ChaseCamera {
       }
       if (horiz > 1e-5 || Math.abs(this.tmp.y) > 1e-5) {
         const rawPitch = Math.atan2(this.tmp.y, Math.max(horiz, 1e-6));
-        // Only pitch *up* from Angle toward the ball (stable near ground).
         baseBallPitch = THREE.MathUtils.clamp(
-          Math.max(angleRad, rawPitch),
-          angleRad,
+          Math.max(minimumBallPitch, rawPitch),
+          minimumBallPitch,
           RL_CAMERA.BALL_CAM_MAX_PITCH,
         );
       }
     }
-    const ballYaw = baseBallYaw - this.swivelYaw;
+    if (opts.snap || !this._ready || this.ballCamBlend <= 0.001 || this._ballYaw === null) {
+      this._ballYaw = baseBallYaw;
+      this._ballPitch = baseBallPitch;
+    } else if (opts.lookAt) {
+      const horizontalDistance = Math.hypot(opts.lookAt.x - this.tmp2.x, opts.lookAt.z - this.tmp2.z);
+      const trackingDt = Math.max(0, dt);
+      const trackingBlend = 1 - Math.exp(-10 * trackingDt);
+      const yawDelta = lerpAngle(this._ballYaw, baseBallYaw, 1) - this._ballYaw;
+      const yawConfidence = THREE.MathUtils.smoothstep(horizontalDistance, 10 * UU, 20 * UU);
+      this._ballYaw += THREE.MathUtils.clamp(yawDelta * trackingBlend * yawConfidence, -3 * Math.PI * trackingDt, 3 * Math.PI * trackingDt);
+      this._ballPitch += THREE.MathUtils.clamp(
+        (baseBallPitch - this._ballPitch) * trackingBlend,
+        -Math.PI / 2 * trackingDt,
+        Math.PI / 2 * trackingDt,
+      );
+    }
+    const ballYaw = (lookBehind ? baseCarYaw : this._ballYaw) - this.swivelYaw;
     const ballPitch = THREE.MathUtils.clamp(
-      baseBallPitch + this.swivelPitch,
-      angleRad - RL_CAMERA.SWIVEL_PITCH_PER_SPEED * 10,
+      (lookBehind ? angleRad : this._ballPitch) + this.swivelPitch,
+      minimumBallPitch - RL_CAMERA.SWIVEL_PITCH_PER_SPEED * 10,
       RL_CAMERA.BALL_CAM_MAX_PITCH,
     );
     forwardFromYawPitch(
@@ -450,7 +607,6 @@ export class ChaseCamera {
     this.ballCamPos.copy(this.tmp2).addScaledVector(this.tmpBallFwd, -dist);
     this.ballCamLook.copy(this.tmp2).addScaledVector(this.tmpBallFwd, dist);
 
-    // ========== TransitionSpeed: timed linterp on Focus/Rotation view ==========
     const ballTarget = ballCam && opts.lookAt ? 1 : 0;
     if (opts.snap) {
       this._ballTarget = ballTarget;
@@ -465,13 +621,10 @@ export class ChaseCamera {
     } else {
       this._transitionElapsed += dt;
     }
-    const blendSpeed = transition * RL_CAMERA.TRANSITION_SPEED_SCALE;
-    this.ballCamBlend = linterpScalar(
-      this._transitionFrom,
-      this._ballTarget,
-      this._transitionElapsed,
-      blendSpeed,
-    );
+    const duration = Math.max(0, (2 - transition) / 2);
+    const progress = duration > 0 ? Math.min(1, this._transitionElapsed / duration) : 1;
+    const blend = 1 - (1 - progress) ** 2;
+    this.ballCamBlend = this._transitionFrom + (this._ballTarget - this._transitionFrom) * blend;
     const b = this.ballCamBlend;
 
     if (b <= 1e-4) {
@@ -483,13 +636,14 @@ export class ChaseCamera {
     } else {
       // Blend rotation around Focus (Psyonix view model), not world-space
       // positions — world lerp tunnels through the car on ~180° flips.
-      const yaw = lerpAngle(carYaw, ballYaw, b);
-      const pitch = carPitch + (ballPitch - carPitch) * b;
+      this.tmp.copy(this.carCamLook).sub(this.carCamPos).normalize();
+      const yaw = lerpAngle(Math.atan2(this.tmp.x, this.tmp.z), ballYaw, b);
+      const actualCarPitch = Math.asin(THREE.MathUtils.clamp(this.tmp.dot(up), -1, 1));
+      const pitch = actualCarPitch + (ballPitch - actualCarPitch) * b;
       forwardFromYawPitch(this.tmp, yaw, pitch, up, this.tmpRight);
-      this.camPos.copy(this.tmp2).addScaledVector(this.tmp, -dist);
-      // Look: car elevated focus → along blended forward through Focus.
-      this.ballCamLook.copy(this.tmp2).addScaledVector(this.tmp, dist);
-      this.camLook.copy(this.carCamLook).lerp(this.ballCamLook, b);
+      this.camLook.copy(this.carCamPos).addScaledVector(this.tmpBallFwd.copy(this.carCamLook).sub(this.carCamPos).normalize(), dist).lerp(this.tmp2, b);
+      this.camPos.copy(this.camLook).addScaledVector(this.tmp, -dist);
+      this.camLook.addScaledVector(this.tmp, dist);
     }
 
     // Camera shake (CameraSave.CameraShake), then ClipToField so shake
@@ -509,11 +663,28 @@ export class ChaseCamera {
     const minY = RL_CAMERA.CLIP_MIN_Z_UU * UU;
     if (this.camPos.y < minY) this.camPos.y = minY;
 
+    if (opts.arenaCollision) {
+      this.tmp.copy(opts.target).addScaledVector(up, height);
+      this.tmp2.copy(this.camPos).sub(this.tmp);
+      const desiredLength = this.tmp2.length();
+      if (desiredLength > 1e-6) {
+        this.tmp2.divideScalar(desiredLength);
+        this.obstructionOrigin.set(this.tmp.x / UU, this.tmp.z / UU, this.tmp.y / UU);
+        this.obstructionDirection.set(this.tmp2.x, this.tmp2.z, this.tmp2.y);
+        const hit = raycastArena(this.obstructionOrigin, this.obstructionDirection, desiredLength / UU + 12);
+        const allowedLength = hit ? Math.max(0.1, hit.dist * UU - 12 * UU) : desiredLength;
+        if (opts.snap || this.armLength === null || allowedLength < this.armLength) this.armLength = allowedLength;
+        else this.armLength += (allowedLength - this.armLength) * (1 - Math.exp(-8 * Math.max(0, dt)));
+        this.camPos.copy(this.tmp).addScaledVector(this.tmp2, Math.min(desiredLength, this.armLength));
+      }
+    } else this.armLength = null;
+
     // Body + look snap to the derived view. RL does not add a second look lag
     // on top of TransitionSpeed / stiffness.
     this.smoothPos.copy(this.camPos);
     this.smoothLook.copy(this.camLook);
     this._ready = true;
+    this.wasAirborne = airborne;
 
     camera.position.copy(this.smoothPos);
     camera.up.copy(up);
@@ -522,14 +693,23 @@ export class ChaseCamera {
 
   invalidate() {
     this._ready = false;
+    this.surfaceReady = false;
+    this.surfaceYaw = null;
+    this.surfacePitch = 0;
+    this.wallFlight = false;
+    this.armLength = null;
+    this._ballYaw = null;
+    this._ballPitch = null;
     this.swivelYaw = 0;
     this.swivelPitch = 0;
     this._followYaw = 0;
+    this.desiredSwivelPitch = 0;
     this.smoothDir.set(0, 0, 1);
     this.ballCamBlend = 0;
     this._transitionElapsed = 0;
     this._transitionFrom = 0;
     this._ballTarget = 0;
+    this.rearYaw = 0;
   }
 }
 
@@ -564,9 +744,11 @@ export function applyModeChaseCamera(chase, camera, dt, opts) {
     target: opts.target,
     forward: opts.forward,
     velocity: opts.velocity ?? ZERO_VEL,
-    lookAt: opts.ballCam ? opts.lookAt : undefined,
+    lookAt: opts.lookAt,
     worldUp: opts.worldUp ?? DEFAULT_WORLD_UP,
     onGround: Boolean(opts.onGround),
+    groundNormal: opts.groundNormal,
+    arenaCollision: opts.arenaCollision,
     boosting: Boolean(opts.boosting),
     lookRight: opts.lookRight ?? 0,
     lookUp: opts.lookUp ?? 0,

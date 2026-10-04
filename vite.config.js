@@ -1,10 +1,31 @@
 import { defineConfig } from "vite";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { SOCCAR_TRI_COUNT, SOCCAR_TRIS, SOCCAR_MESH_ENDS, SOCCAR_QUERY_ORDER, SOCCAR_BT_TRIS } from "./src/shared/soccarMeshData.js";
 
 export default defineConfig({
   server: { hmr: false },
   worker: { format: "es" },
   plugins: [{
+    name: "rocketsim-runtime-assets",
+    configureServer(server) {
+      server.middlewares.use("/physics", (request, response, next) => {
+        const name = decodeURIComponent((request.url ?? "").split("?")[0]).replace(/^\//, "");
+        const assets = rocketSimAssets();
+        const file = assets.get(name);
+        if (!file) return next();
+        try {
+          response.setHeader("Content-Type", name.endsWith(".mjs") ? "text/javascript" : name.endsWith(".wasm") ? "application/wasm" : "application/octet-stream");
+          response.end(readFileSync(file));
+        } catch (error) { next(error); }
+      });
+    },
+    generateBundle() {
+      for (const [name, file] of rocketSimAssets()) {
+        this.emitFile({ type: "asset", fileName: `physics/${name}`, source: readFileSync(file) });
+      }
+    },
+  }, {
     name: "compact-arena-data",
     apply: "build",
     transform(source, id) {
@@ -53,3 +74,18 @@ export default defineConfig({
     },
   },
 });
+
+function rocketSimAssets() {
+  const local = path => fileURLToPath(new URL(path, import.meta.url));
+  const meshRoot = "./tools/physics-compare/collision_meshes/";
+  const manifest = JSON.parse(readFileSync(local(`${meshRoot}manifest.json`), "utf8"));
+  return new Map([
+    ["rocketsim.mjs", local("./tools/rocketsim-wasm/build/rocketsim.mjs")],
+    ["rocketsim.wasm", local("./tools/rocketsim-wasm/build/rocketsim.wasm")],
+    ["RocketSim-LICENSE.txt", local("./tools/rocketsim-wasm/vendor/RocketSim/LICENSE")],
+    ["Bullet-LICENSE.txt", local("./tools/rocketsim-wasm/vendor/RocketSim/libsrc/bullet3-3.24/LICENSE.txt")],
+    ["RLGYM-LICENSE.txt", local(`${meshRoot}RLGYM-LICENSE.txt`)],
+    ["manifest.json", local(`${meshRoot}manifest.json`)],
+    ...Object.keys(manifest.meshes).map(name => [`soccar/${name}`, local(`${meshRoot}soccar/${name}`)]),
+  ]);
+}

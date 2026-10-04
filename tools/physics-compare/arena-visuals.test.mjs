@@ -298,6 +298,20 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
   globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() { }, strokeRect() { }, fillText() { } }) }) };
   try {
     const stadium = createStadium();
+    const surfaces = stadium.children.filter(object => object.name === "collision-matched-arena-surface");
+    assert(surfaces.every(surface => surface.material.side === THREE.BackSide));
+    const ramp = surfaces.find(surface => surface.material.name === "arena-ramp-finish");
+    const positions = ramp.geometry.attributes.position;
+    const first = new THREE.Vector3().fromBufferAttribute(positions, 0);
+    const second = new THREE.Vector3().fromBufferAttribute(positions, 1);
+    const third = new THREE.Vector3().fromBufferAttribute(positions, 2);
+    const rampCenter = first.clone().add(second).add(third).divideScalar(3);
+    const rampNormal = second.clone().sub(first).cross(third.clone().sub(first)).normalize();
+    ramp.updateMatrixWorld(true);
+    const insideRay = new THREE.Raycaster(rampCenter.clone().addScaledVector(rampNormal, -0.01), rampNormal, 0, 0.02);
+    const outsideRay = new THREE.Raycaster(rampCenter.clone().addScaledVector(rampNormal, 0.01), rampNormal.clone().negate(), 0, 0.02);
+    assert(insideRay.intersectObject(ramp).length > 0);
+    assert.equal(outsideRay.intersectObject(ramp).length, 0);
     let meshes = 0;
     stadium.traverse(object => {
       assert.equal(object.matrixAutoUpdate, false);
@@ -305,8 +319,36 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
     });
     assert(meshes < 70);
     const nets = stadium.children.filter(object => object.name === "goal-net-panel");
-    assert.equal(nets.length, 8);
-    assert(nets.every(net => net.material.isMeshStandardMaterial && net.material.depthWrite === false));
+    assert.equal(nets.length, 0);
+    const mouthFrames = stadium.children.filter(object => object.name === "goal-mouth-frame");
+    assert.equal(mouthFrames.length, 2);
+    const rearFrames = stadium.children.filter(object => object.name === "goal-rear-frame");
+    assert.equal(rearFrames.length, 0);
+    const reveals = stadium.children.filter(object => object.name === "goal-mouth-reveal");
+    assert.equal(reveals.length, 2);
+    for (const reveal of reveals) {
+      reveal.geometry.computeBoundingBox();
+      const bounds = reveal.geometry.boundingBox;
+      const depths = [Math.abs(bounds.min.z), Math.abs(bounds.max.z)].sort((start, end) => start - end);
+      assert(depths[0] < RL.HALF_L * 0.01 - 0.16);
+      assert(depths[1] > RL.HALF_L * 0.01 + 0.07);
+      assert([...reveal.geometry.attributes.normal.array].every(Number.isFinite));
+    }
+    for (const frame of mouthFrames) {
+      const path = frame.geometry.parameters.path;
+      const crown = path.getPoint(0.5);
+      assert(Math.abs(crown.y - 6.64) < 1e-5);
+      assert(Math.abs(crown.x) < 1e-5);
+      assert(Math.abs(Math.abs(path.getPoint(0).x) - 9.2) < 1e-5);
+      assert.equal(frame.geometry.parameters.radius, 0.16);
+      assert.equal(frame.geometry.parameters.radialSegments, 24);
+      const positions = frame.geometry.attributes.position;
+      for (let vertex = 0; vertex < positions.count; vertex++) {
+        assert(Math.abs(positions.getZ(vertex)) < RL.HALF_L * 0.01 - 0.01);
+      }
+      const tangent = path.getTangent(0.5);
+      assert(Math.abs(tangent.y) < 1e-5 && Math.abs(tangent.z) < 1e-5);
+    }
     const spectators = stadium.getObjectByName("stadium-spectators");
     assert.equal(spectators.count, 2940);
     assert([...spectators.instanceMatrix.array].every(Number.isFinite));
@@ -330,6 +372,14 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
     assert(enclosure.material.opacity < 0.1);
     assert.equal(stadium.getObjectByName("neon-city-backdrop").children.filter(object => object.name === "city-light-accents").length, 3);
     const floor = stadium.getObjectByName("standard-soccar-floor");
+    assert.equal(floor.material.map.name, "soccar-detailed-pitch");
+    assert.equal(floor.material.map.image.width, 2048);
+    assert.equal(floor.material.bumpMap.name, "turf-blade-relief");
+    const grass = stadium.getObjectByName("short-cut-pitch-grass");
+    assert.equal(grass.count, 180000);
+    assert([...grass.instanceMatrix.array].every(Number.isFinite));
+    grass.geometry.computeBoundingBox();
+    assert(grass.geometry.boundingBox.max.y < 0.018);
     assert.equal(floor.geometry.parameters.width, RL.HALF_W * 0.02);
     assert.equal(floor.geometry.parameters.height, RL.HALF_L * 0.02);
     assert.equal(floor.receiveShadow, true);
@@ -352,7 +402,84 @@ test("neon-city scenery stays outside play and the floor retains soccar dimensio
         assert(Math.abs(uv.getY(vertex) - (0.5 - (goal.position.z - positions.getY(vertex)) / floor.geometry.parameters.height)) < 1e-6);
       }
     }
-    assert.equal(stadium.children.filter(o => o.name === "collision-matched-arena-surface").length, 3);
+    assert.equal(stadium.children.filter(o => o.name === "collision-matched-arena-surface").length, 4);
+    const shellSurfaces = stadium.children.filter(object => object.name === "collision-matched-arena-surface");
+    const teamRails = stadium.children.filter(object => object.name === "surface-mounted-team-rail");
+    assert.equal(teamRails.length, 4);
+    const decoration = [teamRails[0], stadium.getObjectByName("continuous-stadium-fascia"), stadium.getObjectByName("static-stadium-batch")];
+    stadium.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    for (const object of decoration) {
+      const shader = { uniforms: {}, vertexShader: "#include <project_vertex>", fragmentShader: "#include <clipping_planes_fragment>" };
+      object.material.onBeforeCompile(shader);
+      assert(shader.fragmentShader.includes("discard;"));
+      assert(shader.vertexShader.includes("instanceMatrix * stadiumPosition"));
+      for (const [position, outside] of [[[0, 2, 0], false], [[0, 2, 55], false], [[44, 2, 0], true], [[44, 3.14, 0], true], [[40, 2, 50], true], [[0, 2, 62], true], [[0, 23, 0], true]]) {
+        camera.position.set(...position);
+        camera.updateMatrixWorld(true);
+        object.onBeforeRender(null, null, camera);
+        const plane = shader.uniforms.stadiumCutaway.value;
+        const near = camera.position.clone();
+        assert.equal(plane.x * near.x + plane.y * near.y + plane.z * near.z + plane.w > 0, outside);
+        const far = new THREE.Vector3(-position[0], 1, -position[2]);
+        assert(plane.x * far.x + plane.y * far.y + plane.z * far.z + plane.w <= 0);
+      }
+    }
+    const railOrigin = new THREE.Vector3(0, 3.14, 0);
+    const railRay = new THREE.Raycaster();
+    stadium.updateMatrixWorld(true);
+    for (const rail of teamRails) {
+      for (const segment of rail.geometry.parameters.path.curves) {
+        const point = segment.v1;
+        railRay.set(railOrigin, point.clone().sub(railOrigin).normalize());
+        const hit = railRay.intersectObjects(shellSurfaces, false)[0];
+        assert(hit);
+        assert(Math.abs(hit.distance - point.distanceTo(railOrigin) - 0.12) < 1e-4);
+      }
+      for (let sample = 0; sample <= 300; sample++) {
+        const point = rail.geometry.parameters.path.getPoint(sample / 300);
+        railRay.set(railOrigin, point.clone().sub(railOrigin).normalize());
+        const hit = railRay.intersectObjects(shellSurfaces, false)[0];
+        assert(hit && hit.distance - point.distanceTo(railOrigin) > 0.06);
+      }
+    }
+    const wallPosts = stadium.children.filter(object => object.name === "surface-mounted-wall-post");
+    assert(wallPosts.length > 0);
+    for (const post of wallPosts) {
+      for (const segment of post.geometry.parameters.path.curves) {
+        const point = segment.v1;
+        const origin = new THREE.Vector3(0, point.y, point.z);
+        railRay.set(origin, new THREE.Vector3(Math.sign(point.x), 0, 0));
+        const hit = railRay.intersectObjects(shellSurfaces, false)[0];
+        assert(hit && hit.distance - Math.abs(point.x) > 0.1);
+      }
+    }
+    for (const surface of shellSurfaces.filter(object => object.material.transparent)) {
+      const positions = surface.geometry.attributes.position;
+      for (let vertex = 0; vertex < positions.count; vertex++) assert(positions.getY(vertex) >= 3.2 - 1e-5);
+    }
+    const backing = shellSurfaces.find(object => object.material.name === "goal-interior-finish");
+    assert.equal(backing.material.depthWrite, true);
+    assert(backing.geometry.index);
+    assert.equal(backing.material.customProgramCacheKey(), "arena-panel-joints-v3");
+    assert.equal(backing.material.color.getHex(), shellSurfaces[0].material.color.getHex());
+    const shader = { vertexShader: "#include <begin_vertex>", fragmentShader: "#include <color_fragment>" };
+    backing.material.onBeforeCompile(shader);
+    assert(shader.fragmentShader.includes("diffuseColor.rgb *= 1.0 - joint * 0.12;"));
+    assert(!shader.fragmentShader.includes("curvedFinish"));
+    assert(backing.material.color.getHex() !== 0x182329);
+    assert(stadium.getObjectByName("continuous-stadium-fascia"));
+    assert(stadium.getObjectByName("continuous-stadium-light"));
+    for (const name of ["continuous-stadium-fascia", "continuous-stadium-light"]) {
+      const trim = stadium.getObjectByName(name);
+      const positions = trim.geometry.attributes.position;
+      for (let vertex = 0; vertex < positions.count; vertex++) {
+        if (Math.abs(positions.getX(vertex)) < 9.3 && Math.abs(positions.getZ(vertex)) > RL.HALF_L * 0.01) {
+          assert(positions.getY(vertex) + trim.position.y > 6.8);
+        }
+      }
+    }
+    assert([...backing.geometry.attributes.position.array].some((value, index) => index % 3 === 1 && value > RL.GOAL_HEIGHT * 0.01 - 0.2));
     assert.equal(city.children.filter(object => object.name === "city-architectural-details").length, 2);
     const turf = stadium.getObjectByName("standard-soccar-floor").material;
     assert.notEqual(turf.map, turf.bumpMap);

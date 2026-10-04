@@ -1,13 +1,17 @@
 import * as THREE from "three";
+import { initializeRocketSim, disposeRocketSimWorlds, rocketSimDiagnostics } from "./shared/rocketSimRuntime.js";
+let physicsInitialization;
 import { frameElapsed } from "./shared/aerial.js";
 import { createStadiumEnvironment } from "./shared/stadium.js";
-import { PHASES, GAME_MODES, FREE_PLAY, GHOST_ALIGN_DIFFICULTIES, nextTrainingDrill, previousTrainingDrill } from "./modes/catalog.js";
+import { PHASES, GAME_MODES, FREE_PLAY, ARENA_1V1, GHOST_ALIGN_DIFFICULTIES, nextTrainingDrill, previousTrainingDrill } from "./modes/catalog.js";
 import { recentAttempts } from "./shared/metrics.js";
 import { preloadBall, BALL_TYPES, getSelectedBallId, setSelectedBallId } from "./shared/ball.js";
 import { preloadCars } from "./shared/carAssets.js";
+import { EngineAudio, BoostAudio, JumpAudio } from "./shared/engineAudio.js";
 import {
   getActiveGamepad,
   keys,
+  readControls,
   pollGamepadButtonPress,
   snapshotPressedButtons,
 } from "./shared/input.js";
@@ -98,6 +102,38 @@ const btnDifficultyBack = document.getElementById("btn-difficulty-back");
 const btnResetBinds = document.getElementById("btn-reset-binds");
 const tabControls = document.getElementById("tab-controls");
 const tabCamera = document.getElementById("tab-camera");
+
+const engineAudio = new EngineAudio();
+const boostAudio = new BoostAudio({ createContext: () => engineAudio.context });
+const jumpAudio = new JumpAudio({ createContext: () => engineAudio.context });
+const unlockEngineAudio = () => {
+  engineAudio.unlock();
+  boostAudio.unlock();
+  jumpAudio.unlock();
+};
+window.addEventListener("pointerdown", unlockEngineAudio);
+window.addEventListener("keydown", unlockEngineAudio);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    engineAudio.stop();
+    boostAudio.stop();
+    jumpAudio.stop();
+  }
+});
+window.addEventListener("pagehide", () => {
+  engineAudio.stop();
+  boostAudio.stop();
+  jumpAudio.stop();
+});
+if (import.meta.hot) import.meta.hot.dispose(() => {
+  window.removeEventListener("pointerdown", unlockEngineAudio);
+  window.removeEventListener("keydown", unlockEngineAudio);
+  boostAudio.stop();
+  boostAudio.disposed = true;
+  jumpAudio.stop();
+  jumpAudio.disposed = true;
+  engineAudio.dispose();
+});
 
 const hud = {
   root: document.getElementById("hud"),
@@ -438,6 +474,7 @@ function stopActiveMode() {
     activeMode.stop();
     activeMode = null;
   }
+  disposeRocketSimWorlds();
   pendingMode = null;
   setTouchControlsVisible(false);
   if (import.meta.env.DEV) {
@@ -518,6 +555,7 @@ function showDifficultySelect(def) {
 
 async function startMode(def, options = {}) {
   if (!def.available || !def.create) return;
+  document.getElementById("mode-launch-error")?.remove();
   cancelListening();
   stopActiveMode();
   const requestId = modeStartId;
@@ -525,6 +563,9 @@ async function startMode(def, options = {}) {
   drillLoading.hidden = false;
   try {
     await new Promise(resolve => setTimeout(resolve, 0));
+    if (requestId !== modeStartId) return;
+    physicsInitialization ??= initializeRocketSim().catch(error => { physicsInitialization = null; throw error; });
+    await physicsInitialization;
     if (requestId !== modeStartId) return;
     const module = await def.load?.();
     if (requestId !== modeStartId) return;
@@ -541,6 +582,7 @@ async function startMode(def, options = {}) {
     if (import.meta.env.DEV) {
       globalThis.__activeMode = activeMode;
       globalThis.__gameCamera = camera;
+      globalThis.__physicsDiagnostics = rocketSimDiagnostics;
     }
     renderer.render(scene, camera);
     if (requestId === modeStartId) drillLoading.hidden = true;
@@ -548,7 +590,16 @@ async function startMode(def, options = {}) {
     if (requestId !== modeStartId) return;
     console.error("Failed to start mode:", error);
     showHub();
-    menuHintEl.textContent = "Unable to load drill. Check your connection and try again.";
+    const message = error instanceof Error ? error.message : String(error);
+    globalThis.__lastModeLaunchError = { mode: def.id, message, stack: error?.stack, url: location.href };
+    try { sessionStorage.setItem("rl-last-mode-launch-error", JSON.stringify(globalThis.__lastModeLaunchError)); } catch { }
+    menuHintEl.textContent = `Unable to start ${def.title}: ${message}`;
+    const notice = document.createElement("p");
+    notice.id = "mode-launch-error";
+    notice.setAttribute("role", "alert");
+    notice.textContent = menuHintEl.textContent;
+    const menuContent = document.querySelector("#live-menu main");
+    if (menuContent) menuContent.prepend(notice);
   }
 }
 
@@ -942,10 +993,10 @@ function buildCameraList() {
     source.replaceChildren();
     if (preset && id !== "xexead") {
       const link = document.createElement("a");
-      link.href = CAMERA_PRESET_SOURCE;
+      link.href = id === "car-soccer" ? "https://www.car-soccer.com/" : CAMERA_PRESET_SOURCE;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.textContent = `Liquipedia · ${preset.updated}`;
+      link.textContent = `${id === "car-soccer" ? "Car Soccer" : "Liquipedia"} · ${preset.updated}`;
       source.append(link);
     }
   };
@@ -1506,6 +1557,13 @@ function frame(now) {
   if (activeMode && !pauseMenu.open && !pauseSettings) activeMode.update(dt, now);
   else if (!activeMode) updateLockerPreview(dt);
 
+  engineAudio.update(activeMode?.physCar, activeMode?.physCar ? readControls() : {},
+    Boolean(activeMode && !pauseMenu.open && !pauseSettings && !document.hidden));
+  boostAudio.update(activeMode?.physCar, {},
+    Boolean(activeMode && !pauseMenu.open && !pauseSettings && !document.hidden));
+  jumpAudio.update(activeMode?.physCar, {},
+    Boolean(activeMode && !pauseMenu.open && !pauseSettings && !document.hidden));
+
   if (!activeMode) {
     arena.rotation.y += dt * 0.05;
   } else {
@@ -1556,6 +1614,7 @@ globalThis.__trainerMenu = {
     refreshEquippedLabel();
   },
   freeplay: FREE_PLAY,
+  arena1v1: ARENA_1V1,
   playableCount: () => GAME_MODES.filter(mode => mode.available).length,
   lastDrill: () => {
     try { return GAME_MODES.find(mode => mode.id === localStorage.getItem('rl-training-last-drill') && mode.available); } catch { return null; }

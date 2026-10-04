@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RL_CONST as C } from "./rlConst.js";
 import { RL, carHitbox, hitboxExtentOnAxis } from "./rl-physics.js";
 import { UU } from "./rl-units.js";
+import { syncRocketSimPads } from "./rocketSimRuntime.js";
 
 /** Thin disc height for pad meshes (uu) — pickup uses {@link BOOST_PAD.CYL_HEIGHT}. */
 export const BOOST_PAD_VISUAL = Object.freeze({
@@ -223,6 +224,11 @@ function syncPadVisual(pad) {
  * @returns {number} boost collected this tick
  */
 export function stepBoostPads(pads, car, dt) {
+  if (car.physicsProfile === "wasm") {
+    syncRocketSimPads(pads, car);
+    for (const pad of pads) syncPadVisual(pad);
+    return 0;
+  }
   let gained = 0;
   // Version-matched BoostPadGrid::CheckCollision skips full/demoed/high cars.
   // Eligibility is sampled once, before any pad's post-tick boost addition.
@@ -292,6 +298,7 @@ export function stepBoostPads(pads, car, dt) {
  * @param {BoostPad[]} pads
  */
 export function resetBoostPads(pads) {
+  pads._nativeReset = true;
   for (const pad of pads) {
     pad.active = true;
     pad.timer = 0;

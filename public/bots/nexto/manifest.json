@@ -1,0 +1,33 @@
+{
+  "source": "https://github.com/Rolv-Arild/Necto",
+  "revision": "2e6ed7d6ed2b352e8ff529d4a12a0c9c70c28cca",
+  "license": "CC-BY-NC-SA-4.0",
+  "source_sha256": {
+    "agent.py": "af5e20b5741d58da2c12d769cb72c74590653f25fda3243cef73fe7127fe61bd",
+    "nexto_obs.py": "7247046d836059ab4428fb8f08968af1a977cf3228f1462a0235cd7a825362b0",
+    "bot.py": "6dcd0c223a7e7c716825dbc76c14cfea8c66e5ab35278c21f2c733574e53fc7b",
+    "nexto-model.pt": "bf5343b5eeacac6bf7cdb75dac4a5c14ba0f94d820eae75f00a211b6119d69fa",
+    "LICENSE": "1349a4b6148492b44f629e64eed676612e234fe9a839e4f3b277c1482c8849f1"
+  },
+  "model": "nexto.onnx",
+  "sha256": "880244dc7b24a9688e045ab9ef5ee640e9a67beab05345ab75fc510653249f19",
+  "inputs": {
+    "query": [
+      1,
+      1,
+      32
+    ],
+    "entities": [
+      1,
+      37,
+      24
+    ],
+    "mask": [
+      1,
+      37
+    ]
+  },
+  "tick_skip": 8,
+  "validation_samples": 32,
+  "maximum_logit_error": 2.86102294921875e-05
+}

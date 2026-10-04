@@ -3,7 +3,7 @@ import { Quaternion, Vector3 } from "three";
 const field = (value, key) => value instanceof Map ? value.get(key) : value?.[key];
 const identity = value => JSON.stringify(value instanceof Map ? Object.fromEntries(value) : value);
 
-function recordedBallCam(raw, players, times, origin, steering = false) {
+function recordedBallCam(raw, players, times, origin, steering = false, rearView = false) {
   const objects = field(raw, "objects") ?? [];
   const actors = new Map();
   const events = players.map(() => []);
@@ -22,7 +22,7 @@ function recordedBallCam(raw, players, times, origin, steering = false) {
       } else if (name === (steering ? "Engine.Pawn:PlayerReplicationInfo" : "TAGame.CameraSettingsActor_TA:PRI")) {
         const reference = field(attribute, "ActiveActor");
         state.pri = field(reference, "active") ? field(reference, "actor") : undefined;
-      } else if (name === (steering ? "TAGame.Vehicle_TA:ReplicatedSteer" : "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera")) {
+      } else if (name === (steering ? "TAGame.Vehicle_TA:ReplicatedSteer" : rearView ? "TAGame.CameraSettingsActor_TA:bUsingBehindView" : "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera")) {
         state.ballCam = steering ? Math.max(-1, Math.min(1, (field(attribute, "Byte") - 128) / 127)) : field(attribute, "Boolean");
       }
     }
@@ -320,6 +320,7 @@ export function normalizeReplay(decoded, raw) {
   const duration = times.at(-1);
   if (!(duration > 0) || !players.length) throw new Error("Replay has no playable match.");
   if (raw) recordedBallCam(raw, players, times, origin).forEach((track, index) => { players[index].ballCam = track; });
+  if (raw) recordedBallCam(raw, players, times, origin, false, true).forEach((track, index) => { players[index].rearView = track; });
   if (raw) recordedBallCam(raw, players, times, origin, true).forEach((track, index) => { players[index].steering = track; });
   const replay = { times, duration, players, ball: data.ball_data.frames, match: recordedMatch(raw, metadata) };
   replay.events = recordedEvents(raw, replay, origin);

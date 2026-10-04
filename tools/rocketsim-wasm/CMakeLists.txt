@@ -1,0 +1,55 @@
+cmake_minimum_required(VERSION 3.20)
+project(RocketSimWasmProbe LANGUAGES CXX)
+
+if(NOT EMSCRIPTEN)
+  add_subdirectory(vendor/RocketSim)
+  add_executable(native_wall_probe native_wall_probe.cpp)
+  add_executable(rsqrt_probe rsqrt_probe.cpp)
+  target_compile_features(rsqrt_probe PRIVATE cxx_std_20)
+  target_compile_features(native_wall_probe PRIVATE cxx_std_20)
+  if(MSVC)
+    option(ROCKETSIM_NATIVE_SCALAR "Disable Bullet SSE in the native diagnostic" ON)
+    option(ROCKETSIM_NATIVE_EXACT_RSQRT "Use WASM reciprocal square root in the native diagnostic" OFF)
+    target_compile_options(RocketSim PRIVATE /fp:precise)
+    target_compile_options(native_wall_probe PRIVATE /fp:precise)
+    if(ROCKETSIM_NATIVE_SCALAR)
+      target_compile_definitions(RocketSim PUBLIC __BT_DISABLE_SSE__)
+    endif()
+    if(ROCKETSIM_NATIVE_EXACT_RSQRT)
+      target_compile_options(RocketSim PUBLIC "/FI${CMAKE_CURRENT_SOURCE_DIR}/exact_rsqrt.h")
+    endif()
+  else()
+    target_compile_options(RocketSim PRIVATE -ffp-contract=off)
+    target_compile_options(native_wall_probe PRIVATE -ffp-contract=off)
+  endif()
+  target_include_directories(native_wall_probe PRIVATE vendor/RocketSim/src)
+  target_link_libraries(native_wall_probe PRIVATE RocketSim)
+  return()
+endif()
+
+add_subdirectory(vendor/RocketSim)
+option(ROCKETSIM_WASM_SIMD "Use Bullet SSE with native WASM exceptions" ON)
+if(ROCKETSIM_WASM_SIMD)
+  target_compile_options(RocketSim PUBLIC -msimd128 -msse4.1 -include "${CMAKE_CURRENT_SOURCE_DIR}/native_rsqrt.h" -fwasm-exceptions)
+  target_include_directories(RocketSim PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/compat")
+  target_compile_definitions(RocketSim PUBLIC BT_USE_SSE BT_USE_SSE_IN_API BT_USE_SIMD_VECTOR3 BT_ALLOW_SSE4)
+  set(ROCKETSIM_EXCEPTIONS -fwasm-exceptions)
+else()
+  set(ROCKETSIM_EXCEPTIONS -fexceptions)
+endif()
+target_compile_options(RocketSim PRIVATE ${ROCKETSIM_EXCEPTIONS} -ffp-contract=off)
+add_executable(rocketsim bridge.cpp)
+target_compile_features(rocketsim PRIVATE cxx_std_20)
+target_include_directories(rocketsim PRIVATE vendor/RocketSim/src)
+target_compile_options(rocketsim PRIVATE ${ROCKETSIM_EXCEPTIONS} -ffp-contract=off)
+target_link_libraries(rocketsim PRIVATE RocketSim)
+target_link_options(rocketsim PRIVATE
+  ${ROCKETSIM_EXCEPTIONS}
+  "-sMODULARIZE=1"
+  "-sEXPORT_ES6=1"
+  "-sENVIRONMENT=web,node"
+  "-sALLOW_MEMORY_GROWTH=1"
+  "-sEXPORTED_FUNCTIONS=['_malloc','_free','_rs_add_mesh','_rs_create_soccar','_rs_remove_car','_rs_set_car','_rs_set_ball','_rs_create','_rs_step','_rs_state','_rs_destroy','_rs_world_create','_rs_world_destroy','_rs_world_set_car','_rs_world_set_ball','_rs_world_step','_rs_world_state','_rs_world_pad']"
+  "-sEXPORTED_RUNTIME_METHODS=['HEAPF32','HEAPU8']"
+)
+set_target_properties(rocketsim PROPERTIES SUFFIX ".mjs")

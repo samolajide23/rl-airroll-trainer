@@ -24,6 +24,40 @@ function body(value, name) {
     finite(value.rb_time, `${name}.rb_time`);
 }
 
+export function validateCameraDiagnostics(record) {
+    requireCondition(record.camera_callback_interval === null || typeof record.camera_callback_interval === "number", "camera_callback_interval missing");
+    if (record.camera_callback_interval !== null) {
+        finite(record.camera_callback_interval, "camera_callback_interval");
+        requireCondition(record.camera_callback_interval >= 0, "camera_callback_interval must be nonnegative");
+    }
+    requireCondition(typeof record.state_name === "string", "camera state_name missing");
+    requireCondition(record.blender_state === null || typeof record.blender_state === "string", "blender_state missing");
+    requireCondition(record.behind_view === null || typeof record.behind_view === "boolean", "behind_view missing");
+    requireCondition(record.native_rates && typeof record.native_rates === "object", "native_rates missing");
+    for (const key of ["swivel_fast", "swivel_decay", "clip"]) finite(record.native_rates[key], `native_rates.${key}`);
+    requireCondition(record.car_camera_default_rates === null || typeof record.car_camera_default_rates === "object", "car_camera_default_rates missing");
+    if (record.car_camera_default_rates !== null) {
+        for (const key of ["to_ground", "to_air", "ground_rotation", "wall_rotation", "fov", "supersonic_fov", "ground_normal"]) finite(record.car_camera_default_rates[key], `car_camera_default_rates.${key}`);
+    }
+    for (const key of ["observed_car", "observed_ball"]) {
+        requireCondition(record[key] === null || typeof record[key] === "object", `${key} missing`);
+        if (record[key] !== null) body(record[key], key);
+    }
+    requireCondition(record.transition === null || typeof record.transition === "object", "transition missing");
+    if (record.transition !== null) {
+        requireCondition(typeof record.transition.started === "boolean", "transition.started missing");
+        if (record.transition.started) {
+            for (const key of ["remaining_time", "blend_time", "blend_exp"]) finite(record.transition[key], `transition.${key}`);
+            requireCondition(Number.isInteger(record.transition.blend_function) && record.transition.blend_function >= 0 && record.transition.blend_function <= 255, "transition.blend_function invalid");
+            requireCondition(typeof record.transition.lock_outgoing === "boolean", "transition.lock_outgoing missing");
+            const snapshot = record.transition.snapshot;
+            requireCondition(snapshot && typeof snapshot === "object", "transition.snapshot missing");
+            for (const key of ["focus", "pos", "rotator_unreal"]) vector(snapshot[key], 3, `snapshot.${key}`);
+            for (const key of ["distance", "fov"]) finite(snapshot[key], `snapshot.${key}`);
+        }
+    }
+}
+
 export function createCaptureValidator() {
     let header = null;
     let footer = null;
@@ -46,6 +80,8 @@ export function createCaptureValidator() {
                 requireCondition(record.position_units === "uu" && record.rotation_units === "unreal_rotator", "unsupported coordinate units");
                 requireCondition(record.input_phase === "post_SetVehicleInput_not_post_physics" && record.camera_phase === "drawable", "unsupported sample phases");
                 requireCondition(record.sample_rate_assumed === false, "sampling rate must not be assumed");
+                if (record.camera_diagnostics_version !== undefined) requireCondition(record.camera_diagnostics_version === 1, "unsupported camera diagnostics version");
+                if (record.recorder === "0.4.0") requireCondition(record.camera_diagnostics_version === 1, "camera diagnostics version missing");
                 header = record;
                 return;
             }
@@ -55,11 +91,19 @@ export function createCaptureValidator() {
                 footer = record;
                 return;
             }
-            requireCondition(Object.hasOwn(counts, record.type), "unknown sample type");
+            requireCondition(Object.hasOwn(counts, record.type) || record.type === "camera_swivel_update", "unknown sample type");
             requireCondition(record.sequence === sequence++, "sample sequence is not contiguous");
             finite(record.elapsed, "elapsed");
             requireCondition(record.elapsed >= 0 && record.elapsed >= elapsed, "sample time went backwards");
             elapsed = record.elapsed;
+            if (record.type === "camera_swivel_update") {
+                finite(record.delta_time, "swivel.delta_time");
+                requireCondition(record.delta_time > 0 && record.delta_time <= 0.1, "invalid swivel update duration");
+                vector(record.before_unreal, 3, "swivel.before_unreal");
+                vector(record.after_unreal, 3, "swivel.after_unreal");
+                vector(record.desired_unreal, 3, "swivel.desired_unreal");
+                return;
+            }
             if (record.type === "input_state") {
                 finite(record.physics_time, "physics_time");
                 if (record.physics_time === previousPhysicsTime) repeatedPhysicsTimes++;
@@ -82,7 +126,7 @@ export function createCaptureValidator() {
                 if (record.boost_raw !== null) finite(record.boost_raw, "boost_raw");
                 body(record.car, "car");
                 body(record.ball, "ball");
-                if (header.recorder === "0.3.0") {
+                if (header.recorder === "0.3.0" || header.recorder === "0.4.0") {
                     requireCondition(record.contact_state, "contact_state missing");
                     for (const key of ["time_on_ground", "time_off_ground", "sticky_ground", "sticky_wall"]) finite(record.contact_state[key], `contact_state.${key}`);
                     vector(record.contact_state.ground_normal, 3, "contact_state.ground_normal");
@@ -115,6 +159,7 @@ export function createCaptureValidator() {
                 requireCondition(record.fov > 0 && record.fov < 180, "camera FOV out of range");
                 requireCondition(record.settings && typeof record.settings.shake === "boolean", "camera settings missing");
                 for (const key of ["fov", "height", "angle", "distance", "stiffness", "swivel_speed", "transition_speed"]) finite(record.settings[key], `settings.${key}`);
+                if (header.camera_diagnostics_version === 1) validateCameraDiagnostics(record);
             }
             counts[record.type]++;
             times[record.type].push(record.elapsed);

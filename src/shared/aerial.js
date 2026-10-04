@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { RL } from "./rl-physics.js";
+import { makeCar } from "./carSim.js";
+import { rocketSimReady, stepRocketSim, releaseRocketSimWorld } from "./rocketSimRuntime.js";
 
 export function frameElapsed(now, previous) {
   return Math.max(0, Math.min(0.1, (now - previous) / 1000));
@@ -39,6 +41,8 @@ export class AerialBody {
 
   reset() {
     this.omega.set(0, 0, 0);
+    if (this.nativeCar) releaseRocketSimWorld(this.nativeCar);
+    this.nativeCar = null;
   }
 
   /**
@@ -49,6 +53,29 @@ export class AerialBody {
    * @param {number} dt
    */
   step(object, roll, pitch, yaw, dt) {
+    if (rocketSimReady()) {
+      this.nativeCar ??= makeCar(new THREE.Vector3(0, 0, 10000), 0);
+      const car = this.nativeCar;
+      car.arenaCollisions = false;
+      car.onGround = false;
+      car.wheels.forEach(wheel => { wheel.inContact = false; });
+      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(object.quaternion);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(object.quaternion);
+      forward.set(forward.x, forward.z, forward.y);
+      up.set(up.x, up.z, up.y);
+      const right = new THREE.Vector3().crossVectors(up, forward);
+      car.q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(forward, right, up));
+      car.omega.set(-this.omega.x, -this.omega.z, -this.omega.y);
+      stepRocketSim(car, null, { roll, pitch, yaw }, dt, false);
+      forward.set(1, 0, 0).applyQuaternion(car.q);
+      up.set(0, 0, 1).applyQuaternion(car.q);
+      forward.set(forward.x, forward.z, forward.y);
+      up.set(up.x, up.z, up.y);
+      const left = new THREE.Vector3().crossVectors(up, forward);
+      object.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(left, up, forward));
+      this.omega.set(-car.omega.x, -car.omega.z, -car.omega.y);
+      return;
+    }
     const {
       omega,
       _omegaNext: omegaNext,

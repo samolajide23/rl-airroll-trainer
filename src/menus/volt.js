@@ -383,7 +383,8 @@ function renderArena() {
   const section = arenaSections.find(entry => entry.id === arenaSectionId);
   const soloChallenge = arenaSections.find(section => section.id === 'solo-challenges').modes.includes(mode.id);
   const format = arenaFormats.find(entry => entry.id === (soloChallenge ? 'solo' : arenaFormatId));
-  const playable = arenaFormatId === 'solo' && arenaModeId === 'soccar';
+  const duel = arenaFormatId === 'duel' && arenaModeId === 'soccar';
+  const playable = (arenaFormatId === 'solo' || duel) && arenaModeId === 'soccar';
   content.innerHTML = `
     <section class="page-heading arena-heading"><div><p class="eyebrow">ARENA / MATCH LINEUP</p><h1>ARENA.</h1></div><span class="arena-session-label"><i data-lucide="flag"></i>${format.name} / ${mode.name}</span></section>
     <div class="arena-workspace">
@@ -391,7 +392,7 @@ function renderArena() {
         <nav class="arena-category-rail" aria-label="Mode category">${arenaSections.map((entry, index) => `<button type="button" data-arena-section="${entry.id}" aria-pressed="${entry.id === arenaSectionId}"><span>0${index + 1}</span><strong>${entry.name}</strong><small>${entry.modes.length}</small></button>`).join('')}</nav>
         <section aria-labelledby="arena-section-${section.id}">
           <header class="arena-mode-heading"><h2 id="arena-section-${section.id}">${section.name}</h2><span>${section.modes.length} MODES</span></header>
-          <div class="arena-mode-grid" role="group" aria-label="${section.name}">${section.modes.map(modeId => arenaModes.find(entry => entry.id === modeId)).map(entry => `<button type="button" class="arena-mode" data-arena-mode="${entry.id}" aria-pressed="${entry.id === arenaModeId}"><i data-lucide="${entry.icon}"></i><span class="arena-mode-name">${entry.name}</span><span class="arena-mode-description">${entry.summary}</span><small>${entry.id === 'soccar' ? 'Solo available' : 'Coming soon'}</small></button>`).join('')}</div>
+          <div class="arena-mode-grid" role="group" aria-label="${section.name}">${section.modes.map(modeId => arenaModes.find(entry => entry.id === modeId)).map(entry => `<button type="button" class="arena-mode" data-arena-mode="${entry.id}" aria-pressed="${entry.id === arenaModeId}"><i data-lucide="${entry.icon}"></i><span class="arena-mode-name">${entry.name}</span><span class="arena-mode-description">${entry.summary}</span><small>${entry.id === 'soccar' ? '1v1 / Solo available' : 'Coming soon'}</small></button>`).join('')}</div>
         </section>
       </section>
       <aside class="arena-session" aria-label="Selected match">
@@ -399,8 +400,8 @@ function renderArena() {
         ${soloChallenge ? '' : `<h3>Match format</h3><div class="arena-formats" role="group" aria-label="Match format">${arenaFormats.map(entry => `<button type="button" data-arena-format="${entry.id}" aria-pressed="${entry.id === arenaFormatId}"><strong>${entry.label}</strong></button>`).join('')}</div>`}
         <dl><div><dt>Format</dt><dd>${soloChallenge ? 'Solo / Challenge' : `${format.label} / ${format.name}`}</dd></div><div><dt>Players</dt><dd>${format.players}</dd></div><div><dt>Arena</dt><dd>${mode.id === 'soccar' ? 'Standard soccar' : mode.name}</dd></div><div><dt>Status</dt><dd>${playable ? 'Ready to play' : 'Coming soon'}</dd></div></dl>
         <p class="arena-rules">${mode.rule}</p>
-        <button type="button" class="primary arena-launch" data-action="arena-launch" ${playable ? '' : 'disabled'}><i data-lucide="play"></i>${playable ? 'Enter solo arena' : 'Match unavailable'}</button>
-        ${playable ? '' : '<p class="arena-availability">Team matches and extra modes are not playable yet.</p><button type="button" class="secondary arena-solo" data-action="arena-solo"><i data-lucide="car"></i>Play solo arena</button>'}
+        <button type="button" class="primary arena-launch" data-action="arena-launch" ${playable ? '' : 'disabled'}><i data-lucide="play"></i>${duel ? 'Play Nexto' : playable ? 'Enter solo arena' : 'Match unavailable'}</button>
+        ${playable ? '' : '<p class="arena-availability">2v2, 3v3, 4v4 and extra modes are not playable yet.</p><button type="button" class="secondary arena-solo" data-action="arena-solo"><i data-lucide="car"></i>Play solo arena</button>'}
       </aside>
     </div>`;
   createIcons({ icons, root: content });
@@ -595,6 +596,7 @@ document.addEventListener('click', event => {
   }
   if (live && button.dataset.action === 'arena-launch') {
     if (arenaFormatId === 'solo' && arenaModeId === 'soccar') trainer.launch(trainer.freeplay);
+    if (arenaFormatId === 'duel' && arenaModeId === 'soccar') trainer.launch(trainer.arena1v1);
     return;
   }
   if (live && button.dataset.movementStep !== undefined) {

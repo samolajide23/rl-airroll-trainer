@@ -2,13 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { initSync, get_replay_frames_data, parse_replay } from "@rlrml/subtr-actor";
+import { extractResetWindows } from "./flip-reset-replay.mjs";
 import { normalizeReplay, resolveReplayPadLocations, prepareReplayMotion, frameAt, samplePose, sampleBoostTrail, createWheelTrack, formatMatchClock, exportSettings } from "../../src/replay/timeline.js";
 import { PerspectiveCamera, Quaternion, Group } from "three";
 import { groundReplayWheels, ReplayWheels, ReplayBoost } from "../../src/replay/renderEffects.js";
 import { frameReplayGoal } from "../../src/replay/goalCamera.js";
 import { replayGoalCuts, skipReplayGoalPause, replayClipSegments, replayClipTime, replayKickoffs,
   replayPlaybackSegments, replayPlaybackSample, replayPlaybackOffset } from "../../src/replay/goalCuts.js";
-import { createPlayerCameraTrack, playerCameraSettings, constrainReplayCamera } from "../../src/replay/playerCamera.js";
+import { createPlayerCameraTrack, playerCameraSettings, constrainReplayCamera, inferReplayCameraSurface } from "../../src/replay/playerCamera.js";
 import { analyzeReplayBall, compareBallWindow } from "../../src/replay/ballComparison.js";
 import { makeBall, stepBall, RL } from "../../src/shared/rl-physics.js";
 import { Vector3 } from "three";
@@ -240,6 +241,32 @@ test("replay wheel grounding is bounded, surface-relative and independent of see
   assert.ok(pivot.position.distanceTo(center) <= 0.080000001);
 });
 
+test("confirmed replay reset windows preserve separated airborne dodge evidence", () => {
+  initSync({ module: readFileSync(new URL("../../node_modules/@rlrml/subtr-actor/rl_replay_subtr_actor_bg.wasm", import.meta.url)) });
+  const data = get_replay_frames_data(readFileSync(new URL("../../public/replays/001e6892-e801-4815-952e-732ff39531a3.replay", import.meta.url)));
+  const windows = extractResetWindows(data, "zen", [
+    { id: "zen-reset-247", start: 242, end: 250, contactTime: 247.4574432373047, dodgeTime: 247.97613525390625 },
+    { id: "zen-reset-319", start: 317, end: 324, contactTime: 319.5868835449219, dodgeTime: 321.1344299316406 },
+  ]);
+  assert.equal(windows.length, 2);
+  for (const window of windows) {
+    assert.ok(window.frames.length > 800);
+    assert.ok(window.frames.every(frame => frame.car.location && frame.car.rotation && frame.ball.location));
+    assert.ok(window.frames.every((frame, index) => index === 0 || frame.time > window.frames[index - 1].time));
+    assert.ok(window.maximumFrameInterval < 0.009);
+    assert.ok(window.contact.separation < 110);
+    assert.ok(window.contact.wheelSideAlignment > 0.95);
+    assert.equal(window.contact.dodgeActive, false);
+    assert.equal(window.dodge.dodgeActive, true);
+    assert.ok(window.dodge.separation > 300);
+    assert.ok(window.minimumCarHeightBetweenContactAndDodge > 300);
+    assert.ok(window.timeFromLastJumpToDodge > 3);
+    assert.deepEqual(window.jumpPressesBetweenContactAndDodge, []);
+    assert.deepEqual(window.missingAerialAxes, ["pitch", "yaw", "roll"]);
+    assert.ok(Math.abs(window.contact.time - window.contact.elapsed - window.origin) < 1e-9);
+  }
+});
+
 test("supplied Rocket League replay decodes into playable tracks", () => {
   initSync({ module: readFileSync(new URL("../../node_modules/@rlrml/subtr-actor/rl_replay_subtr_actor_bg.wasm", import.meta.url)) });
   const bytes = readFileSync(new URL("../../public/replays/0000a984-75af-4b24-b5a6-cb3663fc4efa.replay", import.meta.url));
@@ -372,7 +399,9 @@ test("supplied Rocket League replay decodes into playable tracks", () => {
   assert.ok(camera.position.distanceTo(position) < 1e-10);
   assert.ok(camera.quaternion.angleTo(rotation) < 1e-7);
   assert.ok(camera.position.toArray().every(Number.isFinite));
-  assert.ok(Math.abs(2 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) * 180 / Math.PI - 109) < 1e-8);
+  const cameraSpeed = samplePose(replay.players[0].frames, cursor).velocity.length();
+  const expectedHorizontalFov = 109 + 5 * Math.min(cameraSpeed / 23, 1);
+  assert.ok(Math.abs(2 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * (16 / 9)) * 180 / Math.PI - expectedHorizontalFov) < 1e-8);
   createPlayerCameraTrack(replay, 1, true)(camera, cursor);
   assert.ok(camera.position.distanceTo(position) > 1);
   createPlayerCameraTrack(replay, 0, false)(camera, cursor);
@@ -588,32 +617,79 @@ test("recorded camera look transitions reconstruct between observations with sta
   assert.ok(camera.quaternion.angleTo(rotation) < 1e-7);
 });
 
-test("ball-cam events preserve player ownership and apply only at their recorded time", () => {
+test("camera mode events preserve player ownership and apply only at their recorded time", () => {
   const decoded = { frame_data: {
     metadata_frames: [10, 11, 12, 13].map(time => ({ time })),
     players: [[{ Steam: "first" }, { frames: [] }], [{ Steam: "second" }, { frames: [] }]],
     ball_data: { frames: [] },
   } };
   const objects = ["Engine.PlayerReplicationInfo:UniqueId", "TAGame.CameraSettingsActor_TA:PRI",
-    "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera"];
+    "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera", "TAGame.CameraSettingsActor_TA:bUsingBehindView"];
   const update = (actor_id, object_id, attribute) => ({ actor_id, object_id, attribute });
   const raw = { objects, network_frames: { frames: [
     { time: 10, updated_actors: [
       update(7, 2, { Boolean: true }),
+      update(7, 3, { Boolean: false }),
       update(7, 1, { ActiveActor: { active: true, actor: 23 } }),
       update(23, 0, { UniqueId: { remote_id: { Steam: "first" } } }),
       update(8, 2, { Boolean: false }),
       update(8, 1, { ActiveActor: { active: true, actor: 6 } }),
       update(6, 0, { UniqueId: { remote_id: { Steam: "second" } } }),
     ] },
-    { time: 11.5, updated_actors: [update(7, 2, { Boolean: false })] },
-    { time: 13, updated_actors: [update(7, 2, { Boolean: true }), update(8, 2, { Boolean: true })] },
+    { time: 11.5, updated_actors: [update(7, 2, { Boolean: false }), update(7, 3, { Boolean: true })] },
+    { time: 13, updated_actors: [update(7, 2, { Boolean: true }), update(8, 2, { Boolean: true }), update(7, 3, { Boolean: false })] },
   ] } };
   const replay = normalizeReplay(decoded, raw);
   assert.deepEqual(replay.players[0].ballCam, [true, true, false, true]);
   assert.deepEqual(replay.players[1].ballCam, [false, false, false, true]);
+  assert.deepEqual(replay.players[0].rearView, [false, false, true, false]);
+  assert.deepEqual(replay.players[1].rearView, [null, null, null, null]);
   assert.deepEqual(normalizeReplay(decoded, { objects, network_frames: { frames: [] } }).players[0].ballCam,
     [null, null, null, null]);
+});
+
+test("replay camera surface inference distinguishes floor, wall and flight", () => {
+  const pose = { position: new Vector3(0, 0.17, 0), quaternion: new Quaternion() };
+  const floor = inferReplayCameraSurface(pose, "octane");
+  assert.equal(floor.onGround, true);
+  assert(floor.groundNormal.distanceTo(new Vector3(0, 1, 0)) < 1e-9);
+  pose.position.y = 2;
+  assert.equal(inferReplayCameraSurface(pose, "octane").onGround, false);
+  pose.position.set(40.78, 5, 0);
+  assert.equal(inferReplayCameraSurface(pose, "octane").onGround, false);
+  pose.quaternion.setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2);
+  const wall = inferReplayCameraSurface(pose, "octane");
+  assert.equal(wall.onGround, true);
+  assert(wall.groundNormal.distanceTo(new Vector3(-1, 0, 0)) < 1e-9);
+  pose.position.x = 39;
+  assert.equal(inferReplayCameraSurface(pose, "octane").onGround, false);
+  assert.equal(inferReplayCameraSurface(pose, "octane", () => null).onGround, false);
+});
+
+test("replay camera preserves speed FOV and recorded rear view across seeks", () => {
+  const times = Array.from({ length: 181 }, (_, index) => index / 120);
+  const frame = speed => ({ Data: { rigid_body: {
+    location: { x: 0, y: 0, z: 500 }, rotation: { x: 0, y: 0, z: 0, w: 1 },
+    linear_velocity: { x: speed, y: 0, z: 0 },
+  } } });
+  const replay = { times, ball: times.map(() => frame(0)), players: [{
+    frames: times.map(() => frame(2300)), cameraSettings: { fov: 108 },
+    ballCam: times.map(() => false), rearView: times.map(time => time >= 0.5),
+  }] };
+  const track = createPlayerCameraTrack(replay, 0);
+  const camera = new PerspectiveCamera(65, 4 / 3);
+  track(camera, frameAt(times, 0));
+  const forward = camera.quaternion.clone();
+  const expectedFov = 2 * Math.atan(Math.tan(113 * Math.PI / 360) / (16 / 9)) * 180 / Math.PI;
+  assert(Math.abs(camera.fov - expectedFov) < 1e-9);
+  track(camera, frameAt(times, 1.5));
+  assert(camera.quaternion.angleTo(forward) > 3);
+  const rear = camera.quaternion.clone();
+  track(camera, frameAt(times, 0));
+  assert(camera.quaternion.angleTo(forward) < 1e-7);
+  track(camera, frameAt(times, 1.5));
+  assert(camera.quaternion.angleTo(rear) < 1e-7);
+  assert(Math.abs(camera.fov - expectedFov) < 1e-9);
 });
 
 test("ball comparison integrates continuously and does not reseed from later observations", () => {

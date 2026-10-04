@@ -25,6 +25,13 @@ Curved surfaces retain the existing collision-matched triangle renderer. No
 scenery is added to physics. Depleted boost pads retain a dark base while all
 luminous pickup elements are hidden.
 
+The visual shell uses smooth shared normals and a level 320 uu ramp-to-glass
+boundary. Neutral panel finishes replace triangle-based dark color masks;
+goal interiors have a separate lining material and team-colored tubular frames.
+A continuous rounded fascia and light strip connect the seating perimeter.
+There is only one glass shell, with structural supports outside the playfield.
+Panel joints are antialiased in the material shader, not overlapping geometry.
+
 Physics is still approximate at complex contacts and pad lock/timing edges;
 this visual pass does not certify complete live-game parity. Existing trajectory
 budgets remain unchanged.
