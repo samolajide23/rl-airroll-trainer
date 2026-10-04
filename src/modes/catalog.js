@@ -38,7 +38,7 @@ const ORIGINAL_PHASES = [
           "Free roam with RL-style driving. Jump, dodge, finite boost + pads, air roll, ball. Reset car / skip ball.",
         available: true,
         load: () => import("./freePlay.js"),
-        create: (ctx, options, module) => new module.FreePlayMode(ctx),
+        create: (ctx, options, module) => new module.FreePlayMode(ctx, { diagnostics: options?.diagnostics === true }),
       },
     ],
   },

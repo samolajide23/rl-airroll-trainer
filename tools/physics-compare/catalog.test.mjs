@@ -2,6 +2,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { PHASES, GAME_MODES, FREE_PLAY, nextTrainingDrill, previousTrainingDrill } from "../../src/modes/catalog.js";
 
+test("manual free play keeps bot diagnostics opt-in", () => {
+  const context = {};
+  class FreePlayMode {
+    constructor(ctx, options) {
+      this.ctx = ctx;
+      this.options = options;
+    }
+  }
+  const module = { FreePlayMode };
+  const manual = FREE_PLAY.create(context, {}, module);
+  assert.equal(manual.ctx, context);
+  assert.equal(manual.options.diagnostics, false);
+  assert.equal(FREE_PLAY.create(context, { diagnostics: true }, module).options.diagnostics, true);
+});
+
 test("previous drill moves backward through stages and wraps across drills", () => {
   assert.equal(previousTrainingDrill("driving", 1).masteryStep, 0);
   assert.equal(previousTrainingDrill("dodges", 0).def.id, "driving");
